@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF #13 — Advanced Patterns Quick Reference</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #1a1040 40%, #0d1117 100%); }
+
+    /* Pattern card accent borders */
+    .p-union    { border-left: 4px solid #58a6ff; }
+    .p-topo     { border-left: 4px solid #3fb950; }
+    .p-trie     { border-left: 4px solid #bc8cff; }
+    .p-twohp    { border-left: 4px solid #f85149; }
+    .p-kway     { border-left: 4px solid #39d5d3; }
+    .p-mbs      { border-left: 4px solid #e3b341; }
+    .p-cyclic   { border-left: 4px solid #d29922; }
+    .p-xor      { border-left: 4px solid #f778ba; }
+
+    /* Signal chips row */
+    .signals    { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+
+    /* Pattern number badge */
+    .p-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 50%;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .p-badge-blue   { background: rgba(88,166,255,.18); color:#58a6ff; border:1px solid #58a6ff44; }
+    .p-badge-green  { background: rgba(63,185,80,.18);  color:#3fb950; border:1px solid #3fb95044; }
+    .p-badge-purple { background: rgba(188,140,255,.18);color:#bc8cff; border:1px solid #bc8cff44; }
+    .p-badge-red    { background: rgba(248,81,73,.18);  color:#f85149; border:1px solid #f8514944; }
+    .p-badge-cyan   { background: rgba(57,213,211,.18); color:#39d5d3; border:1px solid #39d5d344; }
+    .p-badge-yellow { background: rgba(227,179,65,.18); color:#e3b341; border:1px solid #e3b34144; }
+    .p-badge-orange { background: rgba(210,153,34,.18); color:#d29922; border:1px solid #d2992244; }
+    .p-badge-pink   { background: rgba(247,120,186,.18);color:#f778ba; border:1px solid #f778ba44; }
+
+    /* Section title row with badge */
+    .section-title-row { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+    .section-title-row h3 { margin:0; border:none; padding:0; }
+
+    /* Trap box */
+    .trap-box {
+      background: rgba(248,81,73,.08); border:1px solid rgba(248,81,73,.3);
+      border-radius: 8px; padding: 14px 18px; margin-top: 14px;
+    }
+    .trap-box .trap-label {
+      color: #f85149; font-weight: 700; font-size: 12px; text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 6px;
+    }
+
+    /* Complexity row */
+    .complexity-row { display:flex; gap:16px; flex-wrap:wrap; margin:10px 0; }
+    .cmplx { 
+      background: #21262d; border-radius:6px; padding:6px 14px; 
+      font-size:12px; color:#8b949e; 
+    }
+    .cmplx strong { color:#e6edf3; }
+
+    /* Problem list */
+    .prob-list { list-style:none; padding:0; margin:0; }
+    .prob-list li {
+      display:flex; align-items:baseline; gap:10px;
+      padding: 7px 0; border-bottom: 1px solid #21262d;
+      font-size:13px;
+    }
+    .prob-list li:last-child { border-bottom:none; }
+    .prob-list a { color:#58a6ff; text-decoration:none; }
+    .prob-list a:hover { text-decoration:underline; }
+    .prob-list .diff { font-size:11px; flex-shrink:0; }
+
+    /* Mental model highlight */
+    .mental-model {
+      background: linear-gradient(90deg, rgba(88,166,255,.07) 0%, transparent 100%);
+      border-left: 3px solid #58a6ff; border-radius:0 6px 6px 0;
+      padding: 12px 16px; margin: 12px 0; font-style: italic; color: #c9d1d9;
+      font-size: 14px; line-height: 1.6;
+    }
+    .mental-model.green  { border-color:#3fb950; background: linear-gradient(90deg, rgba(63,185,80,.07) 0%, transparent 100%); }
+    .mental-model.purple { border-color:#bc8cff; background: linear-gradient(90deg, rgba(188,140,255,.07) 0%, transparent 100%); }
+    .mental-model.red    { border-color:#f85149; background: linear-gradient(90deg, rgba(248,81,73,.07) 0%, transparent 100%); }
+    .mental-model.cyan   { border-color:#39d5d3; background: linear-gradient(90deg, rgba(57,213,211,.07) 0%, transparent 100%); }
+    .mental-model.yellow { border-color:#e3b341; background: linear-gradient(90deg, rgba(227,179,65,.07) 0%, transparent 100%); }
+    .mental-model.orange { border-color:#d29922; background: linear-gradient(90deg, rgba(210,153,34,.07) 0%, transparent 100%); }
+    .mental-model.pink   { border-color:#f778ba; background: linear-gradient(90deg, rgba(247,120,186,.07) 0%, transparent 100%); }
+
+    /* XOR visual */
+    .xor-table { 
+      display: grid; grid-template-columns: repeat(4, auto);
+      gap: 1px; background: #30363d; border-radius:8px; overflow:hidden;
+      width: fit-content; font-size: 13px; font-family: monospace;
+    }
+    .xor-cell {
+      background: #1c2128; padding: 8px 16px; text-align:center; color:#c9d1d9;
+    }
+    .xor-cell.head { background:#21262d; color:#e3b341; font-weight:700; }
+    .xor-cell.result { color:#3fb950; font-weight:700; }
+
+    /* Heap visual */
+    .heap-visual {
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      padding: 16px; background: #161b22; border-radius:10px;
+    }
+    .heap-row { display:flex; gap:8px; align-items:center; }
+    .heap-node {
+      width:44px; height:44px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:14px; transition: transform 0.3s;
+    }
+    .heap-node:hover { transform: scale(1.15); }
+    .hn-max { background: rgba(248,81,73,.25); border:2px solid #f85149; color:#f85149; }
+    .hn-min { background: rgba(57,213,211,.25); border:2px solid #39d5d3; color:#39d5d3; }
+    .heap-label { font-size:11px; color:#8b949e; text-transform:uppercase; letter-spacing:.08em; }
+    .heap-arrow { font-size:20px; color:#6e7681; }
+
+    /* Trie visual */
+    .trie-vis {
+      font-family: monospace; font-size:13px; 
+      background: #010409; border-radius: 8px; padding:16px;
+      color: #c9d1d9; line-height: 1.8;
+    }
+    .tv-root  { color:#e3b341; }
+    .tv-node  { color:#58a6ff; }
+    .tv-end   { color:#3fb950; font-weight:700; }
+    .tv-line  { color:#30363d; }
+
+    /* Union Find visual */
+    .uf-visual { 
+      display:flex; flex-wrap:wrap; gap:8px; padding:16px; 
+      background: #161b22; border-radius:10px; 
+    }
+    .uf-component {
+      border: 2px dashed #30363d; border-radius: 8px; padding: 8px 12px;
+      display:flex; gap:8px; align-items:center;
+    }
+    .uf-node {
+      width:32px; height:32px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:12px;
+      transition: all 0.4s;
+    }
+    .uf-node.root { border:2px solid #58a6ff; background:rgba(88,166,255,.2); color:#58a6ff; }
+    .uf-node.child { border:2px solid #30363d; background:#21262d; color:#8b949e; }
+    .uf-arrow { color:#30363d; font-size:14px; }
+    .uf-comp-label { font-size:10px; color:#6e7681; display:block; text-align:center; margin-top:4px; }
+
+    /* Cyclic sort visual */
+    .cs-visual { display:flex; gap:6px; flex-wrap:wrap; }
+    .cs-slot {
+      width:44px; height:44px; border-radius:6px; border:2px solid #30363d;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:14px; transition: all 0.5s;
+    }
+    .cs-slot.correct { border-color:#3fb950; background:rgba(63,185,80,.15); color:#3fb950; }
+    .cs-slot.wrong   { border-color:#f85149; background:rgba(248,81,73,.15); color:#f85149; }
+
+    @keyframes swapLeft  { 0%{transform:translateX(0)} 50%{transform:translateX(-50px)} 100%{transform:translateX(0)} }
+    @keyframes swapRight { 0%{transform:translateX(0)} 50%{transform:translateX(50px)}  100%{transform:translateX(0)} }
+    .anim-swap-l { animation: swapLeft  0.6s ease-in-out; }
+    .anim-swap-r { animation: swapRight 0.6s ease-in-out; }
+  </style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- Hamburger -->
+<button id="hamburger" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+<div id="sidebar-overlay"></div>
+
+<!-- ════════════════ SIDEBAR ════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">PDF #13</div>
+    <div class="sidebar-subtitle">Advanced Patterns</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Navigation</div>
+    <a href="../index.html" class="toc-link">🏠 Home</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Patterns</div>
+    <a href="#union-find"   class="toc-link">13 · Union Find (DSU)</a>
+    <a href="#topo-sort"    class="toc-link">14 · Topological Sort</a>
+    <a href="#trie"         class="toc-link">15 · Trie</a>
+    <a href="#two-heaps"    class="toc-link">16 · Two Heaps</a>
+    <a href="#kway-merge"   class="toc-link">17 · K-Way Merge</a>
+    <a href="#mod-bsearch"  class="toc-link">18 · Modified Binary Search</a>
+    <a href="#cyclic-sort"  class="toc-link">19 · Cyclic Sort</a>
+    <a href="#bitwise-xor"  class="toc-link">20 · Bitwise XOR</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Quick Links</div>
+    <a href="#pattern-map"  class="toc-link">📊 Pattern Decision Map</a>
+    <a href="#cheat-sheet"  class="toc-link">⚡ Cheat Sheet</a>
+  </div>
+</nav>
+
+<!-- ════════════════ MAIN ════════════════ -->
+<main id="main">
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Algorithm Patterns · PDF #13</div>
+      <h1>Advanced Patterns<br>Quick Reference</h1>
+      <p class="hero-subtitle">
+        Patterns 13–20 consolidated into one sharp reference. 
+        Each pattern: mental model → recognition signals → template → traps. 
+        Read once, recall forever.
+      </p>
+      <div class="hero-badges">
+        <span class="tag tag-purple">Union Find</span>
+        <span class="tag tag-green">Topo Sort</span>
+        <span class="tag tag-blue">Trie</span>
+        <span class="tag tag-red">Two Heaps</span>
+        <span class="tag tag-cyan">K-Way Merge</span>
+        <span class="tag tag-yellow">Binary Search</span>
+        <span class="tag tag-orange">Cyclic Sort</span>
+        <span class="tag tag-purple">Bitwise XOR</span>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:24px; flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:28px; font-weight:700; color:#58a6ff;">8</div>
+          <div style="font-size:12px; color:#8b949e;">Patterns</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:28px; font-weight:700; color:#3fb950;">24</div>
+          <div style="font-size:12px; color:#8b949e;">Key Problems</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:28px; font-weight:700; color:#e3b341;">8</div>
+          <div style="font-size:12px; color:#8b949e;">Core Templates</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PART 1  —  GRAPH PATTERNS
+  ═════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>Graph Patterns</h2>
+      <p>Union Find for connectivity · Topological Sort for ordering</p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 13 — UNION FIND
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="union-find">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-blue">13</div>
+      <h3>Union Find (Disjoint Set Union)</h3>
+    </div>
+
+    <div class="mental-model">
+      🧠 &nbsp;<strong>Mental Model:</strong> Imagine a social network. Each person starts in their own group.
+      When two people connect, their groups <em>merge</em>. Ask "are A and B in the same group?" 
+      in near-constant time — even after millions of merges.
+    </div>
+
+    <div class="card p-union">
+      <div class="card-grid">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-blue">"connected components"</span>
+            <span class="tag tag-blue">"same group/cluster"</span>
+            <span class="tag tag-blue">"union of sets"</span>
+            <span class="tag tag-blue">"cycle in undirected graph"</span>
+            <span class="tag tag-blue">"number of islands"</span>
+            <span class="tag tag-blue">"friend circles"</span>
+          </div>
+          <p style="margin-top:10px; font-size:13px;">
+            Key tell: you're repeatedly asked "do X and Y belong together?" 
+            or "how many separate groups exist?"
+          </p>
+        </div>
+        <div class="card-mini">
+          <h5>Complexity</h5>
+          <div class="complexity-row">
+            <div class="cmplx">Find <strong>≈ O(1)</strong> amortized</div>
+            <div class="cmplx">Union <strong>≈ O(1)</strong> amortized</div>
+            <div class="cmplx">Space <strong>O(N)</strong></div>
+          </div>
+          <h5 style="margin-top:14px;">When NOT to Use</h5>
+          <p style="font-size:13px;">
+            Directed graphs — use Topological Sort or DFS instead. 
+            DSU only works on <em>undirected</em> connections.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive visual -->
+    <div class="card">
+      <h4>Live Visualization — Union by Rank + Path Compression</h4>
+      <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+        <div>
+          <div class="heap-label" style="margin-bottom:8px;">Before union(1,3)</div>
+          <div class="uf-visual" id="uf-before">
+            <div class="uf-component">
+              <div>
+                <div class="uf-node root">1</div>
+                <span class="uf-comp-label">root</span>
+              </div>
+              <span class="uf-arrow">←</span>
+              <div>
+                <div class="uf-node child">2</div>
+                <span class="uf-comp-label">child</span>
+              </div>
+            </div>
+            <div class="uf-component">
+              <div>
+                <div class="uf-node root" style="border-color:#3fb950; background:rgba(63,185,80,.2); color:#3fb950;">3</div>
+                <span class="uf-comp-label">root</span>
+              </div>
+              <span class="uf-arrow">←</span>
+              <div>
+                <div class="uf-node child">4</div>
+                <span class="uf-comp-label">child</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; color:#6e7681; font-size:24px;">→</div>
+        <div>
+          <div class="heap-label" style="margin-bottom:8px;">After union(1,3) — 1 becomes root</div>
+          <div class="uf-visual" id="uf-after" style="opacity:0; transition:opacity 0.6s;">
+            <div class="uf-component" style="border-color:#58a6ff44;">
+              <div>
+                <div class="uf-node root">1</div>
+                <span class="uf-comp-label">root</span>
+              </div>
+              <span class="uf-arrow">←</span>
+              <div>
+                <div class="uf-node child">2</div>
+                <span class="uf-comp-label">child</span>
+              </div>
+              <span class="uf-arrow">←</span>
+              <div>
+                <div class="uf-node child">3</div>
+                <span class="uf-comp-label">child</span>
+              </div>
+              <span class="uf-arrow">←</span>
+              <div>
+                <div class="uf-node child">4</div>
+                <span class="uf-comp-label">child</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px; color:#6e7681; margin-top:10px;">
+        Path compression flattens the tree — next find() on node 4 points directly to root 1.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Union Find — Path Compression + Union by Rank</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="type">UnionFind</span> {
+    <span class="kw">private int</span>[] parent, rank;
+
+    <span class="fn">UnionFind</span>(<span class="kw">int</span> n) {
+        parent = <span class="kw">new int</span>[n];
+        rank   = <span class="kw">new int</span>[n];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) parent[i] = i; <span class="cmt">// each node is its own root</span>
+    }
+
+    <span class="cmt">// Path compression — flatten tree on every find</span>
+    <span class="kw">public int</span> <span class="fn">find</span>(<span class="kw">int</span> x) {
+        <span class="kw">if</span> (parent[x] != x)
+            parent[x] = <span class="fn">find</span>(parent[x]); <span class="cmt">// recursively compress</span>
+        <span class="kw">return</span> parent[x];
+    }
+
+    <span class="cmt">// Union by rank — always attach smaller tree under larger</span>
+    <span class="kw">public boolean</span> <span class="fn">union</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+        <span class="kw">int</span> px = <span class="fn">find</span>(x), py = <span class="fn">find</span>(y);
+        <span class="kw">if</span> (px == py) <span class="kw">return false</span>; <span class="cmt">// already connected — CYCLE detected</span>
+        <span class="kw">if</span> (rank[px] &lt; rank[py]) { <span class="kw">int</span> tmp = px; px = py; py = tmp; }
+        parent[py] = px;
+        <span class="kw">if</span> (rank[px] == rank[py]) rank[px]++;
+        <span class="kw">return true</span>;
+    }
+
+    <span class="kw">public boolean</span> <span class="fn">connected</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+        <span class="kw">return</span> <span class="fn">find</span>(x) == <span class="fn">find</span>(y);
+    }
+}
+
+<span class="cmt">// Usage pattern — number of components</span>
+<span class="kw">int</span> components = n;
+<span class="kw">for</span> (<span class="kw">int</span>[] edge : edges) {
+    <span class="kw">if</span> (uf.<span class="fn">union</span>(edge[<span class="num">0</span>], edge[<span class="num">1</span>])) components--; <span class="cmt">// successful merge</span>
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Using DSU on a <strong>directed</strong> graph. Union Find only models undirected edges. 
+      If A→B exists, you cannot blindly call union(A,B) — that would mean B also connects back to A, 
+      which may be false. Use BFS/DFS or Kahn's algorithm for directed graphs.</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/number-of-islands/" target="_blank">LC #200 — Number of Islands</a><span style="color:#6e7681; font-size:12px;">— classic DSU or DFS; count how many union operations complete without merging</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/redundant-connection/" target="_blank">LC #684 — Redundant Connection</a><span style="color:#6e7681; font-size:12px;">— first union() that returns false = redundant edge (cycle)</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/" target="_blank">LC #323 — Number of Connected Components</a><span style="color:#6e7681; font-size:12px;">— count remaining components after all unions</span></li>
+        <li><span class="diff">🔴</span><a href="https://leetcode.com/problems/accounts-merge/" target="_blank">LC #721 — Accounts Merge</a><span style="color:#6e7681; font-size:12px;">— union emails by account, then group by root</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 14 — TOPOLOGICAL SORT
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="topo-sort">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-green">14</div>
+      <h3>Topological Sort (Kahn's Algorithm)</h3>
+    </div>
+
+    <div class="mental-model green">
+      🧠 &nbsp;<strong>Mental Model:</strong> Before you can eat a meal, you need ingredients. Before ingredients, 
+      you need a recipe. Topological sort finds the legal <em>ordering of tasks with dependencies</em>. 
+      If any cycle exists (A depends on B, B depends on A) — ordering is impossible.
+    </div>
+
+    <div class="card p-topo">
+      <div class="card-grid">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-green">"course prerequisites"</span>
+            <span class="tag tag-green">"task scheduling"</span>
+            <span class="tag tag-green">"dependency ordering"</span>
+            <span class="tag tag-green">"directed acyclic graph"</span>
+            <span class="tag tag-green">"build order"</span>
+            <span class="tag tag-green">"alien dictionary"</span>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h5>Cycle Detection Rule</h5>
+          <div class="callout danger" style="margin:0;">
+            <div class="icon">🚨</div>
+            <div class="body">
+              <strong>If processed nodes &lt; total nodes → cycle exists.</strong>
+              <p>Some nodes never reach in-degree 0, so they're never added to queue.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Kahn's Algorithm (BFS-based Topological Sort)</span>
+      </div>
+      <pre><code><span class="kw">public</span> <span class="kw">int</span>[] <span class="fn">topoSort</span>(<span class="kw">int</span> numNodes, <span class="kw">int</span>[][] prerequisites) {
+    <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj    = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    <span class="kw">int</span>[] inDegree = <span class="kw">new int</span>[numNodes];
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; numNodes; i++) adj.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+    <span class="kw">for</span> (<span class="kw">int</span>[] pre : prerequisites) {
+        adj.<span class="fn">get</span>(pre[<span class="num">1</span>]).<span class="fn">add</span>(pre[<span class="num">0</span>]);  <span class="cmt">// pre[1] → pre[0]</span>
+        inDegree[pre[<span class="num">0</span>]]++;
+    }
+
+    <span class="type">Queue</span>&lt;<span class="type">Integer</span>&gt; queue = <span class="kw">new</span> <span class="type">LinkedList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; numNodes; i++)
+        <span class="kw">if</span> (inDegree[i] == <span class="num">0</span>) queue.<span class="fn">offer</span>(i); <span class="cmt">// seed: all "free" nodes</span>
+
+    <span class="kw">int</span>[] order   = <span class="kw">new int</span>[numNodes];
+    <span class="kw">int</span>  processed = <span class="num">0</span>;
+
+    <span class="kw">while</span> (!queue.<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span> node = queue.<span class="fn">poll</span>();
+        order[processed++] = node;
+        <span class="kw">for</span> (<span class="kw">int</span> next : adj.<span class="fn">get</span>(node)) {
+            <span class="kw">if</span> (--inDegree[next] == <span class="num">0</span>) queue.<span class="fn">offer</span>(next); <span class="cmt">// dependency resolved</span>
+        }
+    }
+
+    <span class="kw">return</span> processed == numNodes ? order : <span class="kw">new int</span>[<span class="num">0</span>]; <span class="cmt">// [] = cycle detected</span>
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Getting edge direction backwards. <code>prerequisites[i] = [a, b]</code> means 
+      "to take course a, you must first take b" → edge is <strong>b → a</strong>, 
+      so in-degree of <code>a</code> increases. Drawing a quick diagram before coding saves 10 minutes of debugging.</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/course-schedule/" target="_blank">LC #207 — Course Schedule</a><span style="color:#6e7681; font-size:12px;">— return true if no cycle (processed == numCourses)</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/course-schedule-ii/" target="_blank">LC #210 — Course Schedule II</a><span style="color:#6e7681; font-size:12px;">— return the order array itself</span></li>
+        <li><span class="diff">🔴</span><a href="https://leetcode.com/problems/alien-dictionary/" target="_blank">LC #269 — Alien Dictionary</a><span style="color:#6e7681; font-size:12px;">— build graph from char ordering, then topo sort</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/find-eventual-safe-states/" target="_blank">LC #802 — Find Eventual Safe States</a><span style="color:#6e7681; font-size:12px;">— reverse edges, then nodes with in-degree 0 are safe</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PART 2  —  TREE / STRING PATTERNS
+  ═════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">02</div>
+    <div>
+      <h2>String &amp; Tree Patterns</h2>
+      <p>Trie for prefix magic · Two Heaps for continuous median</p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 15 — TRIE
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="trie">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-purple">15</div>
+      <h3>Trie (Prefix Tree)</h3>
+    </div>
+
+    <div class="mental-model purple">
+      🧠 &nbsp;<strong>Mental Model:</strong> A dictionary organised by <em>first letter, then second letter, 
+      then third…</em> Like a filing cabinet where the folder at each level corresponds 
+      to one character. All words sharing a prefix share the same root path.
+    </div>
+
+    <div class="card p-trie">
+      <div class="card-grid">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-purple">"starts with prefix"</span>
+            <span class="tag tag-purple">"autocomplete"</span>
+            <span class="tag tag-purple">"word search in board"</span>
+            <span class="tag tag-purple">"longest common prefix"</span>
+            <span class="tag tag-purple">"dictionary / spell check"</span>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h5>Trie vs HashMap</h5>
+          <div class="table-wrapper" style="margin:0;">
+            <table>
+              <thead><tr><th>Need</th><th>Use</th></tr></thead>
+              <tbody>
+                <tr><td>Exact match</td><td><span class="pill pill-blue">HashMap</span></td></tr>
+                <tr><td>Prefix match</td><td><span class="pill pill-purple">Trie</span></td></tr>
+                <tr><td>All words with prefix</td><td><span class="pill pill-purple">Trie</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <h5>Visual — Words: "cat", "cap", "car"</h5>
+        <div class="trie-vis">
+<span class="tv-root">(root)</span>
+  └── <span class="tv-node">c</span>
+       └── <span class="tv-node">a</span>
+            ├── <span class="tv-end">t</span> <span style="color:#6e7681;">← isEnd=true  ("cat")</span>
+            ├── <span class="tv-end">p</span> <span style="color:#6e7681;">← isEnd=true  ("cap")</span>
+            └── <span class="tv-end">r</span> <span style="color:#6e7681;">← isEnd=true  ("car")</span>
+        </div>
+        <p style="font-size:12px; color:#6e7681; margin-top:6px;">
+          startsWith("ca") → walk c→a, return true. All 3 words share this path.
+        </p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Trie — Insert + Search + StartsWith</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="type">Trie</span> {
+    <span class="kw">private</span> <span class="type">TrieNode</span> root = <span class="kw">new</span> <span class="type">TrieNode</span>();
+
+    <span class="kw">static class</span> <span class="type">TrieNode</span> {
+        <span class="type">TrieNode</span>[] children = <span class="kw">new</span> <span class="type">TrieNode</span>[<span class="num">26</span>]; <span class="cmt">// lowercase a-z</span>
+        <span class="kw">boolean</span> isEnd = <span class="kw">false</span>;
+    }
+
+    <span class="kw">public void</span> <span class="fn">insert</span>(<span class="type">String</span> word) {
+        <span class="type">TrieNode</span> cur = root;
+        <span class="kw">for</span> (<span class="kw">char</span> c : word.<span class="fn">toCharArray</span>()) {
+            <span class="kw">int</span> idx = c - <span class="str">'a'</span>;
+            <span class="kw">if</span> (cur.children[idx] == <span class="kw">null</span>)
+                cur.children[idx] = <span class="kw">new</span> <span class="type">TrieNode</span>();
+            cur = cur.children[idx];
+        }
+        cur.isEnd = <span class="kw">true</span>;
+    }
+
+    <span class="kw">public boolean</span> <span class="fn">search</span>(<span class="type">String</span> word) {
+        <span class="type">TrieNode</span> node = <span class="fn">walk</span>(word);
+        <span class="kw">return</span> node != <span class="kw">null</span> && node.isEnd; <span class="cmt">// must reach end AND isEnd</span>
+    }
+
+    <span class="kw">public boolean</span> <span class="fn">startsWith</span>(<span class="type">String</span> prefix) {
+        <span class="kw">return</span> <span class="fn">walk</span>(prefix) != <span class="kw">null</span>; <span class="cmt">// just needs to reach last char</span>
+    }
+
+    <span class="kw">private</span> <span class="type">TrieNode</span> <span class="fn">walk</span>(<span class="type">String</span> s) {
+        <span class="type">TrieNode</span> cur = root;
+        <span class="kw">for</span> (<span class="kw">char</span> c : s.<span class="fn">toCharArray</span>()) {
+            <span class="kw">int</span> idx = c - <span class="str">'a'</span>;
+            <span class="kw">if</span> (cur.children[idx] == <span class="kw">null</span>) <span class="kw">return null</span>;
+            cur = cur.children[idx];
+        }
+        <span class="kw">return</span> cur;
+    }
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Confusing <code>search()</code> and <code>startsWith()</code>. <code>search("cat")</code> requires 
+      reaching node 't' AND <code>isEnd == true</code>. <code>startsWith("ca")</code> only needs 
+      to reach node 'a'. Forgetting the <code>isEnd</code> check causes "cap" to incorrectly 
+      match a search for "ca".</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/implement-trie-prefix-tree/" target="_blank">LC #208 — Implement Trie</a><span style="color:#6e7681; font-size:12px;">— foundational template problem</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/design-add-and-search-words-data-structure/" target="_blank">LC #211 — Design Add and Search Words</a><span style="color:#6e7681; font-size:12px;">— add wildcard '.' support with DFS at each node</span></li>
+        <li><span class="diff">🔴</span><a href="https://leetcode.com/problems/word-search-ii/" target="_blank">LC #212 — Word Search II</a><span style="color:#6e7681; font-size:12px;">— backtracking on grid + Trie to prune early</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 16 — TWO HEAPS
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="two-heaps">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-red">16</div>
+      <h3>Two Heaps — Median Maintenance</h3>
+    </div>
+
+    <div class="mental-model red">
+      🧠 &nbsp;<strong>Mental Model:</strong> Split a sorted list at the middle. 
+      Left half → max-heap (quickly get the largest of the lower half). 
+      Right half → min-heap (quickly get the smallest of the upper half). 
+      The median lives at the boundary between the two heaps.
+    </div>
+
+    <div class="card p-twohp">
+      <div class="card-grid">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-red">"median of data stream"</span>
+            <span class="tag tag-red">"continuously inserted numbers"</span>
+            <span class="tag tag-red">"sliding window median"</span>
+            <span class="tag tag-red">"find median at each step"</span>
+          </div>
+          <div class="callout info" style="margin-top:10px;">
+            <div class="icon">💡</div>
+            <div class="body"><strong>Key invariant:</strong> <code>|maxHeap.size - minHeap.size| ≤ 1</code></div>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h5>Live Heap State — after inserting [5,2,8,1,9]</h5>
+          <div class="heap-visual">
+            <div style="display:flex; gap:32px; align-items:flex-start;">
+              <div style="text-align:center;">
+                <div class="heap-label" style="color:#f85149;">MAX HEAP (lower)</div>
+                <div class="heap-row" style="margin-top:8px;">
+                  <div class="heap-node hn-max" title="root">5</div>
+                </div>
+                <div class="heap-row">
+                  <div class="heap-node hn-max">2</div>
+                  <div class="heap-node hn-max">1</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; color:#6e7681; font-size:20px; margin-top:20px;">║</div>
+              <div style="text-align:center;">
+                <div class="heap-label" style="color:#39d5d3;">MIN HEAP (upper)</div>
+                <div class="heap-row" style="margin-top:8px;">
+                  <div class="heap-node hn-min" title="root">8</div>
+                </div>
+                <div class="heap-row">
+                  <div class="heap-node hn-min">9</div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:12px; color:#8b949e; margin-top:6px;">
+              Median = (5+8)/2 = <strong style="color:#e6edf3;">6.5</strong> (even count) &nbsp;|&nbsp; 
+              Median = maxHeap.peek() (odd count)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Two Heaps — MedianFinder</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="type">MedianFinder</span> {
+    <span class="cmt">// maxHeap → stores lower half  (top = largest of lower)</span>
+    <span class="cmt">// minHeap → stores upper half  (top = smallest of upper)</span>
+    <span class="type">PriorityQueue</span>&lt;<span class="type">Integer</span>&gt; maxHeap = <span class="kw">new</span> <span class="type">PriorityQueue</span>&lt;&gt;(<span class="type">Collections</span>.<span class="fn">reverseOrder</span>());
+    <span class="type">PriorityQueue</span>&lt;<span class="type">Integer</span>&gt; minHeap = <span class="kw">new</span> <span class="type">PriorityQueue</span>&lt;&gt;();
+
+    <span class="kw">public void</span> <span class="fn">addNum</span>(<span class="kw">int</span> num) {
+        maxHeap.<span class="fn">offer</span>(num);                        <span class="cmt">// 1. always add to maxHeap first</span>
+        minHeap.<span class="fn">offer</span>(maxHeap.<span class="fn">poll</span>());            <span class="cmt">// 2. balance: push max of lower → upper</span>
+        <span class="kw">if</span> (minHeap.<span class="fn">size</span>() > maxHeap.<span class="fn">size</span>())     <span class="cmt">// 3. keep maxHeap >= minHeap in size</span>
+            maxHeap.<span class="fn">offer</span>(minHeap.<span class="fn">poll</span>());
+    }
+
+    <span class="kw">public double</span> <span class="fn">findMedian</span>() {
+        <span class="kw">if</span> (maxHeap.<span class="fn">size</span>() > minHeap.<span class="fn">size</span>())
+            <span class="kw">return</span> maxHeap.<span class="fn">peek</span>();                <span class="cmt">// odd count: median is top of maxHeap</span>
+        <span class="kw">return</span> (maxHeap.<span class="fn">peek</span>() + minHeap.<span class="fn">peek</span>()) / <span class="num">2.0</span>; <span class="cmt">// even: average of two tops</span>
+    }
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Forgetting to use <code>2.0</code> (not <code>2</code>) for the division. 
+      Integer division truncates: <code>(5+8)/2 = 6</code>, not <code>6.5</code>. 
+      Always cast or use <code>2.0</code> when the return type is <code>double</code>.</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🔴</span><a href="https://leetcode.com/problems/find-median-from-data-stream/" target="_blank">LC #295 — Find Median from Data Stream</a><span style="color:#6e7681; font-size:12px;">— pure two heaps template</span></li>
+        <li><span class="diff">🔴</span><a href="https://leetcode.com/problems/sliding-window-median/" target="_blank">LC #480 — Sliding Window Median</a><span style="color:#6e7681; font-size:12px;">— two heaps + lazy deletion for expired elements</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PART 3  —  MERGE & SEARCH PATTERNS
+  ═════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">03</div>
+    <div>
+      <h2>Merge &amp; Search Patterns</h2>
+      <p>K-Way Merge for sorted inputs · Modified Binary Search for rotated arrays</p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 17 — K-WAY MERGE
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="kway-merge">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-cyan">17</div>
+      <h3>K-Way Merge</h3>
+    </div>
+
+    <div class="mental-model cyan">
+      🧠 &nbsp;<strong>Mental Model:</strong> You have K sorted queues. You always want the globally 
+      smallest next element. A min-heap acts as a "smart router" — it always points 
+      you to which queue holds the next smallest value. Pop one, push its successor.
+    </div>
+
+    <div class="card p-kway">
+      <div class="card-grid">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-cyan">"merge K sorted lists"</span>
+            <span class="tag tag-cyan">"Kth smallest across arrays"</span>
+            <span class="tag tag-cyan">"sorted matrix Kth element"</span>
+            <span class="tag tag-cyan">"multiple sorted streams"</span>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h5>Complexity</h5>
+          <div class="complexity-row">
+            <div class="cmplx">Time <strong>O(N log K)</strong></div>
+            <div class="cmplx">Space <strong>O(K)</strong></div>
+          </div>
+          <p style="font-size:12px; color:#8b949e; margin-top:8px;">
+            K = number of lists. N = total elements. 
+            The heap never holds more than K elements.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">K-Way Merge — Merge K Sorted Lists</span>
+      </div>
+      <pre><code><span class="kw">public</span> <span class="type">ListNode</span> <span class="fn">mergeKLists</span>(<span class="type">ListNode</span>[] lists) {
+    <span class="cmt">// Heap stores [value, listIndex, node] — ordered by value</span>
+    <span class="type">PriorityQueue</span>&lt;<span class="kw">int</span>[]&gt; heap = <span class="kw">new</span> <span class="type">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a[<span class="num">0</span>] - b[<span class="num">0</span>]);
+
+    <span class="cmt">// Seed heap with head of each list</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; lists.length; i++)
+        <span class="kw">if</span> (lists[i] != <span class="kw">null</span>)
+            heap.<span class="fn">offer</span>(<span class="kw">new int</span>[]{ lists[i].val, i, 0 });
+
+    <span class="type">ListNode</span> dummy = <span class="kw">new</span> <span class="type">ListNode</span>(<span class="num">0</span>), cur = dummy;
+
+    <span class="kw">while</span> (!heap.<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span>[] top = heap.<span class="fn">poll</span>();              <span class="cmt">// globally smallest node</span>
+        <span class="type">ListNode</span> node = <span class="fn">getNode</span>(lists, top);  <span class="cmt">// retrieve actual node</span>
+        cur.next = node;
+        cur = cur.next;
+        <span class="kw">if</span> (node.next != <span class="kw">null</span>)             <span class="cmt">// push next from same list</span>
+            heap.<span class="fn">offer</span>(<span class="kw">new int</span>[]{ node.next.val, top[<span class="num">1</span>], top[<span class="num">2</span>] + <span class="num">1</span> });
+    }
+    <span class="kw">return</span> dummy.next;
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Seeding the heap without checking if a list is null or empty. 
+      If <code>lists[i] == null</code>, calling <code>lists[i].val</code> throws NPE. 
+      Always guard with a null check when initializing the heap.</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🔴</span><a href="https://leetcode.com/problems/merge-k-sorted-lists/" target="_blank">LC #23 — Merge K Sorted Lists</a><span style="color:#6e7681; font-size:12px;">— pure template problem</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/" target="_blank">LC #378 — Kth Smallest in Sorted Matrix</a><span style="color:#6e7681; font-size:12px;">— treat each row as a sorted list</span></li>
+        <li><span class="diff">🔴</span><a href="https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists/" target="_blank">LC #632 — Smallest Range Covering K Lists</a><span style="color:#6e7681; font-size:12px;">— heap + track max of current window</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 18 — MODIFIED BINARY SEARCH
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="mod-bsearch">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-yellow">18</div>
+      <h3>Modified Binary Search</h3>
+    </div>
+
+    <div class="mental-model yellow">
+      🧠 &nbsp;<strong>Mental Model:</strong> Classic binary search requires a perfectly sorted array. 
+      Modified binary search works even when the array is rotated or partially sorted — 
+      because at least <em>one half</em> is always fully sorted. Use the sorted half 
+      to decide which side to eliminate.
+    </div>
+
+    <div class="card p-mbs">
+      <div class="card-grid">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-yellow">"rotated sorted array"</span>
+            <span class="tag tag-yellow">"find peak element"</span>
+            <span class="tag tag-yellow">"search in matrix"</span>
+            <span class="tag tag-yellow">"minimum in rotated array"</span>
+            <span class="tag tag-yellow">O(log N) required</span>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h5>Decision Rule — Which Half is Sorted?</h5>
+          <div class="callout info" style="margin:0;">
+            <div class="icon">🔑</div>
+            <div class="body">
+              <code>if arr[mid] >= arr[left]</code> → <strong>left half is sorted</strong><br/>
+              <code>else</code> → <strong>right half is sorted</strong><br/>
+              Then check if target falls inside the sorted half.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Binary Search in Rotated Sorted Array — LC #33</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">search</span>(<span class="kw">int</span>[] nums, <span class="kw">int</span> target) {
+    <span class="kw">int</span> left = <span class="num">0</span>, right = nums.length - <span class="num">1</span>;
+
+    <span class="kw">while</span> (left &lt;= right) {
+        <span class="kw">int</span> mid = left + (right - left) / <span class="num">2</span>; <span class="cmt">// avoid overflow</span>
+
+        <span class="kw">if</span> (nums[mid] == target) <span class="kw">return</span> mid;
+
+        <span class="cmt">// Left half [left..mid] is fully sorted</span>
+        <span class="kw">if</span> (nums[left] &lt;= nums[mid]) {
+            <span class="kw">if</span> (nums[left] &lt;= target && target &lt; nums[mid])
+                right = mid - <span class="num">1</span>;   <span class="cmt">// target in left half</span>
+            <span class="kw">else</span>
+                left  = mid + <span class="num">1</span>;   <span class="cmt">// target in right half</span>
+        } <span class="kw">else</span> { <span class="cmt">// Right half [mid..right] is fully sorted</span>
+            <span class="kw">if</span> (nums[mid] &lt; target && target &lt;= nums[right])
+                left  = mid + <span class="num">1</span>;   <span class="cmt">// target in right half</span>
+            <span class="kw">else</span>
+                right = mid - <span class="num">1</span>;   <span class="cmt">// target in left half</span>
+        }
+    }
+    <span class="kw">return</span> -<span class="num">1</span>;
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Using <code>(left + right) / 2</code> for mid. With large indices this causes integer overflow. 
+      Always use <code>left + (right - left) / 2</code>. It's a one-character difference but 
+      a critical bug in production with arrays over ~2 billion elements.</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/search-in-rotated-sorted-array/" target="_blank">LC #33 — Search in Rotated Sorted Array</a><span style="color:#6e7681; font-size:12px;">— core template</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" target="_blank">LC #153 — Find Minimum in Rotated Array</a><span style="color:#6e7681; font-size:12px;">— always move toward unsorted half</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/search-a-2d-matrix-ii/" target="_blank">LC #240 — Search a 2D Matrix II</a><span style="color:#6e7681; font-size:12px;">— start top-right: go left if too big, down if too small</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/find-peak-element/" target="_blank">LC #162 — Find Peak Element</a><span style="color:#6e7681; font-size:12px;">— move toward ascending side</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PART 4  —  INDEX & BIT PATTERNS
+  ═════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">04</div>
+    <div>
+      <h2>Index &amp; Bit Manipulation Patterns</h2>
+      <p>Cyclic Sort for range-constrained arrays · XOR for single-pass identification</p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 19 — CYCLIC SORT
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="cyclic-sort">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-orange">19</div>
+      <h3>Cyclic Sort</h3>
+    </div>
+
+    <div class="mental-model orange">
+      🧠 &nbsp;<strong>Mental Model:</strong> If numbers are in range [1..N], each number has a 
+      <em>correct home index</em>: number <code>k</code> belongs at index <code>k-1</code>. 
+      Walk the array — whenever a number is not at its home, swap it there. 
+      After one pass, every misplaced number reveals itself.
+    </div>
+
+    <div class="card p-cyclic">
+      <div class="card-grid">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-orange">"numbers in range [1..n]"</span>
+            <span class="tag tag-orange">"find missing number"</span>
+            <span class="tag tag-orange">"find duplicate"</span>
+            <span class="tag tag-orange">"all numbers from 1 to n"</span>
+            <span class="tag tag-orange">"in-place O(1) space"</span>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h5>Interactive — Sort [3,1,5,4,2]</h5>
+          <div id="cs-demo" style="padding:8px;">
+            <div class="cs-visual" id="cs-slots">
+              <div class="cs-slot wrong" id="cs0">3</div>
+              <div class="cs-slot wrong" id="cs1">1</div>
+              <div class="cs-slot wrong" id="cs2">5</div>
+              <div class="cs-slot wrong" id="cs3">4</div>
+              <div class="cs-slot wrong" id="cs4">2</div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:10px; align-items:center;">
+              <button id="cs-btn" style="background:#d29922; border:none; color:#0d1117; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700;">▶ Step</button>
+              <span id="cs-msg" style="font-size:12px; color:#8b949e;">Click to step through cyclic sort</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Cyclic Sort + Find Missing Number</span>
+      </div>
+      <pre><code><span class="cmt">// Step 1: Place each number at its correct index</span>
+<span class="kw">public void</span> <span class="fn">cyclicSort</span>(<span class="kw">int</span>[] nums) {
+    <span class="kw">int</span> i = <span class="num">0</span>;
+    <span class="kw">while</span> (i &lt; nums.length) {
+        <span class="kw">int</span> correct = nums[i] - <span class="num">1</span>; <span class="cmt">// where nums[i] should live</span>
+        <span class="kw">if</span> (nums[i] != nums[correct]) {
+            <span class="cmt">// Swap nums[i] to its correct position</span>
+            <span class="kw">int</span> tmp = nums[correct];
+            nums[correct] = nums[i];
+            nums[i] = tmp;
+        } <span class="kw">else</span> {
+            i++; <span class="cmt">// already at correct index (or duplicate) — move on</span>
+        }
+    }
+}
+
+<span class="cmt">// Step 2: Find the first index where nums[i] != i+1</span>
+<span class="kw">public int</span> <span class="fn">findMissing</span>(<span class="kw">int</span>[] nums) {
+    <span class="fn">cyclicSort</span>(nums);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; nums.length; i++)
+        <span class="kw">if</span> (nums[i] != i + <span class="num">1</span>) <span class="kw">return</span> i + <span class="num">1</span>;
+    <span class="kw">return</span> nums.length + <span class="num">1</span>; <span class="cmt">// missing number is n+1</span>
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Using <code>nums[i] != i+1</code> as the swap condition causes an <strong>infinite loop</strong> 
+      when duplicates exist. If both positions hold the same value, you'll keep swapping forever. 
+      Always guard: <code>if (nums[i] != nums[correct])</code> — compare by value at destination, not index.</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🟢</span><a href="https://leetcode.com/problems/missing-number/" target="_blank">LC #268 — Missing Number</a><span style="color:#6e7681; font-size:12px;">— cyclic sort, then scan for misplaced index</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/find-the-duplicate-number/" target="_blank">LC #287 — Find the Duplicate Number</a><span style="color:#6e7681; font-size:12px;">— when swap destination already correct → that's the duplicate</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/find-all-duplicates-in-an-array/" target="_blank">LC #442 — Find All Duplicates</a><span style="color:#6e7681; font-size:12px;">— collect all indices where nums[i] != i+1 after sort</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/first-missing-positive/" target="_blank">LC #41 — First Missing Positive</a><span style="color:#6e7681; font-size:12px;">— cyclic sort, skip numbers outside [1..n]</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       PATTERN 20 — BITWISE XOR
+  ──────────────────────────────────────────────────────────────────── -->
+  <div class="section" id="bitwise-xor">
+    <div class="section-title-row">
+      <div class="p-badge p-badge-pink">20</div>
+      <h3>Bitwise XOR</h3>
+    </div>
+
+    <div class="mental-model pink">
+      🧠 &nbsp;<strong>Mental Model:</strong> XOR is a "difference detector." Two identical bits cancel to 0. 
+      XOR all numbers together — every pair destroys itself. 
+      What remains is the number with no pair: the single or missing element.
+    </div>
+
+    <div class="card p-xor">
+      <h5>Core XOR Properties — Memorise These</h5>
+      <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start;">
+        <div class="xor-table">
+          <div class="xor-cell head">Rule</div>
+          <div class="xor-cell head">Example</div>
+          <div class="xor-cell head">Result</div>
+          <div class="xor-cell head">Why useful</div>
+          <div class="xor-cell"><code>a ^ a = 0</code></div>
+          <div class="xor-cell"><code>5 ^ 5</code></div>
+          <div class="xor-cell result">0</div>
+          <div class="xor-cell">Pairs cancel out</div>
+          <div class="xor-cell"><code>a ^ 0 = a</code></div>
+          <div class="xor-cell"><code>5 ^ 0</code></div>
+          <div class="xor-cell result">5</div>
+          <div class="xor-cell">Identity element</div>
+          <div class="xor-cell"><code>a^b = b^a</code></div>
+          <div class="xor-cell"><code>3^5=5^3</code></div>
+          <div class="xor-cell result">6</div>
+          <div class="xor-cell">Order doesn't matter</div>
+          <div class="xor-cell"><code>(a^b)^c = a^(b^c)</code></div>
+          <div class="xor-cell"><code>—</code></div>
+          <div class="xor-cell result">✓</div>
+          <div class="xor-cell">Group any way</div>
+        </div>
+        <div style="flex:1; min-width:200px;">
+          <div class="callout success" style="margin:0;">
+            <div class="icon">💡</div>
+            <div class="body">
+              <strong>XOR all numbers in [1..n] with all array elements.</strong>
+              <p>Paired numbers annihilate. The survivor is your answer.</p>
+              <code style="font-size:12px; color:#3fb950;">XOR(1..n) ^ XOR(array) = missing</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-grid" style="margin-top:16px;">
+        <div class="card-mini">
+          <h5>Recognition Signals</h5>
+          <div class="signals">
+            <span class="tag tag-purple">"find single number"</span>
+            <span class="tag tag-purple">"only appears once"</span>
+            <span class="tag tag-purple">"swap without temp variable"</span>
+            <span class="tag tag-purple">"missing number O(1) space"</span>
+            <span class="tag tag-purple">"two non-repeating numbers"</span>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h5>XOR vs Cyclic Sort — When to Choose</h5>
+          <div class="table-wrapper" style="margin:0;">
+            <table>
+              <thead><tr><th>Scenario</th><th>Best Approach</th></tr></thead>
+              <tbody>
+                <tr><td>Find 1 missing number</td><td><span class="pill pill-purple">XOR</span></td></tr>
+                <tr><td>Find 2+ missing numbers</td><td><span class="pill pill-orange">Cyclic Sort</span></td></tr>
+                <tr><td>Can't modify array</td><td><span class="pill pill-purple">XOR</span></td></tr>
+                <tr><td>Need all duplicates</td><td><span class="pill pill-orange">Cyclic Sort</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">XOR Templates — Single Number & Two Non-Repeating</span>
+      </div>
+      <pre><code><span class="cmt">// ── Template 1: Single number in array where all others appear twice</span>
+<span class="kw">public int</span> <span class="fn">singleNumber</span>(<span class="kw">int</span>[] nums) {
+    <span class="kw">int</span> result = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> n : nums) result ^= n; <span class="cmt">// pairs cancel, single survives</span>
+    <span class="kw">return</span> result;
+}
+
+<span class="cmt">// ── Template 2: Two unique numbers (LC #260)</span>
+<span class="kw">public int</span>[] <span class="fn">singleNumberIII</span>(<span class="kw">int</span>[] nums) {
+    <span class="kw">int</span> xor = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> n : nums) xor ^= n; <span class="cmt">// xor = a ^ b</span>
+
+    <span class="cmt">// Find rightmost bit where a and b differ</span>
+    <span class="kw">int</span> diffBit = xor & (-xor);
+
+    <span class="kw">int</span> a = <span class="num">0</span>, b = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> n : nums) {
+        <span class="kw">if</span> ((n & diffBit) != <span class="num">0</span>) a ^= n; <span class="cmt">// group with diffBit set</span>
+        <span class="kw">else</span>                      b ^= n; <span class="cmt">// group without diffBit</span>
+    }
+    <span class="kw">return new int</span>[]{ a, b };
+}
+
+<span class="cmt">// ── Template 3: Appears three times, find the one that appears once (LC #137)</span>
+<span class="kw">public int</span> <span class="fn">singleNumberII</span>(<span class="kw">int</span>[] nums) {
+    <span class="kw">int</span> ones = <span class="num">0</span>, twos = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> n : nums) {
+        ones = (ones ^ n) & ~twos;
+        twos = (twos ^ n) & ~ones;
+    }
+    <span class="kw">return</span> ones; <span class="cmt">// bit counter trick — 3-state machine per bit</span>
+}</code></pre>
+    </div>
+
+    <div class="trap-box">
+      <div class="trap-label">⚡ Common Trap</div>
+      <p>Trying to use basic XOR (Template 1) for LC #137 where elements appear 3 times. 
+      <code>a^a^a = a</code>, not 0 — triples don't cancel! You need the 
+      <strong>bit counter technique</strong> (Template 3) or count bits modulo 3 per position.</p>
+    </div>
+
+    <div class="card">
+      <h5>Practice Problems</h5>
+      <ul class="prob-list">
+        <li><span class="diff">🟢</span><a href="https://leetcode.com/problems/single-number/" target="_blank">LC #136 — Single Number</a><span style="color:#6e7681; font-size:12px;">— 1 line: XOR all elements</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/single-number-ii/" target="_blank">LC #137 — Single Number II</a><span style="color:#6e7681; font-size:12px;">— appears 3 times; use bit counter / ones+twos trick</span></li>
+        <li><span class="diff">🟡</span><a href="https://leetcode.com/problems/single-number-iii/" target="_blank">LC #260 — Single Number III</a><span style="color:#6e7681; font-size:12px;">— two unique numbers; partition by diffBit</span></li>
+        <li><span class="diff">🟢</span><a href="https://leetcode.com/problems/missing-number/" target="_blank">LC #268 — Missing Number</a><span style="color:#6e7681; font-size:12px;">— XOR(0..n) ^ XOR(array) = missing</span></li>
+      </tbody>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION: PATTERN DECISION MAP
+  ═════════════════════════════════════════ -->
+  <div class="section" id="pattern-map">
+    <h3>📊 Pattern Decision Map</h3>
+    <p>Read the problem → spot the signal → pick the pattern. This is the instinct you're building.</p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Pattern</th>
+            <th>Trigger Phrase</th>
+            <th>Core Data Structure</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:#58a6ff;">13</strong></td>
+            <td>Union Find</td>
+            <td>"connected?", "same group?", "cycle in undirected"</td>
+            <td>parent[] + rank[]</td>
+            <td>≈ O(1) per op</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#3fb950;">14</strong></td>
+            <td>Topological Sort</td>
+            <td>"dependencies", "ordering", "DAG", "prerequisites"</td>
+            <td>Queue + inDegree[]</td>
+            <td>O(V+E)</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#bc8cff;">15</strong></td>
+            <td>Trie</td>
+            <td>"starts with", "prefix", "autocomplete", "word board"</td>
+            <td>TrieNode[26]</td>
+            <td>O(L) per op</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#f85149;">16</strong></td>
+            <td>Two Heaps</td>
+            <td>"median", "streaming data", "continuous insert"</td>
+            <td>MaxHeap + MinHeap</td>
+            <td>O(log N)</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#39d5d3;">17</strong></td>
+            <td>K-Way Merge</td>
+            <td>"merge K sorted", "Kth smallest across K lists"</td>
+            <td>MinHeap of size K</td>
+            <td>O(N log K)</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#e3b341;">18</strong></td>
+            <td>Modified Binary Search</td>
+            <td>"rotated array", "sorted matrix", O(log N) required</td>
+            <td>Two pointers + midpoint</td>
+            <td>O(log N)</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#d29922;">19</strong></td>
+            <td>Cyclic Sort</td>
+            <td>"numbers 1..n", "missing", "duplicate", "in-place"</td>
+            <td>In-place swap</td>
+            <td>O(N)</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#f778ba;">20</strong></td>
+            <td>Bitwise XOR</td>
+            <td>"single number", "appears once", "O(1) space + O(N)"</td>
+            <td>XOR accumulator</td>
+            <td>O(N) / O(1)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION: CHEAT SHEET
+  ═════════════════════════════════════════ -->
+  <div class="section" id="cheat-sheet">
+    <h3>⚡ One-Line Cheat Sheet</h3>
+
+    <div class="card-grid">
+      <div class="card-mini p-union">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-blue" style="width:28px; height:28px; font-size:11px;">13</div>
+          <strong>Union Find</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          <code>union()</code> returns false? → cycle found. 
+          Count successful merges = n - components.
+        </p>
+      </div>
+      <div class="card-mini p-topo">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-green" style="width:28px; height:28px; font-size:11px;">14</div>
+          <strong>Topo Sort</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          Seed queue with in-degree 0. 
+          If processed &lt; n → cycle exists → impossible ordering.
+        </p>
+      </div>
+      <div class="card-mini p-trie">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-purple" style="width:28px; height:28px; font-size:11px;">15</div>
+          <strong>Trie</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          search() needs isEnd=true at last node. 
+          startsWith() just needs the path to exist.
+        </p>
+      </div>
+      <div class="card-mini p-twohp">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-red" style="width:28px; height:28px; font-size:11px;">16</div>
+          <strong>Two Heaps</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          Always add to maxHeap first, then rebalance. 
+          maxHeap.size() ≥ minHeap.size() always.
+        </p>
+      </div>
+      <div class="card-mini p-kway">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-cyan" style="width:28px; height:28px; font-size:11px;">17</div>
+          <strong>K-Way Merge</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          Seed heap with all list heads. Pop min, push its .next. 
+          Heap size stays ≤ K throughout.
+        </p>
+      </div>
+      <div class="card-mini p-mbs">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-yellow" style="width:28px; height:28px; font-size:11px;">18</div>
+          <strong>Modified BS</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          One half is always sorted. Check if target is in the sorted half. 
+          Always use <code>left + (right-left)/2</code>.
+        </p>
+      </div>
+      <div class="card-mini p-cyclic">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-orange" style="width:28px; height:28px; font-size:11px;">19</div>
+          <strong>Cyclic Sort</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          num k → index k-1. Swap if misplaced. 
+          Guard <code>nums[i] != nums[correct]</code> to avoid infinite loop on duplicates.
+        </p>
+      </div>
+      <div class="card-mini p-xor">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="p-badge p-badge-pink" style="width:28px; height:28px; font-size:11px;">20</div>
+          <strong>Bitwise XOR</strong>
+        </div>
+        <p style="font-size:13px; color:#8b949e;">
+          a^a=0, a^0=a. XOR all → pairs vanish. 
+          Use ones+twos trick when elements appear 3× not 2×.
+        </p>
+      </div>
+    </div>
+
+    <div class="banner banner-purple" style="margin-top:24px;">
+      <h4>🎯 The Interview Instinct</h4>
+      <p>
+        Pattern recognition is a <em>trained reflex</em>, not magic. 
+        After solving 3–5 problems per pattern, the signals become automatic. 
+        Your goal is: read problem → feel the pattern → code the template → handle edge cases. 
+        That's the entire loop. These 8 patterns cover roughly 30% of all hard interview problems.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════════════ JS ════════════════ -->
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const el   = document.getElementById('progress');
+    const full = document.documentElement.scrollHeight - window.innerHeight;
+    el.style.width = (window.scrollY / full * 100) + '%';
+  });
+
+  // Hamburger + sidebar
+  const ham     = document.getElementById('hamburger');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  function toggleSidebar() {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('visible');
+    ham.classList.toggle('active');
+  }
+  ham.addEventListener('click', toggleSidebar);
+  overlay.addEventListener('click', toggleSidebar);
+
+  // Smooth scroll for sidebar links
+  document.querySelectorAll('.toc-link[href^="#"]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (sidebar.classList.contains('open')) toggleSidebar();
+      }
+    });
+  });
+
+  // Active sidebar link on scroll
+  const sections = document.querySelectorAll('.section[id]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const link = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (link) link.classList.toggle('active', entry.isIntersecting);
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+
+  // ── Union Find animation — fade in "after" state
+  setTimeout(() => {
+    const after = document.getElementById('uf-after');
+    if (after) after.style.opacity = '1';
+  }, 800);
+
+  // ── Cyclic Sort step animation
+  const csData  = [3, 1, 5, 4, 2];
+  const csSteps = [
+    { arr: [3,1,5,4,2], msg: "Start: [3,1,5,4,2] — 3 should be at index 2. Swap!",   swap:[0,2] },
+    { arr: [5,1,3,4,2], msg: "5 should be at index 4. Swap!",                          swap:[0,4] },
+    { arr: [2,1,3,4,5], msg: "2 should be at index 1. Swap!",                          swap:[0,1] },
+    { arr: [1,2,3,4,5], msg: "1 is at index 0 ✓. Move forward…",                      swap:[] },
+    { arr: [1,2,3,4,5], msg: "✅ Done! Every number is at its correct index.",          swap:[] },
+  ];
+  let csStep = 0;
+  document.getElementById('cs-btn').addEventListener('click', () => {
+    if (csStep >= csSteps.length) { csStep = 0; }
+    const { arr, msg, swap } = csSteps[csStep];
+    document.getElementById('cs-msg').textContent = msg;
+    for (let i = 0; i < 5; i++) {
+      const slot = document.getElementById('cs' + i);
+      slot.textContent = arr[i];
+      slot.className = 'cs-slot ' + (arr[i] === i + 1 ? 'correct' : 'wrong');
+    }
+    if (swap.length === 2) {
+      document.getElementById('cs' + swap[0]).classList.add('anim-swap-r');
+      document.getElementById('cs' + swap[1]).classList.add('anim-swap-l');
+      setTimeout(() => {
+        document.getElementById('cs' + swap[0]).classList.remove('anim-swap-r');
+        document.getElementById('cs' + swap[1]).classList.remove('anim-swap-l');
+      }, 700);
+    }
+    csStep++;
+    if (csStep >= csSteps.length) {
+      document.getElementById('cs-btn').textContent = '↺ Restart';
+    } else {
+      document.getElementById('cs-btn').textContent = '▶ Step';
+    }
+  });
+
+  // ── Heap node hover pulse (already via CSS :hover scale)
+  // ── Scroll-to-top button (if present in theme)
+  const topBtn = document.getElementById('top-btn');
+  if (topBtn) {
+    window.addEventListener('scroll', () => {
+      topBtn.style.opacity = window.scrollY > 400 ? '1' : '0';
+    });
+    topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  }
+</script>
+
+</body>
+</html>

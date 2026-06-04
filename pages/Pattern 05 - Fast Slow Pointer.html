@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pattern 05 — Fast & Slow Pointers | Floyd's Rhythm</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css" />
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #1a1a2e 40%, #16213e 70%, #0f3460 100%);
+    }
+    .meeting-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 24px 16px;
+      background: #010409;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      overflow-x: auto;
+    }
+    .node-circle {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 12px;
+      flex-shrink: 0;
+    }
+    .node-tail { background: #1c2128; border: 2px solid #58a6ff; color: #58a6ff; }
+    .node-cycle { background: #1c2128; border: 2px solid #3fb950; color: #3fb950; }
+    .node-meeting { background: #bc8cff33; border: 2px solid #bc8cff; color: #bc8cff; }
+    .node-arrow {
+      color: #6e7681; font-size: 16px; padding: 0 4px; flex-shrink: 0;
+    }
+    .pointer-track {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 12px 16px;
+      background: #010409;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      font-family: 'Courier New', monospace; font-size: 13px;
+    }
+    .track-row { display: flex; align-items: center; gap: 10px; }
+    .track-label { color: #8b949e; width: 80px; font-size: 12px; }
+    .track-slow { color: #58a6ff; }
+    .track-fast { color: #f85149; }
+    .track-pos { 
+      width: 32px; height: 28px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+    }
+    .pos-slow { background: #58a6ff22; border: 1px solid #58a6ff55; color: #58a6ff; }
+    .pos-fast { background: #f8514922; border: 1px solid #f8514955; color: #f85149; }
+    .pos-meet { background: #bc8cff33; border: 1px solid #bc8cff; color: #bc8cff; }
+    .pos-empty { background: #1c2128; border: 1px solid #21262d; color: #30363d; }
+    .phase-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    }
+    .phase-1 { background: #58a6ff22; border: 1px solid #58a6ff; color: #58a6ff; }
+    .phase-2 { background: #3fb95022; border: 1px solid #3fb950; color: #3fb950; }
+    .math-box {
+      background: #0d1117;
+      border: 1px solid #bc8cff44;
+      border-left: 3px solid #bc8cff;
+      border-radius: 6px;
+      padding: 16px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #e6edf3;
+      line-height: 1.8;
+    }
+    .math-box .math-label { color: #bc8cff; font-weight: 700; font-size: 12px; margin-bottom: 8px; display: block; }
+    .diff-table td { font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ── PROGRESS BAR ── -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ── HAMBURGER ── -->
+<button id="hamburger" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- ── SIDEBAR OVERLAY ── -->
+<div id="sidebar-overlay"></div>
+
+<!-- ══════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div class="sidebar-title">Pattern 05</div>
+      <div class="sidebar-subtitle">Fast &amp; Slow Pointers</div>
+    </div>
+  </div>
+
+  <div style="padding: 0 12px 8px;">
+    <a href="../index.html" class="toc-link" style="
+      display:flex; align-items:center; gap:8px;
+      background:#21262d; border-radius:6px; padding:8px 12px;
+      color:#8b949e; font-size:12px; text-decoration:none;
+      border:1px solid #30363d; transition:all .2s;
+    "
+    onmouseover="this.style.color='#58a6ff';this.style.borderColor='#58a6ff44'"
+    onmouseout="this.style.color='#8b949e';this.style.borderColor='#30363d'"
+    >
+      ← Home / All Patterns
+    </a>
+  </div>
+
+  <ul class="toc-list">
+    <li class="toc-section-label">Core Concept</li>
+    <li><a class="toc-link" href="#intuition">🧠 The Core Intuition</a></li>
+    <li><a class="toc-link" href="#why-they-meet">📐 Why They Always Meet</a></li>
+
+    <li class="toc-section-label">Templates</li>
+    <li><a class="toc-link" href="#cycle-detection">🔁 Cycle Detection</a></li>
+    <li><a class="toc-link" href="#cycle-start">📍 Finding Cycle Start</a></li>
+    <li><a class="toc-link" href="#find-middle">⚖️ Finding Middle</a></li>
+    <li><a class="toc-link" href="#value-space">🌀 Value Space Cycles</a></li>
+
+    <li class="toc-section-label">Deep Dive</li>
+    <li><a class="toc-link" href="#walkthrough">🔬 Walkthrough: LC #142</a></li>
+    <li><a class="toc-link" href="#vs-two-pointers">⚖️ vs Two Pointers</a></li>
+
+    <li class="toc-section-label">Practice</li>
+    <li><a class="toc-link" href="#recognition">🎯 Recognition Signals</a></li>
+    <li><a class="toc-link" href="#practice">📋 8 Practice Problems</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">Algorithm Patterns · PDF #05</div>
+    <h1>⚡ Fast &amp; Slow Pointers</h1>
+    <p class="hero-subtitle">Floyd's Rhythm — Two speeds, one meeting point, infinite insight.</p>
+    <div class="hero-badges">
+      <span class="badge badge-blue">Linked Lists</span>
+      <span class="badge badge-green">Cycle Detection</span>
+      <span class="badge badge-purple">Floyd's Algorithm</span>
+      <span class="badge badge-orange">Value Space</span>
+      <span class="badge badge-cyan">O(1) Space</span>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">Core Templates</span></div>
+      <div class="stat"><span class="stat-num">8</span><span class="stat-label">Practice Problems</span></div>
+      <div class="stat"><span class="stat-num">O(1)</span><span class="stat-label">Space Always</span></div>
+      <div class="stat"><span class="stat-num">O(n)</span><span class="stat-label">Time Always</span></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ PART 1 ════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-blue);">01</div>
+    <div>
+      <h2>The Core Intuition</h2>
+      <p>Why two runners moving at different speeds always collide in a loop.</p>
+    </div>
+  </div>
+
+  <!-- SECTION: Intuition -->
+  <div class="section" id="intuition">
+    <div class="section-header">
+      <h3>🧠 The Track Runner Mental Model</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Analogy That Makes It Click</h4>
+      <p>
+        Imagine two runners on a circular track. One runs at <strong>1 lap/hour</strong>, the other at
+        <strong>2 laps/hour</strong>. No matter where they start — they <em>will</em> meet.
+        The faster runner laps the slower one. Guaranteed.
+      </p>
+      <p>
+        This is the entire pattern. A <strong>slow pointer</strong> moves 1 step at a time.
+        A <strong>fast pointer</strong> moves 2 steps. If there's a cycle — anywhere — they collide.
+        If there's no cycle, the fast pointer falls off the end (hits <code>null</code>).
+      </p>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Mental Model Lock-In</strong>
+        <p>Fast = hare. Slow = tortoise. If the track loops, the hare comes back around
+        and bumps into the tortoise. If the track ends, the hare falls off a cliff. The
+        tortoise never gets to the cliff edge — it's still walking when the hare is already gone.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Visualising the Pointer Movement</h4>
+      <p>Nodes: <strong>1 → 2 → 3 → 4 → 5 → 3</strong> (cycle back to node 3)</p>
+      <div class="pointer-track" style="margin-top:12px;">
+        <div class="track-row" style="margin-bottom:6px;">
+          <span class="track-label" style="color:#6e7681;font-size:11px;">Nodes →</span>
+          <div class="track-pos pos-empty">1</div>
+          <div class="track-pos pos-empty">2</div>
+          <div class="track-pos pos-empty">3</div>
+          <div class="track-pos pos-empty">4</div>
+          <div class="track-pos pos-empty">5</div>
+        </div>
+        <div class="track-row">
+          <span class="track-label track-slow" style="font-size:11px;">slow (step 0)</span>
+          <div class="track-pos pos-slow">1</div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+        </div>
+        <div class="track-row">
+          <span class="track-label track-fast" style="font-size:11px;">fast (step 0)</span>
+          <div class="track-pos pos-fast">1</div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+        </div>
+        <div class="track-row" style="margin-top:8px;">
+          <span class="track-label track-slow" style="font-size:11px;">slow (step 2)</span>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-slow">3</div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+        </div>
+        <div class="track-row">
+          <span class="track-label track-fast" style="font-size:11px;">fast (step 2)</span>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-fast">5</div>
+        </div>
+        <div class="track-row" style="margin-top:8px;">
+          <span class="track-label" style="font-size:11px;color:#bc8cff;">MEET (step 3)</span>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-empty"></div>
+          <div class="track-pos pos-meet">4</div>
+          <div class="track-pos pos-empty"></div>
+        </div>
+      </div>
+      <p style="margin-top:12px;">Slow: 1→2→3→4. Fast: 1→3→5→4 (wraps cycle). They meet at node 4. ✅</p>
+    </div>
+  </div>
+
+  <!-- SECTION: Why They Meet -->
+  <div class="section" id="why-they-meet">
+    <div class="section-header">
+      <h3>📐 Why They Always Meet (Intuitive Math)</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        You don't need to memorise a proof. You need to <em>feel</em> why this works.
+        Here's the intuition in plain English:
+      </p>
+    </div>
+
+    <div class="math-box">
+      <span class="math-label">STEP-BY-STEP INTUITION</span>
+      Let F = length of tail before cycle starts<br/>
+      Let C = length of the cycle<br/>
+      Let k = distance from cycle entry to meeting point<br/>
+      <br/>
+      When slow enters the cycle, fast is already F steps inside it.<br/>
+      Fast is chasing slow. The gap closes by 1 step each iteration<br/>
+      (fast moves 2, slow moves 1 → gap shrinks by 1 each step).<br/>
+      <br/>
+      ∴ They MUST meet. The gap can never grow — only shrink or stay zero.
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>The Key Insight for Phase 2 (Finding Cycle Start)</strong>
+        <p>When they meet: the distance from <strong>meeting point → cycle start</strong>
+        equals the distance from <strong>head → cycle start</strong>. This is the magic
+        that makes Floyd's Phase 2 work. Reset one pointer to head, keep one at meeting
+        point, advance both at speed 1 — they meet exactly at the cycle start.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ PART 2 ════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-green);">02</div>
+    <div>
+      <h2>The Three Core Templates</h2>
+      <p>Cycle detection · Finding cycle start · Finding the middle.</p>
+    </div>
+  </div>
+
+  <!-- SECTION: Cycle Detection -->
+  <div class="section" id="cycle-detection">
+    <div class="section-header">
+      <h3>🔁 Template 1 — Cycle Detection</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Question It Answers</h4>
+      <p><em>"Does this linked list have a cycle?"</em></p>
+      <p>
+        If fast ever catches slow, yes. If fast hits <code>null</code>, no.
+        Simple as that. This is <a href="https://leetcode.com/problems/linked-list-cycle/" target="_blank" style="color:var(--accent-blue)">LC #141</a>.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #141 — Linked List Cycle (Detect)</span>
+      </div>
+      <pre><code><span class="kw">public boolean</span> <span class="fn">hasCycle</span>(<span class="type">ListNode</span> head) {
+    <span class="cmt">// Edge case: empty or single node can't have a cycle</span>
+    <span class="kw">if</span> (head == <span class="kw">null</span> || head.next == <span class="kw">null</span>) <span class="kw">return false</span>;
+
+    <span class="type">ListNode</span> slow = head;
+    <span class="type">ListNode</span> fast = head;
+
+    <span class="kw">while</span> (fast != <span class="kw">null</span> &amp;&amp; fast.next != <span class="kw">null</span>) {
+        slow = slow.next;          <span class="cmt">// 1 step</span>
+        fast = fast.next.next;     <span class="cmt">// 2 steps</span>
+
+        <span class="kw">if</span> (slow == fast) <span class="kw">return true</span>; <span class="cmt">// Pointers collided → cycle!</span>
+    }
+
+    <span class="kw">return false</span>; <span class="cmt">// fast hit null → no cycle</span>
+}</code></pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Common Trap: Check Both <code>fast</code> AND <code>fast.next</code></strong>
+        <p>Your while condition must be <code>fast != null && fast.next != null</code>.
+        Checking only <code>fast != null</code> will throw a NullPointerException when
+        you try <code>fast.next.next</code> on the last node.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Cycle Start -->
+  <div class="section" id="cycle-start">
+    <div class="section-header">
+      <h3>📍 Template 2 — Finding the Cycle Start (Floyd's Phase 2)</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Two-Phase Algorithm</h4>
+      <p>
+        <span class="phase-badge phase-1">Phase 1</span> Run fast &amp; slow until they meet. This confirms a cycle exists.
+      </p>
+      <p style="margin-top:8px;">
+        <span class="phase-badge phase-2">Phase 2</span> Reset <em>one</em> pointer to head. Move both at speed 1.
+        Where they meet again = the cycle entry node.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #142 — Linked List Cycle II (Find Start)</span>
+      </div>
+      <pre><code><span class="kw">public</span> <span class="type">ListNode</span> <span class="fn">detectCycle</span>(<span class="type">ListNode</span> head) {
+    <span class="kw">if</span> (head == <span class="kw">null</span> || head.next == <span class="kw">null</span>) <span class="kw">return null</span>;
+
+    <span class="type">ListNode</span> slow = head, fast = head;
+
+    <span class="cmt">// ── Phase 1: Find the meeting point ──</span>
+    <span class="kw">while</span> (fast != <span class="kw">null</span> &amp;&amp; fast.next != <span class="kw">null</span>) {
+        slow = slow.next;
+        fast = fast.next.next;
+        <span class="kw">if</span> (slow == fast) <span class="kw">break</span>; <span class="cmt">// meeting point found</span>
+    }
+
+    <span class="cmt">// No cycle detected</span>
+    <span class="kw">if</span> (fast == <span class="kw">null</span> || fast.next == <span class="kw">null</span>) <span class="kw">return null</span>;
+
+    <span class="cmt">// ── Phase 2: Find cycle start ──</span>
+    <span class="cmt">// Reset slow to head, keep fast at meeting point</span>
+    slow = head;
+    <span class="kw">while</span> (slow != fast) {
+        slow = slow.next; <span class="cmt">// both move 1 step now</span>
+        fast = fast.next;
+    }
+
+    <span class="kw">return</span> slow; <span class="cmt">// They meet at the cycle start node</span>
+}</code></pre>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p><strong>Why Phase 2 works:</strong> When fast &amp; slow meet, the meeting point is
+      exactly <code>F</code> steps from the cycle start (where F = tail length).
+      Head is also <code>F</code> steps from cycle start. Move both at speed 1 from
+      their respective positions — they cover equal distance and land on the start. Magic.</p>
+    </div>
+  </div>
+
+  <!-- SECTION: Find Middle -->
+  <div class="section" id="find-middle">
+    <div class="section-header">
+      <h3>⚖️ Template 3 — Finding the Middle of a Linked List</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        When fast reaches the end, slow is at the middle. Fast travels 2x the distance,
+        so when fast has covered the whole list, slow has covered half.
+        It's like measuring half a rubber band — stretch it and fold.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #876 — Middle of the Linked List</span>
+      </div>
+      <pre><code><span class="kw">public</span> <span class="type">ListNode</span> <span class="fn">middleNode</span>(<span class="type">ListNode</span> head) {
+    <span class="type">ListNode</span> slow = head, fast = head;
+
+    <span class="kw">while</span> (fast != <span class="kw">null</span> &amp;&amp; fast.next != <span class="kw">null</span>) {
+        slow = slow.next;
+        fast = fast.next.next;
+    }
+
+    <span class="kw">return</span> slow; <span class="cmt">// For even-length list: returns SECOND middle</span>
+}
+
+<span class="cmt">// ── If you need the FIRST middle (for palindrome check) ──</span>
+<span class="kw">public</span> <span class="type">ListNode</span> <span class="fn">firstMiddle</span>(<span class="type">ListNode</span> head) {
+    <span class="type">ListNode</span> slow = head, fast = head.next; <span class="cmt">// ← fast starts 1 ahead</span>
+
+    <span class="kw">while</span> (fast != <span class="kw">null</span> &amp;&amp; fast.next != <span class="kw">null</span>) {
+        slow = slow.next;
+        fast = fast.next.next;
+    }
+
+    <span class="kw">return</span> slow; <span class="cmt">// Returns FIRST middle for even-length list</span>
+}</code></pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>The Off-By-One Trap — Even-Length Lists</strong>
+        <p>For list <code>1→2→3→4</code>: <code>fast=head</code> → slow returns node 3 (second middle).
+        <code>fast=head.next</code> → slow returns node 2 (first middle).
+        Always clarify with your interviewer which middle they want. State this out loud.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Value Space -->
+  <div class="section" id="value-space">
+    <div class="section-header">
+      <h3>🌀 Beyond Linked Lists — Cycle Detection in Value Space</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Key Generalisation</h4>
+      <p>
+        Fast &amp; slow pointers work on <em>any structure</em> where you can define a "next" function.
+        It doesn't have to be a physical linked list. If you can write <code>f(x)</code> and
+        keep applying it, you can use Floyd's.
+      </p>
+      <p>
+        The Happy Number problem is the perfect example. You <em>follow</em> a number through
+        a transformation sequence. If it loops → not happy. If it reaches 1 → happy.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #202 — Happy Number (Cycle in Value Space)</span>
+      </div>
+      <pre><code><span class="kw">public boolean</span> <span class="fn">isHappy</span>(<span class="kw">int</span> n) {
+    <span class="kw">int</span> slow = n;
+    <span class="kw">int</span> fast = <span class="fn">getNext</span>(n);
+
+    <span class="cmt">// fast reaching 1 = happy number found (exit before meeting)</span>
+    <span class="kw">while</span> (fast != <span class="num">1</span> &amp;&amp; slow != fast) {
+        slow = <span class="fn">getNext</span>(slow);           <span class="cmt">// 1 transformation</span>
+        fast = <span class="fn">getNext</span>(<span class="fn">getNext</span>(fast));  <span class="cmt">// 2 transformations</span>
+    }
+
+    <span class="kw">return</span> fast == <span class="num">1</span>; <span class="cmt">// true = happy, false = cycle detected</span>
+}
+
+<span class="kw">private int</span> <span class="fn">getNext</span>(<span class="kw">int</span> n) {
+    <span class="kw">int</span> sum = <span class="num">0</span>;
+    <span class="kw">while</span> (n > <span class="num">0</span>) {
+        <span class="kw">int</span> digit = n % <span class="num">10</span>;
+        sum += digit * digit;
+        n /= <span class="num">10</span>;
+    }
+    <span class="kw">return</span> sum;
+}</code></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>The Mental Shift</strong>
+        <p>Think of <code>getNext()</code> as a <code>.next</code> pointer. The number sequence
+        <code>19 → 82 → 68 → 100 → 1</code> is just a linked list in disguise.
+        Floyd's algorithm doesn't care whether nodes are objects or integers.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ PART 3 ════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-purple);">03</div>
+    <div>
+      <h2>Deep Dive &amp; Distinctions</h2>
+      <p>Full walkthrough of LC #142 + why this isn't just "Two Pointers."</p>
+    </div>
+  </div>
+
+  <!-- SECTION: Walkthrough -->
+  <div class="section" id="walkthrough">
+    <div class="section-header">
+      <h3>🔬 Full Walkthrough: <a href="https://leetcode.com/problems/linked-list-cycle-ii/" target="_blank" style="color:var(--accent-blue);">LC #142 — Linked List Cycle II</a></h3>
+    </div>
+
+    <div class="card">
+      <h4>Problem Statement</h4>
+      <p>Given a linked list, return the <em>node</em> where the cycle begins. If no cycle, return null.</p>
+      <p><strong>Input:</strong> <code>3 → 2 → 0 → -4</code>, where <code>-4</code> points back to node <code>2</code> (index 1).</p>
+      <p><strong>Output:</strong> Node with value <code>2</code>.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Recognise the Pattern</div>
+          <div class="step-desc">Problem says "linked list" + asks about cycles → Fast &amp; Slow. The ask is the <em>start node</em>, not just existence → need Phase 2.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Phase 1 — Run Until Meeting</div>
+          <div class="step-desc">slow=3, fast=3 → slow=2, fast=0 → slow=0, fast=2 → slow=-4, fast=-4. They meet at <strong>-4</strong>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Phase 2 — Reset slow to Head</div>
+          <div class="step-desc">slow=3, fast=-4. Both move 1 step: slow=2, fast=2. They meet at <strong>node 2</strong>. ✅ That's our cycle start.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Verify the Math</div>
+          <div class="step-desc">Tail length F=1 (just node 3). From meeting point -4 to cycle start 2 = 1 step. From head 3 to cycle start 2 = 1 step. Equal. ✅</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">🗣️</div>
+      <div class="body">
+        <strong>What to Say in the Interview</strong>
+        <p>"I'll use Floyd's cycle detection. Phase 1 finds a meeting point — O(n).
+        Phase 2 exploits the mathematical property that the tail length equals
+        the distance from meeting point to cycle start. Overall O(n) time, O(1) space.
+        No hash set needed."</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: vs Two Pointers -->
+  <div class="section" id="vs-two-pointers">
+    <div class="section-header">
+      <h3>⚖️ Fast &amp; Slow vs Same-Direction Two Pointers</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Both patterns use two pointers moving in the <em>same direction</em>. Junior devs
+        often confuse them. The distinction is sharp once you know it.
+      </p>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Fast &amp; Slow (Floyd's)</th>
+            <th>Same-Direction Two Pointers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Speed Ratio</strong></td>
+            <td>Always 2:1 (fast = 2× slow)</td>
+            <td>Variable — often 1:1 with a gap (window)</td>
+          </tr>
+          <tr>
+            <td><strong>Primary Goal</strong></td>
+            <td>Detect cycles, find middle</td>
+            <td>Remove Nth from end, find pairs</td>
+          </tr>
+          <tr>
+            <td><strong>Structure Required</strong></td>
+            <td>Any "follow the next" structure</td>
+            <td>Array or linked list with indexing</td>
+          </tr>
+          <tr>
+            <td><strong>Key Question</strong></td>
+            <td>"Do they collide?"</td>
+            <td>"Does a k-step gap give me info?"</td>
+          </tr>
+          <tr>
+            <td><strong>Stops When</strong></td>
+            <td>Pointers meet OR fast hits null</td>
+            <td>One pointer exits the structure</td>
+          </tr>
+          <tr>
+            <td><strong>Classic Problems</strong></td>
+            <td>LC #141, #142, #202, #287</td>
+            <td>LC #19 (Remove Nth), #26 (Remove Dups)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>✅ Use Fast &amp; Slow When</h4>
+        <ul>
+          <li>Problem involves <strong>cycles</strong> or repetition</li>
+          <li>You need the <strong>middle</strong> of a linked list</li>
+          <li>Structure could be infinite (no guaranteed end)</li>
+          <li>You need O(1) space and can't afford a HashSet</li>
+          <li>"Follow next pointer" is the core operation</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h4>✅ Use Same-Dir Two Pointers When</h4>
+        <ul>
+          <li>You need an element <strong>k steps before the end</strong></li>
+          <li>Structure is <strong>finite and acyclic</strong></li>
+          <li>You're maintaining a <strong>sliding window</strong></li>
+          <li>You need two views of a sequence simultaneously</li>
+          <li>Think: "gap" not "speed ratio"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ PART 4 ════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-orange);">04</div>
+    <div>
+      <h2>Recognition &amp; Practice</h2>
+      <p>Signals that scream "Floyd's" + 8 problems to build muscle memory.</p>
+    </div>
+  </div>
+
+  <!-- SECTION: Recognition -->
+  <div class="section" id="recognition">
+    <div class="section-header">
+      <h3>🎯 Recognition Signals</h3>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>🔴 Strong Signals</h4>
+        <ul class="checklist">
+          <li>Problem says <strong>"detect cycle"</strong> explicitly</li>
+          <li>Asks for <strong>cycle entry node</strong></li>
+          <li>Linked list problem, O(1) space required</li>
+          <li>Asks to <strong>find the middle</strong> of a linked list</li>
+          <li>Number sequence that <strong>might loop</strong> (Happy Number)</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>🟡 Softer Signals</h4>
+        <ul class="checklist">
+          <li>Palindrome linked list (need middle first)</li>
+          <li>"Find duplicate without extra space" in array where values are indices</li>
+          <li>Circular array — does traversal loop?</li>
+          <li>Reorder list — split at middle, reverse second half</li>
+          <li>Any problem with a <em>functional</em> "next state" that repeats</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="banner banner-purple">
+      <h4>Decision Moment — "Should I Use Floyd's or a HashSet?"</h4>
+      <p>HashSet approach is always simpler to code (O(n) space). Use Floyd's when:
+      the problem <strong>explicitly requires O(1) space</strong>, or when the
+      "visited" set would be too large (infinite domain). In interviews,
+      mentioning both and then choosing Floyd's shows depth.</p>
+    </div>
+  </div>
+
+  <!-- SECTION: Practice -->
+  <div class="section" id="practice">
+    <div class="section-header">
+      <h3>📋 8 Practice Problems</h3>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Problem</th>
+            <th>Difficulty</th>
+            <th>Key Technique</th>
+            <th>Why It's Here</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><a href="https://leetcode.com/problems/linked-list-cycle/" target="_blank" style="color:var(--accent-blue)">LC #141 — Linked List Cycle</a></td>
+            <td>🟢 Easy</td>
+            <td>Basic cycle detect</td>
+            <td>The foundational template — master this first</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><a href="https://leetcode.com/problems/middle-of-the-linked-list/" target="_blank" style="color:var(--accent-blue)">LC #876 — Middle of the Linked List</a></td>
+            <td>🟢 Easy</td>
+            <td>Find middle</td>
+            <td>Core Template 3 — also a prerequisite for many others</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><a href="https://leetcode.com/problems/happy-number/" target="_blank" style="color:var(--accent-blue)">LC #202 — Happy Number</a></td>
+            <td>🟢 Easy</td>
+            <td>Value-space cycle</td>
+            <td>Teaches the "next function" generalisation of Floyd's</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><a href="https://leetcode.com/problems/palindrome-linked-list/" target="_blank" style="color:var(--accent-blue)">LC #234 — Palindrome Linked List</a></td>
+            <td>🟢 Easy</td>
+            <td>Middle + reverse</td>
+            <td>Combines find-middle with reverse — a common 2-step combo</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><a href="https://leetcode.com/problems/linked-list-cycle-ii/" target="_blank" style="color:var(--accent-blue)">LC #142 — Linked List Cycle II</a></td>
+            <td>🟡 Medium</td>
+            <td>Two-phase Floyd's</td>
+            <td>The crown jewel — tests full understanding of Phase 2 math</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><a href="https://leetcode.com/problems/reorder-list/" target="_blank" style="color:var(--accent-blue)">LC #143 — Reorder List</a></td>
+            <td>🟡 Medium</td>
+            <td>Middle + reverse + merge</td>
+            <td>Classic 3-step problem: find middle, reverse second half, merge</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><a href="https://leetcode.com/problems/find-the-duplicate-number/" target="_blank" style="color:var(--accent-blue)">LC #287 — Find the Duplicate Number</a></td>
+            <td>🟡 Medium</td>
+            <td>Array as implicit list</td>
+            <td>Array indices as "next pointers" — brilliant Floyd's disguise</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><a href="https://leetcode.com/problems/circular-array-loop/" target="_blank" style="color:var(--accent-blue)">LC #457 — Circular Array Loop</a></td>
+            <td>🔴 Hard</td>
+            <td>Cycle with direction constraint</td>
+            <td>Hardest application — cycle must be same-direction and length > 1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h4>🌟 Bonus Deep Dive: LC #287 — Find the Duplicate</h4>
+      <p>
+        This problem looks like a math or sort problem. The insight: treat the array as a linked list
+        where <code>index i</code> points to <code>nums[i]</code>. Since values are in range
+        <code>[1, n]</code> and there's a duplicate, there must be a cycle. Floyd's finds it.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #287 — Find the Duplicate (Array as Implicit LinkedList)</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">findDuplicate</span>(<span class="kw">int</span>[] nums) {
+    <span class="cmt">// Treat array as: index i → nums[i] → nums[nums[i]] → ...</span>
+    <span class="cmt">// Duplicate value creates two indices that point to same "next"</span>
+    <span class="cmt">// That's your cycle entry point!</span>
+
+    <span class="kw">int</span> slow = nums[<span class="num">0</span>];
+    <span class="kw">int</span> fast = nums[<span class="num">0</span>];
+
+    <span class="cmt">// Phase 1: Find meeting point</span>
+    <span class="kw">do</span> {
+        slow = nums[slow];              <span class="cmt">// follow once</span>
+        fast = nums[nums[fast]];        <span class="cmt">// follow twice</span>
+    } <span class="kw">while</span> (slow != fast);
+
+    <span class="cmt">// Phase 2: Find cycle start (= duplicate number)</span>
+    slow = nums[<span class="num">0</span>];                   <span class="cmt">// reset to "head"</span>
+    <span class="kw">while</span> (slow != fast) {
+        slow = nums[slow];
+        fast = nums[fast];
+    }
+
+    <span class="kw">return</span> slow; <span class="cmt">// The duplicate value</span>
+}</code></pre>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip: The "No Extra Space" Trigger</strong>
+        <p>Whenever a problem says "find duplicate in array of size n+1 where values
+        are 1 to n — without modifying the array and using O(1) space" — that's
+        Floyd's in disguise. This is a famous problem at top companies. Know it cold.</p>
+      </div>
+    </div>
+
+    <div class="banner banner-blue" style="margin-top:24px;">
+      <h4>📚 Recommended Study Order</h4>
+      <p>
+        #141 → #876 → #202 → #142 (read the walkthrough above first) → #234 → #143 → #287 → #457
+        <br/>
+        Each builds on the last. Don't skip ahead. LC #457 will feel impossible without #287 under your belt.
+      </p>
+    </div>
+  </div>
+
+  <!-- FOOTER SPACER -->
+  <div style="height: 60px;"></div>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════
+     JS — PROGRESS BAR · SIDEBAR · SCROLL SPY
+════════════════════════════════════════════════════ -->
+<script>
+  // ── Progress bar ─────────────────────────────
+  window.addEventListener('scroll', () => {
+    const el   = document.getElementById('progress');
+    const body = document.body;
+    const html = document.documentElement;
+    const total  = Math.max(body.scrollHeight, html.scrollHeight) - html.clientHeight;
+    const pct    = (window.scrollY / total) * 100;
+    el.style.width = pct + '%';
+  });
+
+  // ── Sidebar toggle (standardized) ──
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
+
+  // ── Scroll spy ───────────────────────────────
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks  = document.querySelectorAll('.toc-link[href^="#"]');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // ── Smooth scroll ─────────────────────────────
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

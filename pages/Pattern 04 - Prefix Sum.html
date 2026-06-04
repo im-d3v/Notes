@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pattern 04: Prefix Sum — Pre-compute Everything</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0f1f2e 40%, #0a1a2a 70%, #111827 100%);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 50%, rgba(88,166,255,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 80% 30%, rgba(57,213,211,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── PROGRESS BAR ─────────────────────────────────── -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ─── HAMBURGER ────────────────────────────────────── -->
+<button id="hamburger" aria-label="Toggle sidebar">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- ─── OVERLAY ──────────────────────────────────────── -->
+<div id="sidebar-overlay"></div>
+
+<!-- ─── SIDEBAR ──────────────────────────────────────── -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div class="sidebar-title">Pattern 04</div>
+      <div class="sidebar-subtitle">Prefix Sum</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section-label">Navigate</div>
+  <a href="../index.html" class="toc-link" style="color:var(--accent-cyan);">
+    🏠 Back to Home
+  </a>
+
+  <div class="sidebar-section-label" style="margin-top:1rem;">Contents</div>
+  <a href="#overview"       class="toc-link">🧠 Core Idea</a>
+  <a href="#prefix-1d"      class="toc-link">📐 1D Prefix Sum</a>
+  <a href="#prefix-2d"      class="toc-link">🔲 2D Prefix Sum</a>
+  <a href="#complement"     class="toc-link">🎯 Complement Trick</a>
+  <a href="#hashmap"        class="toc-link">🗺️ Prefix + HashMap</a>
+  <a href="#running-vs"     class="toc-link">⚖️ Running vs Array</a>
+  <a href="#walkthrough"    class="toc-link">🔍 LC #560 Walkthrough</a>
+  <a href="#traps"          class="toc-link">⚠️ Common Traps</a>
+  <a href="#practice"       class="toc-link">🏋️ Practice Problems</a>
+
+  <div class="sidebar-section-label" style="margin-top:1.5rem;">Series</div>
+  <a href="pattern-01.html" class="toc-link">Pattern 01 · Two Pointers</a>
+  <a href="pattern-02.html" class="toc-link">Pattern 02 · Sliding Window</a>
+  <a href="pattern-03.html" class="toc-link">Pattern 03 · Fast & Slow</a>
+  <a href="pattern-04.html" class="toc-link" style="color:var(--accent-blue);font-weight:600;">Pattern 04 · Prefix Sum ◀</a>
+</nav>
+
+<!-- ─── MAIN CONTENT ─────────────────────────────────── -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero" style="position:relative;overflow:hidden;">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Algorithm Patterns · PDF #04</div>
+      <h1>Prefix Sum</h1>
+      <p class="hero-subtitle">Pre-compute Everything</p>
+      <p class="hero-desc">
+        The art of paying an upfront O(n) cost so every future range query costs O(1).
+        One of the cleanest space-for-time trades in all of competitive programming.
+      </p>
+      <div class="hero-badges">
+        <span class="badge badge-blue">Range Queries</span>
+        <span class="badge badge-green">O(1) Query</span>
+        <span class="badge badge-purple">HashMap Combo</span>
+        <span class="badge badge-orange">Subarray Sums</span>
+        <span class="badge badge-cyan">2D Matrix</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- PART 1 -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>The Foundation</h2>
+      <p>Why prefix sums exist, the mental model, and the 1D + 2D templates.</p>
+    </div>
+  </div>
+
+  <!-- ─── CORE IDEA ─────────────────────────────────── -->
+  <div class="section" id="overview">
+    <div class="section-header">
+      <h3>🧠 The Core Idea</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p><strong>Mental Model:</strong> Imagine a highway with toll booths. To know the total toll between exit 3 and exit 8, you don't re-drive that stretch. You pre-record the <em>cumulative toll from the start</em> to every exit — then it's just subtraction.</p>
+    </div>
+
+    <div class="card">
+      <h4>The Problem Prefix Sum Solves</h4>
+      <p>You're given an array and asked <em>many times</em> for the sum between index <code>i</code> and <code>j</code>. Naïve: loop each query → O(n) per query. With prefix sum: preprocess once in O(n), answer every query in O(1).</p>
+
+      <div class="diagram">
+arr   =  [ 3,  1,  4,  1,  5,  9,  2,  6 ]
+index     0   1   2   3   4   5   6   7
+
+prefix[0] = 0         <span class="d-blue">← sentinel, always zero</span>
+prefix[1] = 3
+prefix[2] = 4
+prefix[3] = 8
+prefix[4] = 9
+prefix[5] = 14
+prefix[6] = 23
+prefix[7] = 25
+prefix[8] = 31
+
+Sum(i=2, j=5) → prefix[6] - prefix[2] = 23 - 4 = <span class="d-green">19</span>  ✓
+(verify: 4+1+5+9 = 19)
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>When to Use It</h4>
+        <ul>
+          <li>Multiple range sum queries on static array</li>
+          <li>Count subarrays with exact sum <code>k</code></li>
+          <li>Subarray sum divisible by <code>k</code></li>
+          <li>2D rectangle sum in a matrix</li>
+          <li>Problems asking "how many subarrays…"</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Recognition Signals 🚨</h4>
+        <ul>
+          <li>"sum of elements between index i and j"</li>
+          <li>"subarray sum equals k"</li>
+          <li>"number of subarrays where sum…"</li>
+          <li>"range query" + immutable array</li>
+          <li>Contiguous subarray + sum condition</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 1D PREFIX SUM ─────────────────────────────── -->
+  <div class="section" id="prefix-1d">
+    <div class="section-header">
+      <h3>📐 1D Prefix Sum Template</h3>
+    </div>
+
+    <div class="card">
+      <h4>Build + Query</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-title">1D Prefix Sum — Universal Template</span>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">build_prefix</span>(arr):
+    n = <span class="fn">len</span>(arr)
+    <span class="cmt"># Size n+1, prefix[0] = 0 is the sentinel</span>
+    prefix = [<span class="num">0</span>] * (n + <span class="num">1</span>)
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n):
+        prefix[i + <span class="num">1</span>] = prefix[i] + arr[i]
+    <span class="kw">return</span> prefix
+
+<span class="kw">def</span> <span class="fn">range_sum</span>(prefix, left, right):
+    <span class="cmt"># Sum of arr[left..right] inclusive (0-indexed)</span>
+    <span class="kw">return</span> prefix[right + <span class="num">1</span>] - prefix[left]
+
+<span class="cmt"># Example:</span>
+arr    = [<span class="num">3</span>, <span class="num">1</span>, <span class="num">4</span>, <span class="num">1</span>, <span class="num">5</span>]
+prefix = <span class="fn">build_prefix</span>(arr)   <span class="cmt"># [0, 3, 4, 8, 9, 14]</span>
+<span class="fn">print</span>(<span class="fn">range_sum</span>(prefix, <span class="num">1</span>, <span class="num">3</span>))  <span class="cmt"># 1+4+1 = 6</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">📌</div>
+      <div class="body">
+        <strong>The Formula</strong>
+        <p><code>sum(left, right) = prefix[right + 1] − prefix[left]</code><br>
+        Think of it as: "everything up to right+1" minus "everything before left". The +1 offset is because prefix is 1-indexed over the array.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 2D PREFIX SUM ─────────────────────────────── -->
+  <div class="section" id="prefix-2d">
+    <div class="section-header">
+      <h3>🔲 2D Prefix Sum Template</h3>
+    </div>
+
+    <div class="card">
+      <h4>Mental Model First</h4>
+      <p>For a matrix, <code>prefix[r][c]</code> = sum of all elements in the rectangle from (0,0) to (r-1, c-1). To query any sub-rectangle, use inclusion-exclusion: add the big rectangle, subtract two overlapping slabs, add back the doubly-subtracted corner.</p>
+
+      <div class="diagram">
+  Inclusion-Exclusion for 2D:
+
+  prefix[r2+1][c2+1]       <span class="d-blue">← whole rectangle to bottom-right</span>
+- prefix[r1][c2+1]         <span class="d-red">← strip above</span>
+- prefix[r2+1][c1]         <span class="d-red">← strip to the left</span>
++ prefix[r1][c1]           <span class="d-green">← add back doubly-subtracted corner</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Build + Query</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-title">2D Prefix Sum — LC #304</span>
+        </div>
+        <pre><code><span class="kw">class</span> <span class="type">NumMatrix</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, matrix):
+        m, n = <span class="fn">len</span>(matrix), <span class="fn">len</span>(matrix[<span class="num">0</span>])
+        <span class="cmt"># (m+1) x (n+1) grid of zeros</span>
+        self.p = [[<span class="num">0</span>] * (n + <span class="num">1</span>) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(m + <span class="num">1</span>)]
+        <span class="kw">for</span> r <span class="kw">in</span> <span class="fn">range</span>(m):
+            <span class="kw">for</span> c <span class="kw">in</span> <span class="fn">range</span>(n):
+                self.p[r+<span class="num">1</span>][c+<span class="num">1</span>] = (matrix[r][c]
+                    + self.p[r][c+<span class="num">1</span>]      <span class="cmt"># above</span>
+                    + self.p[r+<span class="num">1</span>][c]      <span class="cmt"># left</span>
+                    - self.p[r][c])        <span class="cmt"># remove double-counted corner</span>
+
+    <span class="kw">def</span> <span class="fn">sumRegion</span>(self, r1, c1, r2, c2):
+        <span class="kw">return</span> (self.p[r2+<span class="num">1</span>][c2+<span class="num">1</span>]
+              - self.p[r1][c2+<span class="num">1</span>]
+              - self.p[r2+<span class="num">1</span>][c1]
+              + self.p[r1][c1])</code></pre>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Same +1 offset applies in 2D</strong>
+        <p>The prefix grid is always <code>(m+1) × (n+1)</code>. The extra row and column of zeros act as sentinels on both axes. Without them, every boundary cell needs an <code>if r > 0 and c > 0</code> guard — messy and error-prone.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- PART 2 -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">02</div>
+    <div>
+      <h2>The Power Combo</h2>
+      <p>Prefix Sum × HashMap — unlocks subarray counting in O(n).</p>
+    </div>
+  </div>
+
+  <!-- ─── COMPLEMENT TRICK ──────────────────────────── -->
+  <div class="section" id="complement">
+    <div class="section-header">
+      <h3>🎯 The Complement Trick</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p><strong>Core Insight:</strong> If the running sum at index <code>j</code> is <code>S</code>, and a sum of <code>k</code> ended at <code>j</code>, then somewhere before <code>j</code> there must be a prefix sum equal to <code>S − k</code>. A HashMap lets you look that up in O(1).</p>
+    </div>
+
+    <div class="card">
+      <h4>Visualising the Complement</h4>
+      <div class="diagram">
+arr     =  [ 1,  2,  3,  3, -3,  4 ],   k = 6
+
+Running sums (prefix):
+  idx:      0   1   2   3   4   5   6
+  prefix:  [0,  1,  3,  6,  9,  6, 10]
+                               ↑
+           At idx 5 prefix = 6.  complement = 6 - 6 = 0.
+           0 exists at idx 0  →  subarray arr[1..5] sums to 6  ✓
+
+           At idx 3 prefix = 6.  complement = 6 - 6 = 0.
+           0 exists at idx 0  →  subarray arr[1..3] sums to 6  ✓
+
+Total subarrays summing to 6: <span class="d-green">2</span>
+      </div>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>The Core Formula</h4>
+      <p>We want: <strong>count of indices where prefix[j] − prefix[i] = k</strong><br>
+      Rearranged: <strong>prefix[i] = prefix[j] − k</strong><br>
+      So at every step: look in the HashMap for <code>current_sum − k</code>.</p>
+    </div>
+  </div>
+
+  <!-- ─── PREFIX + HASHMAP ──────────────────────────── -->
+  <div class="section" id="hashmap">
+    <div class="section-header">
+      <h3>🗺️ Prefix Sum + HashMap Pattern</h3>
+    </div>
+
+    <div class="card">
+      <h4>Universal Template</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Python</span>
+          <span class="code-title">Count subarrays with sum = k</span>
+        </div>
+        <pre><code><span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+
+<span class="kw">def</span> <span class="fn">subarray_sum</span>(nums, k):
+    count = <span class="num">0</span>
+    curr_sum = <span class="num">0</span>
+    seen = defaultdict(<span class="fn">int</span>)
+    seen[<span class="num">0</span>] = <span class="num">1</span>   <span class="cmt"># ← critical: prefix sum 0 exists once before we start</span>
+
+    <span class="kw">for</span> num <span class="kw">in</span> nums:
+        curr_sum += num                  <span class="cmt"># running prefix sum</span>
+        complement = curr_sum - k        <span class="cmt"># what prefix must exist before us</span>
+
+        <span class="kw">if</span> complement <span class="kw">in</span> seen:
+            count += seen[complement]    <span class="cmt"># every occurrence is a valid subarray</span>
+
+        seen[curr_sum] += <span class="num">1</span>             <span class="cmt"># record this prefix sum for future use</span>
+
+    <span class="kw">return</span> count</code></pre>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>Step-by-Step Logic</h4>
+        <ol>
+          <li>Initialise <code>seen = {0: 1}</code></li>
+          <li>Walk array, accumulate <code>curr_sum</code></li>
+          <li>Ask: "has <code>curr_sum − k</code> appeared before?"</li>
+          <li>If yes, add its frequency to <code>count</code></li>
+          <li>Record <code>curr_sum</code> in map</li>
+        </ol>
+      </div>
+      <div class="card-mini">
+        <h4>Why record AFTER querying?</h4>
+        <p>We add <code>curr_sum</code> to the map <em>after</em> checking the complement. This prevents counting a subarray that starts and ends at the same index — we need a strictly <em>previous</em> prefix sum.</p>
+        <div class="callout danger" style="margin-top:0.5rem;">
+          <div class="icon">🚫</div>
+          <div class="body"><strong>Never swap</strong> the query and the record. Subarray length ≥ 1, so you must look at only past prefixes.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── RUNNING SUM VS PREFIX ARRAY ──────────────── -->
+  <div class="section" id="running-vs">
+    <div class="section-header">
+      <h3>⚖️ Running Sum vs Prefix Array</h3>
+    </div>
+
+    <div class="card">
+      <p>You don't always need to materialise the full prefix array. Choose based on what you need:</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Approach</th>
+              <th>Space</th>
+              <th>Use When</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Prefix Array</strong><br><code>prefix[0..n]</code></td>
+              <td>O(n)</td>
+              <td>Multiple random-access range queries, 2D, or need indices later</td>
+              <td>LC #303, LC #304</td>
+            </tr>
+            <tr>
+              <td><strong>Running Sum + HashMap</strong></td>
+              <td>O(n)</td>
+              <td>Counting subarrays, one pass, don't need to revisit old values by index</td>
+              <td>LC #560, LC #974</td>
+            </tr>
+            <tr>
+              <td><strong>Running Sum only</strong></td>
+              <td>O(1)</td>
+              <td>Single pass, need current total only (not historical lookup)</td>
+              <td>Running total checks</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>Decision rule:</strong>
+        <p>If you need to look up <em>"did this prefix sum exist before?"</em> → Running sum + HashMap.<br>
+        If you need <em>"exact sum between specific indices i and j"</em> → Prefix array.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- PART 3 -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">03</div>
+    <div>
+      <h2>Deep Dive & Traps</h2>
+      <p>Full walkthrough of LC #560, the off-by-one trap, and practice problems.</p>
+    </div>
+  </div>
+
+  <!-- ─── WALKTHROUGH ───────────────────────────────── -->
+  <div class="section" id="walkthrough">
+    <div class="section-header">
+      <h3>🔍 Full Walkthrough: LC #560 — Subarray Sum Equals K</h3>
+    </div>
+
+    <div class="card">
+      <h4>Problem</h4>
+      <p>Given an integer array <code>nums</code> and integer <code>k</code>, return the total number of subarrays whose sum equals <code>k</code>.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Text</span>
+          <span class="code-title">Example</span>
+        </div>
+        <pre><code>Input:  nums = [1, 1, 1],  k = 2
+Output: 2
+Explanation: [1,1] appears at indices (0,1) and (1,2)</code></pre>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Initialise</div>
+          <div class="step-desc"><code>count = 0</code>, <code>curr = 0</code>, <code>seen = {0: 1}</code>. We pre-load the zero prefix to handle subarrays starting at index 0.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Process nums[0] = 1</div>
+          <div class="step-desc"><code>curr = 1</code>. Complement = <code>1 − 2 = −1</code>. Not in map. Record <code>{0:1, 1:1}</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Process nums[1] = 1</div>
+          <div class="step-desc"><code>curr = 2</code>. Complement = <code>2 − 2 = 0</code>. In map with count 1 → <code>count = 1</code>. Record <code>{0:1, 1:1, 2:1}</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Process nums[2] = 1</div>
+          <div class="step-desc"><code>curr = 3</code>. Complement = <code>3 − 2 = 1</code>. In map with count 1 → <code>count = 2</code>. Record <code>{0:1, 1:1, 2:1, 3:1}</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Return</div>
+          <div class="step-desc"><code>count = 2</code> ✅ — both [1,1] subarrays found in one O(n) pass.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Complexity</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>Time</td><td><span class="pill pill-green">O(n)</span></td><td>Single pass, O(1) HashMap ops</td></tr>
+            <tr><td>Space</td><td><span class="pill pill-blue">O(n)</span></td><td>HashMap can store up to n distinct prefix sums</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TRAPS ─────────────────────────────────────── -->
+  <div class="section" id="traps">
+    <div class="section-header">
+      <h3>⚠️ Common Traps</h3>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🔴</div>
+      <div class="body">
+        <strong>Trap #1 — Forgetting <code>seen[0] = 1</code></strong>
+        <p>This is the most common mistake. Without it, any subarray that starts at index 0 and sums to <code>k</code> is never counted. The zero prefix sum represents the "empty prefix" — the state before touching any element.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>WHY is <code>seen[0] = 1</code> necessary? — Proof by example</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Text</span>
+          <span class="code-title">nums = [3, 1, 2],  k = 3</span>
+        </div>
+        <pre><code>Without seen[0]=1:
+  curr=3, complement=0, not in map → miss!  ← arr[0..0] = [3] counts as 0
+  curr=4, complement=1, not in map → miss
+  curr=6, complement=3, found!     → count=1
+  WRONG ANSWER: 1 (missed [3] itself)
+
+With seen[0]=1:
+  curr=3, complement=0, found (count=1) → ✅ [3] counted
+  curr=4, complement=1, not in map
+  curr=6, complement=3, found (count=2) → ✅ [3,1,2] counted... wait
+  Let's recheck: [3,1,2] sum=6 ≠ 3. Only [3] and [1,2] sum to 3.
+  curr=4, complement=1, not in map.
+  curr=6, complement=3, found (count=2) → ✅ [1,2] counted via prefix diff
+  CORRECT ANSWER: 2</code></pre>
+      </div>
+      <p>The sentinel <code>seen[0] = 1</code> represents the fact that a prefix sum of zero occurs exactly once: before the array starts. Without it, subarrays that <em>start at index 0</em> have no way to register their complement.</p>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Trap #2 — Off-by-one in 1D prefix array indexing</strong>
+        <p><code>range_sum(left, right) = prefix[right + 1] − prefix[left]</code> — notice the <code>+1</code> on right. If you use <code>prefix[right] − prefix[left]</code>, you get the wrong range. Trace it on paper once to burn it in.</p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Trap #3 — Prefix Sum with negative numbers</strong>
+        <p>Prefix sum works perfectly with negative numbers. But sliding window does NOT (window contraction logic breaks). If an array has negatives and you need subarray sum = k, reach for prefix sum + HashMap, not sliding window.</p>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip — The "modulo" variant</strong>
+        <p>For "subarray sum divisible by k" (LC #974), store <code>curr_sum % k</code> instead of <code>curr_sum</code>. Two indices with the same modulo mean the subarray between them is divisible by k. Initialise <code>seen[0] = 1</code> still applies.</p>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>✅ Use Prefix Sum + HashMap when</h4>
+        <ul>
+          <li>Array can have <strong>negatives</strong></li>
+          <li>Need <strong>exact count</strong> of subarrays</li>
+          <li>Sum condition is an <strong>equality</strong> (= k)</li>
+          <li>Cannot shrink a window meaningfully</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h4>✅ Use Sliding Window when</h4>
+        <ul>
+          <li>Array is <strong>all non-negative</strong></li>
+          <li>Need longest/shortest subarray</li>
+          <li>Sum condition is an <strong>inequality</strong> (≤ k, ≥ k)</li>
+          <li>Window can be contracted greedily</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PRACTICE PROBLEMS ─────────────────────────── -->
+  <div class="section" id="practice">
+    <div class="section-header">
+      <h3>🏋️ Practice Problems</h3>
+    </div>
+
+    <div class="card">
+      <h4>Structured Practice Path — Prefix Sum</h4>
+      <p>Work in order. Each problem teaches a distinct variation of the pattern.</p>
+    </div>
+
+    <div class="qa-container">
+
+      <!-- Easy 1 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟢 Easy &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/range-sum-query-immutable/" target="_blank" rel="noopener">
+            LC #303 — Range Sum Query - Immutable
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Pure 1D prefix array build + query. The textbook problem.</p>
+          <p><strong>What to learn:</strong> Build <code>prefix[n+1]</code>, implement <code>sumRange(left, right)</code>. Off-by-one practice.</p>
+          <p><strong>Key trick:</strong> Constructor builds the array once, each query is a single subtraction.</p>
+          <div class="tag tag-blue">Prefix Array</div> <div class="tag tag-green">O(1) Query</div>
+        </div>
+      </div>
+
+      <!-- Medium 1 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟡 Medium &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/subarray-sum-equals-k/" target="_blank" rel="noopener">
+            LC #560 — Subarray Sum Equals K
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Prefix sum + HashMap complement trick.</p>
+          <p><strong>What to learn:</strong> The core <code>seen[0] = 1</code> pattern. Most important problem in this group.</p>
+          <p><strong>Trap:</strong> Works with negative numbers — sliding window fails here.</p>
+          <div class="tag tag-purple">HashMap</div> <div class="tag tag-blue">Complement Trick</div>
+        </div>
+      </div>
+
+      <!-- Medium 2 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟡 Medium &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/contiguous-array/" target="_blank" rel="noopener">
+            LC #525 — Contiguous Array
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Prefix sum + HashMap, but with a clever transformation.</p>
+          <p><strong>What to learn:</strong> Replace 0s with −1. Then "equal 0s and 1s" becomes "subarray sum = 0". Classic transformation before applying pattern.</p>
+          <p><strong>Key insight:</strong> Longest subarray with same prefix sum = farthest two indices with equal running totals.</p>
+          <div class="tag tag-orange">Transform Input</div> <div class="tag tag-purple">HashMap</div>
+        </div>
+      </div>
+
+      <!-- Medium 3 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟡 Medium &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/subarray-sums-divisible-by-k/" target="_blank" rel="noopener">
+            LC #974 — Subarray Sums Divisible by K
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Prefix sum modulo + HashMap.</p>
+          <p><strong>What to learn:</strong> Store <code>curr % k</code> instead of <code>curr</code>. Two equal remainders = subarray divisible by k.</p>
+          <p><strong>Trap:</strong> Negative modulo in Python is fine (<code>-7 % 5 = 3</code>), but in Java/C++ add k then mod to avoid negatives.</p>
+          <div class="tag tag-cyan">Modulo</div> <div class="tag tag-purple">HashMap</div>
+        </div>
+      </div>
+
+      <!-- Medium 4 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟡 Medium &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/product-of-array-except-self/" target="_blank" rel="noopener">
+            LC #238 — Product of Array Except Self
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Prefix product + suffix product (same idea, different operator).</p>
+          <p><strong>What to learn:</strong> Prefix sums generalise to any associative operation. Build left-product array, then scan right-to-left with running right-product.</p>
+          <p><strong>Key insight:</strong> <code>result[i] = prefix_left[i] * suffix_right[i]</code></p>
+          <div class="tag tag-yellow">Prefix + Suffix</div> <div class="tag tag-green">No Division</div>
+        </div>
+      </div>
+
+      <!-- Medium 5 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟡 Medium &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/count-number-of-nice-subarrays/" target="_blank" rel="noopener">
+            LC #1248 — Count Number of Nice Subarrays
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Exact prefix sum count with a different domain.</p>
+          <p><strong>What to learn:</strong> Replace each number: odd → 1, even → 0. Problem becomes LC #560 (count subarrays summing to k). Pattern transfer practice.</p>
+          <div class="tag tag-orange">Transform Input</div> <div class="tag tag-blue">Prefix + HashMap</div>
+        </div>
+      </div>
+
+      <!-- Medium 6 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟡 Medium &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/range-sum-query-2d-immutable/" target="_blank" rel="noopener">
+            LC #304 — Range Sum Query 2D - Immutable
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> 2D prefix sum build + inclusion-exclusion query.</p>
+          <p><strong>What to learn:</strong> The 4-term formula. Essential for any matrix range-sum question.</p>
+          <p><strong>Trap:</strong> Build formula is also inclusion-exclusion — don't just sum naively.</p>
+          <div class="tag tag-cyan">2D Prefix</div> <div class="tag tag-green">Matrix</div>
+        </div>
+      </div>
+
+      <!-- Medium 7 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🟡 Medium &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/sum-of-absolute-differences-in-a-sorted-array/" target="_blank" rel="noopener">
+            LC #1685 — Sum of Absolute Differences in a Sorted Array
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Prefix sum for efficient range aggregation.</p>
+          <p><strong>What to learn:</strong> For sorted array, split absolute differences into left-sum and right-sum using prefix array to avoid O(n²).</p>
+          <p><code>result[i] = i*nums[i] - prefix[i] + (prefix[n] - prefix[i+1]) - (n-i-1)*nums[i]</code></p>
+          <div class="tag tag-blue">Prefix Array</div> <div class="tag tag-yellow">Math</div>
+        </div>
+      </div>
+
+      <!-- Hard 1 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🔴 Hard &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/number-of-submatrices-that-sum-to-target/" target="_blank" rel="noopener">
+            LC #1074 — Number of Submatrices That Sum to Target
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> 2D prefix sum + reduce to 1D prefix + HashMap.</p>
+          <p><strong>What to learn:</strong> Fix top and bottom row, compress each column's sum into a 1D array, then run LC #560 on that array. Combines both major techniques in one problem.</p>
+          <p><strong>Complexity:</strong> O(m² × n) — the best possible for this problem.</p>
+          <div class="tag tag-red">Hard</div> <div class="tag tag-cyan">2D + HashMap</div> <div class="tag tag-purple">Reduce Dimension</div>
+        </div>
+      </div>
+
+      <!-- Hard 2 -->
+      <div class="qa-item">
+        <div class="qa-q">
+          🔴 Hard &nbsp;·&nbsp;
+          <a href="https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/" target="_blank" rel="noopener">
+            LC #862 — Shortest Subarray with Sum at Least K
+          </a>
+        </div>
+        <div class="qa-a">
+          <p><strong>Pattern:</strong> Prefix sum + monotonic deque (not HashMap — this is a length optimisation, not a count).</p>
+          <p><strong>What to learn:</strong> When the array has negatives and you need shortest subarray (not count), prefix sum + deque is the unlock. Combines two patterns.</p>
+          <p><strong>Why not sliding window?</strong> Negatives mean you can't greedily shrink the window — the deque maintains a monotone prefix for smart pruning.</p>
+          <div class="tag tag-red">Hard</div> <div class="tag tag-orange">Deque</div> <div class="tag tag-blue">Prefix Array</div>
+        </div>
+      </div>
+
+    </div><!-- end qa-container -->
+
+    <div class="banner banner-purple">
+      <h4>📊 Practice Summary</h4>
+      <p>
+        <span class="pill pill-green">Easy: 1</span>&nbsp;
+        <span class="pill pill-orange">Medium: 7</span>&nbsp;
+        <span class="pill pill-red">Hard: 2</span>&nbsp;&nbsp;
+        Master LC #560 and LC #525 first. They cover 80% of the pattern's interview applications.
+      </p>
+    </div>
+  </div>
+
+  <!-- FINAL KEY POINT -->
+  <div class="section">
+    <div class="key-point">
+      <span class="kp-icon">🧠</span>
+      <p>
+        <strong>One-line summary:</strong> Whenever you see "subarray sum equals k" with any integers — no hesitation, reach for <code>prefix + seen{0:1} + complement trick</code>. It's O(n), it handles negatives, and it's always correct.
+      </p>
+    </div>
+  </div>
+
+  <!-- BACK TO TOP -->
+  <button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+</main><!-- end #main -->
+
+<script>
+  // ── Sidebar toggle (standardized) ──
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
+
+  // ── Progress bar ────────────────────────────────────────────
+  const progressFill = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const docH   = document.documentElement.scrollHeight - window.innerHeight;
+    const scroll = window.scrollY;
+    progressFill.style.width = docH > 0 ? (scroll / docH * 100) + '%' : '0%';
+  });
+
+  // ── Back to top button ──────────────────────────────────────
+  const topBtn = document.getElementById('topBtn');
+  window.addEventListener('scroll', () => {
+    topBtn.style.opacity = window.scrollY > 400 ? '1' : '0';
+    topBtn.style.pointerEvents = window.scrollY > 400 ? 'auto' : 'none';
+  });
+
+  // ── Active sidebar link on scroll ───────────────────────────
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('#sidebar .toc-link[href^="#"]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const active = document.querySelector(`#sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(sec => observer.observe(sec));
+
+  // ── Q&A expand/collapse ─────────────────────────────────────
+  document.querySelectorAll('.qa-q').forEach(q => {
+    q.style.cursor = 'pointer';
+    q.addEventListener('click', () => {
+      const answer = q.nextElementSibling;
+      if (!answer) return;
+      const isOpen = answer.style.display !== 'none';
+      answer.style.display = isOpen ? 'none' : 'block';
+      q.style.borderBottomLeftRadius = isOpen ? '8px' : '0';
+      q.style.borderBottomRightRadius = isOpen ? '8px' : '0';
+    });
+  });
+</script>
+
+</body>
+</html>

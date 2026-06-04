@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JVM, JRE, JDK & ClassLoader | Java Interview Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    
+    :root {
+      --bg:      #0f1117;
+      --surface: #1a1d27;
+      --card:    #21253a;
+      --border:  #2e3350;
+      --accent:  #00d4aa;
+      --a2:      #6c63ff;
+      --a3:      #ff6b6b;
+      --a4:      #ffd93d;
+      --a5:      #4ecdc4;
+      --pink:    #ec4899;
+      --orange:  #fb923c;
+      --text:    #e8eaf6;
+      --muted:   #8b92b8;
+      --code-bg: #13151f;
+    }
+
+    
+                    
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #0f1d2e 0%, #0d1a1a 50%, #0f1117 100%);
+      padding: 56px 24px 48px; text-align: center;
+      border-bottom: 1px solid var(--border); position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 500px;
+      background: radial-gradient(circle, rgba(0,212,170,0.10) 0%, transparent 65%);
+      pointer-events: none;
+    }
+                    
+    /* LAYOUT */
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+                        
+    /* SECTION */
+    .section { margin-bottom: 64px; }
+                                    
+        .section-label { font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .section-title { font-size: 26px; font-weight: 800; color: var(--text); }                            
+                            .info-box.orange { background: rgba(251,146,60,0.08);
+      border: 1px solid rgba(251,146,60,0.25); color: #fed7aa; }
+
+                        
+                            .key-list li.orange { border-left-color: var(--orange); }
+    .key-list li.cyan   { border-left-color: var(--a5); }
+    
+    /* DIAGRAM */
+    .diagram {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 22px; margin: 16px 0;
+      font-family: 'Fira Code', 'Consolas', monospace; font-size: 12px;
+      color: var(--muted); overflow-x: auto; line-height: 2.0;
+    }
+    .diagram .d-title { color: var(--accent); font-weight: 700;
+      margin-bottom: 14px; font-size: 13px; display: block; }
+    .diagram     .diagram .hi    { color: var(--a4); font-weight: 700; }
+    .diagram .arr   { color: var(--a2); }
+    .diagram .grn   { color: var(--accent); font-weight: 700; }
+    .diagram .red   { color: var(--a3); }
+    .diagram .pnk   { color: var(--pink); }
+    .diagram .pur   { color: var(--a2); }
+    .diagram .orn   { color: var(--orange); }
+
+    /* PHASE STRIP */
+    .phase-row { display: flex; gap: 0; margin: 16px 0; flex-wrap: wrap; }
+    .phase-box {
+      flex: 1; min-width: 120px; padding: 14px 10px; text-align: center;
+      border: 1px solid var(--border); position: relative;
+    }
+    .phase-box:first-child { border-radius: 12px 0 0 12px; }
+    .phase-box:last-child  { border-radius: 0 12px 12px 0; }
+    .phase-label { font-size: 11px; font-weight: 800; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 6px; }
+    .phase-desc  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .ph-green  { background: rgba(0,212,170,0.08);  border-color: rgba(0,212,170,0.3); }
+    .ph-green  .phase-label { color: var(--accent); }
+    .ph-purple { background: rgba(108,99,255,0.08); border-color: rgba(108,99,255,0.3); }
+    .ph-purple .phase-label { color: var(--a2); }
+    .ph-yellow { background: rgba(255,217,61,0.08); border-color: rgba(255,217,61,0.3); }
+    .ph-yellow .phase-label { color: var(--a4); }
+    .ph-red    { background: rgba(255,107,107,0.08);border-color: rgba(255,107,107,0.3); }
+    .ph-red    .phase-label { color: var(--a3); }
+    .ph-pink   { background: rgba(236,72,153,0.08); border-color: rgba(236,72,153,0.3); }
+    .ph-pink   .phase-label { color: var(--pink); }
+    .ph-orange { background: rgba(251,146,60,0.08); border-color: rgba(251,146,60,0.3); }
+    .ph-orange .phase-label { color: var(--orange); }
+
+    /* MEM BOXES */
+    .mem-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+      gap: 12px; margin: 16px 0;
+    }
+    .mem-box {
+      border-radius: 12px; padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .mem-title  { font-size: 13px; font-weight: 800; margin-bottom: 8px; }
+    .mem-detail { font-size: 12px; color: var(--muted); line-height: 1.7; }
+    .mem-tag    { display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 6px; margin-top: 8px; }
+    .mb-green  { background: rgba(0,212,170,0.08);  border-color: rgba(0,212,170,0.25); }
+    .mb-green  .mem-title { color: var(--accent); }
+    .mb-green  .mem-tag   { background: rgba(0,212,170,0.15); color: var(--accent); }
+    .mb-purple { background: rgba(108,99,255,0.08); border-color: rgba(108,99,255,0.25); }
+    .mb-purple .mem-title { color: var(--a2); }
+    .mb-purple .mem-tag   { background: rgba(108,99,255,0.15); color: var(--a2); }
+    .mb-red    { background: rgba(255,107,107,0.08);border-color: rgba(255,107,107,0.25); }
+    .mb-red    .mem-title { color: var(--a3); }
+    .mb-red    .mem-tag   { background: rgba(255,107,107,0.15); color: var(--a3); }
+    .mb-yellow { background: rgba(255,217,61,0.08); border-color: rgba(255,217,61,0.25); }
+    .mb-yellow .mem-title { color: var(--a4); }
+    .mb-yellow .mem-tag   { background: rgba(255,217,61,0.15); color: var(--a4); }
+    .mb-pink   { background: rgba(236,72,153,0.08); border-color: rgba(236,72,153,0.25); }
+    .mb-pink   .mem-title { color: var(--pink); }
+    .mb-pink   .mem-tag   { background: rgba(236,72,153,0.15); color: var(--pink); }
+    .mb-orange { background: rgba(251,146,60,0.08); border-color: rgba(251,146,60,0.25); }
+    .mb-orange .mem-title { color: var(--orange); }
+    .mb-orange .mem-tag   { background: rgba(251,146,60,0.15); color: var(--orange); }
+
+                    
+                    .output-line.yellow { color: var(--a4); }
+    .output-line.red  { color: var(--a3); }
+
+    
+        
+    @media (max-width: 640px) {
+            .mem-grid  { grid-template-columns: 1fr; }
+      .phase-row { flex-direction: column; }
+      .phase-box:first-child { border-radius: 12px 12px 0 0; }
+      .phase-box:last-child  { border-radius: 0 0 12px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>⚙️ JVM Internals</h2>
+      <p>Core JVM & ClassLoader</p>
+    </div>
+    <nav>
+      <div class="section-label">JVM Basics</div>
+      <a href="#overview">JDK vs JRE vs JVM</a>
+      <a href="#jvm-arch">JVM Architecture</a>
+      <a href="#classloading">Class Loading Process</a>
+      <a href="#classloaders">ClassLoaders</a>
+      <a href="#delegation">Delegation Model</a>
+      <div class="section-label">Runtime Data Areas</div>
+      <a href="#rda">Runtime Data Areas</a>
+      <a href="#heap">Heap Memory</a>
+      <a href="#stack">Stack Memory</a>
+      <div class="section-label">Execution Engine</div>
+      <a href="#engine">Execution Engine</a>
+      <a href="#jit">JIT Compiler</a>
+      <a href="#custom">Custom ClassLoader</a>
+      <a href="#bytecode">Bytecode & Tools</a>
+      <a href="#interview">Interview Q&A</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ══ NAV ══ -->
+<nav class="topnav">
+  <div class="topnav-left">
+    <span class="nav-series">Java Notes</span>
+    <span style="color:var(--border)">›</span>
+    <span class="nav-title">JVM, JRE, JDK &amp; ClassLoader</span>
+  </div>
+  <span class="nav-badge">Core JVM Internals</span>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <div class="hero-part-label">JVM Internals — Deep Dive</div>
+  <h1>JVM, JRE, JDK &amp; ClassLoader</h1>
+  <p class="hero-desc">
+    Complete internals: JDK vs JRE vs JVM architecture, Class Loading (3 phases),
+    ClassLoader hierarchy &amp; delegation, Runtime Data Areas, Execution Engine,
+    JIT compilation — with diagrams, code, and 20+ interview questions.
+  </p>
+  <div class="hero-pills">
+    <div class="hero-pill">📦 JDK / JRE / JVM</div>
+    <div class="hero-pill">🔄 Class Loading</div>
+    <div class="hero-pill">🏗️ ClassLoader Types</div>
+    <div class="hero-pill">👑 Delegation Model</div>
+    <div class="hero-pill">🧠 Runtime Data Areas</div>
+    <div class="hero-pill">⚙️ Execution Engine</div>
+    <div class="hero-pill">🚀 JIT Compiler</div>
+    <div class="hero-pill">🔧 Custom ClassLoader</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══ TOC ══ -->
+<div class="toc">
+  <div class="toc-title">📋 Contents</div>
+  <div class="toc-grid">
+    <a href="#overview"      class="toc-item"><span class="toc-num">0</span>JDK vs JRE vs JVM</a>
+    <a href="#jvm-arch"      class="toc-item"><span class="toc-num">1</span>JVM Architecture (Big Picture)</a>
+    <a href="#classloading"  class="toc-item"><span class="toc-num">2</span>Class Loading Process</a>
+    <a href="#classloaders"  class="toc-item"><span class="toc-num">3</span>Types of ClassLoaders</a>
+    <a href="#delegation"    class="toc-item"><span class="toc-num">4</span>Parent Delegation Model</a>
+    <a href="#rda"           class="toc-item"><span class="toc-num">5</span>Runtime Data Areas</a>
+    <a href="#heap"          class="toc-item"><span class="toc-num">6</span>Heap Memory &amp; GC Regions</a>
+    <a href="#stack"         class="toc-item"><span class="toc-num">7</span>Stack &amp; Stack Frame</a>
+    <a href="#engine"        class="toc-item"><span class="toc-num">8</span>Execution Engine</a>
+    <a href="#jit"           class="toc-item"><span class="toc-num">9</span>JIT Compiler &amp; Tiered Compilation</a>
+    <a href="#custom"        class="toc-item"><span class="toc-num">10</span>Custom ClassLoader</a>
+    <a href="#bytecode"      class="toc-item"><span class="toc-num">11</span>Bytecode &amp; .class File</a>
+    <a href="#interview"     class="toc-item"><span class="toc-num">12</span>Interview Q&amp;A (20+)</a>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     SECTION 0 — JDK vs JRE vs JVM
+════════════════════════════════════ -->
+<section id="overview" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-green">📦</div>
+    <div class="section-meta">
+      <div class="section-label">Section 0</div>
+      <div class="section-title">JDK vs JRE vs JVM</div>
+      <div class="section-sub">What each contains, nested relationship, version differences</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🗂️ Nested Containment Relationship</h3>
+    <div class="diagram">
+      <span class="d-title">JDK ⊃ JRE ⊃ JVM (containment diagram)</span>
+<span class="hi">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="hi">│                          JDK                                 │</span>
+<span class="hi">│  Development Tools: javac, javadoc, jar, jdb, jconsole...    │</span>
+<span class="hi">│  ┌────────────────────────────────────────────────────────┐  │</span>
+<span class="hi">│  │                        JRE                             │  │</span>
+<span class="hi">│  │  Java Class Libraries (rt.jar / modules)               │  │</span>
+<span class="hi">│  │  java.lang, java.util, java.io, java.net...            │  │</span>
+<span class="hi">│  │  ┌──────────────────────────────────────────────────┐  │  │</span>
+<span class="grn">│  │  │                     JVM                          │  │  │</span>
+<span class="grn">│  │  │  Class Loader + Runtime Data Areas               │  │  │</span>
+<span class="grn">│  │  │  Execution Engine + Native Interface             │  │  │</span>
+<span class="grn">│  │  └──────────────────────────────────────────────────┘  │  │</span>
+<span class="hi">│  └────────────────────────────────────────────────────────┘  │</span>
+<span class="hi">└──────────────────────────────────────────────────────────────┘</span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📋 JDK vs JRE vs JVM — Detailed Comparison</h3>
+    <table class="comp-table">
+      <thead>
+        <tr><th>Feature</th><th>JDK</th><th>JRE</th><th>JVM</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Full Name</td>
+          <td>Java Development Kit</td>
+          <td>Java Runtime Environment</td>
+          <td>Java Virtual Machine</td>
+        </tr>
+        <tr>
+          <td>Purpose</td>
+          <td>Develop + Run Java programs</td>
+          <td>Run Java programs</td>
+          <td>Execute bytecode</td>
+        </tr>
+        <tr>
+          <td>Contains</td>
+          <td>JRE + javac + javadoc + jar + jdb + jshell + profilers</td>
+          <td>JVM + Standard Class Libraries (java.*)</td>
+          <td>ClassLoader + Memory Areas + Execution Engine</td>
+        </tr>
+        <tr>
+          <td>javac compiler</td>
+          <td>✅ Yes</td>
+          <td>❌ No</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td>Can run .class</td>
+          <td>✅ Yes</td>
+          <td>✅ Yes</td>
+          <td>✅ Yes (needs libraries)</td>
+        </tr>
+        <tr>
+          <td>Can compile .java</td>
+          <td>✅ Yes</td>
+          <td>❌ No</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td>Platform-specific</td>
+          <td>✅ Yes (per OS)</td>
+          <td>✅ Yes (per OS)</td>
+          <td>✅ Yes (per OS)</td>
+        </tr>
+        <tr>
+          <td>Java 9+ note</td>
+          <td>JRE no longer distributed separately — JDK only</td>
+          <td>Merged into JDK</td>
+          <td>Part of JDK</td>
+        </tr>
+        <tr>
+          <td>Who installs it</td>
+          <td>Developers</td>
+          <td>End users (legacy)</td>
+          <td>N/A — embedded</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-card">
+    <h3>🛠️ Key JDK Tools You Should Know</h3>
+    <table class="comp-table">
+      <thead><tr><th>Tool</th><th>Purpose</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>javac</td><td>Compile .java → .class (bytecode)</td><td><code>javac Hello.java</code></td></tr>
+        <tr><td>java</td><td>Launch JVM and run .class / JAR</td><td><code>java Hello</code></td></tr>
+        <tr><td>jar</td><td>Package .class files into JAR archive</td><td><code>jar cf app.jar *.class</code></td></tr>
+        <tr><td>javadoc</td><td>Generate HTML API documentation</td><td><code>javadoc Hello.java</code></td></tr>
+        <tr><td>jdb</td><td>Command-line debugger</td><td><code>jdb Hello</code></td></tr>
+        <tr><td>jshell</td><td>Interactive REPL (Java 9+)</td><td><code>jshell</code></td></tr>
+        <tr><td>javap</td><td>Disassemble .class — show bytecode</td><td><code>javap -c Hello.class</code></td></tr>
+        <tr><td>jps</td><td>List running Java processes</td><td><code>jps -l</code></td></tr>
+        <tr><td>jstack</td><td>Thread dump (deadlock detection)</td><td><code>jstack &lt;pid&gt;</code></td></tr>
+        <tr><td>jmap</td><td>Heap dump / memory usage</td><td><code>jmap -heap &lt;pid&gt;</code></td></tr>
+        <tr><td>jstat</td><td>GC statistics, class loading stats</td><td><code>jstat -gc &lt;pid&gt;</code></td></tr>
+        <tr><td>jconsole</td><td>GUI JVM monitoring tool</td><td><code>jconsole</code></td></tr>
+        <tr><td>jlink</td><td>Create custom minimal JRE (Java 9+)</td><td><code>jlink --add-modules java.base</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-card">
+    <h3>🔄 Write Once, Run Anywhere — How?</h3>
+    <div class="diagram">
+      <span class="d-title">Java Compilation & Execution Pipeline</span>
+<span class="hi">  Source Code (.java)                                          </span>
+<span class="box">  ┌──────────────┐                                             </span>
+<span class="box">  │  Hello.java  │                                             </span>
+<span class="box">  └──────┬───────┘                                             </span>
+<span class="arr">         │  javac (Java Compiler — part of JDK)                </span>
+<span class="arr">         ↓  compiles to platform-independent bytecode          </span>
+<span class="grn">  ┌──────────────┐                                             </span>
+<span class="grn">  │  Hello.class │  ← Bytecode (NOT machine code)              </span>
+<span class="grn">  └──────┬───────┘  ← Same file runs on Windows, Linux, Mac   </span>
+<span class="arr">         │                                                      </span>
+<span class="arr">         ├──────────────────────────────────────────┐          </span>
+<span class="arr">         ↓                         ↓                ↓          </span>
+<span class="pur">  ┌────────────┐          ┌──────────────┐  ┌───────────────┐ </span>
+<span class="pur">  │Windows JVM │          │  Linux JVM   │  │   Mac JVM     │ </span>
+<span class="pur">  │ (JVM impl) │          │  (JVM impl)  │  │  (JVM impl)   │ </span>
+<span class="pur">  └────────────┘          └──────────────┘  └───────────────┘ </span>
+<span class="arr">         ↓                         ↓                ↓          </span>
+<span class="red">  Windows x86            Linux x86-64          ARM64            </span>
+<span class="red">  Machine Code           Machine Code         Machine Code      </span>
+    </div>
+    <div class="info-box note">
+      <div class="ib-icon">💡</div>
+      <div>
+        <strong>Bytecode is platform-independent; JVM is platform-dependent.</strong>
+        The same <code>.class</code> file runs on any OS that has a JVM.
+        Each JVM is compiled specifically for its target OS/CPU.
+        This is what "Write Once, Run Anywhere" means.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 1 — JVM ARCHITECTURE
+════════════════════════════════════ -->
+<section id="jvm-arch" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-purple">🏗️</div>
+    <div class="section-meta">
+      <div class="section-label">Section 1</div>
+      <div class="section-title">JVM Architecture — Big Picture</div>
+      <div class="section-sub">3 main subsystems: Class Loader, Runtime Data Areas, Execution Engine</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🗺️ Complete JVM Architecture Diagram</h3>
+    <div class="diagram">
+      <span class="d-title">JVM Internal Architecture</span>
+<span class="box">┌────────────────────────────────────────────────────────────────────┐</span>
+<span class="box">│                           J V M                                    │</span>
+<span class="box">│                                                                    │</span>
+<span class="hi">│  ┌─────────────────────────────────────────────────────────────┐  │</span>
+<span class="hi">│  │              CLASS LOADER SUBSYSTEM                         │  │</span>
+<span class="hi">│  │  Bootstrap CL → Extension/Platform CL → Application CL     │  │</span>
+<span class="hi">│  │  [Loading] → [Linking: Verify+Prepare+Resolve] → [Init]    │  │</span>
+<span class="hi">│  └───────────────────────┬─────────────────────────────────────┘  │</span>
+<span class="arr">│                           │ loads .class into memory               │</span>
+<span class="arr">│                           ↓                                        │</span>
+<span class="grn">│  ┌─────────────────────────────────────────────────────────────┐  │</span>
+<span class="grn">│  │              RUNTIME DATA AREAS (Memory)                    │  │</span>
+<span class="grn">│  │                                                             │  │</span>
+<span class="grn">│  │  ┌─────────────┐  ┌─────────────────────────────────────┐  │  │</span>
+<span class="grn">│  │  │ Method Area │  │           Heap                      │  │  │</span>
+<span class="grn">│  │  │ (Metaspace) │  │  Young Gen │  Old Gen (Tenured)     │  │  │</span>
+<span class="grn">│  │  │ Class meta  │  │  Eden│S0│S1│                        │  │  │</span>
+<span class="grn">│  │  └─────────────┘  └─────────────────────────────────────┘  │  │</span>
+<span class="grn">│  │         ← Shared by all threads →                           │  │</span>
+<span class="grn">│  │                                                             │  │</span>
+<span class="pur">│  │  ┌──────────────┐ ┌────────────┐ ┌───────────────────────┐ │  │</span>
+<span class="pur">│  │  │  JVM Stack   │ │ PC Register│ │ Native Method Stack   │ │  │</span>
+<span class="pur">│  │  │ (per thread) │ │(per thread)│ │   (per thread)        │ │  │</span>
+<span class="pur">│  │  └──────────────┘ └────────────┘ └───────────────────────┘ │  │</span>
+<span class="pur">│  │         ← One per thread →                                  │  │</span>
+<span class="grn">│  └─────────────────────────────────────────────────────────────┘  │</span>
+<span class="arr">│                           ↓                                        │</span>
+<span class="orn">│  ┌─────────────────────────────────────────────────────────────┐  │</span>
+<span class="orn">│  │              EXECUTION ENGINE                               │  │</span>
+<span class="orn">│  │   Interpreter   │   JIT Compiler (C1+C2)  │  GC            │  │</span>
+<span class="orn">│  └──────────────────────────────┬──────────────────────────────┘  │</span>
+<span class="arr">│                                 │ native calls                     │</span>
+<span class="red">│  ┌────────────────────────────────────────────────────────────┐   │</span>
+<span class="red">│  │  Native Method Interface (JNI) + Native Method Libraries   │   │</span>
+<span class="red">│  └────────────────────────────────────────────────────────────┘   │</span>
+<span class="box">└────────────────────────────────────────────────────────────────────┘</span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📊 Three Main Subsystems — Summary</h3>
+    <table class="comp-table">
+      <thead><tr><th>Subsystem</th><th>Responsibility</th><th>Key Components</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Class Loader Subsystem</td>
+          <td>Finds, loads, links, and initializes .class files into JVM memory</td>
+          <td>Bootstrap, Extension, Application ClassLoaders; Loading → Linking → Initialization pipeline</td>
+        </tr>
+        <tr>
+          <td>Runtime Data Areas</td>
+          <td>Memory areas the JVM uses during program execution</td>
+          <td>Method Area, Heap (Eden/Survivor/Old), JVM Stack, PC Register, Native Method Stack</td>
+        </tr>
+        <tr>
+          <td>Execution Engine</td>
+          <td>Executes bytecode instructions</td>
+          <td>Interpreter (slow first run), JIT Compiler (hot methods → machine code), GC (frees heap)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 2 — CLASS LOADING PROCESS
+════════════════════════════════════ -->
+<section id="classloading" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-yellow">🔄</div>
+    <div class="section-meta">
+      <div class="section-label">Section 2</div>
+      <div class="section-title">Class Loading Process</div>
+      <div class="section-sub">3 phases: Loading → Linking (Verify+Prepare+Resolve) → Initialization</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📋 5-Step Class Loading Pipeline</h3>
+    <div class="phase-row">
+      <div class="phase-box ph-green">
+        <div class="phase-label">① Loading</div>
+        <div class="phase-desc">Find .class file<br>Read bytecode<br>Create Class object</div>
+      </div>
+      <div class="phase-box ph-purple">
+        <div class="phase-label">② Verification</div>
+        <div class="phase-desc">Verify bytecode<br>Check format<br>Security check</div>
+      </div>
+      <div class="phase-box ph-yellow">
+        <div class="phase-label">③ Preparation</div>
+        <div class="phase-desc">Allocate static vars<br>Set default values<br>(not code values)</div>
+      </div>
+      <div class="phase-box ph-orange">
+        <div class="phase-label">④ Resolution</div>
+        <div class="phase-desc">Resolve symbolic<br>references to<br>direct references</div>
+      </div>
+      <div class="phase-box ph-pink">
+        <div class="phase-label">⑤ Initialization</div>
+        <div class="phase-desc">Run static blocks<br>Assign static vars<br>Run &lt;clinit&gt;</div>
+      </div>
+    </div>
+
+    <p style="margin-top:12px">Steps ②③④ together form the <strong>Linking</strong> phase.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>🔷 Phase 1 — Loading</h3>
+    <p>ClassLoader reads the binary data from a .class file and creates a
+    <code>java.lang.Class</code> object in the Method Area (Metaspace).</p>
+    <ul class="key-list">
+      <li><strong>Finds the .class file</strong> using fully qualified class name (e.g., <code>com.example.MyClass</code>)</li>
+      <li class="purple"><strong>Reads the binary bytecode</strong> from filesystem, JAR, network, or anywhere</li>
+      <li class="yellow"><strong>Creates a Class&lt;?&gt; object</strong> in Method Area representing the loaded class</li>
+      <li class="red"><strong>Only loaded once per ClassLoader</strong> — subsequent requests return the same Class object</li>
+    </ul>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Class loading observation</span></div>
+      <pre>
+<span class="cm">// When does class loading happen?</span>
+<span class="cm">// 1. new MyClass() — instantiation</span>
+<span class="cm">// 2. MyClass.staticMethod() — static method call</span>
+<span class="cm">// 3. MyClass.STATIC_FIELD  — static field access (except compile-time constants)</span>
+<span class="cm">// 4. Class.forName("MyClass") — explicit loading</span>
+<span class="cm">// 5. Loading a subclass triggers loading of parent class</span>
+
+<span class="cm">// Observe class loading with JVM flag: -verbose:class</span>
+<span class="cm">// java -verbose:class Main → prints every class as it's loaded</span>
+
+<span class="cm">// Get ClassLoader of a class</span>
+<span class="cl">System</span>.out.println(<span class="cl">String</span>.<span class="kw">class</span>.<span class="fn">getClassLoader</span>());        <span class="cm">// null (Bootstrap)</span>
+<span class="cl">System</span>.out.println(<span class="cl">MyClass</span>.<span class="kw">class</span>.<span class="fn">getClassLoader</span>());      <span class="cm">// AppClassLoader</span>
+<span class="cl">System</span>.out.println(<span class="cl">MyClass</span>.<span class="kw">class</span>.<span class="fn">getClassLoader</span>()
+                         .<span class="fn">getParent</span>());                   <span class="cm">// ExtClassLoader / PlatformCL</span>
+<span class="cl">System</span>.out.println(<span class="cl">MyClass</span>.<span class="kw">class</span>.<span class="fn">getClassLoader</span>()
+                         .<span class="fn">getParent</span>().<span class="fn">getParent</span>());        <span class="cm">// null (Bootstrap)</span>
+
+<span class="cm">// Class.forName — loads AND initializes (runs static blocks)</span>
+<span class="cl">Class</span>&lt;?&gt; c1 = <span class="cl">Class</span>.<span class="fn">forName</span>(<span class="str">"com.example.MyClass"</span>);
+
+<span class="cm">// ClassLoader.loadClass — loads but does NOT initialize</span>
+<span class="cl">ClassLoader</span> cl = <span class="cl">ClassLoader</span>.<span class="fn">getSystemClassLoader</span>();
+<span class="cl">Class</span>&lt;?&gt; c2 = cl.<span class="fn">loadClass</span>(<span class="str">"com.example.MyClass"</span>); <span class="cm">// no &lt;clinit&gt; run</span></pre>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔶 Phase 2 — Linking (3 sub-phases)</h3>
+
+    <h4>2a. Verification</h4>
+    <p>JVM checks that the bytecode is structurally correct and safe.
+       Ensures the JVM won't crash or violate security by executing it.</p>
+    <ul class="key-list">
+      <li><strong>File format check:</strong> Magic number <code>0xCAFEBABE</code>, valid version</li>
+      <li class="purple"><strong>Bytecode validity:</strong> Valid opcodes, correct operand types, stack depth consistency</li>
+      <li class="yellow"><strong>Class/method references:</strong> Referenced classes and methods actually exist</li>
+      <li class="red"><strong>Access rules:</strong> No accessing private members of other classes</li>
+    </ul>
+
+    <h4>2b. Preparation</h4>
+    <p>JVM allocates memory for static variables and sets them to
+       <strong>default values</strong> (0, false, null) — NOT the values from the source code.</p>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Preparation phase — default values</span></div>
+      <pre>
+<span class="kw">class</span> <span class="cl">MyClass</span> {
+    <span class="kw">static int</span>     count   = <span class="num">100</span>;   <span class="cm">// Preparation: count = 0 (not 100!)</span>
+    <span class="kw">static boolean</span> active  = <span class="kw">true</span>;  <span class="cm">// Preparation: active = false</span>
+    <span class="kw">static</span> <span class="cl">String</span>  name    = <span class="str">"Java"</span>; <span class="cm">// Preparation: name = null</span>
+    <span class="kw">static final int</span> MAX  = <span class="num">50</span>;    <span class="cm">// compile-time constant: MAX = 50 directly!</span>
+}
+<span class="cm">// Actual values (100, true, "Java") are assigned during Initialization phase</span>
+<span class="cm">// static final primitive constants assigned during Preparation (not Initialization)</span></pre>
+    </div>
+
+    <h4>2c. Resolution</h4>
+    <p>Replaces <strong>symbolic references</strong> in the constant pool with
+       <strong>direct references</strong> (memory addresses / method table offsets).</p>
+    <div class="info-box note">
+      <div class="ib-icon">💡</div>
+      <div>
+        In bytecode, method calls are stored as symbolic references like
+        <code>"java/io/PrintStream.println:(Ljava/lang/String;)V"</code>.
+        Resolution converts this to an actual pointer to the method in memory.
+        This can be done lazily (when first used) or eagerly depending on JVM implementation.
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔷 Phase 3 — Initialization</h3>
+    <p>JVM executes the class initializer <code>&lt;clinit&gt;</code> method —
+       assigns actual values to static variables and runs static initialization blocks,
+       in top-to-bottom order.</p>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Initialization — static blocks and order</span></div>
+      <pre>
+<span class="kw">class</span> <span class="cl">InitDemo</span> {
+    <span class="kw">static int</span> x = <span class="num">10</span>;         <span class="cm">// ← executed 1st (top-to-bottom)</span>
+
+    <span class="kw">static</span> {
+        <span class="cl">System</span>.out.println(<span class="str">"Static block 1, x = "</span> + x); <span class="cm">// x=10</span>
+        x = <span class="num">20</span>;
+    }
+
+    <span class="kw">static int</span> y = x * <span class="num">2</span>;      <span class="cm">// y = 40 (x is 20 at this point)</span>
+
+    <span class="kw">static</span> {
+        <span class="cl">System</span>.out.println(<span class="str">"Static block 2, y = "</span> + y); <span class="cm">// y=40</span>
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">System</span>.out.println(<span class="str">"main, x="</span> + x + <span class="str">", y="</span> + y);
+    }
+}
+<span class="cm">// Output:
+// Static block 1, x = 10
+// Static block 2, y = 40
+// main, x=20, y=40</span>
+
+<span class="cm">// Class initialization is thread-safe!
+// JVM guarantees &lt;clinit&gt; is called ONCE and atomically
+// If two threads try to load same class simultaneously, only one runs &lt;clinit&gt;</span>
+
+<span class="cm">// Parent class is initialized BEFORE child class</span>
+<span class="kw">class</span> <span class="cl">Parent</span> {
+    <span class="kw">static</span> { <span class="cl">System</span>.out.println(<span class="str">"Parent init"</span>); }
+}
+<span class="kw">class</span> <span class="cl">Child</span> <span class="kw">extends</span> <span class="cl">Parent</span> {
+    <span class="kw">static</span> { <span class="cl">System</span>.out.println(<span class="str">"Child init"</span>); }
+}
+<span class="cm">// new Child() → "Parent init" then "Child init"</span></pre>
+    </div>
+
+    <div class="info-box warn">
+      <div class="ib-icon">⚠️</div>
+      <div>
+        <strong>Tricky Interview Question:</strong> A class is initialized at most ONCE per ClassLoader.
+        Accessing a <code>static final</code> compile-time constant (e.g., <code>static final int X = 5</code>)
+        does <strong>NOT</strong> trigger class initialization — the value is inlined by the compiler.
+        But <code>static final String s = new String("hello")</code> DOES trigger initialization
+        (it's not a compile-time constant).
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 3 — TYPES OF CLASSLOADERS
+════════════════════════════════════ -->
+<section id="classloaders" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-cyan">🏗️</div>
+    <div class="section-meta">
+      <div class="section-label">Section 3</div>
+      <div class="section-title">Types of ClassLoaders</div>
+      <div class="section-sub">Bootstrap, Platform (Extension), Application, Custom — hierarchy &amp; responsibilities</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📊 ClassLoader Hierarchy</h3>
+    <div class="diagram">
+      <span class="d-title">ClassLoader Parent-Child Hierarchy</span>
+<span class="hi">  ┌──────────────────────────────────────────────────┐</span>
+<span class="hi">  │         Bootstrap ClassLoader                    │</span>
+<span class="hi">  │  - Written in native C++ (no Java parent)        │</span>
+<span class="hi">  │  - Loads JDK core classes                        │</span>
+<span class="hi">  │  - Java 8: rt.jar, charsets.jar (JRE/lib)        │</span>
+<span class="hi">  │  - Java 9+: java.base module                     │</span>
+<span class="hi">  │  - Returns null when asked for parent            │</span>
+<span class="hi">  └──────────────────────────┬───────────────────────┘</span>
+<span class="arr">                             │  parent</span>
+<span class="arr">                             ↓</span>
+<span class="grn">  ┌──────────────────────────────────────────────────┐</span>
+<span class="grn">  │   Extension CL (Java 8) / Platform CL (Java 9+)  │</span>
+<span class="grn">  │  - Loads extensions of Java platform              │</span>
+<span class="grn">  │  - Java 8: JRE/lib/ext directory                 │</span>
+<span class="grn">  │  - Java 9+: named modules except java.base       │</span>
+<span class="grn">  │  - sun.misc.Launcher$ExtClassLoader (Java 8)     │</span>
+<span class="grn">  │  - jdk.internal.loader.ClassLoaders$PlatformCL   │</span>
+<span class="grn">  └──────────────────────────┬───────────────────────┘</span>
+<span class="arr">                             │  parent</span>
+<span class="arr">                             ↓</span>
+<span class="pur">  ┌──────────────────────────────────────────────────┐</span>
+<span class="pur">  │         Application (App) ClassLoader            │</span>
+<span class="pur">  │  = System ClassLoader                            │</span>
+<span class="pur">  │  - Loads classes from classpath (-cp / CLASSPATH)│</span>
+<span class="pur">  │  - Loads YOUR application's .class files         │</span>
+<span class="pur">  │  - sun.misc.Launcher$AppClassLoader (Java 8)     │</span>
+<span class="pur">  └──────────────────────────┬───────────────────────┘</span>
+<span class="arr">                             │  parent</span>
+<span class="arr">                             ↓</span>
+<span class="orn">  ┌──────────────────────────────────────────────────┐</span>
+<span class="orn">  │         Custom ClassLoader (User-defined)        │</span>
+<span class="orn">  │  - Extends java.lang.ClassLoader                 │</span>
+<span class="orn">  │  - Loads from DB, network, encrypted files, etc. │</span>
+<span class="orn">  │  - Used by app servers, OSGi, Spring, Tomcat      │</span>
+<span class="orn">  └──────────────────────────────────────────────────┘</span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📋 ClassLoader — Detailed Responsibilities</h3>
+    <table class="comp-table">
+      <thead>
+        <tr><th>ClassLoader</th><th>Loads From</th><th>Examples of Classes Loaded</th><th>getParent()</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bootstrap</td>
+          <td>JDK core: <code>$JAVA_HOME/lib/</code> (Java 8) or <code>java.base</code> module (Java 9+)</td>
+          <td>java.lang.*, java.util.*, java.io.*, java.net.*</td>
+          <td><code>null</code></td>
+        </tr>
+        <tr>
+          <td>Extension / Platform</td>
+          <td>Java 8: <code>$JAVA_HOME/lib/ext/</code><br>Java 9+: Platform modules</td>
+          <td>javax.*, com.sun.*, jdk.* (non-base)</td>
+          <td>Bootstrap (null)</td>
+        </tr>
+        <tr>
+          <td>Application / System</td>
+          <td>Classpath: <code>-classpath</code> / <code>CLASSPATH</code> env var</td>
+          <td>Your app classes + third-party JARs</td>
+          <td>Extension/Platform CL</td>
+        </tr>
+        <tr>
+          <td>Custom</td>
+          <td>Anywhere (database, network, encrypted file)</td>
+          <td>Dynamically generated classes, hot-reloaded code</td>
+          <td>Usually App CL</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-card">
+    <h3>💻 Exploring ClassLoaders Programmatically</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ClassLoader inspection</span></div>
+      <pre>
+<span class="kw">public class</span> <span class="cl">ClassLoaderInspect</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+
+        <span class="cm">// String is loaded by Bootstrap (returns null)</span>
+        <span class="cl">System</span>.out.println(<span class="cl">String</span>.<span class="kw">class</span>.<span class="fn">getClassLoader</span>());
+        <span class="cm">// Output: null  (Bootstrap is native, no Java object)</span>
+
+        <span class="cm">// Your class is loaded by Application ClassLoader</span>
+        <span class="cl">System</span>.out.println(<span class="cl">ClassLoaderInspect</span>.<span class="kw">class</span>.<span class="fn">getClassLoader</span>());
+        <span class="cm">// Output: jdk.internal.loader.ClassLoaders$AppClassLoader@...</span>
+
+        <span class="cm">// Walk up the parent chain</span>
+        <span class="cl">ClassLoader</span> cl = <span class="cl">ClassLoaderInspect</span>.<span class="kw">class</span>.<span class="fn">getClassLoader</span>();
+        <span class="kw">while</span> (cl != <span class="kw">null</span>) {
+            <span class="cl">System</span>.out.println(<span class="str">"ClassLoader: "</span> + cl.<span class="fn">getClass</span>().<span class="fn">getName</span>());
+            cl = cl.<span class="fn">getParent</span>();
+        }
+        <span class="cl">System</span>.out.println(<span class="str">"Bootstrap ClassLoader (null parent)"</span>);
+
+        <span class="cm">// Get system ClassLoader (= Application ClassLoader)</span>
+        <span class="cl">ClassLoader</span> sysCL = <span class="cl">ClassLoader</span>.<span class="fn">getSystemClassLoader</span>();
+
+        <span class="cm">// Get context ClassLoader of current thread</span>
+        <span class="cl">ClassLoader</span> ctxCL = <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">getContextClassLoader</span>();
+
+        <span class="cm">// Find a resource using ClassLoader</span>
+        java.net.<span class="cl">URL</span> url = cl.<span class="fn">getResource</span>(<span class="str">"com/example/MyClass.class"</span>);
+        <span class="cl">System</span>.out.println(<span class="str">"Class location: "</span> + url);
+
+        <span class="cm">// Check if class is loaded (doesn't trigger initialization)</span>
+        <span class="cl">Class</span>&lt;?&gt; loaded = <span class="cl">Class</span>.<span class="fn">forName</span>(<span class="str">"java.lang.String"</span>,
+            <span class="kw">false</span>, <span class="cm">/* initialize=false */</span>
+            <span class="cl">ClassLoader</span>.<span class="fn">getSystemClassLoader</span>());
+    }
+}</pre>
+    </div>
+    <div class="output-box">
+      <div class="output-label">Output</div>
+      <div class="output-line gray">null</div>
+      <div class="output-line">jdk.internal.loader.ClassLoaders$AppClassLoader@251a69d7</div>
+      <div class="output-line">ClassLoader: jdk.internal.loader.ClassLoaders$AppClassLoader</div>
+      <div class="output-line">ClassLoader: jdk.internal.loader.ClassLoaders$PlatformClassLoader</div>
+      <div class="output-line gray">Bootstrap ClassLoader (null parent)</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 4 — PARENT DELEGATION MODEL
+════════════════════════════════════ -->
+<section id="delegation" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-orange">👑</div>
+    <div class="section-meta">
+      <div class="section-label">Section 4</div>
+      <div class="section-title">Parent Delegation Model</div>
+      <div class="section-sub">How class loading requests propagate, why it exists, how to break it</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔄 How the Delegation Model Works</h3>
+    <p>When any ClassLoader is asked to load a class, it follows a strict delegation chain
+       <strong>before trying to load it itself</strong>.</p>
+    <div class="diagram">
+      <span class="d-title">Parent Delegation — "Load java.lang.String" Flow</span>
+<span class="orn">  AppClassLoader.loadClass("java.lang.String")</span>
+<span class="arr">       │</span>
+<span class="arr">       │ 1. Already loaded? Check cache → NO</span>
+<span class="arr">       │ 2. Delegate to parent first!</span>
+<span class="arr">       ↓</span>
+<span class="grn">  PlatformClassLoader.loadClass("java.lang.String")</span>
+<span class="arr">       │</span>
+<span class="arr">       │ 1. Already loaded? Check cache → NO</span>
+<span class="arr">       │ 2. Delegate to parent first!</span>
+<span class="arr">       ↓</span>
+<span class="hi">  BootstrapClassLoader.loadClass("java.lang.String")</span>
+<span class="arr">       │</span>
+<span class="arr">       │ 1. Already loaded? Check cache → YES (if loaded before) or</span>
+<span class="arr">       │    look in java.base module → FOUND!</span>
+<span class="grn">       ↓ returns Class&lt;String&gt;</span>
+<span class="hi">  BootstrapCL returns Class → PlatformCL returns it → AppCL returns it</span>
+<span class="box">       ↓</span>
+<span class="grn">  java.lang.String loaded by Bootstrap (not App CL)</span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>💻 loadClass() Algorithm — Source Code Logic</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">java.lang.ClassLoader.loadClass() — simplified</span></div>
+      <pre>
+<span class="cm">// This is the ACTUAL logic inside ClassLoader.loadClass()</span>
+<span class="kw">protected</span> <span class="cl">Class</span>&lt;?&gt; <span class="fn">loadClass</span>(<span class="cl">String</span> name, <span class="kw">boolean</span> resolve)
+        <span class="kw">throws</span> <span class="cl">ClassNotFoundException</span> {
+
+    <span class="kw">synchronized</span> (<span class="fn">getClassLoadingLock</span>(name)) {
+
+        <span class="cm">// Step 1: Check if class already loaded (cache)</span>
+        <span class="cl">Class</span>&lt;?&gt; c = <span class="fn">findLoadedClass</span>(name);
+
+        <span class="kw">if</span> (c == <span class="kw">null</span>) {
+            <span class="kw">try</span> {
+                <span class="cm">// Step 2: Delegate to parent FIRST</span>
+                <span class="kw">if</span> (parent != <span class="kw">null</span>) {
+                    c = parent.<span class="fn">loadClass</span>(name, <span class="kw">false</span>); <span class="cm">// recurse up</span>
+                } <span class="kw">else</span> {
+                    <span class="cm">// Parent is Bootstrap (null) — ask Bootstrap</span>
+                    c = <span class="fn">findBootstrapClassOrNull</span>(name);
+                }
+            } <span class="kw">catch</span> (<span class="cl">ClassNotFoundException</span> e) {
+                <span class="cm">// Parent couldn't find it — that's OK</span>
+            }
+
+            <span class="kw">if</span> (c == <span class="kw">null</span>) {
+                <span class="cm">// Step 3: Parent failed — try to find it OURSELVES</span>
+                c = <span class="fn">findClass</span>(name); <span class="cm">// ← subclasses override THIS method</span>
+            }
+        }
+
+        <span class="kw">if</span> (resolve) {
+            <span class="fn">resolveClass</span>(c); <span class="cm">// link the class</span>
+        }
+        <span class="kw">return</span> c;
+    }
+}</pre>
+    </div>
+    <div class="info-box tip">
+      <div class="ib-icon">✅</div>
+      <div>
+        <strong>Key insight:</strong> When creating a custom ClassLoader, you should
+        <strong>override <code>findClass()</code></strong>, not <code>loadClass()</code>.
+        Overriding <code>loadClass()</code> breaks the delegation model.
+        <code>findClass()</code> is called only after the parent chain has failed.
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>❓ Why Parent Delegation Model?</h3>
+    <ul class="key-list">
+      <li><strong>Security:</strong> Prevents malicious code from replacing core JDK classes.
+          Even if you create a class called <code>java.lang.String</code>,
+          the Bootstrap ClassLoader's version will always be loaded first.</li>
+      <li class="purple"><strong>Uniqueness:</strong> Ensures a class is loaded exactly once.
+          Same class definition = same Class object across the application.</li>
+      <li class="yellow"><strong>Consistency:</strong> <code>java.lang.*</code> classes behave the same everywhere —
+          they're always loaded by Bootstrap.</li>
+    </ul>
+  </div>
+
+  <div class="content-card">
+    <h3>💡 Breaking the Delegation Model (When & Why)</h3>
+    <p>Some frameworks intentionally break parent delegation for valid reasons:</p>
+    <ul class="key-list">
+      <li><strong>Tomcat / App Servers:</strong> Each web app has its own ClassLoader to
+          isolate their classes. webapp-A's version of Hibernate ≠ webapp-B's version.</li>
+      <li class="purple"><strong>OSGi (Eclipse):</strong> Bundle ClassLoaders load their own dependencies,
+          different bundles can use different versions of same library.</li>
+      <li class="yellow"><strong>Hot Reload (dev tools):</strong> Throw away old ClassLoader,
+          create new one to reload changed classes without restarting JVM.</li>
+      <li class="red"><strong>Thread Context ClassLoader:</strong> SPI (Service Provider Interface) like JDBC
+          uses Thread Context ClassLoader to break delegation —
+          Bootstrap needs to load user's DB driver.</li>
+    </ul>
+  </div>
+
+  <div class="iq-title">🎯 Interview Questions — ClassLoader</div>
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q1</span>What happens if you create a class named java.lang.String in your application?</div>
+    <div class="iq-a">
+      Due to the Parent Delegation Model, when your code tries to load "java.lang.String",
+      the request is delegated up to Bootstrap ClassLoader, which finds the real JDK String
+      and returns it. Your custom String class will never be loaded.
+      Additionally, the JVM has a security restriction: you cannot define classes in the
+      <code>java.*</code> package at all — it throws <code>SecurityException</code>.
+    </div>
+  </div>
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q2</span>Can the same class be loaded by two different ClassLoaders? Are they the same?</div>
+    <div class="iq-a">
+      Yes! You can load the same .class file with two different ClassLoader instances.
+      However, <strong>they are treated as completely different classes by the JVM</strong>.
+      Instances of one cannot be cast to the other — you'll get <code>ClassCastException</code>.
+      <code>Class.equals()</code> will return false.
+      This is why ClassLoader isolation works in app servers.
+    </div>
+  </div>
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q3</span>What is the difference between Class.forName() and ClassLoader.loadClass()?</div>
+    <div class="iq-a">
+      <strong>Class.forName("X"):</strong> Loads AND initializes the class — runs static blocks, assigns static values.<br>
+      <strong>ClassLoader.loadClass("X"):</strong> Loads the class but does NOT initialize it — static blocks don't run.<br>
+      Example: JDBC driver registration uses <code>Class.forName("com.mysql.Driver")</code>
+      specifically to trigger the static block that registers the driver with DriverManager.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 5 — RUNTIME DATA AREAS
+════════════════════════════════════ -->
+<section id="rda" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-purple">🧠</div>
+    <div class="section-meta">
+      <div class="section-label">Section 5</div>
+      <div class="section-title">Runtime Data Areas</div>
+      <div class="section-sub">5 memory regions — which are shared vs per-thread, what's stored where</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🗂️ 5 Memory Areas — Overview</h3>
+    <div class="mem-grid">
+      <div class="mem-box mb-yellow">
+        <div class="mem-title">📦 Method Area</div>
+        <div class="mem-detail">
+          Class metadata, bytecode, static variables, constant pool, method/field info.
+          Java 8+: Replaced PermGen → <strong>Metaspace</strong> (native memory).
+        </div>
+        <div class="mem-tag">Shared — all threads</div>
+      </div>
+      <div class="mem-box mb-green">
+        <div class="mem-title">🌿 Heap</div>
+        <div class="mem-detail">
+          All object instances and arrays. GC operates here.
+          Divided: Young Gen (Eden+Survivor) + Old Gen + (String Pool Java 7+).
+        </div>
+        <div class="mem-tag">Shared — all threads</div>
+      </div>
+      <div class="mem-box mb-purple">
+        <div class="mem-title">📚 JVM Stack</div>
+        <div class="mem-detail">
+          One per thread. Holds Stack Frames.
+          Each frame = local variables + operand stack + frame data.
+          StackOverflowError if too deep.
+        </div>
+        <div class="mem-tag">Per-thread</div>
+      </div>
+      <div class="mem-box mb-orange">
+        <div class="mem-title">🔢 PC Register</div>
+        <div class="mem-detail">
+          Program Counter — holds address of currently executing bytecode instruction.
+          Undefined (native) when running native methods.
+        </div>
+        <div class="mem-tag">Per-thread</div>
+      </div>
+      <div class="mem-box mb-red">
+        <div class="mem-title">⚡ Native Method Stack</div>
+        <div class="mem-detail">
+          Like JVM Stack but for native (non-Java) methods called via JNI.
+          C stack for native code execution.
+        </div>
+        <div class="mem-tag">Per-thread</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔷 Method Area (Metaspace in Java 8+)</h3>
+    <p>Stores all class-level data. In Java 7 and earlier, it was called
+       <strong>PermGen</strong> (Permanent Generation) — a fixed-size heap area.
+       In Java 8+, it became <strong>Metaspace</strong> — stored in native memory
+       (off-heap), can grow dynamically.</p>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Text</span><span class="code-label">What's stored in Method Area / Metaspace</span></div>
+      <pre>
+Method Area stores per-class:
+  ├── Runtime Constant Pool
+  │     ├── String literals ("hello"), numeric constants
+  │     ├── Symbolic references (class/method/field names)
+  │     └── Direct references (after resolution)
+  ├── Field Information
+  │     ├── Field names, types, modifiers
+  │     └── Static variable values (after initialization)
+  ├── Method Information
+  │     ├── Method names, return types, parameter types
+  │     ├── Bytecode of each method
+  │     └── Exception table
+  ├── Class Information
+  │     ├── Fully qualified class name
+  │     ├── Superclass name, interface names
+  │     └── Modifiers (public/abstract/final...)
+  └── Reference to ClassLoader that loaded this class</pre>
+    </div>
+
+    <table class="comp-table">
+      <thead><tr><th>Feature</th><th>PermGen (Java ≤ 7)</th><th>Metaspace (Java 8+)</th></tr></thead>
+      <tbody>
+        <tr><td>Location</td><td>Java Heap (fixed region)</td><td>Native Memory (off-heap)</td></tr>
+        <tr><td>Default size</td><td>64 MB (limited)</td><td>No fixed limit (grows as needed)</td></tr>
+        <tr><td>String Pool</td><td>Stored in PermGen</td><td>Moved to Heap (Java 7+)</td></tr>
+        <tr><td>OutOfMemory</td><td>java.lang.OutOfMemoryError: PermGen space</td><td>java.lang.OutOfMemoryError: Metaspace</td></tr>
+        <tr><td>GC'd?</td><td>Only during Full GC</td><td>Yes, when ClassLoader is unreachable</td></tr>
+        <tr><td>Configuration</td><td>-XX:MaxPermSize=256m</td><td>-XX:MaxMetaspaceSize=256m</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box note">
+      <div class="ib-icon">💡</div>
+      <div>
+        <strong>String Pool (Interning):</strong> In Java 6 and earlier, String literals were
+        stored in PermGen. Since Java 7, the String Pool is on the Heap.
+        <code>"abc" == "abc"</code> → true (same interned instance).
+        <code>new String("abc") == "abc"</code> → false (heap object ≠ pool).
+        <code>"abc".intern()</code> → returns the pooled reference.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 6 — HEAP MEMORY & GC
+════════════════════════════════════ -->
+<section id="heap" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-green">🌿</div>
+    <div class="section-meta">
+      <div class="section-label">Section 6</div>
+      <div class="section-title">Heap Memory &amp; GC Regions</div>
+      <div class="section-sub">Young Gen, Old Gen, Eden, Survivor spaces, Metaspace, GC behavior</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🗺️ Heap Layout — Generational Model</h3>
+    <div class="diagram">
+      <span class="d-title">JVM Heap Layout (Traditional Generational GC)</span>
+<span class="brn">┌──────────────────────────────────────────────────────────────────┐</span>
+<span class="brn">│                         J V M  H E A P                           │</span>
+<span class="brn">│                                                                  │</span>
+<span class="grn">│  ┌───────────────────────────────────────┐  ┌─────────────────┐  │</span>
+<span class="grn">│  │           YOUNG GENERATION            │  │  OLD GENERATION │  │</span>
+<span class="grn">│  │           (~33% of heap)              │  │  (Tenured Space)│  │</span>
+<span class="grn">│  │                                       │  │  (~67% of heap) │  │</span>
+<span class="grn">│  │  ┌──────────────┐ ┌─────┐ ┌────────┐  │  │                 │  │</span>
+<span class="hi">│  │  │     EDEN     │ │ S0  │ │  S1    │  │  │  Long-lived     │  │</span>
+<span class="hi">│  │  │  (new objs   │ │(from│ │(to     │  │  │  objects        │  │</span>
+<span class="hi">│  │  │   born here) │ │space│ │space)  │  │  │  (survived 15+  │  │</span>
+<span class="hi">│  │  └──────────────┘ └─────┘ └────────┘  │  │   minor GCs)    │  │</span>
+<span class="grn">│  └───────────────────────────────────────┘  └─────────────────┘  │</span>
+<span class="arr">│       Minor GC (fast)                          Major/Full GC     │</span>
+<span class="brn">│                                                                  │</span>
+<span class="pur">│  String Pool (Heap, since Java 7)                                │</span>
+<span class="brn">│                                                                  │</span>
+<span class="brn">└──────────────────────────────────────────────────────────────────┘</span>
+<span class="orn">                                                                   </span>
+<span class="orn">  Metaspace (native memory, off-heap) — class metadata             </span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔄 Object Lifecycle in Heap — Step by Step</h3>
+    <div class="diagram">
+      <span class="d-title">Object Lifecycle — From Birth to Collection</span>
+<span class="hi">  1. new MyObject() → allocated in EDEN space</span>
+<span class="brn">     Eden: [obj1][obj2][obj3][obj4]...</span>
+<span class="arr">     ↓ Eden gets full → Minor GC triggered</span>
+
+<span class="grn">  2. MINOR GC (Young Gen GC)</span>
+<span class="brn">     - Mark live objects in Eden + S0 (from-space)</span>
+<span class="brn">     - Copy live objects to S1 (to-space)</span>
+<span class="brn">     - Increment age counter on each survived object</span>
+<span class="brn">     - Clear Eden and S0</span>
+<span class="brn">     - Swap S0 ↔ S1 (to becomes from for next GC)</span>
+<span class="arr">     ↓ Repeat: survivors move between S0 and S1</span>
+
+<span class="hi">  3. TENURING — after surviving N minor GCs (default N=15)</span>
+<span class="brn">     Object promoted from Young Gen → Old Gen (Tenured)</span>
+<span class="brn">     Also: large objects may go directly to Old Gen</span>
+<span class="arr">     ↓ Old Gen gets full</span>
+
+<span class="orn">  4. MAJOR GC / FULL GC</span>
+<span class="brn">     - Collects entire heap (Young + Old + Metaspace)</span>
+<span class="red">     - Stop-The-World pause (all application threads paused)</span>
+<span class="brn">     - More expensive, less frequent than Minor GC</span>
+    </div>
+
+    <div class="info-box warn">
+      <div class="ib-icon">⚠️</div>
+      <div>
+        <strong>Stop-The-World (STW):</strong> During GC, all application threads are
+        paused — this causes latency spikes. Modern GC algorithms (G1, ZGC, Shenandoah)
+        minimize STW pauses by doing most work concurrently with application threads.
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>⚙️ GC Algorithms — Quick Reference</h3>
+    <table class="comp-table">
+      <thead><tr><th>GC Algorithm</th><th>Java Version</th><th>STW Pause</th><th>Best For</th></tr></thead>
+      <tbody>
+        <tr><td>Serial GC</td><td>All</td><td>Full STW</td><td>Small single-core apps, embedded</td></tr>
+        <tr><td>Parallel GC</td><td>Default Java 8</td><td>STW, parallel threads</td><td>Batch processing, throughput priority</td></tr>
+        <tr><td>CMS (deprecated)</td><td>Java 9 deprecated</td><td>Low pause</td><td>Low-latency (replaced by G1)</td></tr>
+        <tr><td>G1 GC</td><td>Default Java 9+</td><td>Predictable short pauses</td><td>Large heaps (&gt;4GB), balanced latency/throughput</td></tr>
+        <tr><td>ZGC</td><td>Java 15 production</td><td>&lt;1ms (scalable)</td><td>Ultra-low latency, very large heaps</td></tr>
+        <tr><td>Shenandoah</td><td>Java 12+ (RedHat)</td><td>&lt;10ms concurrent</td><td>Low latency, OpenJDK</td></tr>
+      </tbody>
+    </table>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">JVM Flags</span><span class="code-label">Common GC configuration flags</span></div>
+      <pre>
+<span class="cm"># Heap sizing</span>
+-Xms512m                     <span class="cm"># Initial heap size</span>
+-Xmx2g                       <span class="cm"># Maximum heap size</span>
+-Xmn512m                     <span class="cm"># Young generation size</span>
+-XX:MetaspaceSize=128m        <span class="cm"># Initial Metaspace size</span>
+-XX:MaxMetaspaceSize=256m     <span class="cm"># Max Metaspace (prevents unbounded growth)</span>
+
+<span class="cm"># GC selection</span>
+-XX:+UseSerialGC              <span class="cm"># Serial GC</span>
+-XX:+UseParallelGC            <span class="cm"># Parallel GC</span>
+-XX:+UseG1GC                  <span class="cm"># G1 GC (default Java 9+)</span>
+-XX:+UseZGC                   <span class="cm"># ZGC (Java 15+)</span>
+
+<span class="cm"># GC tuning</span>
+-XX:MaxTenuringThreshold=10   <span class="cm"># Promote to Old Gen after 10 minor GCs</span>
+-XX:NewRatio=3                <span class="cm"># Old:Young = 3:1</span>
+-XX:SurvivorRatio=8           <span class="cm"># Eden:Survivor = 8:1</span>
+
+<span class="cm"># GC logging (Java 9+)</span>
+-Xlog:gc*                     <span class="cm"># Verbose GC logging</span>
+-Xlog:gc:file=gc.log          <span class="cm"># Log to file</span>
+
+<span class="cm"># Diagnostics</span>
+-XX:+HeapDumpOnOutOfMemoryError  <span class="cm"># Dump heap on OOM</span>
+-XX:HeapDumpPath=/tmp/heap.hprof</pre>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 7 — STACK & STACK FRAME
+════════════════════════════════════ -->
+<section id="stack" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-red">📚</div>
+    <div class="section-meta">
+      <div class="section-label">Section 7</div>
+      <div class="section-title">JVM Stack &amp; Stack Frame</div>
+      <div class="section-sub">Per-thread, stack frames, local variable array, operand stack, StackOverflowError</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📋 JVM Stack — Structure</h3>
+    <p>Each thread has its own JVM Stack created at thread creation time.
+       The stack holds <strong>Stack Frames</strong>.
+       One frame is pushed for each method invocation and popped when the method returns.</p>
+
+    <div class="diagram">
+      <span class="d-title">JVM Stack — Thread execution visualization</span>
+<span class="brn">  Thread's JVM Stack</span>
+<span class="brn">  ┌─────────────────────────────────────────────┐</span>
+<span class="hi">  │  ← TOP (current executing frame)           │</span>
+<span class="hi">  │  Frame 3: calculateTax(double)              │</span>
+<span class="hi">  │    Local Variables: [this, amount=1000.0]   │</span>
+<span class="hi">  │    Operand Stack:   [200.0]                 │</span>
+<span class="hi">  │    Return Address:  processOrder (line 45)  │</span>
+<span class="brn">  ├─────────────────────────────────────────────┤</span>
+<span class="grn">  │  Frame 2: processOrder(Order)               │</span>
+<span class="grn">  │    Local Variables: [this, order, total=0]  │</span>
+<span class="grn">  │    Operand Stack:   []                      │</span>
+<span class="grn">  │    Return Address:  main (line 12)          │</span>
+<span class="brn">  ├─────────────────────────────────────────────┤</span>
+<span class="pur">  │  Frame 1: main(String[])                    │</span>
+<span class="pur">  │    Local Variables: [args, order]           │</span>
+<span class="pur">  │    Operand Stack:   []                      │</span>
+<span class="pur">  │    Return Address:  (none — bottom)         │</span>
+<span class="brn">  └─────────────────────────────────────────────┘</span>
+<span class="arr">  ← BOTTOM</span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔷 Stack Frame — 3 Components</h3>
+    <table class="comp-table">
+      <thead><tr><th>Component</th><th>What It Contains</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Local Variable Array</td>
+          <td>
+            Method parameters + local variables.
+            Primitives stored directly (int, long, double...).
+            Objects stored as references (pointer to heap object).
+            Index 0 = <code>this</code> for instance methods.
+          </td>
+          <td>Fixed at compile time</td>
+        </tr>
+        <tr>
+          <td>Operand Stack</td>
+          <td>
+            Working space for bytecode instructions.
+            Push/pop values during computation.
+            Like CPU registers but stack-based.
+          </td>
+          <td>Fixed max depth at compile time</td>
+        </tr>
+        <tr>
+          <td>Frame Data</td>
+          <td>
+            Reference to constant pool (for dynamic linking).
+            Normal method completion info.
+            Abnormal completion (exception) table.
+          </td>
+          <td>Variable</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java + Bytecode</span><span class="code-label">Simple method — Stack Frame visualization</span></div>
+      <pre>
+<span class="cm">// Java source</span>
+<span class="kw">int</span> <span class="fn">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+    <span class="kw">int</span> result = a + b;
+    <span class="kw">return</span> result;
+}
+
+<span class="cm">// Bytecode (from javap -c)</span>
+<span class="cm">// Local Variable Array: [0]=this, [1]=a, [2]=b, [3]=result</span>
+0: iload_1          <span class="cm">// push local[1] (a) → operand stack</span>
+1: iload_2          <span class="cm">// push local[2] (b) → operand stack</span>
+2: iadd             <span class="cm">// pop 2 ints, add, push result</span>
+3: istore_3         <span class="cm">// pop result → local[3] (result)</span>
+4: iload_3          <span class="cm">// push local[3]</span>
+5: ireturn          <span class="cm">// pop and return top of stack</span>
+
+<span class="cm">// Stack evolution:
+// After iload_1: [a]
+// After iload_2: [a, b]
+// After iadd:    [a+b]
+// After istore_3:[]  (stored in local vars)
+// After iload_3: [result]
+// After ireturn: frame popped, result returned</span></pre>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>💥 Stack vs Heap — What Goes Where</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Stack vs Heap allocation</span></div>
+      <pre>
+<span class="kw">void</span> <span class="fn">example</span>() {
+    <span class="cm">// ── ON STACK ──────────────────────────────────────────────</span>
+    <span class="kw">int</span> x = <span class="num">42</span>;               <span class="cm">// primitive → stored directly in stack frame</span>
+    <span class="kw">double</span> pi = <span class="num">3.14</span>;          <span class="cm">// primitive → stored directly in stack frame</span>
+    <span class="kw">boolean</span> flag = <span class="kw">true</span>;       <span class="cm">// primitive → stored directly in stack frame</span>
+
+    <span class="cm">// Reference (pointer) → on stack; Object → on heap</span>
+    <span class="cl">String</span> name = <span class="kw">new</span> <span class="cl">String</span>(<span class="str">"Alice"</span>);
+    <span class="cm">//  ^--- reference (4/8 bytes) on Stack</span>
+    <span class="cm">//                              ^--- String object on HEAP</span>
+
+    <span class="cm">// ── ON HEAP ───────────────────────────────────────────────</span>
+    <span class="cl">MyObject</span> obj = <span class="kw">new</span> <span class="cl">MyObject</span>();  <span class="cm">// obj → Stack; new MyObject() → Heap</span>
+    <span class="kw">int</span>[] arr = <span class="kw">new int</span>[<span class="num">10</span>];         <span class="cm">// arr → Stack; array → Heap</span>
+
+    <span class="cm">// Instance variables are on HEAP (inside the object)</span>
+    obj.name = <span class="str">"Bob"</span>;  <span class="cm">// obj.name is inside obj on heap</span>
+    obj.age  = <span class="num">30</span>;    <span class="cm">// obj.age  is inside obj on heap</span>
+
+    <span class="cm">// Static variables → Method Area (Metaspace), not stack or instance heap</span>
+    <span class="cl">MyObject</span>.count = <span class="num">5</span>; <span class="cm">// stored in Method Area</span>
+}
+<span class="cm">// When example() returns: stack frame is popped, x/pi/flag/references gone
+// Heap objects (MyObject, String) are candidates for GC (if no other references)</span></pre>
+    </div>
+
+    <div class="info-box danger">
+      <div class="ib-icon">🚨</div>
+      <div>
+        <strong>StackOverflowError vs OutOfMemoryError:</strong><br>
+        <strong>StackOverflowError:</strong> Too many nested method calls (infinite recursion).
+        JVM Stack for that thread is exhausted. Default stack ~512KB-1MB.<br>
+        <strong>OutOfMemoryError: Java heap space:</strong> Heap is full — too many objects.<br>
+        <strong>OutOfMemoryError: Metaspace:</strong> Too many classes loaded.<br>
+        Increase stack size: <code>-Xss2m</code> (2MB per thread)
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 8 — EXECUTION ENGINE
+════════════════════════════════════ -->
+<section id="engine" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-orange">⚙️</div>
+    <div class="section-meta">
+      <div class="section-label">Section 8</div>
+      <div class="section-title">Execution Engine</div>
+      <div class="section-sub">Interpreter, JIT Compiler, GC, JNI — how bytecode becomes machine code</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔷 Three Components of the Execution Engine</h3>
+    <ul class="key-list">
+      <li><strong>Interpreter:</strong> Reads and executes bytecode instructions ONE at a time.
+          Fast startup, but slow for repeated code (re-interprets every time).</li>
+      <li class="purple"><strong>JIT Compiler:</strong> Identifies "hot" methods (frequently called),
+          compiles them to native machine code. Subsequent calls run at native speed.</li>
+      <li class="yellow"><strong>Garbage Collector:</strong> Automatically manages heap memory —
+          reclaims memory of unreachable objects.</li>
+    </ul>
+  </div>
+
+  <div class="content-card">
+    <h3>🔄 Interpreter vs JIT — The Hybrid Approach</h3>
+    <div class="diagram">
+      <span class="d-title">Bytecode Execution — Interpreter → JIT Pipeline</span>
+<span class="brn">  .class bytecode</span>
+<span class="arr">       ↓</span>
+<span class="hi">  Interpreter (starts immediately)</span>
+<span class="hi">  - Executes each bytecode instruction directly</span>
+<span class="hi">  - No warmup time, immediate startup</span>
+<span class="hi">  - Slow: re-interprets same code every invocation</span>
+<span class="arr">       ↓ (method call counter exceeds threshold)</span>
+<span class="grn">  JIT Compiler detects "hot method"</span>
+<span class="grn">  Threshold: -XX:CompileThreshold=10000 (default)</span>
+<span class="grn">  (method called &gt;10000 times OR 10000 combined invocations+loops)</span>
+<span class="arr">       ↓</span>
+<span class="pur">  C1 Compiler (Client JIT — Tier 1-3)</span>
+<span class="pur">  - Quick compilation, basic optimizations</span>
+<span class="pur">  - Profiling instrumentation inserted</span>
+<span class="arr">       ↓ (more profiling data collected)</span>
+<span class="orn">  C2 Compiler (Server JIT — Tier 4)</span>
+<span class="orn">  - Aggressive optimizations</span>
+<span class="orn">  - Inlining, loop unrolling, escape analysis</span>
+<span class="orn">  - Compiles to highly optimized native code</span>
+<span class="arr">       ↓</span>
+<span class="grn">  Native machine code in Code Cache</span>
+<span class="grn">  (called directly, no interpretation overhead)</span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🌐 JNI — Java Native Interface</h3>
+    <p>JNI allows Java code to call, and be called by, native C/C++ code.
+       The Execution Engine uses it when Java code invokes <code>native</code> methods.</p>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">JNI example — calling native method</span></div>
+      <pre>
+<span class="kw">class</span> <span class="cl">NativeExample</span> {
+    <span class="cm">// 1. Declare native method in Java</span>
+    <span class="kw">public native</span> <span class="kw">int</span> <span class="fn">nativeAdd</span>(<span class="kw">int</span> a, <span class="kw">int</span> b);
+
+    <span class="cm">// 2. Load the native library</span>
+    <span class="kw">static</span> {
+        <span class="cl">System</span>.<span class="fn">loadLibrary</span>(<span class="str">"NativeLib"</span>); <span class="cm">// loads NativeLib.dll/.so</span>
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">NativeExample</span> ex = <span class="kw">new</span> <span class="cl">NativeExample</span>();
+        <span class="cl">System</span>.out.println(ex.<span class="fn">nativeAdd</span>(<span class="num">3</span>, <span class="num">4</span>)); <span class="cm">// calls C/C++ code</span>
+    }
+}
+
+<span class="cm">// Examples of native methods in JDK:
+// Object.hashCode()     → native
+// System.currentTimeMillis() → native
+// Thread.start0()       → native (actual OS thread creation)
+// Object.clone()        → native
+// Math.sqrt()           → native (often maps to CPU instruction)</span></pre>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 9 — JIT COMPILER
+════════════════════════════════════ -->
+<section id="jit" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-pink">🚀</div>
+    <div class="section-meta">
+      <div class="section-label">Section 9</div>
+      <div class="section-title">JIT Compiler &amp; Tiered Compilation</div>
+      <div class="section-sub">C1, C2 compilers, tiered levels, key optimizations, deoptimization</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📊 5 Tiered Compilation Levels</h3>
+    <table class="comp-table">
+      <thead><tr><th>Tier</th><th>Mode</th><th>Description</th><th>Speed</th></tr></thead>
+      <tbody>
+        <tr><td>Tier 0</td><td>Interpreter</td><td>Pure bytecode interpretation, collects profile data</td><td>Slowest</td></tr>
+        <tr><td>Tier 1</td><td>C1 (simple)</td><td>C1 compiled, no profiling. For small/simple methods</td><td>Fast</td></tr>
+        <tr><td>Tier 2</td><td>C1 (limited)</td><td>C1 compiled, limited invocation + back-edge counters</td><td>Fast</td></tr>
+        <tr><td>Tier 3</td><td>C1 (profiled)</td><td>C1 compiled, full profiling instrumentation inserted</td><td>Medium</td></tr>
+        <tr><td>Tier 4</td><td>C2</td><td>Heavily optimized C2 native code, using profiling data</td><td>Fastest</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-card">
+    <h3>🔥 Key JIT Optimizations</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">JIT Optimizations — Method Inlining</span></div>
+      <pre>
+<span class="cm">// ── Method Inlining (most impactful) ──</span>
+<span class="cm">// JIT replaces method call with method body (eliminates call overhead)</span>
+<span class="kw">int</span> <span class="fn">square</span>(<span class="kw">int</span> x) { <span class="kw">return</span> x * x; }
+<span class="kw">int</span> result = <span class="fn">square</span>(<span class="num">5</span>);
+
+<span class="cm">// After inlining (JIT does this automatically):</span>
+<span class="kw">int</span> result = <span class="num">5</span> * <span class="num">5</span>; <span class="cm">// no method call overhead</span>
+
+<span class="cm">// Limit: methods &gt;35 bytecodes not inlined by default
+// -XX:MaxInlineSize=35 (JIT inline threshold)</span></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">JIT — Escape Analysis (Stack Allocation)</span></div>
+      <pre>
+<span class="cm">// ── Escape Analysis ──</span>
+<span class="cm">// JIT determines if object "escapes" the method scope</span>
+<span class="cm">// If NOT: can allocate on stack (no GC!) or scalar replace</span>
+<span class="kw">void</span> <span class="fn">process</span>() {
+    <span class="cl">Point</span> p = <span class="kw">new</span> <span class="cl">Point</span>(<span class="num">3</span>, <span class="num">4</span>);  <span class="cm">// p doesn't escape this method</span>
+    <span class="kw">double</span> dist = <span class="cl">Math</span>.<span class="fn">sqrt</span>(p.x*p.x + p.y*p.y);
+    <span class="cm">// JIT can: allocate p on stack (fast!) or scalar replace:</span>
+    <span class="cm">// double dist = Math.sqrt(3*3 + 4*4); // p eliminated entirely!</span>
+}
+
+<span class="cm">// Scalar Replacement: decompose object into individual scalar variables</span>
+<span class="cm">// Lock Elision: remove synchronized blocks for thread-local objects</span>
+<span class="kw">synchronized</span> (<span class="kw">new</span> <span class="cl">Object</span>()) { <span class="cm">/* JIT removes this lock — object never shared */</span> }
+
+<span class="cm">// Dead Code Elimination</span>
+<span class="kw">if</span> (<span class="kw">false</span>) { <span class="cl">System</span>.out.println(<span class="str">"never runs"</span>); } <span class="cm">// JIT removes entirely</span>
+
+<span class="cm">// Constant Folding</span>
+<span class="kw">int</span> x = <span class="num">2</span> + <span class="num">3</span>; <span class="cm">// JIT: int x = 5; (computed at compile time)</span>
+
+<span class="cm">// Null Check Elimination — if JIT knows object can't be null
+// Branch Prediction / Speculative Optimization
+// Loop Unrolling — expand small loops for fewer iterations</span></pre>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔄 Deoptimization — When JIT Assumptions Break</h3>
+    <p>JIT makes optimistic assumptions based on profiling data.
+       If those assumptions become invalid (e.g., a new subclass is loaded),
+       JIT must <strong>deoptimize</strong> — revert to interpreter or re-compile.</p>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Monomorphic call → Deoptimization scenario</span></div>
+      <pre>
+<span class="cm">// Initially, only one implementation of Animal (Dog)</span>
+<span class="cm">// JIT: "dog.makeSound() is always Dog.makeSound()" → inline it</span>
+<span class="cl">Animal</span> animal = <span class="fn">getAnimal</span>(); <span class="cm">// always returns Dog so far</span>
+animal.<span class="fn">makeSound</span>();         <span class="cm">// JIT inlines Dog.makeSound()</span>
+
+<span class="cm">// ... later, Cat is loaded and getAnimal() might return Cat</span>
+<span class="cm">// JIT deoptimizes → reverts to virtual dispatch (or re-compiles bimorphic version)</span>
+
+<span class="cm">// JIT compilation flags</span>
+<span class="cm">-XX:+TieredCompilation       // Enable tiered compilation (default)</span>
+<span class="cm">-XX:-TieredCompilation       // Disable (only C1 or C2)</span>
+<span class="cm">-XX:+PrintCompilation        // Print when methods are JIT compiled</span>
+<span class="cm">-XX:CompileThreshold=1000    // Compile after 1000 invocations (default 10000)</span>
+<span class="cm">-XX:+PrintInlining           // Show inlining decisions</span>
+<span class="cm">-XX:ReservedCodeCacheSize=256m // Increase Code Cache (where JIT code is stored)</span></pre>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 10 — CUSTOM CLASSLOADER
+════════════════════════════════════ -->
+<section id="custom" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-cyan">🔧</div>
+    <div class="section-meta">
+      <div class="section-label">Section 10</div>
+      <div class="section-title">Custom ClassLoader</div>
+      <div class="section-sub">Implement, override findClass(), use cases, hot reload pattern</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>💻 Custom ClassLoader — File System Loader</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Custom ClassLoader — load from custom directory</span></div>
+      <pre>
+<span class="kw">import</span> java.io.*;
+<span class="kw">import</span> java.nio.file.*;
+
+<span class="kw">public class</span> <span class="cl">FileClassLoader</span> <span class="kw">extends</span> <span class="cl">ClassLoader</span> {
+
+    <span class="kw">private final</span> <span class="cl">String</span> classDir; <span class="cm">// directory containing .class files</span>
+
+    <span class="kw">public</span> <span class="cl">FileClassLoader</span>(<span class="cl">String</span> classDir) {
+        <span class="kw">super</span>(); <span class="cm">// parent = AppClassLoader (maintains delegation)</span>
+        <span class="kw">this</span>.classDir = classDir;
+    }
+
+    <span class="kw">public</span> <span class="cl">FileClassLoader</span>(<span class="cl">String</span> classDir, <span class="cl">ClassLoader</span> parent) {
+        <span class="kw">super</span>(parent); <span class="cm">// custom parent</span>
+        <span class="kw">this</span>.classDir = classDir;
+    }
+
+    <span class="cm">// ✅ Override findClass(), NOT loadClass()
+    // findClass() is called only AFTER parent delegation has failed</span>
+    <span class="an">@Override</span>
+    <span class="kw">protected</span> <span class="cl">Class</span>&lt;?&gt; <span class="fn">findClass</span>(<span class="cl">String</span> name) <span class="kw">throws</span> <span class="cl">ClassNotFoundException</span> {
+        <span class="kw">byte</span>[] bytecode = <span class="fn">loadBytecode</span>(name);
+        <span class="kw">if</span> (bytecode == <span class="kw">null</span>) {
+            <span class="kw">throw new</span> <span class="cl">ClassNotFoundException</span>(<span class="str">"Cannot find class: "</span> + name);
+        }
+        <span class="cm">// defineClass — converts raw bytecode to Class object</span>
+        <span class="kw">return</span> <span class="fn">defineClass</span>(name, bytecode, <span class="num">0</span>, bytecode.length);
+    }
+
+    <span class="kw">private byte</span>[] <span class="fn">loadBytecode</span>(<span class="cl">String</span> className) {
+        <span class="cm">// Convert class name to file path: "com.example.Foo" → "com/example/Foo.class"</span>
+        <span class="cl">String</span> filePath = classDir + <span class="cl">File</span>.separator
+            + className.<span class="fn">replace</span>(<span class="str">"."</span>, <span class="cl">File</span>.separator) + <span class="str">".class"</span>;
+        <span class="cl">File</span> classFile = <span class="kw">new</span> <span class="cl">File</span>(filePath);
+        <span class="kw">if</span> (!classFile.<span class="fn">exists</span>()) <span class="kw">return null</span>;
+        <span class="kw">try</span> {
+            <span class="kw">return</span> <span class="cl">Files</span>.<span class="fn">readAllBytes</span>(classFile.<span class="fn">toPath</span>());
+        } <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+            <span class="kw">return null</span>;
+        }
+    }
+}
+
+<span class="cm">// ─── Usage ───</span>
+<span class="cl">FileClassLoader</span> loader = <span class="kw">new</span> <span class="cl">FileClassLoader</span>(<span class="str">"/plugins/classes"</span>);
+
+<span class="cm">// Load class dynamically</span>
+<span class="cl">Class</span>&lt;?&gt; clazz = loader.<span class="fn">loadClass</span>(<span class="str">"com.example.Plugin"</span>);
+
+<span class="cm">// Instantiate (use interface for type safety)</span>
+<span class="cl">Runnable</span> plugin = (<span class="cl">Runnable</span>) clazz.<span class="fn">getDeclaredConstructor</span>().<span class="fn">newInstance</span>();
+plugin.<span class="fn">run</span>();
+
+<span class="cm">// Get class metadata</span>
+<span class="cl">System</span>.out.println(clazz.<span class="fn">getClassLoader</span>()); <span class="cm">// FileClassLoader</span>
+<span class="cl">System</span>.out.println(clazz.<span class="fn">getName</span>());        <span class="cm">// com.example.Plugin</span></pre>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔥 Hot Reload Pattern — Key Use Case</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Hot Class Reload — recreate ClassLoader</span></div>
+      <pre>
+<span class="cm">// Hot reload: throw away old CL, create new one for updated .class</span>
+<span class="kw">class</span> <span class="cl">HotReloader</span> {
+    <span class="kw">private</span> <span class="cl">FileClassLoader</span> currentLoader;
+    <span class="kw">private final</span> <span class="cl">String</span> classDir;
+
+    <span class="cl">HotReloader</span>(<span class="cl">String</span> classDir) {
+        <span class="kw">this</span>.classDir = classDir;
+        <span class="kw">this</span>.currentLoader = <span class="kw">new</span> <span class="cl">FileClassLoader</span>(classDir);
+    }
+
+    <span class="kw">public</span> <span class="cl">Object</span> <span class="fn">loadFresh</span>(<span class="cl">String</span> className) <span class="kw">throws</span> <span class="cl">Exception</span> {
+        <span class="cm">// DISCARD old ClassLoader → all its classes become GC-eligible</span>
+        <span class="kw">this</span>.currentLoader = <span class="kw">new</span> <span class="cl">FileClassLoader</span>(classDir);
+
+        <span class="cm">// Load fresh copy from updated .class file</span>
+        <span class="cl">Class</span>&lt;?&gt; clazz = currentLoader.<span class="fn">loadClass</span>(className);
+        <span class="kw">return</span> clazz.<span class="fn">getDeclaredConstructor</span>().<span class="fn">newInstance</span>();
+    }
+}
+
+<span class="cm">// Note: Java ClassLoader cache is per-instance!
+// The OLD ClassLoader still has the cached old class.
+// NEW ClassLoader has no cache → loads fresh from disk.
+// Old ClassLoader (and its Class objects) are GC'd when no references remain.</span></pre>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔐 Encrypted ClassLoader — Security Use Case</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Encrypted ClassLoader — decrypt then load</span></div>
+      <pre>
+<span class="kw">public class</span> <span class="cl">EncryptedClassLoader</span> <span class="kw">extends</span> <span class="cl">ClassLoader</span> {
+    <span class="kw">private final</span> <span class="kw">byte</span> XOR_KEY = <span class="num">0x42</span>; <span class="cm">// simple XOR "encryption"</span>
+    <span class="kw">private final</span> <span class="cl">String</span> encryptedDir;
+
+    <span class="kw">public</span> <span class="cl">EncryptedClassLoader</span>(<span class="cl">String</span> dir) {
+        <span class="kw">this</span>.encryptedDir = dir;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">protected</span> <span class="cl">Class</span>&lt;?&gt; <span class="fn">findClass</span>(<span class="cl">String</span> name) <span class="kw">throws</span> <span class="cl">ClassNotFoundException</span> {
+        <span class="kw">try</span> {
+            <span class="cm">// 1. Read encrypted .class file</span>
+            <span class="kw">byte</span>[] encrypted = <span class="fn">readEncryptedFile</span>(name);
+            <span class="cm">// 2. Decrypt</span>
+            <span class="kw">byte</span>[] bytecode = <span class="fn">decrypt</span>(encrypted);
+            <span class="cm">// 3. Define class from decrypted bytecode</span>
+            <span class="kw">return</span> <span class="fn">defineClass</span>(name, bytecode, <span class="num">0</span>, bytecode.length);
+        } <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+            <span class="kw">throw new</span> <span class="cl">ClassNotFoundException</span>(name, e);
+        }
+    }
+
+    <span class="kw">private byte</span>[] <span class="fn">decrypt</span>(<span class="kw">byte</span>[] data) {
+        <span class="kw">byte</span>[] result = <span class="kw">new byte</span>[data.length];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < data.length; i++)
+            result[i] = (<span class="kw">byte</span>) (data[i] ^ XOR_KEY);
+        <span class="kw">return</span> result;
+    }
+
+    <span class="kw">private byte</span>[] <span class="fn">readEncryptedFile</span>(<span class="cl">String</span> name) <span class="kw">throws</span> <span class="cl">IOException</span> {
+        <span class="cl">String</span> path = encryptedDir + <span class="str">"/"</span>
+            + name.<span class="fn">replace</span>(<span class="str">"."</span>, <span class="str">"/"</span>) + <span class="str">".enc"</span>;
+        <span class="kw">return</span> <span class="cl">Files</span>.<span class="fn">readAllBytes</span>(<span class="cl">Paths</span>.<span class="fn">get</span>(path));
+    }
+}</pre>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 11 — BYTECODE & .CLASS FILE
+════════════════════════════════════ -->
+<section id="bytecode" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-yellow">📄</div>
+    <div class="section-meta">
+      <div class="section-label">Section 11</div>
+      <div class="section-title">Bytecode &amp; .class File Structure</div>
+      <div class="section-sub">Magic number, class file format, javap disassembly, bytecode instructions</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📋 .class File Structure</h3>
+    <div class="diagram">
+      <span class="d-title">.class File Format (JVM Spec)</span>
+<span class="hi">  ClassFile {</span>
+<span class="grn">    magic             u4        0xCAFEBABE   ← Java's signature</span>
+<span class="grn">    minor_version     u2        e.g. 0</span>
+<span class="grn">    major_version     u2        52=Java8, 55=Java11, 61=Java17, 65=Java21</span>
+<span class="hi">    constant_pool_count  u2</span>
+<span class="hi">    constant_pool[]      cp_info  ← strings, class/method/field refs, numbers</span>
+<span class="pur">    access_flags      u2        public/final/abstract/interface/enum/annotation</span>
+<span class="pur">    this_class        u2        index into constant pool</span>
+<span class="pur">    super_class       u2        index into constant pool (0 for Object)</span>
+<span class="pur">    interfaces_count  u2</span>
+<span class="pur">    interfaces[]      u2[]</span>
+<span class="orn">    fields_count      u2</span>
+<span class="orn">    fields[]          field_info   ← field names, descriptors, attributes</span>
+<span class="arr">    methods_count     u2</span>
+<span class="arr">    methods[]         method_info  ← method names, bytecode, local vars table</span>
+<span class="box">    attributes_count  u2</span>
+<span class="box">    attributes[]      attr_info    ← SourceFile, InnerClasses, etc.</span>
+<span class="hi">  }</span>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔍 javap — Disassemble a .class File</h3>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">javap commands</span></div>
+      <pre>
+<span class="cm"># Basic info (class structure)</span>
+javap Hello.class
+
+<span class="cm"># Show bytecode instructions (-c)</span>
+javap -c Hello.class
+
+<span class="cm"># Verbose: bytecode + constant pool + local variable table</span>
+javap -verbose Hello.class
+
+<span class="cm"># Show private members too</span>
+javap -c -private Hello.class
+
+<span class="cm"># Example: javap -c for a simple method</span>
+<span class="cm"># public int add(int, int);</span>
+<span class="cm">#   Code:</span>
+<span class="cm">#      0: iload_1      ← push param 'a'</span>
+<span class="cm">#      1: iload_2      ← push param 'b'</span>
+<span class="cm">#      2: iadd         ← int add (pop 2, push result)</span>
+<span class="cm">#      3: ireturn      ← return int from top of stack</span></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">Text</span><span class="code-label">Common bytecode instructions</span></div>
+      <pre>
+<span class="cm">── Load Instructions ──────────────────────────────────────</span>
+iload_0/1/2/3    load int local variable 0/1/2/3 onto stack
+aload_0/1/2/3    load object ref local variable
+lload, dload, fload   load long/double/float
+
+<span class="cm">── Store Instructions ─────────────────────────────────────</span>
+istore_0/1/2/3   pop int → local variable 0/1/2/3
+astore_0/1/2/3   pop object ref → local variable
+
+<span class="cm">── Arithmetic ─────────────────────────────────────────────</span>
+iadd, isub, imul, idiv    int arithmetic
+ladd, fadd, dadd          long/float/double arithmetic
+iinc 1, 1                 increment local variable
+
+<span class="cm">── Method Invocation ──────────────────────────────────────</span>
+invokevirtual     instance method (virtual dispatch)
+invokeinterface   interface method
+invokestatic      static method
+invokespecial     constructor / private / super call
+invokedynamic     lambda / dynamic dispatch (Java 7+)
+
+<span class="cm">── Object Instructions ────────────────────────────────────</span>
+new #index        create new object (allocate on heap)
+dup               duplicate top of stack (for new + init)
+getfield          get instance field
+putfield          set instance field
+getstatic         get static field
+putstatic         set static field
+instanceof        type check
+checkcast         type cast (throws ClassCastException if fails)
+
+<span class="cm">── Control Flow ───────────────────────────────────────────</span>
+if_icmpeq/ne/lt/ge/gt/le   compare two ints, branch if condition
+goto              unconditional jump
+tableswitch       switch with int range
+lookupswitch      switch with key-value pairs
+return, ireturn, areturn, etc.   return from method
+
+<span class="cm">── Exception ──────────────────────────────────────────────</span>
+athrow            throw exception (pops ref from stack)
+(exception table in method describes catch ranges)</pre>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════
+     SECTION 12 — INTERVIEW Q&A
+════════════════════════════════════ -->
+<section id="interview" class="section">
+  <div class="section-header">
+    <div class="section-icon ic-yellow">🎯</div>
+    <div class="section-meta">
+      <div class="section-label">Section 12</div>
+      <div class="section-title">Master Interview Q&amp;A</div>
+      <div class="section-sub">20+ most asked JVM/ClassLoader interview questions with detailed answers</div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>📦 JDK / JRE / JVM Questions</h3>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between JDK, JRE, and JVM?</div>
+      <div class="iq-a">
+        <strong>JVM (Java Virtual Machine):</strong> Abstract machine that executes Java bytecode.
+        Platform-specific (different JVM for Windows/Linux/Mac). Contains ClassLoader,
+        Memory Areas, and Execution Engine.<br>
+        <strong>JRE (Java Runtime Environment):</strong> JVM + Java Standard Class Libraries
+        (java.lang, java.util, etc.). Used to run Java programs. No compiler.<br>
+        <strong>JDK (Java Development Kit):</strong> JRE + development tools (javac, jar, javadoc,
+        jdb, jshell). Used to develop and run Java programs.<br>
+        <strong>Java 9+ note:</strong> JRE is no longer separately distributed. JDK includes everything.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q2</span>Is Java compiled or interpreted?</div>
+      <div class="iq-a">
+        <strong>Both!</strong> Java uses a two-phase approach:<br>
+        1. <strong>javac compiles</strong> .java source to platform-independent bytecode (.class).<br>
+        2. JVM <strong>interprets</strong> bytecode at startup, then the <strong>JIT compiler</strong>
+        compiles hot methods to native machine code at runtime.<br>
+        This hybrid approach gives: fast startup (interpreter), fast steady-state (JIT native code),
+        and platform independence (bytecode is portable).
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🔄 Class Loading Questions</h3>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q3</span>What are the phases of class loading?</div>
+      <div class="iq-a">
+        <strong>3 main phases (5 steps):</strong><br>
+        1. <strong>Loading:</strong> ClassLoader finds .class file, reads binary data, creates Class object in Method Area.<br>
+        2. <strong>Linking:</strong> 3 sub-phases:<br>
+        &nbsp;&nbsp;• <strong>Verification:</strong> Verify bytecode correctness and security.<br>
+        &nbsp;&nbsp;• <strong>Preparation:</strong> Allocate memory for static variables, set to default values (0/false/null).<br>
+        &nbsp;&nbsp;• <strong>Resolution:</strong> Convert symbolic references to direct memory references.<br>
+        3. <strong>Initialization:</strong> Execute &lt;clinit&gt; — run static blocks, assign actual static variable values in source order.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q4</span>Explain the Parent Delegation Model with an example.</div>
+      <div class="iq-a">
+        When a ClassLoader is asked to load a class, it <strong>delegates to its parent FIRST</strong>
+        before trying itself.<br>
+        Example — Loading <code>java.util.ArrayList</code>:<br>
+        1. AppClassLoader asks: "did parent load it?" → delegates to PlatformCL<br>
+        2. PlatformCL asks: "did parent load it?" → delegates to Bootstrap<br>
+        3. Bootstrap finds it in <code>java.base</code> module → returns Class object<br>
+        4. Returns all the way back to AppClassLoader → uses Bootstrap's version.<br>
+        <strong>Why?</strong> Security (prevent hijacking core classes), uniqueness (one definition per ClassLoader), consistency (same String class everywhere).
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q5</span>What is a ClassNotFoundException vs NoClassDefFoundError?</div>
+      <div class="iq-a">
+        <strong>ClassNotFoundException (checked):</strong> ClassLoader tried to load a class
+        dynamically (via <code>Class.forName()</code>, <code>loadClass()</code>)
+        and could not find it on the classpath. Handle explicitly.<br>
+        <strong>NoClassDefFoundError (unchecked Error):</strong> Class was present at compile-time
+        but missing at runtime. OR class was found but its static initializer threw an exception
+        (subsequent attempts get ExceptionInInitializerError → NoClassDefFoundError).
+        Much harder to debug.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q6</span>What triggers class initialization?</div>
+      <div class="iq-a">
+        A class is initialized (static blocks run) when:<br>
+        1. An instance is created: <code>new MyClass()</code><br>
+        2. A static method is called: <code>MyClass.staticMethod()</code><br>
+        3. A non-constant static field is read/written<br>
+        4. <code>Class.forName("MyClass")</code> is called (with initialize=true)<br>
+        5. A subclass is initialized (triggers parent class init first)<br>
+        <strong>Does NOT trigger initialization:</strong> Accessing a compile-time static final constant,
+        accessing class via array type (<code>MyClass[] arr</code>),
+        <code>classLoader.loadClass()</code>.
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🧠 Memory &amp; JVM Architecture Questions</h3>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q7</span>What are the runtime data areas in JVM?</div>
+      <div class="iq-a">
+        <strong>Shared by all threads:</strong><br>
+        • <strong>Method Area (Metaspace):</strong> Class metadata, bytecode, static variables, constant pool.<br>
+        • <strong>Heap:</strong> All object instances and arrays. GC's domain.<br>
+        <strong>Per-thread (each thread gets its own):</strong><br>
+        • <strong>JVM Stack:</strong> Stack frames for method invocations (local vars + operand stack).<br>
+        • <strong>PC Register:</strong> Address of currently executing bytecode instruction.<br>
+        • <strong>Native Method Stack:</strong> Stack for native (JNI) method calls.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q8</span>What is PermGen and why was it replaced by Metaspace in Java 8?</div>
+      <div class="iq-a">
+        <strong>PermGen</strong> was a fixed-size region of the Java Heap (default 64MB) storing class metadata.
+        <strong>Problems:</strong> Fixed size caused <code>OutOfMemoryError: PermGen space</code>
+        especially in app servers loading many classes. Hard to tune correctly.<br>
+        <strong>Metaspace (Java 8+):</strong> Moved to native memory (off-heap). Grows dynamically
+        as needed. Only limited by available system memory.
+        Configure with <code>-XX:MaxMetaspaceSize</code> to prevent unbounded growth.
+        <strong>Also:</strong> String Pool moved to Heap in Java 7 (before Metaspace change).
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q9</span>Where are local variables, instance variables, and static variables stored?</div>
+      <div class="iq-a">
+        <strong>Local variables (primitives):</strong> Directly in JVM Stack frame's local variable array.<br>
+        <strong>Local variables (object references):</strong> Reference is in Stack; actual object is in Heap.<br>
+        <strong>Instance variables:</strong> Inside the object on the Heap (both primitives and references).<br>
+        <strong>Static variables:</strong> In the Method Area (Metaspace), in the class's static fields section.<br>
+        <strong>String literals:</strong> In the String Pool (part of Heap since Java 7).
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q10</span>What is StackOverflowError? How to prevent it?</div>
+      <div class="iq-a">
+        Thrown when the JVM Stack for a thread runs out of space — typically due to infinitely
+        (or too deeply) recursive method calls. Each method call creates a Stack Frame;
+        too many frames overflow the stack.<br>
+        <strong>Prevention:</strong> Fix infinite recursion, convert to iterative approach,
+        increase stack size with <code>-Xss4m</code> (but this uses more memory per thread).
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🚀 JIT &amp; Execution Engine Questions</h3>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q11</span>What is the JIT compiler? How does it work?</div>
+      <div class="iq-a">
+        JIT (Just-In-Time) compiler monitors method invocation counts. When a method becomes
+        "hot" (called &gt; ~10,000 times), JIT compiles it to native machine code stored in the
+        Code Cache. Subsequent calls bypass interpretation and execute native code directly.<br>
+        <strong>C1 (Client):</strong> Quick compilation, basic optimization, profiling instrumented.<br>
+        <strong>C2 (Server):</strong> Aggressive optimization using profiling data (inlining, escape analysis, loop unrolling).<br>
+        <strong>Tiered compilation (default):</strong> Starts with C1 (fast compile), promotes to C2 (optimal) for hottest methods.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q12</span>What is escape analysis?</div>
+      <div class="iq-a">
+        JIT analysis that determines whether an object "escapes" the scope of the method
+        where it was created. If it doesn't escape:<br>
+        1. <strong>Stack Allocation:</strong> JIT can allocate the object on the stack instead of heap
+           (instant deallocation when method returns, no GC needed).<br>
+        2. <strong>Scalar Replacement:</strong> Decompose object into individual scalar fields
+           (object is never actually created).<br>
+        3. <strong>Lock Elision:</strong> Remove synchronization on objects that are thread-local.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q13</span>Why does Java warm up slowly? What is JVM warm-up?</div>
+      <div class="iq-a">
+        At startup, JVM interprets all code — slow per-instruction execution.
+        JIT hasn't had enough invocations to compile methods yet.
+        Over time (~seconds to minutes depending on app), JIT compiles hot methods to native code —
+        performance improves dramatically. This is "warm-up time."<br>
+        <strong>Solutions for slow start:</strong> GraalVM Native Image (AOT compilation),
+        AppCDS (class data sharing), Project Leyden (future Java).
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>🧩 Tricky / Advanced Questions</h3>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q14</span>Why does ClassLoader.getParent() return null for Bootstrap ClassLoader's child?</div>
+      <div class="iq-a">
+        Bootstrap ClassLoader is written in native C++ and has NO Java object representation.
+        When PlatformClassLoader's <code>getParent()</code> is called, it returns <code>null</code>
+        because the Bootstrap loader cannot be represented as a Java <code>ClassLoader</code> object.
+        This is why we check for <code>null</code> in the delegation chain to identify
+        the Bootstrap ClassLoader.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q15</span>What is the Thread Context ClassLoader and why is it needed?</div>
+      <div class="iq-a">
+        When code in Bootstrap ClassLoader needs to load classes provided by the application
+        (e.g., JDBC driver via SPI), normal parent delegation fails — Bootstrap can't load
+        application-level classes by going UP the chain. The Thread Context ClassLoader
+        (<code>Thread.currentThread().getContextClassLoader()</code>) solves this by allowing
+        Bootstrap-loaded code to access a ClassLoader set by the application thread.
+        This is used by JDBC, JNDI, XML parsers, and other SPI-based frameworks.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q16</span>What is the difference between Minor GC, Major GC, and Full GC?</div>
+      <div class="iq-a">
+        <strong>Minor GC:</strong> Collects Young Generation (Eden + Survivor spaces) only.
+        Fast (Young Gen is small), frequent. Causes STW pause but very brief (milliseconds).<br>
+        <strong>Major GC:</strong> Collects Old Generation. Slower than Minor GC (large area).
+        Triggered when Old Gen is full.<br>
+        <strong>Full GC:</strong> Collects ENTIRE heap — Young + Old + Metaspace.
+        Slowest, longest STW pause. Should be minimized.
+        Triggered by: explicit <code>System.gc()</code>, promotion failure, concurrent mode failure.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q17</span>What is the String Pool? How does String interning work?</div>
+      <div class="iq-a">
+        String Pool is a special cache in the Heap (since Java 7) that stores unique String literals.
+        When you write <code>"hello"</code>, JVM checks the pool — if it exists, returns the cached
+        reference; if not, creates it and adds to pool.<br>
+        <code>"abc" == "abc"</code> → true (same pool reference)<br>
+        <code>new String("abc") == "abc"</code> → false (new heap object)<br>
+        <code>new String("abc").intern() == "abc"</code> → true (intern() returns pool reference)<br>
+        <strong>Memory benefit:</strong> Thousands of "GET", "POST" strings reuse same pool entry.
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q18</span>What is 0xCAFEBABE and why does it exist?</div>
+      <div class="iq-a">
+        <code>0xCAFEBABE</code> is the "magic number" — the first 4 bytes of every valid Java .class file.
+        The JVM verifies this magic number during the Loading → Verification phase. If the file
+        doesn't start with <code>CA FE BA BE</code>, the JVM rejects it as not a valid Java class file.
+        It was named by James Gosling (Java's creator) — "cafe babe" was the food/drink theme of
+        Grateful Dead hang-out spots. The version bytes follow (minor/major version).
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q19</span>What is the difference between -Xms and -Xmx?</div>
+      <div class="iq-a">
+        <code>-Xms512m</code>: Initial heap size — JVM starts with this much heap.
+        Setting it equal to Xmx avoids heap resizing overhead.<br>
+        <code>-Xmx2g</code>: Maximum heap size — JVM cannot grow beyond this.
+        Throws <code>OutOfMemoryError: Java heap space</code> when reached.<br>
+        <strong>Best practice:</strong> Set <code>-Xms = -Xmx</code> in production to avoid GC
+        overhead from heap resizing and ensure predictable memory usage.
+        E.g., <code>-Xms2g -Xmx2g</code>
+      </div>
+    </div>
+
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q20</span>How can you cause a memory leak in Java?</div>
+      <div class="iq-a">
+        Java GC prevents traditional memory leaks but you can still prevent GC from collecting objects:<br>
+        1. <strong>Static collections:</strong> <code>static List&lt;Object&gt; cache</code> — objects never removed.<br>
+        2. <strong>ThreadLocal without remove():</strong> Thread pool keeps reference via ThreadLocalMap.<br>
+        3. <strong>Unclosed resources:</strong> DB connections, file streams — keep internal buffers alive.<br>
+        4. <strong>Listeners not deregistered:</strong> Event listeners hold references to their publishers.<br>
+        5. <strong>Inner classes:</strong> Non-static inner class holds implicit reference to outer class.<br>
+        6. <strong>Custom ClassLoader:</strong> If CL is not GC'd, all its loaded classes stay in memory.
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Reference Summary -->
+  <div class="content-card">
+    <h3>⚡ Cheat Sheet — Key Facts to Remember</h3>
+    <table class="comp-table">
+      <thead><tr><th>Topic</th><th>Key Fact</th></tr></thead>
+      <tbody>
+        <tr><td>Magic Number</td><td><code>0xCAFEBABE</code> — first 4 bytes of every .class file</td></tr>
+        <tr><td>Class file major version</td><td>Java 8=52, Java 11=55, Java 17=61, Java 21=65</td></tr>
+        <tr><td>Bootstrap CL getParent()</td><td>Returns null — it's written in native C++</td></tr>
+        <tr><td>Class.forName()</td><td>Loads AND initializes (runs static blocks)</td></tr>
+        <tr><td>ClassLoader.loadClass()</td><td>Loads but does NOT initialize</td></tr>
+        <tr><td>Override which method in custom CL?</td><td>findClass() — NOT loadClass() (preserves delegation)</td></tr>
+        <tr><td>PermGen → Metaspace</td><td>Java 8 change — native memory, no fixed limit</td></tr>
+        <tr><td>String Pool location</td><td>Heap (since Java 7), was PermGen before</td></tr>
+        <tr><td>Static variables stored in</td><td>Method Area (Metaspace)</td></tr>
+        <tr><td>Default JIT threshold</td><td>10,000 invocations before C2 compilation</td></tr>
+        <tr><td>JIT compile threshold flag</td><td>-XX:CompileThreshold=N</td></tr>
+        <tr><td>Default GC Java 9+</td><td>G1 GC</td></tr>
+                <tr><td>Tenuring threshold</td><td><code>-XX:MaxTenuringThreshold=15</code> (default) — max GC cycles in Survivor before promotion to Old Gen</td></tr>
+        <tr><td>-Xms / -Xmx</td><td>Initial heap size / Maximum heap size (e.g. <code>-Xms256m -Xmx2g</code>)</td></tr>
+        <tr><td>-Xss</td><td>Thread stack size (e.g. <code>-Xss512k</code>)</td></tr>
+        <tr><td>Stack overflow cause</td><td>Infinite recursion — each call pushes a stack frame until StackOverflowError</td></tr>
+        <tr><td>OutOfMemoryError causes</td><td>Heap full (objects), Metaspace full (classes), Native memory exhausted</td></tr>
+        <tr><td>instanceof check in JVM</td><td>Uses Class object reference in object header + type hierarchy walk</td></tr>
+        <tr><td>Object header size</td><td>12 bytes (compressed oops ON, 64-bit JVM) — mark word (8b) + class pointer (4b)</td></tr>
+        <tr><td>JIT compiler types</td><td>C1 (client — fast compile, less opt) | C2 (server — slow compile, max opt)</td></tr>
+        <tr><td>Tiered Compilation</td><td>Default since Java 8 — levels 0→1→2→3→4 (interpreted → C1 → C2)</td></tr>
+        <tr><td>Escape Analysis</td><td>JIT optimization — if object doesn't escape method, allocated on stack (no GC)</td></tr>
+        <tr><td>invokedynamic</td><td>Bytecode instruction introduced in Java 7, used by lambdas &amp; method references (Java 8+)</td></tr>
+        <tr><td>-verbose:gc</td><td>Print GC log to console (basic)</td></tr>
+        <tr><td>-XX:+PrintGCDetails</td><td>Detailed GC log with region info</td></tr>
+        <tr><td>TLAB</td><td>Thread-Local Allocation Buffer — each thread gets a private slice of Eden for fast object allocation (no sync)</td></tr>
+        <tr><td>Safe Point</td><td>JVM stops all threads at safe points for GC (STW), JIT deoptimization, etc.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Final Interview Q&A Rapid Fire -->
+  <div class="iq-title">🎯 Rapid Fire — JVM Interview Questions</div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between JDK, JRE, and JVM?</div>
+    <div class="iq-a">
+      <strong>JVM (Java Virtual Machine):</strong> Abstract machine that executes bytecode. Platform-specific implementation (Windows JVM, Linux JVM).<br>
+      <strong>JRE (Java Runtime Environment):</strong> JVM + standard class libraries (rt.jar, java.util, java.lang etc.) — enough to RUN Java programs.<br>
+      <strong>JDK (Java Development Kit):</strong> JRE + development tools (javac compiler, javadoc, jdb debugger, jconsole, jstack etc.) — needed to DEVELOP Java programs.<br>
+      Relationship: JDK ⊃ JRE ⊃ JVM. In Java 9+, modular system (JPMS) replaced monolithic JRE — you can create custom runtime images with <code>jlink</code>.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q2</span>Explain the ClassLoader delegation model (Parent Delegation).</div>
+    <div class="iq-a">
+      When a ClassLoader is asked to load a class it: (1) Checks its own cache first. (2) Delegates to parent ClassLoader. (3) Only if parent cannot find it, loads it itself.<br>
+      <strong>Hierarchy:</strong> Bootstrap CL → Extension/Platform CL → Application CL → Custom CL<br>
+      <strong>Why?</strong> Prevents malicious code from replacing core classes (e.g., a fake java.lang.String). Security and consistency.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q3</span>Can we load the same class twice in the same JVM?</div>
+    <div class="iq-a">
+      Yes — by different ClassLoaders. Each ClassLoader maintains its own namespace. The same fully qualified class name loaded by two different ClassLoaders creates two distinct Class objects in the JVM. They are NOT type-compatible — casting between them throws ClassCastException. This is used in application servers (each webapp has its own ClassLoader) and hot-reloading frameworks.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q4</span>What are the phases of class loading?</div>
+    <div class="iq-a">
+      <strong>1. Loading:</strong> Read .class file bytes, create Class object in Method Area.<br>
+      <strong>2. Linking:</strong><br>
+      &nbsp;&nbsp;• Verification — bytecode validity check (structure, types, security)<br>
+      &nbsp;&nbsp;• Preparation — allocate memory for static fields, set to default values (0, null, false)<br>
+      &nbsp;&nbsp;• Resolution — replace symbolic references with direct memory references<br>
+      <strong>3. Initialization:</strong> Run static initializers and static blocks in top-down order. Triggered on first active use.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q5</span>What triggers class initialization?</div>
+    <div class="iq-a">
+      Active use triggers initialization: (1) Creating instance with <code>new</code>. (2) Calling a static method. (3) Reading/writing a non-constant static field. (4) <code>Class.forName()</code> call. (5) A subclass being initialized triggers superclass initialization. (6) JVM main class at startup.<br>
+      <strong>Does NOT trigger (passive use):</strong> Accessing a <code>static final</code> compile-time constant (inlined by compiler), creating array of a class type, ClassLoader.loadClass().
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q6</span>What is the difference between Stack and Heap in JVM?</div>
+    <div class="iq-a">
+      <strong>Stack:</strong> Per-thread. Stores stack frames (local variables, method arguments, partial results, return address). LIFO. Fixed size (<code>-Xss</code>). Fast allocation. StackOverflowError if exceeded. Automatically managed (frame pushed/popped).<br>
+      <strong>Heap:</strong> Shared across all threads. Stores all object instances and arrays. Managed by GC. <code>-Xms/-Xmx</code> controls size. OutOfMemoryError if full. Slower than stack (GC overhead, synchronization).
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q7</span>What is Metaspace and how is it different from PermGen?</div>
+    <div class="iq-a">
+      <strong>PermGen (before Java 8):</strong> Fixed-size JVM heap region. Stored class metadata, interned strings, static variables. Common cause of <code>OutOfMemoryError: PermGen space</code> in apps that load many classes dynamically.<br>
+      <strong>Metaspace (Java 8+):</strong> Uses native OS memory (outside JVM heap). No fixed upper limit by default (auto-grows). Can be limited with <code>-XX:MaxMetaspaceSize</code>. String pool moved to heap. Static variable references moved to heap. Significantly reduces OOM errors from class loading.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q8</span>How does JIT compilation work? What is tiered compilation?</div>
+    <div class="iq-a">
+      JIT monitors method invocation counts. Initially code runs interpreted. After ~10,000 invocations (threshold), method is compiled to native machine code by JIT.<br>
+      <strong>Tiered Compilation (Java 8+ default):</strong><br>
+      Level 0: Interpreter (no profiling)<br>
+      Level 1–3: C1 compiler (fast compile, basic optimizations + profiling data collection)<br>
+      Level 4: C2 compiler (aggressive optimizations using profiling data — inlining, loop unrolling, escape analysis)<br>
+      Methods can be <strong>deoptimized</strong> if assumptions become invalid (e.g., new subclass loaded invalidating an inlined call).
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q9</span>Explain Garbage Collection — how does generational GC work?</div>
+    <div class="iq-a">
+      Based on the "generational hypothesis" — most objects die young.<br>
+      <strong>Young Generation:</strong> Eden + 2 Survivor spaces (S0, S1). New objects go to Eden. Minor GC: copies live objects to Survivor, increments age. Objects aging past threshold promoted to Old Gen.<br>
+      <strong>Old Generation:</strong> Long-lived objects. Major/Full GC collects here — more expensive, longer STW pauses.<br>
+      <strong>GC algorithms:</strong> Serial (single thread), Parallel (multi-thread throughput), CMS (deprecated, low-pause), G1 (default Java 9+, region-based, predictable pauses), ZGC (Java 11+, &lt;1ms pauses), Shenandoah (Red Hat, concurrent).
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q10</span>What is the difference between Minor GC, Major GC, and Full GC?</div>
+    <div class="iq-a">
+      <strong>Minor GC:</strong> Collects Young Generation only. Fast (young gen is small). STW pause is short. Triggered when Eden is full.<br>
+      <strong>Major GC:</strong> Collects Old Generation. Slower, longer STW pause. Triggered when old gen is full.<br>
+      <strong>Full GC:</strong> Collects ENTIRE heap (Young + Old + Metaspace). Most expensive. Triggered by: <code>System.gc()</code>, promotion failure, concurrent mode failure (CMS), explicit request. Should be minimized in production.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q11</span>What is a memory leak in Java? How to detect it?</div>
+    <div class="iq-a">
+      Java memory leak = objects are not GC'd because references are unintentionally held. Common causes:<br>
+      • Static collections growing without bound<br>
+      • Unclosed resources (streams, connections)<br>
+      • ThreadLocal without remove() in thread pools<br>
+      • Listener/callback not unregistered<br>
+      • Inner class holding outer class reference<br>
+      <strong>Detection:</strong> Heap dump analysis (jmap -dump + Eclipse MAT / VisualVM), monitoring heap growth over time with JConsole, GC log analysis (<code>-verbose:gc</code>), profilers (YourKit, JProfiler, Async-profiler).
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q12</span>What happens when you call System.gc()?</div>
+    <div class="iq-a">
+      It is a <strong>hint</strong> to the JVM to run GC — the JVM may ignore it entirely. It is non-deterministic, non-blocking, and not guaranteed to do anything. In production code, calling <code>System.gc()</code> is considered bad practice because: (1) It may trigger an unnecessary Full GC causing long STW pause. (2) The JVM's GC algorithms are better at deciding when to collect. (3) It can be disabled with <code>-XX:+DisableExplicitGC</code>. Use case: before capturing a heap dump in diagnostics.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q13</span>What are Strong, Soft, Weak, and Phantom references?</div>
+    <div class="iq-a">
+      <strong>Strong (default):</strong> <code>Object obj = new Object()</code> — never GC'd while reference exists.<br>
+      <strong>Soft:</strong> <code>SoftReference&lt;T&gt;</code> — GC'd only when JVM is low on memory. Good for memory-sensitive caches.<br>
+      <strong>Weak:</strong> <code>WeakReference&lt;T&gt;</code> — GC'd at next GC cycle regardless of memory. Used in WeakHashMap, ThreadLocal internals.<br>
+      <strong>Phantom:</strong> <code>PhantomReference&lt;T&gt;</code> — get() always returns null. Used for pre-mortem cleanup (resource release) before GC. Used with ReferenceQueue. Cleaner API (Java 9+) is preferred modern alternative.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q14</span>How does the JVM execute bytecode — describe the execution engine?</div>
+    <div class="iq-a">
+      <strong>Execution Engine components:</strong><br>
+      1. <strong>Interpreter:</strong> Reads and executes bytecode instructions one at a time. Fast startup, slower execution.<br>
+      2. <strong>JIT Compiler:</strong> Compiles hot methods to native code. C1 (quick) → C2 (optimized). Results cached in Code Cache.<br>
+      3. <strong>Garbage Collector:</strong> Automatic memory reclamation.<br>
+      4. <strong>Native Method Interface (JNI):</strong> Bridge to native (C/C++) code.<br>
+      5. <strong>Native Method Libraries:</strong> Platform-specific native implementations.
+    </div>
+  </div>
+
+  <div class="iq-card">
+    <div class="iq-q"><span class="iq-q-num">Q15</span>What is the G1 GC and why is it the default since Java 9?</div>
+    <div class="iq-a">
+      G1 (Garbage-First) GC divides heap into equal-sized regions (1–32MB). Regions are dynamically assigned as Eden, Survivor, Old, or Humongous (for large objects). G1 prioritizes collecting regions with most garbage first (hence "Garbage-First"). Benefits: predictable pause times (<code>-XX:MaxGCPauseMillis=200</code> target), works well for heaps 6GB+, concurrent marking, no fragmentation. Good balance of throughput vs latency. For ultra-low latency use ZGC (Java 15+ production-ready, &lt;1ms pauses).
+    </div>
+  </div>
+
+</div><!-- end content-card -->
+
+</section><!-- end section -->
+
+</div><!-- end container -->
+
+<!-- ════ FOOTER ════ -->
+<footer class="page-footer">
+  <p>
+    📘 <strong>Part 05 of 20</strong> — Java Interview Notes Series |
+    Next: <strong>Part 06 — Multithreading &amp; Concurrency (Thread creation, synchronization, locks, CompletableFuture)</strong>
+  </p>
+  <p style="margin-top:8px; font-size:12px;">
+    Topics Covered: JDK vs JRE vs JVM • Java compilation pipeline • Bytecode &amp; class file structure •
+    JVM Architecture (ClassLoader subsystem, Runtime Data Areas, Execution Engine) •
+    Bootstrap / Extension / Application ClassLoaders • Parent Delegation Model •
+    Custom ClassLoader (findClass override) • Class loading phases (Loading→Linking→Initialization) •
+    Class initialization triggers • Stack vs Heap vs Method Area vs PC Register •
+    PermGen → Metaspace migration (Java 8) • JIT compilation (C1/C2, Tiered Compilation levels 0–4) •
+    JIT optimizations (inlining, escape analysis, loop unrolling, dead code elimination) •
+    Generational GC (Eden, Survivor S0/S1, Old Gen) • Minor/Major/Full GC •
+    GC algorithms (Serial, Parallel, CMS, G1, ZGC, Shenandoah) •
+    Strong/Soft/Weak/Phantom references • Memory leak detection •
+    JVM diagnostic tools (jstack, jmap, jconsole, jstat, jcmd, VisualVM) •
+    25+ cheat sheet facts • 15 deep Interview Q&amp;As
+  </p>
+</footer>
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>

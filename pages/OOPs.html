@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Part 01 — OOPs: Four Pillars | Java Interview Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --card:     #21253a;
+      --border:   #2e3350;
+      --accent:   #6c63ff;
+      --accent2:  #00d4aa;
+      --accent3:  #ff6b6b;
+      --accent4:  #ffd93d;
+      --accent5:  #4ecdc4;
+      --pink:     #ec4899;
+      --text:     #e8eaf6;
+      --muted:    #8b92b8;
+      --code-bg:  #13151f;
+    }
+
+    
+                        
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #12162b 50%, #1a1020 100%);
+      padding: 56px 24px 48px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+                    
+    /* ── LAYOUT ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+                        
+    /* ── SECTION ── */
+    .section { margin-bottom: 60px; }
+                .section-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px;
+    }
+    .section-title {
+      font-size: 26px; font-weight: 800; color: var(--text);
+    }
+    
+    /* Color themes for sections */
+    .s1     .s2     .s3     .s4     .s5     .s6     .s7
+
+       /* keyword */                                                                                                                                                                    /* operators */
+
+                        
+                        
+            .key-list li.green { border-left-color: var(--accent2); }
+                
+    /* ── INTERVIEW Q CARD ── */
+    .iq-section { margin-top: 32px; }
+                    
+                
+    /* ── PILLARS OVERVIEW ── */
+    .pillars-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px; margin: 20px 0;
+    }
+    .pillar-box {
+      border-radius: 14px; padding: 20px;
+      border: 1px solid var(--border); text-align: center;
+    }
+    .pillar-box .p-icon { font-size: 32px; margin-bottom: 10px; }
+    .pillar-box .p-name { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+    .pillar-box .p-desc { font-size: 12px; color: var(--muted); }
+    .pb1 { background: rgba(108,99,255,0.08); border-color: rgba(108,99,255,0.25); }
+    .pb1 .p-name { color: #a78bfa; }
+    .pb2 { background: rgba(0,212,170,0.08); border-color: rgba(0,212,170,0.25); }
+    .pb2 .p-name { color: var(--accent2); }
+    .pb3 { background: rgba(255,107,107,0.08); border-color: rgba(255,107,107,0.25); }
+    .pb3 .p-name { color: var(--accent3); }
+    .pb4 { background: rgba(255,217,61,0.08); border-color: rgba(255,217,61,0.25); }
+    .pb4 .p-name { color: var(--accent4); }
+
+    
+    /* ── SNIPPET QUIZ ── */
+    .quiz-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; margin-bottom: 16px;
+    }
+    .quiz-q {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 12px; display: flex; gap: 8px;
+    }
+    .quiz-badge {
+      background: rgba(255,107,107,0.15); color: var(--accent3);
+      border-radius: 6px; padding: 2px 8px; font-size: 11px;
+      font-weight: 800; flex-shrink: 0;
+    }
+    .quiz-reveal {
+      background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.2);
+      border-radius: 8px; padding: 12px 16px; margin-top: 10px;
+    }
+    .quiz-reveal-label {
+      font-size: 10px; font-weight: 700; color: var(--accent2);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .quiz-ans { font-size: 13px; color: var(--muted); }
+
+        
+    @media (max-width: 600px) {
+      .pillars-grid { grid-template-columns: 1fr 1fr; }
+          }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>🌐 OOPs — 4 Pillars</h2>
+      <p>Part 01 — Core Java</p>
+    </div>
+    <nav>
+      <div class="section-label">Four Pillars</div>
+      <a href="#overview">OOPs Overview</a>
+      <a href="#abstraction">Abstraction (Pillar 1)</a>
+      <a href="#encapsulation">Encapsulation (Pillar 2)</a>
+      <a href="#inheritance">Inheritance (Pillar 3)</a>
+      <a href="#polymorphism">Polymorphism (Pillar 4)</a>
+      <div class="section-label">More Concepts</div>
+      <a href="#static">Static Keyword</a>
+      <a href="#oop-vs-fp">OOP vs Functional</a>
+      <a href="#snippets">Code Snippets</a>
+      <a href="#interview">Interview Q&A</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ═══ TOP NAV ═══ -->
+<nav class="topnav">
+  <div class="topnav-left">
+    <span class="nav-series">Java Notes</span>
+    <span class="nav-divider">›</span>
+    <span class="nav-title">Part 01 — OOPs: Four Pillars</span>
+  </div>
+  <span class="nav-badge">Part 01 / 20</span>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <div class="hero-part-label">Part 01 of 20 — Core Java</div>
+  <h1>OOPs: Four Pillars</h1>
+  <p class="hero-desc">
+    Complete guide from basic definitions to tricky code snippets.
+    Covers Abstraction, Encapsulation, Inheritance, Polymorphism,
+    Static keyword, and common interview traps.
+  </p>
+  <div class="hero-pills">
+    <div class="hero-pill">🏛️ Abstraction</div>
+    <div class="hero-pill">🔒 Encapsulation</div>
+    <div class="hero-pill">🧬 Inheritance</div>
+    <div class="hero-pill">🔄 Polymorphism</div>
+    <div class="hero-pill">⚡ Static Keyword</div>
+    <div class="hero-pill">🧠 Code Snippets</div>
+  </div>
+</div>
+
+<!-- ═══ CONTAINER ═══ -->
+<div class="container">
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <div class="toc-title">📋 Contents</div>
+    <div class="toc-grid">
+      <a href="#overview" class="toc-item"><span class="toc-num">0</span>OOPs Overview</a>
+      <a href="#abstraction" class="toc-item"><span class="toc-num">1</span>Abstraction</a>
+      <a href="#encapsulation" class="toc-item"><span class="toc-num">2</span>Encapsulation</a>
+      <a href="#inheritance" class="toc-item"><span class="toc-num">3</span>Inheritance</a>
+      <a href="#polymorphism" class="toc-item"><span class="toc-num">4</span>Polymorphism</a>
+      <a href="#static" class="toc-item"><span class="toc-num">5</span>Static Keyword</a>
+      <a href="#oop-vs-fp" class="toc-item"><span class="toc-num">6</span>OOP vs FP</a>
+      <a href="#snippets" class="toc-item"><span class="toc-num">7</span>Tricky Snippets</a>
+      <a href="#interview" class="toc-item"><span class="toc-num">8</span>Interview Q&amp;A</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 0 — OVERVIEW
+  ═══════════════════════════════════════ -->
+  <section id="overview" class="section s1">
+    <div class="section-header">
+      <div class="section-icon">🌐</div>
+      <div class="section-meta">
+        <div class="section-label">Section 0</div>
+        <div class="section-title">OOPs Overview</div>
+        <div class="section-sub">What is OOP and why it exists</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 What is Object-Oriented Programming?</h3>
+      <p>
+        OOP is a <strong>programming paradigm</strong> that organizes software around
+        <strong>objects</strong> — instances of classes that bundle data (fields) and behavior
+        (methods) together. Java is primarily an OOP language.
+      </p>
+      <p>
+        OOP was introduced to solve problems of <strong>procedural/structured programming</strong>
+        like code reuse, maintainability, and modeling real-world entities.
+      </p>
+
+      <div class="pillars-grid">
+        <div class="pillar-box pb1">
+          <div class="p-icon">🏛️</div>
+          <div class="p-name">Abstraction</div>
+          <div class="p-desc">Hide complexity, show only what's needed</div>
+        </div>
+        <div class="pillar-box pb2">
+          <div class="p-icon">🔒</div>
+          <div class="p-name">Encapsulation</div>
+          <div class="p-desc">Wrap data + methods, restrict direct access</div>
+        </div>
+        <div class="pillar-box pb3">
+          <div class="p-icon">🧬</div>
+          <div class="p-name">Inheritance</div>
+          <div class="p-desc">Child class reuses parent class features</div>
+        </div>
+        <div class="pillar-box pb4">
+          <div class="p-icon">🔄</div>
+          <div class="p-name">Polymorphism</div>
+          <div class="p-desc">One interface, many implementations</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box note">
+      <div class="ib-icon">💡</div>
+      <div>
+        <strong>Is Java fully OOP?</strong> — No. Java is NOT fully object-oriented because it
+        supports <strong>primitive types</strong> (int, char, float, boolean etc.) which are not
+        objects. A fully OOP language (like Smalltalk) treats everything as an object.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 1 — ABSTRACTION
+  ═══════════════════════════════════════ -->
+  <section id="abstraction" class="section s1">
+    <div class="section-header">
+      <div class="section-icon">🏛️</div>
+      <div class="section-meta">
+        <div class="section-label">Pillar 1</div>
+        <div class="section-title">Abstraction</div>
+        <div class="section-sub">Hiding implementation details, exposing only what's necessary</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 What is Abstraction?</h3>
+      <p>
+        Abstraction means <strong>hiding the internal implementation</strong> and showing only the
+        <strong>relevant features</strong> to the user. Think of a car — you press the accelerator
+        without knowing how the engine works internally.
+      </p>
+      <p>In Java, abstraction is achieved via:</p>
+      <ul class="key-list">
+        <li><strong>Abstract classes</strong> — partial abstraction (0% to 100%)</li>
+        <li class="green"><strong>Interfaces</strong> — 100% abstraction (before Java 8)</li>
+      </ul>
+    </div>
+
+    <!-- ABSTRACT CLASS -->
+    <div class="content-card">
+      <h3>🔷 Abstract Class</h3>
+      <p>Declared with <code>abstract</code> keyword. Cannot be instantiated. May contain abstract + concrete methods.</p>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Abstract Class Example</span>
+        </div>
+        <pre>
+<span class="cm">// Abstract class — cannot instantiate directly</span>
+<span class="kw">abstract class</span> <span class="cl">Animal</span> {
+
+    <span class="kw">private</span> <span class="cl">String</span> name;
+
+    <span class="cm">// Constructor in abstract class — YES it can have one!</span>
+    <span class="cl">Animal</span>(<span class="cl">String</span> name) {
+        <span class="kw">this</span>.name = name;
+        <span class="cl">System</span>.out.println(<span class="str">"Animal constructor called: "</span> + name);
+    }
+
+    <span class="cm">// Abstract method — NO body, subclass MUST override</span>
+    <span class="kw">abstract void</span> <span class="fn">makeSound</span>();
+
+    <span class="cm">// Concrete method — has body, subclass can use or override</span>
+    <span class="kw">void</span> <span class="fn">breathe</span>() {
+        <span class="cl">System</span>.out.println(name + <span class="str">" is breathing"</span>);
+    }
+
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">getName</span>() { <span class="kw">return</span> name; }
+}
+
+<span class="kw">class</span> <span class="cl">Dog</span> <span class="kw">extends</span> <span class="cl">Animal</span> {
+
+    <span class="cl">Dog</span>(<span class="cl">String</span> name) {
+        <span class="kw">super</span>(name); <span class="cm">// Must call parent constructor</span>
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">void</span> <span class="fn">makeSound</span>() {
+        <span class="cl">System</span>.out.println(getName() + <span class="str">" says: Woof!"</span>);
+    }
+}
+
+<span class="kw">public class</span> <span class="cl">Main</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cm">// Animal a = new Animal();  ← ERROR! Cannot instantiate</span>
+        <span class="cl">Animal</span> dog = <span class="kw">new</span> <span class="cl">Dog</span>(<span class="str">"Tommy"</span>);
+        dog.<span class="fn">makeSound</span>();  <span class="cm">// Tommy says: Woof!</span>
+        dog.<span class="fn">breathe</span>();    <span class="cm">// Tommy is breathing</span>
+    }
+}</pre>
+      </div>
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">Animal constructor called: Tommy</div>
+        <div class="output-line">Tommy says: Woof!</div>
+        <div class="output-line">Tommy is breathing</div>
+      </div>
+    </div>
+
+    <!-- INTERFACE -->
+    <div class="content-card">
+      <h3>🔶 Interface</h3>
+      <p>
+        A contract that a class must follow. Before Java 8: all methods were abstract.
+        After Java 8: can have <code>default</code> and <code>static</code> methods.
+        Java 9+: can have <code>private</code> methods.
+      </p>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Interface with default &amp; static methods (Java 8+)</span>
+        </div>
+        <pre>
+<span class="kw">interface</span> <span class="cl">Flyable</span> {
+    <span class="cm">// implicitly public abstract</span>
+    <span class="kw">void</span> <span class="fn">fly</span>();
+
+    <span class="cm">// Java 8 — default method (has body, optional to override)</span>
+    <span class="kw">default void</span> <span class="fn">land</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Landing safely"</span>);
+    }
+
+    <span class="cm">// Java 8 — static method (called on interface, not object)</span>
+    <span class="kw">static void</span> <span class="fn">info</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Flyable interface"</span>);
+    }
+
+    <span class="cm">// Variables are implicitly public static final</span>
+    <span class="kw">int</span> MAX_ALTITUDE = <span class="num">30000</span>; <span class="cm">// constant</span>
+}
+
+<span class="kw">class</span> <span class="cl">Bird</span> <span class="kw">implements</span> <span class="cl">Flyable</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">fly</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Bird is flying at max "</span> + MAX_ALTITUDE + <span class="str">" ft"</span>);
+    }
+    <span class="cm">// land() is optional to override — default is available</span>
+}
+
+<span class="kw">class</span> <span class="cl">Plane</span> <span class="kw">implements</span> <span class="cl">Flyable</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">fly</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Plane is flying!"</span>);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">land</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Plane landing on runway"</span>);
+    }
+}</pre>
+      </div>
+    </div>
+
+    <!-- Abstract Class vs Interface Table -->
+    <div class="content-card">
+      <h3>📊 Abstract Class vs Interface — Comparison</h3>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Abstract Class</th>
+            <th>Interface</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Keyword</td>
+            <td><code>abstract class</code></td>
+            <td><code>interface</code></td>
+          </tr>
+          <tr>
+            <td>Methods</td>
+            <td>Abstract + Concrete</td>
+            <td>Abstract + default + static (Java 8+)</td>
+          </tr>
+          <tr>
+            <td>Variables</td>
+            <td>Any type (instance vars ok)</td>
+            <td>Only <code>public static final</code></td>
+          </tr>
+          <tr>
+            <td>Constructor</td>
+            <td>✅ Yes (called via super)</td>
+            <td>❌ No</td>
+          </tr>
+          <tr>
+            <td>Multiple Inheritance</td>
+            <td>❌ Only one class</td>
+            <td>✅ A class can implement many interfaces</td>
+          </tr>
+          <tr>
+            <td>Access Modifiers</td>
+            <td>Any (public, protected, private)</td>
+            <td>Methods are public by default</td>
+          </tr>
+          <tr>
+            <td>When to use</td>
+            <td>Shared code + IS-A relationship</td>
+            <td>Define contract / capability</td>
+          </tr>
+          <tr>
+            <td>Example</td>
+            <td><code>abstract class Vehicle</code></td>
+            <td><code>interface Serializable</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="info-box tip">
+        <div class="ib-icon">✅</div>
+        <div>
+          <strong>Rule of thumb:</strong> Use <strong>abstract class</strong> when classes share
+          common state/behavior (IS-A). Use <strong>interface</strong> when you want to define a
+          capability contract that unrelated classes can implement (CAN-DO).
+          Example: A <code>Dog</code> IS-A <code>Animal</code> but CAN-DO <code>Swimmable</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="iq-section">
+      <div class="iq-title">🎯 Interview Questions — Abstraction</div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q1</span>Can an abstract class have a constructor?</div>
+        <div class="iq-a">Yes! Abstract classes CAN have constructors. They are called when a subclass is instantiated via <code>super()</code>. Purpose: to initialize fields defined in the abstract class.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q2</span>Can an interface have instance variables?</div>
+        <div class="iq-a">No. Interface variables are implicitly <code>public static final</code> (constants). They are shared across all implementors and cannot be changed.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q3</span>Can we instantiate an abstract class?</div>
+        <div class="iq-a">No directly. But we can create an anonymous subclass: <code>Animal a = new Animal() { void makeSound(){} };</code></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 2 — ENCAPSULATION
+  ═══════════════════════════════════════ -->
+  <section id="encapsulation" class="section s2">
+    <div class="section-header">
+      <div class="section-icon">🔒</div>
+      <div class="section-meta">
+        <div class="section-label">Pillar 2</div>
+        <div class="section-title">Encapsulation</div>
+        <div class="section-sub">Data hiding + controlled access via access modifiers</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 What is Encapsulation?</h3>
+      <p>
+        Encapsulation is the process of <strong>wrapping data (fields) and methods into a single unit (class)</strong>
+        and <strong>restricting direct access</strong> to the internal state using access modifiers.
+        Access is provided through <strong>getters and setters</strong>.
+      </p>
+      <ul class="key-list">
+        <li><strong>Protects data</strong> from unintended modification</li>
+        <li class="green"><strong>Enables validation</strong> in setters before assigning values</li>
+        <li class="yellow"><strong>Makes code maintainable</strong> — internal changes don't break external code</li>
+        <li class="red"><strong>Supports immutability</strong> — no setter + final field = immutable</li>
+      </ul>
+    </div>
+
+    <!-- Access Modifiers -->
+    <div class="content-card">
+      <h3>🔐 Access Modifiers — Complete Table</h3>
+      <table class="comp-table">
+        <thead>
+          <tr><th>Modifier</th><th>Same Class</th><th>Same Package</th><th>Subclass</th><th>Everywhere</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>private</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>default (no keyword)</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+          <tr><td>protected</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+          <tr><td>public</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Code Example -->
+    <div class="content-card">
+      <h3>💻 Encapsulation — Full Example</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Bank Account with Validation</span>
+        </div>
+        <pre>
+<span class="kw">public class</span> <span class="cl">BankAccount</span> {
+
+    <span class="cm">// private — only accessible within this class</span>
+    <span class="kw">private</span> <span class="cl">String</span> accountNumber;
+    <span class="kw">private</span> <span class="kw">double</span> balance;
+    <span class="kw">private</span> <span class="cl">String</span> ownerName;
+
+    <span class="cm">// Constructor</span>
+    <span class="kw">public</span> <span class="cl">BankAccount</span>(<span class="cl">String</span> accNum, <span class="cl">String</span> owner, <span class="kw">double</span> initialBalance) {
+        <span class="kw">this</span>.accountNumber = accNum;
+        <span class="kw">this</span>.ownerName = owner;
+        <span class="kw">this</span>.balance = initialBalance;
+    }
+
+    <span class="cm">// Getter — read-only access to accountNumber</span>
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">getAccountNumber</span>() { <span class="kw">return</span> accountNumber; }
+
+    <span class="cm">// Getter for balance</span>
+    <span class="kw">public double</span> <span class="fn">getBalance</span>() { <span class="kw">return</span> balance; }
+
+    <span class="cm">// NO setter for accountNumber — it's immutable after creation</span>
+
+    <span class="cm">// Controlled deposit with validation</span>
+    <span class="kw">public void</span> <span class="fn">deposit</span>(<span class="kw">double</span> amount) {
+        <span class="kw">if</span> (amount &lt;= <span class="num">0</span>) {
+            <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="str">"Deposit must be positive"</span>);
+        }
+        balance += amount;
+    }
+
+    <span class="cm">// Controlled withdrawal with validation</span>
+    <span class="kw">public void</span> <span class="fn">withdraw</span>(<span class="kw">double</span> amount) {
+        <span class="kw">if</span> (amount &gt; balance) {
+            <span class="kw">throw new</span> <span class="cl">IllegalStateException</span>(<span class="str">"Insufficient funds"</span>);
+        }
+        balance -= amount;
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="cl">BankAccount</span> acc = <span class="kw">new</span> <span class="cl">BankAccount</span>(<span class="str">"ACC001"</span>, <span class="str">"Alice"</span>, <span class="num">1000.0</span>);
+acc.<span class="fn">deposit</span>(<span class="num">500</span>);
+acc.<span class="fn">withdraw</span>(<span class="num">200</span>);
+<span class="cm">// acc.balance = 99999;  ← COMPILE ERROR — private!</span>
+<span class="cl">System</span>.out.println(acc.<span class="fn">getBalance</span>()); <span class="cm">// 1300.0</span></pre>
+      </div>
+    </div>
+
+    <!-- Immutable Class -->
+    <div class="content-card">
+      <h3>🧊 Creating an Immutable Class</h3>
+      <p>An immutable class cannot be changed after creation. To create one:</p>
+      <ul class="key-list">
+        <li>Make class <code>final</code> (can't be subclassed)</li>
+        <li class="green">Make all fields <code>private final</code></li>
+        <li class="yellow">No setters</li>
+        <li class="red">Initialize all fields via constructor</li>
+        <li class="pink">Return copies of mutable fields in getters (defensive copy)</li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Immutable Class Pattern</span>
+        </div>
+        <pre>
+<span class="kw">public final class</span> <span class="cl">ImmutableStudent</span> {
+
+    <span class="kw">private final</span> <span class="kw">int</span> id;
+    <span class="kw">private final</span> <span class="cl">String</span> name;
+    <span class="kw">private final</span> <span class="cl">List</span>&lt;<span class="cl">String</span>&gt; courses; <span class="cm">// mutable field!</span>
+
+    <span class="kw">public</span> <span class="cl">ImmutableStudent</span>(<span class="kw">int</span> id, <span class="cl">String</span> name, <span class="cl">List</span>&lt;<span class="cl">String</span>&gt; courses) {
+        <span class="kw">this</span>.id = id;
+        <span class="kw">this</span>.name = name;
+        <span class="cm">// Defensive copy — don't store reference to outside list</span>
+        <span class="kw">this</span>.courses = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(courses);
+    }
+
+    <span class="kw">public int</span> <span class="fn">getId</span>()    { <span class="kw">return</span> id; }
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">getName</span>() { <span class="kw">return</span> name; }
+
+    <span class="kw">public</span> <span class="cl">List</span>&lt;<span class="cl">String</span>&gt; <span class="fn">getCourses</span>() {
+        <span class="cm">// Return defensive copy — don't expose internal list</span>
+        <span class="kw">return</span> <span class="cl">Collections</span>.<span class="fn">unmodifiableList</span>(courses);
+    }
+}</pre>
+      </div>
+    </div>
+
+    <div class="iq-section">
+      <div class="iq-title">🎯 Interview Questions — Encapsulation</div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between encapsulation and abstraction?</div>
+        <div class="iq-a"><strong>Abstraction</strong> = WHAT (hide complexity, show only what's needed) | <strong>Encapsulation</strong> = HOW (bundle data+methods, protect via access modifiers). Abstraction is design-level; encapsulation is implementation-level.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q2</span>Why is <code>protected</code> used?</div>
+        <div class="iq-a">When you want a field/method to be accessible in subclasses (even in different packages) but NOT public. Common in framework code and template method pattern.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q3</span>How does encapsulation support immutability?</div>
+        <div class="iq-a">By making fields <code>private final</code> with no setters and providing only getters. String in Java is a classic immutable example — once created, the value never changes.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 3 — INHERITANCE
+  ═══════════════════════════════════════ -->
+  <section id="inheritance" class="section s3">
+    <div class="section-header">
+      <div class="section-icon">🧬</div>
+      <div class="section-meta">
+        <div class="section-label">Pillar 3</div>
+        <div class="section-title">Inheritance</div>
+        <div class="section-sub">IS-A relationship, super(), constructor chaining, types</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 What is Inheritance?</h3>
+      <p>
+        Inheritance allows a child class to <strong>acquire properties and methods</strong> of a
+        parent class. It promotes <strong>code reusability</strong> and establishes an
+        <strong>IS-A relationship</strong>.
+      </p>
+      <ul class="key-list">
+        <li><strong>IS-A:</strong> Dog IS-A Animal ✅ (use inheritance)</li>
+        <li class="green"><strong>HAS-A:</strong> Car HAS-A Engine (use composition)</li>
+        <li class="yellow">Java supports <strong>single inheritance</strong> for classes</li>
+        <li class="red">Multiple inheritance via <strong>interfaces</strong> only</li>
+      </ul>
+    </div>
+
+    <!-- Types of Inheritance -->
+    <div class="content-card">
+      <h3>🔷 Types of Inheritance in Java</h3>
+      <table class="comp-table">
+        <thead><tr><th>Type</th><th>Supported?</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Single</td><td>✅ Yes</td><td><code>class Dog extends Animal</code></td></tr>
+          <tr><td>Multi-level</td><td>✅ Yes</td><td><code>Animal → Dog → Labrador</code></td></tr>
+          <tr><td>Hierarchical</td><td>✅ Yes</td><td><code>Animal → Dog, Cat, Horse</code></td></tr>
+          <tr><td>Multiple (class)</td><td>❌ No</td><td>Not allowed — Diamond problem</td></tr>
+          <tr><td>Multiple (interface)</td><td>✅ Yes</td><td><code>implements Flyable, Swimmable</code></td></tr>
+          <tr><td>Hybrid</td><td>✅ Partial (via interfaces)</td><td>Combination of above</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Constructor Chaining -->
+    <div class="content-card">
+      <h3>🔗 Constructor Chaining — super() and this()</h3>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Constructor Chain — Output Prediction (asked in interview!)</span>
+        </div>
+        <pre>
+<span class="kw">class</span> <span class="cl">A</span> {
+    <span class="cl">A</span>() {
+        <span class="cl">System</span>.out.print(<span class="str">"A "</span>);
+    }
+}
+
+<span class="kw">class</span> <span class="cl">B</span> <span class="kw">extends</span> <span class="cl">A</span> {
+    <span class="cl">B</span>() {
+        <span class="cm">// Compiler auto-inserts: super();  ← calls A()</span>
+        <span class="cl">System</span>.out.print(<span class="str">"B "</span>);
+    }
+}
+
+<span class="kw">class</span> <span class="cl">C</span> <span class="kw">extends</span> <span class="cl">B</span> {
+    <span class="cl">C</span>() {
+        <span class="cm">// Compiler auto-inserts: super();  ← calls B()</span>
+        <span class="cl">System</span>.out.print(<span class="str">"C "</span>);
+    }
+}
+
+<span class="kw">public class</span> <span class="cl">Main</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="kw">new</span> <span class="cl">C</span>();
+    }
+}</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">A B C</div>
+      </div>
+
+      <div class="info-box note">
+        <div class="ib-icon">💡</div>
+        <div>
+          <strong>Rule:</strong> When <code>new C()</code> is called → C() calls B() via super() →
+          B() calls A() via super() → A() prints first. Then B, then C.
+          Parent constructors always execute before child.
+        </div>
+      </div>
+    </div>
+
+    <!-- this() chaining -->
+    <div class="content-card">
+      <h3>🔗 this() — Constructor Overloading Chain</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">this() for constructor chaining within same class</span>
+        </div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Employee</span> {
+    <span class="kw">private</span> <span class="cl">String</span> name;
+    <span class="kw">private int</span> age;
+    <span class="kw">private</span> <span class="cl">String</span> dept;
+
+    <span class="cm">// Main constructor</span>
+    <span class="cl">Employee</span>(<span class="cl">String</span> name, <span class="kw">int</span> age, <span class="cl">String</span> dept) {
+        <span class="kw">this</span>.name = name;
+        <span class="kw">this</span>.age = age;
+        <span class="kw">this</span>.dept = dept;
+    }
+
+    <span class="cm">// Delegating to main constructor using this()</span>
+    <span class="cl">Employee</span>(<span class="cl">String</span> name, <span class="kw">int</span> age) {
+        <span class="kw">this</span>(name, age, <span class="str">"General"</span>); <span class="cm">// must be FIRST statement</span>
+    }
+
+    <span class="cl">Employee</span>(<span class="cl">String</span> name) {
+        <span class="kw">this</span>(name, <span class="num">0</span>); <span class="cm">// chains to above</span>
+    }
+}</pre>
+      </div>
+
+      <div class="info-box warn">
+        <div class="ib-icon">⚠️</div>
+        <div>
+          <strong>Rules:</strong> <code>super()</code> and <code>this()</code> must be the
+          <strong>first statement</strong> in a constructor. You CANNOT use both in same constructor.
+        </div>
+      </div>
+    </div>
+
+    <!-- super keyword -->
+    <div class="content-card">
+      <h3>⬆️ super Keyword — 3 Uses</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">All 3 uses of super</span>
+        </div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Vehicle</span> {
+    <span class="kw">String</span> brand = <span class="str">"Generic"</span>;
+
+    <span class="cl">Vehicle</span>(<span class="cl">String</span> brand) {
+        <span class="kw">this</span>.brand = brand;
+    }
+
+    <span class="kw">void</span> <span class="fn">display</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Vehicle: "</span> + brand);
+    }
+}
+
+<span class="kw">class</span> <span class="cl">Car</span> <span class="kw">extends</span> <span class="cl">Vehicle</span> {
+    <span class="kw">String</span> brand = <span class="str">"Toyota"</span>; <span class="cm">// shadows parent brand</span>
+
+    <span class="cl">Car</span>() {
+        <span class="kw">super</span>(<span class="str">"Ford"</span>); <span class="cm">// USE 1: Call parent constructor</span>
+    }
+
+    <span class="kw">void</span> <span class="fn">show</span>() {
+        <span class="cl">System</span>.out.println(<span class="kw">super</span>.brand); <span class="cm">// USE 2: Access parent field → "Ford"</span>
+        <span class="cl">System</span>.out.println(<span class="kw">this</span>.brand);  <span class="cm">// → "Toyota"</span>
+        <span class="kw">super</span>.<span class="fn">display</span>();                   <span class="cm">// USE 3: Call parent method</span>
+    }
+}</pre>
+      </div>
+    </div>
+
+    <!-- IS-A vs HAS-A -->
+    <div class="content-card">
+      <h3>🔄 IS-A vs HAS-A Relationship</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">IS-A (Inheritance) vs HAS-A (Composition)</span>
+        </div>
+        <pre>
+<span class="cm">// IS-A — Dog IS-A Animal (Inheritance)</span>
+<span class="kw">class</span> <span class="cl">Animal</span> { <span class="kw">void</span> <span class="fn">eat</span>() {} }
+<span class="kw">class</span> <span class="cl">Dog</span> <span class="kw">extends</span> <span class="cl">Animal</span> { <span class="kw">void</span> <span class="fn">bark</span>() {} }
+
+<span class="cm">// HAS-A — Car HAS-A Engine (Composition — preferred!)</span>
+<span class="kw">class</span> <span class="cl">Engine</span> {
+    <span class="kw">void</span> <span class="fn">start</span>() { <span class="cl">System</span>.out.println(<span class="str">"Engine started"</span>); }
+}
+
+<span class="kw">class</span> <span class="cl">Car</span> {
+    <span class="cm">// Car HAS-A Engine — composition</span>
+    <span class="kw">private</span> <span class="cl">Engine</span> engine = <span class="kw">new</span> <span class="cl">Engine</span>();
+
+    <span class="kw">void</span> <span class="fn">drive</span>() {
+        engine.<span class="fn">start</span>();
+        <span class="cl">System</span>.out.println(<span class="str">"Car is moving"</span>);
+    }
+}
+
+<span class="cm">// Ask: Is Car a type of Engine? NO → HAS-A (composition)</span>
+<span class="cm">// Ask: Is Dog a type of Animal? YES → IS-A (inheritance)</span></pre>
+      </div>
+
+      <div class="info-box tip">
+        <div class="ib-icon">✅</div>
+        <div>
+          <strong>Favour composition over inheritance</strong> (Effective Java rule).
+          Composition is more flexible — you can change the behavior at runtime by
+          swapping the composed object.
+        </div>
+      </div>
+    </div>
+
+    <div class="iq-section">
+      <div class="iq-title">🎯 Interview Questions — Inheritance</div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q1</span>What happens if child class doesn't call super()?</div>
+        <div class="iq-a">Java compiler automatically inserts <code>super()</code> (no-arg) as the first line in child constructor. If parent has NO no-arg constructor (only parameterized), compile error occurs — must explicitly call <code>super(args)</code>.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q2</span>Why doesn't Java support multiple class inheritance?</div>
+        <div class="iq-a">To avoid the <strong>Diamond Problem</strong>: if class C extends A and B, and both A and B have same method, Java won't know which one to use. Interfaces with default methods handle this via explicit override rule.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q3</span>Can a subclass reduce the visibility of an overridden method?</div>
+        <div class="iq-a">No! You can only increase (widen) access. If parent method is <code>public</code>, child cannot override it as <code>protected</code> or <code>private</code> — compile error.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 4 — POLYMORPHISM
+  ═══════════════════════════════════════ -->
+  <section id="polymorphism" class="section s4">
+    <div class="section-header">
+      <div class="section-icon">🔄</div>
+      <div class="section-meta">
+        <div class="section-label">Pillar 4</div>
+        <div class="section-title">Polymorphism</div>
+        <div class="section-sub">Overriding (runtime) vs Overloading (compile-time)</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 What is Polymorphism?</h3>
+      <p>
+        <em>Poly = many, morph = forms.</em>
+        Polymorphism allows one interface to be used for different data types or behaviors.
+        In Java there are <strong>two types</strong>:
+      </p>
+      <ul class="key-list">
+        <li><strong>Compile-time Polymorphism</strong> — Method Overloading (resolved at compile time)</li>
+        <li class="green"><strong>Runtime Polymorphism</strong> — Method Overriding (resolved at runtime via dynamic dispatch)</li>
+      </ul>
+    </div>
+
+    <!-- METHOD OVERLOADING -->
+    <div class="content-card">
+      <h3>🔷 Method Overloading — Compile-time Polymorphism</h3>
+      <p>Same method name, <strong>different parameters</strong> (type, number, or order) in the SAME class.</p>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Method Overloading Examples</span>
+        </div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Calculator</span> {
+
+    <span class="cm">// Different number of params</span>
+    <span class="kw">int</span> <span class="fn">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b)              { <span class="kw">return</span> a + b; }
+    <span class="kw">int</span> <span class="fn">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b, <span class="kw">int</span> c)       { <span class="kw">return</span> a + b + c; }
+
+    <span class="cm">// Different type of params</span>
+    <span class="kw">double</span> <span class="fn">add</span>(<span class="kw">double</span> a, <span class="kw">double</span> b)    { <span class="kw">return</span> a + b; }
+
+    <span class="cm">// NOTE: Return type ALONE cannot differentiate overloading!</span>
+    <span class="cm">// int add(int a, int b)    ← ERROR if double add already exists with same params</span>
+}
+
+<span class="kw">class</span> <span class="cl">PrintTest</span> {
+
+    <span class="kw">void</span> <span class="fn">print</span>(<span class="kw">int</span> x)      { <span class="cl">System</span>.out.println(<span class="str">"int: "</span> + x); }
+    <span class="kw">void</span> <span class="fn">print</span>(<span class="cl">Object</span> x)   { <span class="cl">System</span>.out.println(<span class="str">"Object: "</span> + x); }
+    <span class="kw">void</span> <span class="fn">print</span>(<span class="cl">String</span> x)   { <span class="cl">System</span>.out.println(<span class="str">"String: "</span> + x); }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">PrintTest</span> p = <span class="kw">new</span> <span class="cl">PrintTest</span>();
+        p.<span class="fn">print</span>(<span class="num">5</span>);       <span class="cm">// → int: 5</span>
+        p.<span class="fn">print</span>(<span class="str">"hi"</span>);   <span class="cm">// → String: hi</span>
+        p.<span class="fn">print</span>(<span class="kw">null</span>);   <span class="cm">// → String: null  (most specific type chosen)</span>
+    }
+}</pre>
+      </div>
+
+      <div class="info-box warn">
+        <div class="ib-icon">⚠️</div>
+        <div>
+          <strong>Tricky:</strong> <code>print(null)</code> calls <code>print(String)</code>
+          because String is more specific than Object. If both String and Integer overloads exist
+          without Object, <code>print(null)</code> would be <strong>ambiguous</strong> → compile error!
+        </div>
+      </div>
+    </div>
+
+    <!-- METHOD OVERRIDING -->
+    <div class="content-card">
+      <h3>🔶 Method Overriding — Runtime Polymorphism</h3>
+      <p>Child class provides its own implementation of a method defined in parent class.</p>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Method Overriding — Dynamic Dispatch</span>
+        </div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Shape</span> {
+    <span class="kw">void</span> <span class="fn">draw</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Drawing a shape"</span>);
+    }
+}
+
+<span class="kw">class</span> <span class="cl">Circle</span> <span class="kw">extends</span> <span class="cl">Shape</span> {
+    <span class="an">@Override</span>
+    <span class="kw">void</span> <span class="fn">draw</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Drawing a CIRCLE"</span>);
+    }
+}
+
+<span class="kw">class</span> <span class="cl">Rectangle</span> <span class="kw">extends</span> <span class="cl">Shape</span> {
+    <span class="an">@Override</span>
+    <span class="kw">void</span> <span class="fn">draw</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Drawing a RECTANGLE"</span>);
+    }
+}
+
+<span class="kw">public class</span> <span class="cl">Main</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+
+        <span class="cm">// Runtime Polymorphism — reference is Shape, object is Circle/Rectangle</span>
+        <span class="cl">Shape</span> s1 = <span class="kw">new</span> <span class="cl">Circle</span>();
+        <span class="cl">Shape</span> s2 = <span class="kw">new</span> <span class="cl">Rectangle</span>();
+
+        s1.<span class="fn">draw</span>();  <span class="cm">// Drawing a CIRCLE (decided at RUNTIME)</span>
+        s2.<span class="fn">draw</span>();  <span class="cm">// Drawing a RECTANGLE (decided at RUNTIME)</span>
+
+        <span class="cm">// Polymorphic array</span>
+        <span class="cl">Shape</span>[] shapes = { <span class="kw">new</span> <span class="cl">Circle</span>(), <span class="kw">new</span> <span class="cl">Rectangle</span>(), <span class="kw">new</span> <span class="cl">Circle</span>() };
+        <span class="kw">for</span> (<span class="cl">Shape</span> shape : shapes) {
+            shape.<span class="fn">draw</span>(); <span class="cm">// Each calls its own version</span>
+        }
+    }
+}</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">Drawing a CIRCLE</div>
+        <div class="output-line">Drawing a RECTANGLE</div>
+        <div class="output-line">Drawing a CIRCLE</div>
+        <div class="output-line">Drawing a RECTANGLE</div>
+        <div class="output-line">Drawing a CIRCLE</div>
+      </div>
+    </div>
+
+    <!-- Overloading vs Overriding Comparison -->
+    <div class="content-card">
+      <h3>📊 Overloading vs Overriding — Full Comparison</h3>
+      <table class="comp-table">
+        <thead>
+          <tr><th>Feature</th><th>Overloading</th><th>Overriding</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Also called</td><td>Compile-time / Static polymorphism</td><td>Runtime / Dynamic polymorphism</td></tr>
+          <tr><td>Where</td><td>Same class</td><td>Parent-child classes</td></tr>
+          <tr><td>Method name</td><td>Same</td><td>Same</td></tr>
+          <tr><td>Parameters</td><td>Must differ</td><td>Must be same</td></tr>
+          <tr><td>Return type</td><td>Can differ</td><td>Same (or covariant)</td></tr>
+          <tr><td>Access modifier</td><td>Can differ</td><td>Can only increase (not reduce)</td></tr>
+          <tr><td>static methods</td><td>✅ Can overload</td><td>❌ Cannot override (method hiding)</td></tr>
+          <tr><td>private methods</td><td>✅ Can overload</td><td>❌ Cannot override</td></tr>
+          <tr><td>final methods</td><td>✅ Can overload</td><td>❌ Cannot override</td></tr>
+          <tr><td>@Override annotation</td><td>Not used</td><td>✅ Recommended always</td></tr>
+          <tr><td>Binding</td><td>Early / Static binding</td><td>Late / Dynamic binding</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Can we override static? -->
+    <div class="content-card">
+      <h3>⚡ Can We Override a Static Method?</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Method Hiding vs Overriding</span>
+        </div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Parent</span> {
+    <span class="kw">static void</span> <span class="fn">greet</span>() { <span class="cl">System</span>.out.println(<span class="str">"Hello from Parent"</span>); }
+    <span class="kw">void</span> <span class="fn">show</span>()       { <span class="cl">System</span>.out.println(<span class="str">"Parent show"</span>); }
+}
+
+<span class="kw">class</span> <span class="cl">Child</span> <span class="kw">extends</span> <span class="cl">Parent</span> {
+    <span class="cm">// This is METHOD HIDING (not overriding)</span>
+    <span class="kw">static void</span> <span class="fn">greet</span>() { <span class="cl">System</span>.out.println(<span class="str">"Hello from Child"</span>); }
+
+    <span class="an">@Override</span>
+    <span class="kw">void</span> <span class="fn">show</span>()       { <span class="cl">System</span>.out.println(<span class="str">"Child show"</span>); }
+}
+
+<span class="kw">public class</span> <span class="cl">Test</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">Parent</span> obj = <span class="kw">new</span> <span class="cl">Child</span>();
+
+        obj.<span class="fn">greet</span>(); <span class="cm">// → Hello from Parent (static — bound at COMPILE time)</span>
+        obj.<span class="fn">show</span>();  <span class="cm">// → Child show (instance — bound at RUNTIME)</span>
+    }
+}</pre>
+      </div>
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">Hello from Parent</div>
+        <div class="output-line">Child show</div>
+      </div>
+      <div class="info-box danger">
+        <div class="ib-icon">🚨</div>
+        <div>
+          <strong>Key point:</strong> Static methods are HIDDEN not overridden. The method called
+          depends on the <strong>reference type</strong> (Parent), not the object type (Child).
+          This is why static methods do NOT participate in runtime polymorphism.
+        </div>
+      </div>
+    </div>
+
+    <div class="iq-section">
+      <div class="iq-title">🎯 Interview Questions — Polymorphism</div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q1</span>What is covariant return type?</div>
+        <div class="iq-a">In overriding, the child method's return type can be a subtype of the parent's return type. E.g., parent returns <code>Animal</code>, child can return <code>Dog</code> (which extends Animal). This is covariant return type — added in Java 5.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q2</span>Why does reducing scope from parent to child give error while overriding?</div>
+        <div class="iq-a">Liskov Substitution Principle (LSP). If parent says a method is <code>public</code>, any code using the parent reference expects public access. If child makes it <code>protected</code>, it breaks the contract — code expecting public behavior would fail. Java enforces widening only.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q3</span>What is static binding vs dynamic binding?</div>
+        <div class="iq-a"><strong>Static/Early binding:</strong> Method resolved at compile time — static, private, final methods, overloaded methods. <strong>Dynamic/Late binding:</strong> Method resolved at runtime — overridden methods. JVM uses vtable for dynamic dispatch.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 5 — STATIC KEYWORD
+  ═══════════════════════════════════════ -->
+  <section id="static" class="section s5">
+    <div class="section-header">
+      <div class="section-icon">⚡</div>
+      <div class="section-meta">
+        <div class="section-label">Section 5</div>
+        <div class="section-title">Static Keyword — In Depth</div>
+        <div class="section-sub">static variable, method, block, class, import</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 What is static?</h3>
+      <p>
+        The <code>static</code> keyword means the member belongs to the <strong>class</strong>
+        (not to any instance). It is loaded into memory when the class is loaded (even before
+        any object is created).
+      </p>
+    </div>
+
+    <div class="content-card">
+      <h3>🔷 All 5 Uses of static</h3>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">Static — All Contexts</span>
+        </div>
+        <pre>
+<span class="kw">public class</span> <span class="cl">StaticDemo</span> {
+
+    <span class="cm">// 1. STATIC VARIABLE — shared by all instances</span>
+    <span class="kw">static int</span> instanceCount = <span class="num">0</span>;
+    <span class="kw">private</span> <span class="kw">int</span> id;
+
+    <span class="cm">// 2. STATIC BLOCK — runs once when class is loaded</span>
+    <span class="kw">static</span> {
+        <span class="cl">System</span>.out.println(<span class="str">"Class loaded — static block runs ONCE"</span>);
+        instanceCount = <span class="num">100</span>; <span class="cm">// initialize</span>
+    }
+
+    <span class="cm">// Instance block — runs on every new object</span>
+    {
+        instanceCount++;
+        <span class="kw">this</span>.id = instanceCount;
+        <span class="cl">System</span>.out.println(<span class="str">"Instance block: id = "</span> + id);
+    }
+
+    <span class="cm">// 3. STATIC METHOD — no access to instance variables</span>
+    <span class="kw">static int</span> <span class="fn">getCount</span>() {
+        <span class="kw">return</span> instanceCount;
+        <span class="cm">// return id;  ← COMPILE ERROR — cannot access instance var</span>
+    }
+
+    <span class="cm">// 4. STATIC INNER CLASS</span>
+    <span class="kw">static class</span> <span class="cl">Helper</span> {
+        <span class="kw">void</span> <span class="fn">help</span>() { <span class="cl">System</span>.out.println(<span class="str">"Helping!"</span>); }
+    }
+}
+
+<span class="cm">// 5. STATIC IMPORT</span>
+<span class="cm">// import static java.lang.Math.PI;</span>
+<span class="cm">// System.out.println(PI);  ← No need to write Math.PI</span>
+
+<span class="kw">class</span> <span class="cl">TestStatic</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cm">// static block runs here first</span>
+        <span class="cl">StaticDemo</span> s1 = <span class="kw">new</span> <span class="cl">StaticDemo</span>(); <span class="cm">// id = 101</span>
+        <span class="cl">StaticDemo</span> s2 = <span class="kw">new</span> <span class="cl">StaticDemo</span>(); <span class="cm">// id = 102</span>
+
+        <span class="cl">System</span>.out.println(<span class="cl">StaticDemo</span>.<span class="fn">getCount</span>()); <span class="cm">// 102</span>
+
+        <span class="cm">// Static inner class — no outer object needed</span>
+        <span class="cl">StaticDemo</span>.<span class="cl">Helper</span> h = <span class="kw">new</span> <span class="cl">StaticDemo</span>.<span class="cl">Helper</span>();
+        h.<span class="fn">help</span>();
+    }
+}</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">Class loaded — static block runs ONCE</div>
+        <div class="output-line">Instance block: id = 101</div>
+        <div class="output-line">Instance block: id = 102</div>
+        <div class="output-line">102</div>
+        <div class="output-line">Helping!</div>
+      </div>
+    </div>
+
+    <!-- Static Rules Table -->
+    <div class="content-card">
+      <h3>📊 Static Rules — Quick Reference</h3>
+      <table class="comp-table">
+        <thead><tr><th>Rule</th><th>Allowed?</th></tr></thead>
+        <tbody>
+          <tr><td>Static method access instance variable</td><td>❌ No — no <code>this</code> reference</td></tr>
+          <tr><td>Static method access another static variable</td><td>✅ Yes</td></tr>
+          <tr><td>Instance method access static variable</td><td>✅ Yes</td></tr>
+          <tr><td>Override a static method</td><td>❌ No — method hiding only</td></tr>
+          <tr><td>Call static method on object reference</td><td>⚠️ Works but bad practice — use ClassName</td></tr>
+          <tr><td>Static variable in interface</td><td>✅ Yes (public static final)</td></tr>
+          <tr><td>Static method in interface</td><td>✅ Yes (Java 8+)</td></tr>
+          <tr><td>Abstract static method</td><td>❌ No — contradiction in terms</td></tr>
+          <tr><td>Static inner class access outer instance members</td><td>❌ No (without outer ref)</td></tr>
+          <tr><td>Utility classes — final + private constructor</td><td>✅ Common pattern (Math, Collections)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tricky static snippet -->
+    <div class="content-card">
+      <h3>🧠 Tricky Static Snippet (Interview Favorite)</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-label">What is the output?</span>
+        </div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Counter</span> {
+    <span class="kw">static int</span> count = <span class="num">0</span>;
+
+    <span class="cl">Counter</span>() { count++; }
+
+    <span class="kw">static void</span> <span class="fn">reset</span>() { count = <span class="num">0</span>; }
+}
+
+<span class="kw">public class</span> <span class="cl">Test</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">Counter</span> a = <span class="kw">new</span> <span class="cl">Counter</span>();
+        <span class="cl">Counter</span> b = <span class="kw">new</span> <span class="cl">Counter</span>();
+        <span class="cl">Counter</span> c = <span class="kw">new</span> <span class="cl">Counter</span>();
+        <span class="cl">System</span>.out.println(<span class="cl">Counter</span>.count); <span class="cm">// ?</span>
+
+        <span class="cl">Counter</span>.<span class="fn">reset</span>();
+        <span class="cl">System</span>.out.println(<span class="cl">Counter</span>.count); <span class="cm">// ?</span>
+
+        <span class="cm">// Tricky: calling static via object reference (bad practice)</span>
+        a.<span class="fn">reset</span>();  <span class="cm">// compiles but uses class</span>
+        <span class="cl">System</span>.out.println(b.count); <span class="cm">// ?</span>
+    }
+}</pre>
+      </div>
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">3</div>
+        <div class="output-line">0</div>
+        <div class="output-line">0</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 6 — OOP vs FP
+  ═══════════════════════════════════════ -->
+  <section id="oop-vs-fp" class="section s6">
+    <div class="section-header">
+      <div class="section-icon">⚖️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 6</div>
+        <div class="section-title">OOP vs Functional Programming</div>
+        <div class="section-sub">Key differences, when to use each</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📊 OOP vs Functional Programming</h3>
+      <table class="comp-table">
+        <thead><tr><th>Aspect</th><th>OOP</th><th>Functional Programming</th></tr></thead>
+        <tbody>
+          <tr><td>Core unit</td><td>Object (state + behavior)</td><td>Function (pure transformation)</td></tr>
+          <tr><td>State</td><td>Mutable (objects change state)</td><td>Immutable (no side effects)</td></tr>
+          <tr><td>How</td><td>Tells HOW to do it (imperative)</td><td>Says WHAT to compute (declarative)</td></tr>
+          <tr><td>Java example</td><td>Classes, objects, loops</td><td>Lambdas, Streams, Optional</td></tr>
+          <tr><td>Data sharing</td><td>Via references (careful with threading)</td><td>Safe — immutable = thread-safe</td></tr>
+          <tr><td>Code style</td><td><code>for(item : list) { process(item) }</code></td><td><code>list.stream().map(this::process)</code></td></tr>
+          <tr><td>Best for</td><td>Modeling real-world entities</td><td>Data transformation pipelines</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-box note">
+        <div class="ib-icon">💡</div>
+        <div>
+          Java is a <strong>multi-paradigm</strong> language — it supports both OOP (classes)
+          AND functional programming (lambdas, streams since Java 8). Modern Java code uses
+          both together.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 7 — TRICKY CODE SNIPPETS
+  ═══════════════════════════════════════ -->
+  <section id="snippets" class="section s7">
+    <div class="section-header">
+      <div class="section-icon">🧠</div>
+      <div class="section-meta">
+        <div class="section-label">Section 7</div>
+        <div class="section-title">Tricky OOPs Code Snippets</div>
+        <div class="section-sub">Output prediction questions — most asked in interviews</div>
+      </div>
+    </div>
+
+    <!-- SNIPPET 1 -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">S1</span>What is the output?</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Constructor Order</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Base</span> {
+    <span class="kw">int</span> x = <span class="fn">initX</span>();
+    <span class="kw">int</span> <span class="fn">initX</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Base initX"</span>);
+        <span class="kw">return</span> <span class="num">10</span>;
+    }
+    <span class="cl">Base</span>() { <span class="cl">System</span>.out.println(<span class="str">"Base()"</span>); }
+}
+
+<span class="kw">class</span> <span class="cl">Child</span> <span class="kw">extends</span> <span class="cl">Base</span> {
+    <span class="kw">int</span> y = <span class="fn">initY</span>();
+    <span class="kw">int</span> <span class="fn">initY</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Child initY"</span>);
+        <span class="kw">return</span> <span class="num">20</span>;
+    }
+    <span class="cl">Child</span>() { <span class="cl">System</span>.out.println(<span class="str">"Child()"</span>); }
+}
+
+<span class="kw">new</span> <span class="cl">Child</span>();</pre>
+      </div>
+      <div class="quiz-reveal">
+        <div class="quiz-reveal-label">✅ Output &amp; Explanation</div>
+        <div class="quiz-ans">
+          <strong>Output:</strong> Base initX → Base() → Child initY → Child()<br><br>
+          <strong>Why?</strong> Order when <code>new Child()</code> is called:<br>
+          1. Parent fields initialized (x = initX() → prints "Base initX")<br>
+          2. Parent constructor body (prints "Base()")<br>
+          3. Child fields initialized (y = initY() → prints "Child initY")<br>
+          4. Child constructor body (prints "Child()")
+        </div>
+      </div>
+    </div>
+
+    <!-- SNIPPET 2 -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">S2</span>What is the output?</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Static vs Instance</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">A</span> {
+    <span class="kw">static int</span> x = <span class="num">10</span>;
+    <span class="kw">int</span> y = <span class="num">20</span>;
+
+    <span class="kw">static void</span> <span class="fn">show</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"x = "</span> + x);
+        <span class="cm">// System.out.println("y = " + y); ← COMPILE ERROR</span>
+    }
+}
+
+<span class="cl">A</span> obj1 = <span class="kw">new</span> <span class="cl">A</span>();
+<span class="cl">A</span> obj2 = <span class="kw">new</span> <span class="cl">A</span>();
+obj1.x = <span class="num">99</span>;
+<span class="cl">System</span>.out.println(obj2.x); <span class="cm">// ?</span>
+<span class="cl">System</span>.out.println(obj2.y); <span class="cm">// ?</span></pre>
+      </div>
+      <div class="quiz-reveal">
+        <div class="quiz-reveal-label">✅ Output &amp; Explanation</div>
+        <div class="quiz-ans">
+          <strong>Output:</strong> 99 → 20<br><br>
+          <strong>Why?</strong> <code>x</code> is <strong>static</strong> — shared by all instances.
+          When obj1.x = 99, it changes the class-level x.
+          obj2.x is the same x → 99.<br>
+          <code>y</code> is an <strong>instance variable</strong> — each object has its own copy → obj2.y = 20.
+        </div>
+      </div>
+    </div>
+
+    <!-- SNIPPET 3 -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">S3</span>What is the output?</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Runtime Polymorphism with Fields</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Parent</span> {
+    <span class="cl">String</span> name = <span class="str">"Parent"</span>;
+
+    <span class="cl">String</span> <span class="fn">getName</span>() { <span class="kw">return</span> <span class="str">"Parent method"</span>; }
+}
+
+<span class="kw">class</span> <span class="cl">Child</span> <span class="kw">extends</span> <span class="cl">Parent</span> {
+    <span class="cl">String</span> name = <span class="str">"Child"</span>;   <span class="cm">// Field hiding</span>
+
+    <span class="an">@Override</span>
+    <span class="cl">String</span> <span class="fn">getName</span>() { <span class="kw">return</span> <span class="str">"Child method"</span>; }
+}
+
+<span class="cl">Parent</span> obj = <span class="kw">new</span> <span class="cl">Child</span>();
+<span class="cl">System</span>.out.println(obj.name);      <span class="cm">// ?</span>
+<span class="cl">System</span>.out.println(obj.<span class="fn">getName</span>()); <span class="cm">// ?</span></pre>
+      </div>
+      <div class="quiz-reveal">
+        <div class="quiz-reveal-label">✅ Output &amp; Explanation</div>
+        <div class="quiz-ans">
+          <strong>Output:</strong> Parent → Child method<br><br>
+          <strong>Why?</strong> <strong>Fields are NOT polymorphic</strong> — resolved by reference type (Parent) → "Parent".<br>
+          <strong>Methods ARE polymorphic</strong> — resolved by actual object type (Child) → "Child method".<br>
+          This is a classic interview trap!
+        </div>
+      </div>
+    </div>
+
+    <!-- SNIPPET 4 -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">S4</span>What is the output?</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">this() and super() trap</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">X</span> {
+    <span class="cl">X</span>()    { <span class="cl">System</span>.out.print(<span class="str">"X0 "</span>); }
+    <span class="cl">X</span>(<span class="kw">int</span> n) { <span class="cl">System</span>.out.print(<span class="str">"X1 "</span>); }
+}
+
+<span class="kw">class</span> <span class="cl">Y</span> <span class="kw">extends</span> <span class="cl">X</span> {
+    <span class="cl">Y</span>()    { <span class="kw">this</span>(<span class="num">10</span>); <span class="cl">System</span>.out.print(<span class="str">"Y0 "</span>); }
+    <span class="cl">Y</span>(<span class="kw">int</span> n) { <span class="kw">super</span>(n); <span class="cl">System</span>.out.print(<span class="str">"Y1 "</span>); }
+}
+
+<span class="kw">new</span> <span class="cl">Y</span>();</pre>
+      </div>
+      <div class="quiz-reveal">
+        <div class="quiz-reveal-label">✅ Output &amp; Explanation</div>
+        <div class="quiz-ans">
+          <strong>Output:</strong> X1 Y1 Y0<br><br>
+          <strong>Why?</strong> <code>new Y()</code> → Y() calls <code>this(10)</code> → Y(10) called →
+          Y(10) calls <code>super(10)</code> → X(10) prints "X1" →
+          back in Y(10) prints "Y1" → back in Y() prints "Y0"
+        </div>
+      </div>
+    </div>
+
+    <!-- SNIPPET 5 -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">S5</span>Will this compile? What is the output?</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">final and overriding</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Animal</span> {
+    <span class="kw">final void</span> <span class="fn">breathe</span>()  { <span class="cl">System</span>.out.println(<span class="str">"Animal breathes"</span>); }
+    <span class="kw">void</span> <span class="fn">eat</span>()            { <span class="cl">System</span>.out.println(<span class="str">"Animal eats"</span>); }
+}
+
+<span class="kw">class</span> <span class="cl">Dog</span> <span class="kw">extends</span> <span class="cl">Animal</span> {
+    <span class="cm">// void breathe() { ... }  ← COMPILE ERROR — cannot override final</span>
+
+    <span class="an">@Override</span>
+    <span class="kw">void</span> <span class="fn">eat</span>() { <span class="cl">System</span>.out.println(<span class="str">"Dog eats"</span>); }
+}
+
+<span class="cl">Animal</span> d = <span class="kw">new</span> <span class="cl">Dog</span>();
+d.<span class="fn">breathe</span>(); <span class="cm">// ?</span>
+d.<span class="fn">eat</span>();     <span class="cm">// ?</span></pre>
+      </div>
+      <div class="quiz-reveal">
+        <div class="quiz-reveal-label">✅ Output &amp; Explanation</div>
+        <div class="quiz-ans">
+          <strong>Output:</strong> Animal breathes → Dog eats<br><br>
+          <strong>Why?</strong> <code>breathe()</code> is <code>final</code> — cannot be overridden,
+          so even though reference is Animal and object is Dog, breathe() always calls Animal's version.<br>
+          <code>eat()</code> is overridden → runtime polymorphism → Dog's version called.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 8 — INTERVIEW Q&A MASTER LIST
+  ═══════════════════════════════════════ -->
+  <section id="interview" class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(255,217,61,0.15);">🎯</div>
+      <div class="section-meta">
+        <div class="section-label">Section 8</div>
+        <div class="section-title">Complete Interview Q&amp;A</div>
+        <div class="section-sub">All OOPs questions asked in real interviews</div>
+      </div>
+    </div>
+
+    <!-- Abstraction Qs -->
+    <div class="content-card">
+      <h3>🏛️ Abstraction — Interview Q&amp;A</h3>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q1</span>Can abstract class have constructor? Why?</div>
+        <div class="iq-a">Yes. To initialize its own fields. Called by child via super(). Though abstract class can't be instantiated directly, the constructor runs when child class object is created.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q2</span>Difference: abstract class vs interface — when to use?</div>
+        <div class="iq-a">Use <strong>abstract class</strong> when: classes share state/code + IS-A relationship. Use <strong>interface</strong> when: defining capability contract, unrelated classes need same behavior, or for multiple inheritance of type.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q3</span>Can interface extend another interface?</div>
+        <div class="iq-a">Yes! And it can extend multiple interfaces: <code>interface C extends A, B</code>. A class implementing C must implement all methods from A, B, and C.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q4</span>What are Marker Interfaces? Why needed?</div>
+        <div class="iq-a">Interfaces with NO methods (empty). Used to tag a class to provide metadata to JVM or frameworks. Examples: <code>Serializable</code>, <code>Cloneable</code>, <code>RandomAccess</code>. JVM uses these tags to provide special behavior (e.g., allow serialization only if Serializable is implemented).</div>
+      </div>
+    </div>
+
+    <!-- Encapsulation Qs -->
+    <div class="content-card">
+      <h3>🔒 Encapsulation — Interview Q&amp;A</h3>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q5</span>What are the rules for an immutable class?</div>
+        <div class="iq-a">1. Class must be <code>final</code>. 2. All fields <code>private final</code>. 3. No setters. 4. Initialize via constructor. 5. Return defensive copies of mutable fields (like List, Date) in getters. Example: String class is immutable.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q6</span>Why do we need getters/setters instead of public fields?</div>
+        <div class="iq-a">Setters allow <strong>validation</strong> (e.g., reject negative age), <strong>lazy initialization</strong>, <strong>logging</strong>, and maintain <strong>invariants</strong>. Public fields give unrestricted access — no way to add logic later without breaking API.</div>
+      </div>
+    </div>
+
+    <!-- Inheritance Qs -->
+    <div class="content-card">
+      <h3>🧬 Inheritance — Interview Q&amp;A</h3>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q7</span>What is the Diamond Problem?</div>
+        <div class="iq-a">If class D extends B and C, and both B and C inherit method from A and override it differently, D doesn't know which version to use. Java solves this by not allowing multiple class inheritance. With interfaces (Java 8 default methods), if conflict occurs, class MUST explicitly override the method.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q8</span>Composition vs Inheritance — which to prefer?</div>
+        <div class="iq-a"><strong>Prefer Composition</strong> (Effective Java, Item 18). Composition = HAS-A. More flexible — can change behavior at runtime, no tight coupling, no fragile base class problem. Use inheritance only for true IS-A relationships where subtype can substitute supertype.</div>
+      </div>
+    </div>
+
+    <!-- Polymorphism Qs -->
+    <div class="content-card">
+      <h3>🔄 Polymorphism — Interview Q&amp;A</h3>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q9</span>What is method hiding? How is it different from overriding?</div>
+        <div class="iq-a"><strong>Method Hiding</strong>: When a child class defines a static method with same signature as parent's static method. The method called depends on <strong>reference type</strong> (compile-time). <strong>Overriding</strong>: Instance methods — method called depends on <strong>object type</strong> (runtime). <code>@Override</code> does NOT apply to static methods.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q10</span>Can we overload main method?</div>
+        <div class="iq-a">Yes! Java allows overloading main. But JVM only calls <code>public static void main(String[] args)</code> as the entry point. Other overloaded versions can be called manually.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q11</span>Can constructors be overloaded? Can they be overridden?</div>
+        <div class="iq-a"><strong>Overloaded</strong>: ✅ Yes — multiple constructors with different parameters in same class. <strong>Overridden</strong>: ❌ No — constructors are not inherited, so can't be overridden. Each class has its own constructors.</div>
+      </div>
+    </div>
+
+    <!-- Static Qs -->
+    <div class="content-card">
+      <h3>⚡ Static — Interview Q&amp;A</h3>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q12</span>Can static method access instance variables?</div>
+        <div class="iq-a">No. Static methods don't have a <code>this</code> reference. They belong to the class, not any object. To access instance variables in a static method, you need to pass an object reference as parameter.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q13</span>Why are utility classes (Math, Collections) final with private constructor?</div>
+        <div class="iq-a"><code>final</code> prevents subclassing (no one can extend and override static methods). Private constructor prevents instantiation. This enforces the utility class pattern — all methods are static, no need to create objects.</div>
+      </div>
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q14</span>Difference between static and instance initializer blocks?</div>
+        <div class="iq-a"><strong>Static block</strong> <code>static { }</code>: runs once when class is loaded, before any object creation. Used for one-time setup. <strong>Instance block</strong> <code>{ }</code>: runs every time a new object is created, before constructor body. Runs AFTER parent constructor.</div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- end container -->
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="page-footer">
+  <p>
+    📘 <strong>Part 01 of 20</strong> — Java Interview Notes Series |
+    Next: <strong>Part 02 — Collections Framework</strong>
+  </p>
+  <p style="margin-top:8px; font-size:12px;">
+    Topics Covered: Abstraction • Encapsulation • Inheritance • Polymorphism •
+    Static Keyword • OOP vs FP • 5 Code Snippets • 14 Interview Q&amp;As
+  </p>
+</footer>
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>

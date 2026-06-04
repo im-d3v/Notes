@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pattern 12: Dynamic Programming — The Complete Playbook</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css" />
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #1a1a2e 40%, #16213e 70%, #0f3460 100%); }
+    .dp-state-vis { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; }
+    .dp-cell { width:48px; height:48px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:monospace; transition: all 0.3s ease; cursor:default; }
+    .dp-cell.filled { background:#1f6feb; color:#e6edf3; border:2px solid #58a6ff; }
+    .dp-cell.current { background:#388bfd; color:#fff; border:2px solid #79c0ff; transform:scale(1.15); box-shadow:0 0 12px #388bfd88; }
+    .dp-cell.empty { background:#161b22; color:#6e7681; border:2px solid #30363d; }
+    .dp-cell.answer { background:#2ea043; color:#fff; border:2px solid #3fb950; box-shadow:0 0 10px #2ea04388; }
+    .dp-arrow { color:#58a6ff; font-size:20px; line-height:48px; }
+    .matrix-grid { display:grid; gap:4px; margin:12px 0; width:fit-content; }
+    .matrix-cell { width:52px; height:44px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; font-family:monospace; border:1.5px solid #30363d; background:#161b22; color:#8b949e; transition: all 0.4s ease; }
+    .matrix-cell.active { background:#1f6feb; color:#e6edf3; border-color:#58a6ff; }
+    .matrix-cell.match { background:#2ea043; color:#fff; border-color:#3fb950; }
+    .matrix-cell.header { background:#21262d; color:#58a6ff; font-weight:700; border-color:#388bfd; }
+    .pattern-tag { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; margin:2px; }
+    .p-linear { background:#1f2d3d; color:#58a6ff; border:1px solid #1f6feb; }
+    .p-knapsack { background:#2d1f2d; color:#bc8cff; border:1px solid #8957e5; }
+    .p-lcs { background:#1f2d1f; color:#3fb950; border:1px solid #2ea043; }
+    .p-interval { background:#2d2d1f; color:#e3b341; border:1px solid #9e6a03; }
+    .p-grid { background:#2d1f1f; color:#f85149; border:1px solid #da3633; }
+    .p-tree { background:#1f2d2d; color:#39d5d3; border:1px solid #1b7c83; }
+    .flowchart { display:flex; flex-direction:column; align-items:center; gap:0; }
+    .fc-node { background:#161b22; border:2px solid #30363d; border-radius:10px; padding:10px 20px; text-align:center; font-size:13px; color:#e6edf3; min-width:220px; max-width:320px; }
+    .fc-node.question { border-color:#58a6ff; background:#1a2332; color:#79c0ff; font-weight:600; }
+    .fc-node.answer { border-color:#3fb950; background:#1a2a1a; color:#7ee787; font-weight:700; }
+    .fc-arrow-down { width:2px; height:20px; background:#30363d; margin:0 auto; }
+    .fc-branch { display:flex; gap:24px; align-items:flex-start; justify-content:center; margin:0; }
+    .fc-branch-item { display:flex; flex-direction:column; align-items:center; gap:0; }
+    .fc-branch-label { font-size:11px; color:#8b949e; margin:4px 0; font-weight:600; }
+    .trap-num { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#da3633,#f85149); color:#fff; font-weight:700; font-size:13px; flex-shrink:0; margin-right:10px; }
+    .trap-item { display:flex; align-items:flex-start; gap:0; padding:14px; background:#1c2128; border-radius:10px; border-left:3px solid #f85149; margin-bottom:10px; }
+    .knapsack-compare { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:12px 0; }
+    @media(max-width:700px){ .knapsack-compare{grid-template-columns:1fr;} .fc-branch{flex-direction:column;align-items:center;} }
+    .recurrence-box { background:#010409; border:1.5px solid #30363d; border-radius:10px; padding:16px 20px; font-family:monospace; font-size:14px; color:#79c0ff; margin:12px 0; line-height:2; }
+    .recurrence-box .case { color:#8b949e; font-size:12px; margin-left:8px; }
+    .recurrence-box .eq { color:#3fb950; }
+    .recurrence-box .kw { color:#f85149; }
+    .anim-btn { background:linear-gradient(135deg,#1f6feb,#388bfd); border:none; color:#fff; padding:8px 18px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s; margin:8px 0; }
+    .anim-btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px #1f6feb55; }
+    .diff-vis { display:flex; gap:0; margin:12px 0; flex-wrap:wrap; align-items:center; }
+    .diff-label { font-size:11px; color:#8b949e; margin-right:8px; font-weight:600; }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+<button id="hamburger" aria-label="Toggle sidebar">
+  <span></span><span></span><span></span>
+</button>
+<div id="sidebar-overlay"></div>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div class="sidebar-title">Pattern 12</div>
+      <div class="sidebar-subtitle">Dynamic Programming</div>
+    </div>
+  </div>
+  <div style="padding:0 12px 12px;">
+    <a href="../index.html" class="toc-link" style="display:flex;align-items:center;gap:8px;color:var(--accent-orange);border-left-color:var(--accent-orange);">
+      🏠 <span>Back to Home</span>
+    </a>
+  </div>
+  <div style="padding:0 12px;font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Contents</div>
+  <a href="#dp-mindset" class="toc-link">§1 The DP Mindset</a>
+  <a href="#dp-framework" class="toc-link">§1.2 The 5-Step Framework</a>
+  <a href="#topdown-vs-bottom" class="toc-link">§1.3 Top-Down vs Bottom-Up</a>
+  <a href="#subpatterns-table" class="toc-link">§2 Sub-Patterns Overview</a>
+  <a href="#linear-dp" class="toc-link">§3 Linear / Fibonacci DP</a>
+  <a href="#knapsack-dp" class="toc-link">§4 Knapsack DP</a>
+  <a href="#lcs-dp" class="toc-link">§5 Two-Sequence (LCS) DP</a>
+  <a href="#interval-dp" class="toc-link">§6 Interval DP</a>
+  <a href="#grid-dp" class="toc-link">§7 Grid / Matrix DP</a>
+  <a href="#recognition" class="toc-link">§8 Pattern Recognition</a>
+  <a href="#trap-hall" class="toc-link">§9 Trap Hall of Fame</a>
+  <a href="#practice" class="toc-link">§10 Practice Problems</a>
+</nav>
+
+<main id="main">
+
+  <!-- ═══════════════════ HERO ═══════════════════ -->
+  <div class="hero">
+    <div class="hero-eyebrow">Algorithm Patterns · PDF #12</div>
+    <h1>Dynamic Programming<br>The Complete Playbook</h1>
+    <p class="hero-subtitle">
+      Build the DP instinct — from raw recursion to mastering all 6 sub-patterns.
+      After this, no DP problem is a mystery, only a template waiting to be applied.
+    </p>
+    <div class="hero-badges">
+      <span class="badge badge-blue">6 Sub-Patterns</span>
+      <span class="badge badge-green">25 Practice Problems</span>
+      <span class="badge badge-purple">5-Step Framework</span>
+      <span class="badge badge-orange">Interview Critical</span>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:16px;flex-wrap:wrap;">
+      <span class="pattern-tag p-linear">Linear DP</span>
+      <span class="pattern-tag p-knapsack">Knapsack</span>
+      <span class="pattern-tag p-lcs">Two-Sequence</span>
+      <span class="pattern-tag p-interval">Interval</span>
+      <span class="pattern-tag p-grid">Grid</span>
+      <span class="pattern-tag p-tree">Tree DP</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PART 1 ═══════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>The Foundation</h2>
+      <p>Build the mental model that makes every DP problem feel familiar.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 1: DP MINDSET ── -->
+  <div class="section" id="dp-mindset">
+    <div class="section-header">
+      <h3>🧠 §1 — What is DP, Really?</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p><strong>Mental Model:</strong> DP is just recursion with a memory upgrade. You've already solved every DP problem recursively — DP just refuses to re-solve the same sub-problem twice.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4 style="color:var(--accent-red);">Without DP (Naive Recursion)</h4>
+        <p>Imagine calculating Fibonacci. <code>fib(5)</code> calls <code>fib(4)</code> and <code>fib(3)</code>. <code>fib(4)</code> calls <code>fib(3)</code> again. By <code>fib(50)</code> you're making billions of calls — 90% are repeats.</p>
+        <p style="color:var(--accent-red);font-weight:600;margin-top:8px;">Exponential time. Completely useless.</p>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:var(--accent-green);">With DP (Memoized / Tabulated)</h4>
+        <p>The first time you solve <code>fib(3)</code>, you write the answer down. Every future call just looks it up in O(1). You solve each unique sub-problem <strong>exactly once</strong>.</p>
+        <p style="color:var(--accent-green);font-weight:600;margin-top:8px;">Polynomial time. Interview-ready.</p>
+      </div>
+    </div>
+
+    <h4>The 2 Conditions for DP</h4>
+    <p>Every DP problem satisfies <strong>both</strong> of these — if either is missing, DP doesn't apply:</p>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>1. Optimal Substructure</h4>
+        <p>The optimal answer to the whole problem <strong>can be built from</strong> optimal answers to sub-problems.</p>
+        <div class="callout success" style="margin-top:10px;padding:10px 14px;">
+          <div class="icon">✅</div>
+          <div class="body"><strong>Example:</strong> Shortest path from A→C through B = shortest(A→B) + shortest(B→C)</div>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4>2. Overlapping Subproblems</h4>
+        <p>The recursive breakdown hits the <strong>same sub-problem multiple times</strong>. Without this, plain recursion or divide-and-conquer already works fine.</p>
+        <div class="callout warn" style="margin-top:10px;padding:10px 14px;">
+          <div class="icon">⚠️</div>
+          <div class="body"><strong>Merge Sort</strong> does NOT have overlapping subproblems — each sub-array is unique. DP doesn't help there.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip</strong>
+        <p>When an interviewer asks "can DP solve this?" — your first move is to check these 2 conditions out loud. It shows you understand the theory, not just the technique.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 1.2: 5-STEP FRAMEWORK ── -->
+  <div class="section" id="dp-framework">
+    <div class="section-header">
+      <h3>🪜 §1.2 — The 5-Step DP Framework</h3>
+    </div>
+
+    <p>Use this framework on <em>every single DP problem</em>. It's not optional. Engineers fail DP interviews because they jump to code without defining the state properly.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Define the State</div>
+          <div class="step-desc">
+            What does <code>dp[i]</code> (or <code>dp[i][j]</code>) represent <em>in English</em>? Write this down explicitly. A wrong state definition dooms every step after it.
+            <br><br>
+            <strong style="color:var(--accent-blue);">Ask:</strong> "What do I need to know at position <code>i</code> to answer the problem?"
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Find the Recurrence</div>
+          <div class="step-desc">
+            Express <code>dp[i]</code> in terms of smaller states. This is the mathematical heart of DP. Usually looks like: <code>dp[i] = f(dp[i-1], dp[i-2], ...)</code>
+            <br><br>
+            <strong style="color:var(--accent-blue);">Ask:</strong> "If I already know all answers up to <code>i-1</code>, how do I compute <code>i</code>?"
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Identify Base Cases</div>
+          <div class="step-desc">
+            These are the smallest inputs you can answer directly without the recurrence. Every DP table needs at least one base case — it's where the chain starts.
+            <br><br>
+            <strong style="color:var(--accent-orange);">Common trap:</strong> Off-by-one in base cases. Should it be <code>dp[0]=0</code> or <code>dp[1]=1</code>? Draw it out.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Determine Traversal Order</div>
+          <div class="step-desc">
+            Fill states in the order they are needed. If <code>dp[i]</code> needs <code>dp[i-1]</code>, you must fill left-to-right. For 2D DP the direction matters critically.
+            <br><br>
+            <strong style="color:var(--accent-blue);">Rule:</strong> The state you need must already be computed before you compute the current state.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Extract the Answer</div>
+          <div class="step-desc">
+            The answer is <strong>not always</strong> <code>dp[n]</code>. Sometimes it's <code>max(dp[0..n])</code>, sometimes <code>dp[m][n]</code>, sometimes a running max across all cells.
+            <br><br>
+            <strong style="color:var(--accent-orange);">Common trap:</strong> Assuming <code>dp[n]</code> is always the answer and not verifying.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">📐</div>
+      <div class="body">
+        <strong>Worked Example — Climbing Stairs (LC #70)</strong>
+        <p><strong>1. State:</strong> <code>dp[i]</code> = number of distinct ways to reach step <code>i</code><br>
+        <strong>2. Recurrence:</strong> <code>dp[i] = dp[i-1] + dp[i-2]</code> (came from 1 step back OR 2 steps back)<br>
+        <strong>3. Base cases:</strong> <code>dp[1]=1, dp[2]=2</code><br>
+        <strong>4. Order:</strong> left to right, <code>i</code> from 3 to n<br>
+        <strong>5. Answer:</strong> <code>dp[n]</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 1.3: TOP-DOWN VS BOTTOM-UP ── -->
+  <div class="section" id="topdown-vs-bottom">
+    <div class="section-header">
+      <h3>⚖️ §1.3 — Top-Down vs Bottom-Up</h3>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>🔽 Top-Down (Memoization)</h4>
+        <ul>
+          <li>Write the recursive solution first</li>
+          <li>Add a <code>HashMap</code> or array to cache results</li>
+          <li>Only computes states that are actually needed</li>
+          <li>Easier to write, closer to intuition</li>
+          <li>Stack overflow risk on very deep recursion</li>
+        </ul>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Top-Down Template</span></div>
+          <pre><code><span class="type">Map</span>&lt;<span class="type">Integer</span>, <span class="type">Long</span>&gt; memo = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+
+<span class="kw">private</span> <span class="type">long</span> <span class="fn">solve</span>(<span class="type">int</span> i) {
+    <span class="kw">if</span> (i &lt;= 1) <span class="kw">return</span> i; <span class="cmt">// base case</span>
+    <span class="kw">if</span> (memo.<span class="fn">containsKey</span>(i))
+        <span class="kw">return</span> memo.<span class="fn">get</span>(i);
+    <span class="type">long</span> result = <span class="fn">solve</span>(i-1) + <span class="fn">solve</span>(i-2);
+    memo.<span class="fn">put</span>(i, result);
+    <span class="kw">return</span> result;
+}</code></pre>
+        </div>
+      </div>
+      <div class="compare-card">
+        <h4>🔼 Bottom-Up (Tabulation)</h4>
+        <ul>
+          <li>Build a table starting from base cases</li>
+          <li>Iteratively fill states using the recurrence</li>
+          <li>Computes all states in range (may do extra work)</li>
+          <li>No recursion stack — safer for large inputs</li>
+          <li>Often faster in practice (cache-friendly)</li>
+        </ul>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Bottom-Up Template</span></div>
+          <pre><code><span class="type">long</span>[] dp = <span class="kw">new</span> <span class="type">long</span>[n + 1];
+dp[0] = 0;
+dp[1] = 1; <span class="cmt">// base cases</span>
+
+<span class="kw">for</span> (<span class="type">int</span> i = 2; i &lt;= n; i++) {
+    dp[i] = dp[i-1] + dp[i-2]; <span class="cmt">// recurrence</span>
+}
+
+<span class="kw">return</span> dp[n]; <span class="cmt">// extract answer</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>🧭 Practical Decision Rule</h4>
+      <p><strong>Use Top-Down when:</strong> The state space is sparse (not all states will be visited) or the recurrence has complex conditional branching that's clearer as recursion.<br>
+      <strong>Use Bottom-Up when:</strong> You need the absolute best performance, the state space is dense, or you want to later optimize space (rolling array trick).<br>
+      <strong>In interviews:</strong> Top-down is faster to write correctly — start there, mention you can optimize to bottom-up if asked.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PART 2 ═══════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">02</div>
+    <div>
+      <h2>The 6 Sub-Patterns</h2>
+      <p>Every DP problem in interviews maps to one of these six shapes. Learn the shape, solve the problem.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: OVERVIEW TABLE ── -->
+  <div class="section" id="subpatterns-table">
+    <div class="section-header">
+      <h3>📊 §2 — Sub-Patterns Master Overview</h3>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Pattern Name</th>
+            <th>State Shape</th>
+            <th>Recurrence Shape</th>
+            <th>Classic Problem</th>
+            <th>Complexity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pattern-tag p-linear">1</span></td>
+            <td><strong>Linear / Fibonacci</strong></td>
+            <td><code>dp[i]</code></td>
+            <td><code>dp[i] = f(dp[i-1], dp[i-2])</code></td>
+            <td>Climbing Stairs</td>
+            <td><span class="pill pill-green">O(n) / O(1)</span></td>
+          </tr>
+          <tr>
+            <td><span class="pattern-tag p-knapsack">2</span></td>
+            <td><strong>Knapsack (0/1 + Unbounded)</strong></td>
+            <td><code>dp[i][w]</code></td>
+            <td><code>dp[i][w] = max(skip, take)</code></td>
+            <td>0/1 Knapsack</td>
+            <td><span class="pill pill-blue">O(n·W)</span></td>
+          </tr>
+          <tr>
+            <td><span class="pattern-tag p-lcs">3</span></td>
+            <td><strong>Two-Sequence (LCS)</strong></td>
+            <td><code>dp[i][j]</code></td>
+            <td><code>match → dp[i-1][j-1]+1<br>skip → max(dp[i-1][j], dp[i][j-1])</code></td>
+            <td>Longest Common Subsequence</td>
+            <td><span class="pill pill-blue">O(m·n)</span></td>
+          </tr>
+          <tr>
+            <td><span class="pattern-tag p-interval">4</span></td>
+            <td><strong>Interval DP</strong></td>
+            <td><code>dp[i][j]</code></td>
+            <td><code>dp[i][j] = f(dp[i][k], dp[k+1][j])</code></td>
+            <td>Burst Balloons</td>
+            <td><span class="pill pill-orange">O(n³)</span></td>
+          </tr>
+          <tr>
+            <td><span class="pattern-tag p-grid">5</span></td>
+            <td><strong>Grid / Matrix DP</strong></td>
+            <td><code>dp[i][j]</code></td>
+            <td><code>dp[i][j] = f(dp[i-1][j], dp[i][j-1])</code></td>
+            <td>Unique Paths</td>
+            <td><span class="pill pill-green">O(m·n)</span></td>
+          </tr>
+          <tr>
+            <td><span class="pattern-tag p-tree">6</span></td>
+            <td><strong>Tree / Graph DP</strong></td>
+            <td><code>dp[node]</code></td>
+            <td><code>dp[node] = f(dp[children])</code></td>
+            <td>House Robber III</td>
+            <td><span class="pill pill-blue">O(n)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: LINEAR DP ── -->
+  <div class="section" id="linear-dp">
+    <div class="section-header">
+      <h3><span class="pattern-tag p-linear" style="font-size:14px;margin-right:8px;">Pattern 1</span> §3 — Linear / Fibonacci DP</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🔑</span>
+      <p><strong>Recognition Signal:</strong> The answer at position <code>i</code> only depends on a few nearby previous positions (<code>i-1</code>, <code>i-2</code>). The "chain" flows in one direction.</p>
+    </div>
+
+    <h4>Animated Visualization — Filling the DP Array</h4>
+    <p style="color:var(--text-muted);font-size:13px;">Climbing Stairs with n=6. Each cell = ways to reach that step.</p>
+    <div class="dp-state-vis" id="fib-vis">
+      <div class="dp-cell empty" id="fc0">dp[0]<br>1</div>
+      <div class="dp-arrow">→</div>
+      <div class="dp-cell empty" id="fc1">dp[1]<br>1</div>
+      <div class="dp-arrow">→</div>
+      <div class="dp-cell empty" id="fc2">dp[2]<br>?</div>
+      <div class="dp-arrow">→</div>
+      <div class="dp-cell empty" id="fc3">dp[3]<br>?</div>
+      <div class="dp-arrow">→</div>
+      <div class="dp-cell empty" id="fc4">dp[4]<br>?</div>
+      <div class="dp-arrow">→</div>
+      <div class="dp-cell empty" id="fc5">dp[5]<br>?</div>
+      <div class="dp-arrow">→</div>
+      <div class="dp-cell empty" id="fc6">dp[6]<br>?</div>
+    </div>
+    <button class="anim-btn" onclick="animateFib()">▶ Animate Filling</button>
+
+    <h4>Core Template</h4>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Linear DP Template</span></div>
+      <pre><code><span class="cmt">// dp[i] = answer at index i</span>
+<span class="type">int</span>[] dp = <span class="kw">new</span> <span class="type">int</span>[n + 1];
+dp[0] = <span class="cmt">/* base case 0 */</span>;
+dp[1] = <span class="cmt">/* base case 1 */</span>;
+
+<span class="kw">for</span> (<span class="type">int</span> i = 2; i &lt;= n; i++) {
+    dp[i] = <span class="cmt">/* recurrence using dp[i-1], dp[i-2], ... */</span>;
+}
+
+<span class="cmt">// ── Space Optimization (if dp[i] only needs last 2 states) ──</span>
+<span class="type">int</span> prev2 = dp[0], prev1 = dp[1];
+<span class="kw">for</span> (<span class="type">int</span> i = 2; i &lt;= n; i++) {
+    <span class="type">int</span> curr = prev1 + prev2; <span class="cmt">// example recurrence</span>
+    prev2 = prev1;
+    prev1 = curr;
+}
+<span class="kw">return</span> prev1;</code></pre>
+    </div>
+
+    <h4>Problem Walkthroughs</h4>
+    <div class="card-grid">
+      <div class="card-mini">
+        <h5>House Robber Pattern</h5>
+        <p><strong>State:</strong> <code>dp[i]</code> = max money robbing houses 0..i</p>
+        <div class="recurrence-box">dp[i] = <span class="eq">max</span>(dp[i-1], dp[i-2] + nums[i])<span class="case">// skip or rob house i</span></div>
+        <p style="color:var(--text-muted);font-size:12px;"><strong>Key insight:</strong> You can't rob adjacent houses, so at house <code>i</code> you either skip it (keep dp[i-1]) or rob it (dp[i-2] + value).</p>
+      </div>
+      <div class="card-mini">
+        <h5>Max Subarray (Kadane's)</h5>
+        <p><strong>State:</strong> <code>dp[i]</code> = max subarray ending at index i</p>
+        <div class="recurrence-box">dp[i] = <span class="eq">max</span>(nums[i], dp[i-1] + nums[i])<span class="case">// fresh start or extend</span></div>
+        <p style="color:var(--text-muted);font-size:12px;"><strong>Key insight:</strong> If the previous subarray total is negative, restart from current element — extending it would only hurt.</p>
+      </div>
+      <div class="card-mini">
+        <h5>Longest Increasing Subsequence</h5>
+        <p><strong>State:</strong> <code>dp[i]</code> = LIS length ending at index i</p>
+        <div class="recurrence-box">dp[i] = <span class="eq">max</span>(dp[j]+1) <span class="kw">for all</span> j&lt;i <span class="kw">where</span> nums[j]&lt;nums[i]</div>
+        <p style="color:var(--text-muted);font-size:12px;"><strong>Answer:</strong> <code>max(dp[0..n])</code> — not <code>dp[n]</code>! The longest sequence doesn't have to end at the last element.</p>
+      </div>
+      <div class="card-mini">
+        <h5>Word Break</h5>
+        <p><strong>State:</strong> <code>dp[i]</code> = can we segment <code>s[0..i-1]</code> into words?</p>
+        <div class="recurrence-box">dp[i] = <span class="eq">true</span> <span class="kw">if</span> ∃ j&lt;i: dp[j] <span class="kw">&&</span> s[j..i] ∈ dict</div>
+        <p style="color:var(--text-muted);font-size:12px;"><strong>Key insight:</strong> A boolean DP — checking if any valid "cut point" j exists where everything before j works and the word from j..i is in the dictionary.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 4: KNAPSACK ── -->
+  <div class="section" id="knapsack-dp">
+    <div class="section-header">
+      <h3><span class="pattern-tag p-knapsack" style="font-size:14px;margin-right:8px;">Pattern 2</span> §4 — Knapsack DP</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🎒</span>
+      <p><strong>Recognition Signal:</strong> You have items, each with a weight/cost and value. You have a capacity budget. You want to maximize/minimize value within the budget. Or: "can you reach exactly sum X?"</p>
+    </div>
+
+    <h4>The Critical Distinction</h4>
+    <div class="knapsack-compare">
+      <div class="card-mini" style="border-left:3px solid var(--accent-purple);">
+        <h4 style="color:var(--accent-purple);">0/1 Knapsack</h4>
+        <p>Each item can be used <strong>at most once</strong>. Take it or leave it.</p>
+        <p><strong style="color:var(--accent-orange);">Loop order:</strong> inner loop runs <strong>BACKWARDS</strong> (right to left)</p>
+        <p style="font-size:12px;color:var(--text-muted);">Why? Forward iteration would let you "use the same item again" within the same item pass, since you'd read updated values from the same row.</p>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="kw">for</span> (<span class="type">int</span> i = 0; i &lt; n; i++) {
+  <span class="kw">for</span> (<span class="type">int</span> w = W; w &gt;= weight[i]; w--) {
+    dp[w] = <span class="type">Math</span>.<span class="fn">max</span>(dp[w],
+        dp[w - weight[i]] + value[i]);
+  }
+}</code></pre>
+        </div>
+      </div>
+      <div class="card-mini" style="border-left:3px solid var(--accent-green);">
+        <h4 style="color:var(--accent-green);">Unbounded Knapsack</h4>
+        <p>Each item can be used <strong>unlimited times</strong>. Take as many as you want.</p>
+        <p><strong style="color:var(--accent-green);">Loop order:</strong> inner loop runs <strong>FORWARDS</strong> (left to right)</p>
+        <p style="font-size:12px;color:var(--text-muted);">Why? Forward iteration allows reading an already-updated dp[w - weight[i]], meaning we CAN use the same item multiple times in one pass.</p>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="kw">for</span> (<span class="type">int</span> i = 0; i &lt; n; i++) {
+  <span class="kw">for</span> (<span class="type">int</span> w = weight[i]; w &lt;= W; w++) {
+    dp[w] = <span class="type">Math</span>.<span class="fn">max</span>(dp[w],
+        dp[w - weight[i]] + value[i]);
+  }
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🚨</div>
+      <div class="body">
+        <strong>Loop Order is THE Trap</strong>
+        <p>Swapping the loop direction (forward vs backward) for 0/1 vs Unbounded is one of the top interview mistakes. If you can't remember which is which, remember this: <strong>Backwards = Once, Forwards = Many times.</strong> The inner loop direction controls whether an item gets counted multiple times.</p>
+      </div>
+    </div>
+
+    <h4>Subset Sum / Partition Equal Subset</h4>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Subset Sum — Can we reach exactly target T?</span></div>
+      <pre><code><span class="cmt">// State: dp[w] = can we form sum w using elements so far?</span>
+<span class="type">boolean</span>[] dp = <span class="kw">new</span> <span class="type">boolean</span>[T + 1];
+dp[0] = <span class="kw">true</span>; <span class="cmt">// empty subset sums to 0</span>
+
+<span class="kw">for</span> (<span class="type">int</span> num : nums) {
+    <span class="kw">for</span> (<span class="type">int</span> w = T; w &gt;= num; w--) { <span class="cmt">// backward = 0/1 knapsack</span>
+        dp[w] = dp[w] || dp[w - num];
+    }
+}
+<span class="kw">return</span> dp[T];
+
+<span class="cmt">// Partition Equal Subset: just check if sum/2 is reachable</span>
+<span class="cmt">// (if total sum is odd → immediately false)</span></code></pre>
+    </div>
+  </div>
+
+  <!-- ── SECTION 5: LCS ── -->
+  <div class="section" id="lcs-dp">
+    <div class="section-header">
+      <h3><span class="pattern-tag p-lcs" style="font-size:14px;margin-right:8px;">Pattern 3</span> §5 — Two-Sequence (LCS) DP</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🔑</span>
+      <p><strong>Recognition Signal:</strong> You have two sequences (strings, arrays). The answer involves aligning, comparing, or transforming one into the other. The state needs to track position in BOTH sequences.</p>
+    </div>
+
+    <h4>Animated Matrix Fill — LCS of "ABCDE" and "ACE"</h4>
+    <p style="color:var(--text-muted);font-size:13px;">Green = characters match (diagonal + 1). Blue = filled from best of up/left.</p>
+    <div id="lcs-matrix-container" style="overflow-x:auto;"></div>
+    <button class="anim-btn" onclick="animateLCS()">▶ Animate LCS Fill</button>
+
+    <h4>The Match-or-Skip Recurrence — Explained</h4>
+    <div class="recurrence-box">
+<span class="kw">if</span> s1[i] == s2[j]:
+    dp[i][j] = dp[i-1][j-1] + 1    <span class="case">// characters match → extend diagonal</span>
+<span class="kw">else</span>:
+    dp[i][j] = <span class="eq">max</span>(dp[i-1][j], dp[i][j-1])   <span class="case">// skip one char from either string</span>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">🧩</div>
+      <div class="body">
+        <strong>Visual Intuition</strong>
+        <p>Think of the 2D table as a map. You start at <code>(0,0)</code> and want to reach <code>(m,n)</code>. When characters match, you move <strong>diagonally</strong> (progress in both). When they don't, you choose to skip in s1 (move down) or skip in s2 (move right), taking whichever direction gave the better score.</p>
+      </div>
+    </div>
+
+    <h4>Three Classic Two-Sequence Problems</h4>
+    <div class="card-grid">
+      <div class="card-mini">
+        <h5>LCS (Longest Common Subsequence)</h5>
+        <div class="recurrence-box">match: dp[i-1][j-1] + 1
+skip:  max(dp[i-1][j], dp[i][j-1])
+answer: dp[m][n]</div>
+      </div>
+      <div class="card-mini">
+        <h5>Edit Distance (Levenshtein)</h5>
+        <div class="recurrence-box">match: dp[i-1][j-1]  (no cost)
+replace: dp[i-1][j-1] + 1
+delete:  dp[i-1][j]  + 1
+insert:  dp[i][j-1]  + 1
+dp[i][j] = min of above</div>
+      </div>
+      <div class="card-mini">
+        <h5>Longest Common Substring</h5>
+        <div class="recurrence-box">match: dp[i-1][j-1] + 1
+no match: dp[i][j] = 0  (reset!)
+answer: max value seen in table</div>
+        <p style="font-size:12px;color:var(--accent-orange);">⚠️ Unlike LCS, reset to 0 on mismatch. Answer is the global max, NOT dp[m][n].</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Edit Distance — Full Template</span></div>
+      <pre><code><span class="kw">public</span> <span class="type">int</span> <span class="fn">minDistance</span>(<span class="type">String</span> word1, <span class="type">String</span> word2) {
+    <span class="type">int</span> m = word1.<span class="fn">length</span>(), n = word2.<span class="fn">length</span>();
+    <span class="type">int</span>[][] dp = <span class="kw">new</span> <span class="type">int</span>[m+1][n+1];
+
+    <span class="cmt">// Base cases: transform to/from empty string</span>
+    <span class="kw">for</span> (<span class="type">int</span> i = 0; i &lt;= m; i++) dp[i][0] = i;
+    <span class="kw">for</span> (<span class="type">int</span> j = 0; j &lt;= n; j++) dp[0][j] = j;
+
+    <span class="kw">for</span> (<span class="type">int</span> i = 1; i &lt;= m; i++) {
+        <span class="kw">for</span> (<span class="type">int</span> j = 1; j &lt;= n; j++) {
+            <span class="kw">if</span> (word1.<span class="fn">charAt</span>(i-1) == word2.<span class="fn">charAt</span>(j-1)) {
+                dp[i][j] = dp[i-1][j-1]; <span class="cmt">// no cost on match</span>
+            } <span class="kw">else</span> {
+                dp[i][j] = 1 + <span class="type">Math</span>.<span class="fn">min</span>(dp[i-1][j-1],  <span class="cmt">// replace</span>
+                               <span class="type">Math</span>.<span class="fn">min</span>(dp[i-1][j],    <span class="cmt">// delete</span>
+                                        dp[i][j-1]));  <span class="cmt">// insert</span>
+            }
+        }
+    }
+    <span class="kw">return</span> dp[m][n];
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- ── SECTION 6: INTERVAL DP ── -->
+  <div class="section" id="interval-dp">
+    <div class="section-header">
+      <h3><span class="pattern-tag p-interval" style="font-size:14px;margin-right:8px;">Pattern 4</span> §6 — Interval DP</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🔑</span>
+      <p><strong>Recognition Signal:</strong> The problem asks about a subarray or substring from index <code>i</code> to <code>j</code>. You need answers for all intervals, and a larger interval depends on smaller intervals inside it.</p>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🚨</div>
+      <div class="body">
+        <strong>The #1 Interval DP Trap — Wrong Iteration Order</strong>
+        <p>You CANNOT iterate by <code>i</code> from 0 to n. When computing <code>dp[i][j]</code>, you need <code>dp[i][k]</code> and <code>dp[k+1][j]</code> — both are smaller intervals. <strong>You must iterate by interval LENGTH</strong>, from small to large. Start with length 1, then 2, then 3...</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Interval DP Template — Iterate by Length</span></div>
+      <pre><code><span class="type">int</span>[][] dp = <span class="kw">new</span> <span class="type">int</span>[n][n];
+
+<span class="cmt">// Base case: length-1 intervals</span>
+<span class="kw">for</span> (<span class="type">int</span> i = 0; i &lt; n; i++) {
+    dp[i][i] = <span class="cmt">/* base value */</span>;
+}
+
+<span class="cmt">// Fill by increasing interval length</span>
+<span class="kw">for</span> (<span class="type">int</span> len = 2; len &lt;= n; len++) {
+    <span class="kw">for</span> (<span class="type">int</span> i = 0; i &lt;= n - len; i++) {
+        <span class="type">int</span> j = i + len - 1; <span class="cmt">// right boundary</span>
+        dp[i][j] = <span class="type">Integer</span>.<span class="const">MAX_VALUE</span>; <span class="cmt">// or MIN for max problems</span>
+        <span class="kw">for</span> (<span class="type">int</span> k = i; k &lt; j; k++) { <span class="cmt">// try all split points</span>
+            dp[i][j] = <span class="type">Math</span>.<span class="fn">min</span>(dp[i][j],
+                dp[i][k] + dp[k+1][j] + <span class="cmt">/* cost of merge */</span>);
+        }
+    }
+}
+<span class="kw">return</span> dp[0][n-1];</code></pre>
+    </div>
+
+    <h4>Palindromic Substrings — The Interval DP Classic</h4>
+    <div class="card">
+      <p><strong>State:</strong> <code>dp[i][j]</code> = true if <code>s[i..j]</code> is a palindrome</p>
+      <p><strong>Recurrence:</strong> <code>dp[i][j] = (s[i] == s[j]) && dp[i+1][j-1]</code></p>
+      <p><strong>Base:</strong> <code>dp[i][i] = true</code> (single char), <code>dp[i][i+1] = (s[i]==s[i+1])</code></p>
+      <p><strong>Answer:</strong> Count all <code>true</code> entries, OR for Longest Palindromic Substring, track the max length seen.</p>
+      <div class="callout warn" style="margin-top:10px;">
+        <div class="icon">⚠️</div>
+        <div class="body"><strong>Direction matters!</strong> For palindromes, the outer iteration must go from bottom (large <code>i</code>) to top (small <code>i</code>), because <code>dp[i][j]</code> needs <code>dp[i+1][j-1]</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 7: GRID DP ── -->
+  <div class="section" id="grid-dp">
+    <div class="section-header">
+      <h3><span class="pattern-tag p-grid" style="font-size:14px;margin-right:8px;">Pattern 5</span> §7 — Grid / Matrix DP</h3>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🔑</span>
+      <p><strong>Recognition Signal:</strong> You're moving through a 2D grid. Movement is typically right and down (or all 4 directions). Answer at each cell depends on neighbors already computed.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Grid DP Template — Min/Max Path</span></div>
+      <pre><code><span class="type">int</span>[][] dp = <span class="kw">new</span> <span class="type">int</span>[m][n];
+dp[0][0] = grid[0][0]; <span class="cmt">// base case: top-left</span>
+
+<span class="cmt">// Fill first row (can only come from the left)</span>
+<span class="kw">for</span> (<span class="type">int</span> j = 1; j &lt; n; j++)
+    dp[0][j] = dp[0][j-1] + grid[0][j];
+
+<span class="cmt">// Fill first column (can only come from above)</span>
+<span class="kw">for</span> (<span class="type">int</span> i = 1; i &lt; m; i++)
+    dp[i][0] = dp[i-1][0] + grid[i][0];
+
+<span class="cmt">// Fill rest — came from top OR left, take minimum</span>
+<span class="kw">for</span> (<span class="type">int</span> i = 1; i &lt; m; i++) {
+    <span class="kw">for</span> (<span class="type">int</span> j = 1; j &lt; n; j++) {
+        dp[i][j] = grid[i][j] +
+            <span class="type">Math</span>.<span class="fn">min</span>(dp[i-1][j], dp[i][j-1]);
+    }
+}
+<span class="kw">return</span> dp[m-1][n-1];</code></pre>
+    </div>
+
+    <h4>Grid DP Variants</h4>
+    <div class="card-grid">
+      <div class="card-mini">
+        <h5>Unique Paths</h5>
+        <p>Count ways to reach bottom-right. Grid has no obstacles.</p>
+        <div class="recurrence-box">dp[i][j] = dp[i-1][j] + dp[i][j-1]
+base: dp[0][j] = 1, dp[i][0] = 1</div>
+      </div>
+      <div class="card-mini">
+        <h5>Unique Paths II (with obstacles)</h5>
+        <p>Same but cells with obstacle = 0 ways, block propagation.</p>
+        <div class="recurrence-box">if obstacle[i][j]: dp[i][j] = 0
+else: dp[i][j] = dp[i-1][j] + dp[i][j-1]</div>
+      </div>
+      <div class="card-mini">
+        <h5>Dungeon Game (right-to-left)</h5>
+        <p>Minimum HP needed to reach bottom-right. Fill <strong>backwards</strong> — start from destination.</p>
+        <div class="recurrence-box">dp[i][j] = max(1,
+  min(dp[i+1][j], dp[i][j+1]) - dungeon[i][j])</div>
+        <p style="font-size:12px;color:var(--accent-orange);">⚠️ Must fill right-to-left, bottom-to-top.</p>
+      </div>
+      <div class="card-mini">
+        <h5>Maximal Square</h5>
+        <p>Largest square of 1s in a binary matrix.</p>
+        <div class="recurrence-box">if matrix[i][j]=='1':
+  dp[i][j] = min(dp[i-1][j], dp[i][j-1],
+                 dp[i-1][j-1]) + 1
+answer: max(dp)²</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PART 3 ═══════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">03</div>
+    <div>
+      <h2>Recognition & Mastery</h2>
+      <p>The tools that make the difference in an actual interview under pressure.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 8: RECOGNITION FLOWCHART ── -->
+  <div class="section" id="recognition">
+    <div class="section-header">
+      <h3>🗺️ §8 — Recognize Which Sub-Pattern in 30 Seconds</h3>
+    </div>
+
+    <p>When you see a DP problem, ask these questions in order:</p>
+
+    <div class="flowchart">
+      <div class="fc-node question">Is it a DP problem?<br><small>Does it ask for max/min/count/can-you-do-X with optimal choices?</small></div>
+      <div class="fc-arrow-down"></div>
+      <div class="fc-node question">Are you working with a 2D grid?</div>
+      <div class="fc-arrow-down"></div>
+      <div class="fc-branch">
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">YES</div>
+          <div class="fc-node answer">🔵 Grid DP<br><small>dp[i][j] = state at cell (i,j)</small></div>
+        </div>
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">NO →</div>
+          <div class="fc-node question">Do you have TWO sequences / strings?</div>
+        </div>
+      </div>
+      <div class="fc-arrow-down"></div>
+      <div class="fc-branch">
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">YES</div>
+          <div class="fc-node answer">🟢 Two-Sequence DP<br><small>dp[i][j] = answer for s1[0..i], s2[0..j]</small></div>
+        </div>
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">NO →</div>
+          <div class="fc-node question">Are you choosing from ITEMS with weights/values and a BUDGET?</div>
+        </div>
+      </div>
+      <div class="fc-arrow-down"></div>
+      <div class="fc-branch">
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">YES</div>
+          <div class="fc-node answer">🟣 Knapsack DP<br><small>0/1 or Unbounded based on reuse</small></div>
+        </div>
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">NO →</div>
+          <div class="fc-node question">Is the answer about a subarray/substring interval [i..j]?</div>
+        </div>
+      </div>
+      <div class="fc-arrow-down"></div>
+      <div class="fc-branch">
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">YES</div>
+          <div class="fc-node answer">🟡 Interval DP<br><small>Iterate by length, try all split points</small></div>
+        </div>
+        <div class="fc-branch-item">
+          <div class="fc-branch-label">NO →</div>
+          <div class="fc-node answer">🔵 Linear DP<br><small>dp[i] depends on dp[i-1], dp[i-2], ...</small></div>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="margin-top:28px;">Recognition Keywords Cheat Sheet</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>If you see this phrase…</th><th>Think this pattern</th><th>Key state</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>"minimum cost path" / "maximum reward path"</td><td><span class="pattern-tag p-grid">Grid DP</span></td><td><code>dp[i][j]</code> = answer at cell</td></tr>
+          <tr><td>"edit distance" / "insert delete replace"</td><td><span class="pattern-tag p-lcs">Two-Seq DP</span></td><td><code>dp[i][j]</code> = ops on s1[0..i], s2[0..j]</td></tr>
+          <tr><td>"longest common …" / "subsequence"</td><td><span class="pattern-tag p-lcs">Two-Seq DP</span></td><td><code>dp[i][j]</code> = best match up to i,j</td></tr>
+          <tr><td>"subset sum" / "partition" / "target sum"</td><td><span class="pattern-tag p-knapsack">Knapsack</span></td><td><code>dp[w]</code> = can reach sum w</td></tr>
+          <tr><td>"coin change" / "unbounded" / "infinite supply"</td><td><span class="pattern-tag p-knapsack">Knapsack</span></td><td><code>dp[amount]</code> = min coins</td></tr>
+          <tr><td>"palindrome substring" / "burst/remove elements"</td><td><span class="pattern-tag p-interval">Interval DP</span></td><td><code>dp[i][j]</code> = answer for range</td></tr>
+          <tr><td>"n stairs" / "ways to reach" / "house robber"</td><td><span class="pattern-tag p-linear">Linear DP</span></td><td><code>dp[i]</code> = answer at position i</td></tr>
+          <tr><td>"LIS" / "longest increasing"</td><td><span class="pattern-tag p-linear">Linear DP</span></td><td><code>dp[i]</code> = LIS ending at i</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── SECTION 9: TRAP HALL OF FAME ── -->
+  <div class="section" id="trap-hall">
+    <div class="section-header">
+      <h3>💀 §9 — The DP Trap Hall of Fame</h3>
+    </div>
+
+    <p>These 8 mistakes cause engineers to fail DP problems they actually understand. Read once. Internalize forever.</p>
+
+    <div class="trap-item">
+      <span class="trap-num">1</span>
+      <div>
+        <strong style="color:var(--accent-red);">Wrong State Definition</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">Defining <code>dp[i]</code> vaguely like "best answer" without specifying exactly what constraint is applied. Example: for LIS, saying dp[i] = "LIS length in array" instead of "LIS length <strong>ending at index i</strong>". One is correct. One makes the recurrence impossible.</p>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <span class="trap-num">2</span>
+      <div>
+        <strong style="color:var(--accent-red);">Assuming dp[n] is Always the Answer</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">For LIS, the answer is <code>max(dp[0..n])</code>. For Max Subarray, same. The longest/best sequence doesn't have to end at the last element. Always ask: "could the answer involve a middle state?"</p>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <span class="trap-num">3</span>
+      <div>
+        <strong style="color:var(--accent-red);">Wrong Loop Order in Knapsack (0/1 vs Unbounded)</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">Using forward iteration for 0/1 knapsack allows items to be reused multiple times, silently giving wrong answers. The bug won't crash — it'll just compute wrong values. Always verify loop direction with a small manual example.</p>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <span class="trap-num">4</span>
+      <div>
+        <strong style="color:var(--accent-red);">Iterating by i in Interval DP Instead of Length</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">If you iterate <code>i</code> from 0 to n in interval DP, when you compute <code>dp[i][j]</code>, the smaller interval <code>dp[i+1][j]</code> may not be filled yet. Always iterate by interval length from small to large.</p>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <span class="trap-num">5</span>
+      <div>
+        <strong style="color:var(--accent-red);">Off-by-One in Base Cases</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">Initializing dp arrays at index 0 when the problem is 1-indexed (or vice versa). The rule: if dp[i] represents "using the first i elements," then dp[0] = empty set = no elements. Draw the first 3 states manually before coding.</p>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <span class="trap-num">6</span>
+      <div>
+        <strong style="color:var(--accent-red);">Forgetting to Handle Negative Values</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">Initializing dp with 0 when values can be negative (e.g., Max Subarray, Dungeon Game). Use <code>Integer.MIN_VALUE</code> for max problems with negatives, and always clamp with <code>Math.max(1, ...)</code> for "minimum health" style problems.</p>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <span class="trap-num">7</span>
+      <div>
+        <strong style="color:var(--accent-red);">Not Resetting dp[i][j]=0 for Longest Common Substring</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">LCS (subsequence) extends across mismatches. Substring (contiguous) must reset to 0 on mismatch. Mixing them up gives wrong length. Substring answer = global max table value. Subsequence answer = dp[m][n].</p>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <span class="trap-num">8</span>
+      <div>
+        <strong style="color:var(--accent-red);">Stack Overflow with Top-Down on Large Inputs</strong>
+        <p style="margin:4px 0 0;color:var(--text-secondary);">Java's default stack is ~500 recursive calls deep. For n=10000, pure recursion even with memoization will overflow. Always mention this trade-off and switch to bottom-up for large n (LCS with 1000-char strings, etc.).</p>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Protocol</strong>
+        <p>Before writing any code: state your dp definition in one sentence, write the recurrence, write 2 base cases, say the iteration order, and say where the answer is. This takes 90 seconds and prevents 7 of the 8 traps above.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PART 4 ═══════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">04</div>
+    <div>
+      <h2>Practice Problems</h2>
+      <p>25 curated problems — 4-5 per sub-pattern — from LeetCode. Sorted by difficulty.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 10: PRACTICE ── -->
+  <div class="section" id="practice">
+    <div class="section-header">
+      <h3>🎯 §10 — Practice Problem Set</h3>
+    </div>
+
+    <h4><span class="pattern-tag p-linear">Linear / Fibonacci DP</span></h4>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>#</th><th>Problem</th><th>Key Idea</th><th>Difficulty</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><a href="https://leetcode.com/problems/climbing-stairs/" target="_blank" style="color:var(--accent-blue);">LC #70 — Climbing Stairs</a></td>
+            <td>Classic Fibonacci. dp[i] = dp[i-1] + dp[i-2]</td>
+            <td>🟢 Easy</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><a href="https://leetcode.com/problems/house-robber/" target="_blank" style="color:var(--accent-blue);">LC #198 — House Robber</a></td>
+            <td>Can't rob adjacent. dp[i] = max(skip, rob+dp[i-2])</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><a href="https://leetcode.com/problems/maximum-subarray/" target="_blank" style="color:var(--accent-blue);">LC #53 — Maximum Subarray</a></td>
+            <td>Kadane's. dp[i] = max(nums[i], dp[i-1]+nums[i])</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><a href="https://leetcode.com/problems/longest-increasing-subsequence/" target="_blank" style="color:var(--accent-blue);">LC #300 — Longest Increasing Subsequence</a></td>
+            <td>dp[i] = best LIS ending at i. Answer = max(dp)</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><a href="https://leetcode.com/problems/word-break/" target="_blank" style="color:var(--accent-blue);">LC #139 — Word Break</a></td>
+            <td>Boolean DP. dp[i] = can segment s[0..i]. Check all cut points</td>
+            <td>🟡 Medium</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-top:24px;"><span class="pattern-tag p-knapsack">Knapsack DP</span></h4>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>#</th><th>Problem</th><th>Key Idea</th><th>Difficulty</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>6</td>
+            <td><a href="https://leetcode.com/problems/coin-change/" target="_blank" style="color:var(--accent-blue);">LC #322 — Coin Change</a></td>
+            <td>Unbounded knapsack. Forward inner loop. dp[amount] = min coins</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><a href="https://leetcode.com/problems/partition-equal-subset-sum/" target="_blank" style="color:var(--accent-blue);">LC #416 — Partition Equal Subset Sum</a></td>
+            <td>0/1 knapsack. Can we reach sum/2? Backward inner loop</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><a href="https://leetcode.com/problems/target-sum/" target="_blank" style="color:var(--accent-blue);">LC #494 — Target Sum</a></td>
+            <td>Count ways to assign +/- to reach target. Subset-sum count variant</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><a href="https://leetcode.com/problems/coin-change-ii/" target="_blank" style="color:var(--accent-blue);">LC #518 — Coin Change II</a></td>
+            <td>Count combinations (not permutations). Outer = coins, inner = forward</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><a href="https://leetcode.com/problems/last-stone-weight-ii/" target="_blank" style="color:var(--accent-blue);">LC #1049 — Last Stone Weight II</a></td>
+            <td>Reduce to subset sum. Minimize |S1-S2| = reach sum closest to total/2</td>
+            <td>🟡 Medium</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-top:24px;"><span class="pattern-tag p-lcs">Two-Sequence (LCS) DP</span></h4>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>#</th><th>Problem</th><th>Key Idea</th><th>Difficulty</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>11</td>
+            <td><a href="https://leetcode.com/problems/longest-common-subsequence/" target="_blank" style="color:var(--accent-blue);">LC #1143 — Longest Common Subsequence</a></td>
+            <td>Classic LCS. Match → diagonal+1. Else → max(up, left)</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><a href="https://leetcode.com/problems/edit-distance/" target="_blank" style="color:var(--accent-blue);">LC #72 — Edit Distance</a></td>
+            <td>3 operations: insert, delete, replace. dp[i][j] = min ops</td>
+            <td>🔴 Hard</td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td><a href="https://leetcode.com/problems/distinct-subsequences/" target="_blank" style="color:var(--accent-blue);">LC #115 — Distinct Subsequences</a></td>
+            <td>Count ways to form t from s. Match → dp[i-1][j-1]+dp[i-1][j]</td>
+            <td>🔴 Hard</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><a href="https://leetcode.com/problems/interleaving-string/" target="_blank" style="color:var(--accent-blue);">LC #97 — Interleaving String</a></td>
+            <td>dp[i][j] = can s1[0..i]+s2[0..j] interleave to form s3[0..i+j]</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><a href="https://leetcode.com/problems/delete-operation-for-two-strings/" target="_blank" style="color:var(--accent-blue);">LC #583 — Delete Operation for Two Strings</a></td>
+            <td>Min deletions = m+n - 2*LCS(s1,s2). Reduce to LCS</td>
+            <td>🟡 Medium</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-top:24px;"><span class="pattern-tag p-interval">Interval DP</span></h4>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>#</th><th>Problem</th><th>Key Idea</th><th>Difficulty</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>16</td>
+            <td><a href="https://leetcode.com/problems/longest-palindromic-subsequence/" target="_blank" style="color:var(--accent-blue);">LC #516 — Longest Palindromic Subsequence</a></td>
+            <td>dp[i][j] = LPS in s[i..j]. Or: LCS(s, reverse(s))</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>17</td>
+            <td><a href="https://leetcode.com/problems/palindromic-substrings/" target="_blank" style="color:var(--accent-blue);">LC #647 — Palindromic Substrings</a></td>
+            <td>dp[i][j] = is palindrome. Count all true. Expand from center is O(n²) too</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>18</td>
+            <td><a href="https://leetcode.com/problems/burst-balloons/" target="_blank" style="color:var(--accent-blue);">LC #312 — Burst Balloons</a></td>
+            <td>dp[i][j] = max coins bursting all balloons in (i,j). k = last balloon burst</td>
+            <td>🔴 Hard</td>
+          </tr>
+          <tr>
+            <td>19</td>
+            <td><a href="https://leetcode.com/problems/minimum-cost-tree-from-leaf-values/" target="_blank" style="color:var(--accent-blue);">LC #1130 — Min Cost Tree from Leaf Values</a></td>
+            <td>Interval DP on array. dp[i][j] = min cost for leaves i..j</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>20</td>
+            <td><a href="https://leetcode.com/problems/strange-printer/" target="_blank" style="color:var(--accent-blue);">LC #664 — Strange Printer</a></td>
+            <td>dp[i][j] = min turns to print s[i..j]. Hard to spot as interval DP</td>
+            <td>🔴 Hard</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-top:24px;"><span class="pattern-tag p-grid">Grid DP</span></h4>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>#</th><th>Problem</th><th>Key Idea</th><th>Difficulty</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>21</td>
+            <td><a href="https://leetcode.com/problems/unique-paths/" target="_blank" style="color:var(--accent-blue);">LC #62 — Unique Paths</a></td>
+            <td>dp[i][j] = dp[i-1][j] + dp[i][j-1]. First row/col = 1</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>22</td>
+            <td><a href="https://leetcode.com/problems/minimum-path-sum/" target="_blank" style="color:var(--accent-blue);">LC #64 — Minimum Path Sum</a></td>
+            <td>Same as unique paths but accumulate cost. Answer = dp[m-1][n-1]</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>23</td>
+            <td><a href="https://leetcode.com/problems/dungeon-game/" target="_blank" style="color:var(--accent-blue);">LC #174 — Dungeon Game</a></td>
+            <td>Fill backwards. dp[i][j] = min HP needed entering cell (i,j)</td>
+            <td>🔴 Hard</td>
+          </tr>
+          <tr>
+            <td>24</td>
+            <td><a href="https://leetcode.com/problems/maximal-square/" target="_blank" style="color:var(--accent-blue);">LC #221 — Maximal Square</a></td>
+            <td>dp[i][j] = side of largest square with bottom-right at (i,j)</td>
+            <td>🟡 Medium</td>
+          </tr>
+          <tr>
+            <td>25</td>
+            <td><a href="https://leetcode.com/problems/triangle/" target="_blank" style="color:var(--accent-blue);">LC #120 — Triangle</a></td>
+            <td>Fill bottom-up from last row. dp[j] = min(dp[j], dp[j+1]) + triangle[i][j]</td>
+            <td>🟡 Medium</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="banner banner-purple" style="margin-top:28px;">
+      <h4>📌 Study Order Recommendation</h4>
+      <p>
+        <strong>Week 1:</strong> LC #70 → #198 → #53 → #300 → #322 → #416 (Linear + Knapsack foundation)<br>
+        <strong>Week 2:</strong> LC #1143 → #72 → #62 → #64 → #647 (Two-Seq + Grid + Interval basics)<br>
+        <strong>Week 3:</strong> LC #312 → #115 → #174 → #664 → #494 (Hard problems — push limits)<br>
+        After these 15 problems, you'll recognize DP patterns faster than 95% of candidates.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── FINAL SUMMARY ── -->
+  <div class="section">
+    <div class="section-header">
+      <h3>🏁 Master Summary — The DP Compact</h3>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini" style="border-top:3px solid var(--accent-blue);">
+        <h4>Always Do First</h4>
+        <ol style="padding-left:18px;color:var(--text-secondary);">
+          <li>Define state in English</li>
+          <li>Write the recurrence</li>
+          <li>State 2 base cases</li>
+          <li>Say iteration order</li>
+          <li>Say where answer is</li>
+        </ol>
+      </div>
+      <div class="card-mini" style="border-top:3px solid var(--accent-green);">
+        <h4>Pattern Triggers</h4>
+        <ul style="padding-left:18px;color:var(--text-secondary);">
+          <li>Grid → Grid DP</li>
+          <li>Two strings → LCS DP</li>
+          <li>Items+budget → Knapsack</li>
+          <li>Subarray range → Interval DP</li>
+          <li>1D sequence → Linear DP</li>
+        </ul>
+      </div>
+      <div class="card-mini" style="border-top:3px solid var(--accent-orange);">
+        <h4>Never Forget</h4>
+        <ul style="padding-left:18px;color:var(--text-secondary);">
+          <li>0/1 Knapsack → backwards loop</li>
+          <li>Unbounded → forward loop</li>
+          <li>Interval DP → iterate by length</li>
+          <li>LIS answer → max(dp) not dp[n]</li>
+          <li>Substring → reset to 0 on miss</li>
+        </ul>
+      </div>
+      <div class="card-mini" style="border-top:3px solid var(--accent-purple);">
+        <h4>Space Optimization</h4>
+        <ul style="padding-left:18px;color:var(--text-secondary);">
+          <li>Linear DP: 2 variables</li>
+          <li>Knapsack: 1D array</li>
+          <li>LCS: 2 rows (current + prev)</li>
+          <li>Grid: 1 row + prev value</li>
+          <li>Interval/Tree: usually no shortcut</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="key-point" style="margin-top:20px;">
+      <span class="kp-icon">🏆</span>
+      <p><strong>The Real Secret:</strong> DP is not about memorizing solutions. It's about recognizing that the problem has a <em>shape</em> — and every shape has a template. The 5-step framework plus pattern recognition is all you need. Practice 25 problems with deliberate focus on the state definition, and DP becomes your strongest category.</p>
+    </div>
+  </div>
+
+  <div style="height:60px;"></div>
+</main>
+
+<button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  // ── Progress Bar ──────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('progress');
+    const top = document.documentElement.scrollTop;
+    const height = document.documentElement.scrollHeight - window.innerHeight;
+    if (el) el.style.width = (top / height * 100) + '%';
+    document.getElementById('topBtn').style.opacity = top > 400 ? '1' : '0';
+  });
+
+  // ── Sidebar Toggle ────────────────────────────────
+  const hamburger = document.getElementById('hamburger');
+  const sidebar   = document.getElementById('sidebar');
+  const overlay   = document.getElementById('sidebar-overlay');
+
+  function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('active'); hamburger.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); hamburger.classList.remove('active'); }
+
+  hamburger.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  overlay.addEventListener('click', closeSidebar);
+
+  // Close sidebar on nav link click (mobile)
+  document.querySelectorAll('.toc-link').forEach(link => {
+    link.addEventListener('click', () => { if (window.innerWidth < 900) closeSidebar(); });
+  });
+
+  // ── Active TOC highlight on scroll ───────────────
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocLinks.forEach(l => {
+          l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  // ── Fibonacci Animation ───────────────────────────
+  const fibValues = [1, 1, 2, 3, 5, 8, 13];
+  let fibDone = false;
+
+  function animateFib() {
+    if (fibDone) {
+      // Reset
+      for (let i = 0; i <= 6; i++) {
+        const el = document.getElementById('fc' + i);
+        el.className = 'dp-cell empty';
+        el.innerHTML = `dp[${i}]<br>?`;
+      }
+      document.getElementById('fc0').innerHTML = 'dp[0]<br>1';
+      document.getElementById('fc1').innerHTML = 'dp[1]<br>1';
+      fibDone = false;
+    }
+    // Base cases
+    const c0 = document.getElementById('fc0');
+    const c1 = document.getElementById('fc1');
+    c0.className = 'dp-cell filled';
+    c1.className = 'dp-cell filled';
+
+    for (let i = 2; i <= 6; i++) {
+      ((idx) => {
+        setTimeout(() => {
+          const el = document.getElementById('fc' + idx);
+          el.className = 'dp-cell current';
+          el.innerHTML = `dp[${idx}]<br>…`;
+          setTimeout(() => {
+            el.innerHTML = `dp[${idx}]<br>${fibValues[idx]}`;
+            el.className = idx === 6 ? 'dp-cell answer' : 'dp-cell filled';
+            if (idx === 6) fibDone = true;
+          }, 350);
+        }, (idx - 2) * 600);
+      })(i);
+    }
+  }
+
+  // ── LCS Matrix Animation ─────────────────────────
+  const s1 = ' ABCDE';
+  const s2 = ' ACE';
+  const lcsTable = Array.from({length: 6}, () => Array(4).fill(0));
+  // Precompute LCS table
+  for (let i = 1; i <= 5; i++) {
+    for (let j = 1; j <= 3; j++) {
+      if (s1[i] === s2[j]) lcsTable[i][j] = lcsTable[i-1][j-1] + 1;
+      else lcsTable[i][j] = Math.max(lcsTable[i-1][j], lcsTable[i][j-1]);
+    }
+  }
+
+  function buildLCSMatrix() {
+    const container = document.getElementById('lcs-matrix-container');
+    let html = '<div class="matrix-grid" id="lcs-grid" style="grid-template-columns:repeat(4,52px)">';
+    // Header row
+    const headers = ['', '', 'A', 'C', 'E'];
+    const rowHeaders = ['', 'A', 'B', 'C', 'D', 'E'];
+    html += `<div class="matrix-cell header"></div>`;
+    for (let j = 0; j < 4; j++) html += `<div class="matrix-cell header">${headers[j]}</div>`;
+    for (let i = 1; i <= 5; i++) {
+      html += `<div class="matrix-cell header">${rowHeaders[i]}</div>`;
+      for (let j = 0; j < 4; j++) {
+        html += `<div class="matrix-cell" id="lc-${i}-${j}">0</div>`;
+      }
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  buildLCSMatrix();
+  let lcsAnimDone = false;
+
+  function animateLCS() {
+    if (lcsAnimDone) {
+      buildLCSMatrix();
+      lcsAnimDone = false;
+    }
+    let delay = 0;
+    for (let i = 1; i <= 5; i++) {
+      for (let j = 0; j < 4; j++) {
+        ((row, col, d) => {
+          setTimeout(() => {
+            const el = document.getElementById(`lc-${row}-${col}`);
+            if (!el) return;
+            el.textContent = lcsTable[row][col];
+            const isMatch = col > 0 && s1[row] === s2[col];
+            el.className = 'matrix-cell ' + (isMatch ? 'match' : 'active');
+            if (row === 5 && col === 3) lcsAnimDone = true;
+          }, d);
+        })(i, j, delay);
+        delay += 120;
+      }
+    }
+  }
+</script>
+</body>
+</html>

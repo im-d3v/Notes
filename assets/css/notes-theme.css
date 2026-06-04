@@ -1,0 +1,1949 @@
+/* ════════════════════════════════════════════════════════════════════
+   JAVA STUDY NOTES — SHARED THEME  (notes-theme.css)
+   Dark GitHub-inspired theme for engineering study notes.
+   ════════════════════════════════════════════════════════════════════
+
+   ┌─ HOW TO START A NEW PAGE ──────────────────────────────────────┐
+   │                                                                 │
+   │  1. Copy pages/Security.html as a template and clear the body. │
+   │                                                                 │
+   │  2. In <head>, link this file:                                  │
+   │       <link rel="stylesheet"                                    │
+   │             href="../assets/css/notes-theme.css">               │
+   │                                                                 │
+   │  3. Add ONE small <style> block for page-only overrides:        │
+   │       .hero { background: linear-gradient(                      │
+   │           135deg, #0d1117 0%, #162020 40%, #0a2a2a22 100%); }   │
+   │     (change the tint colour to match your topic)                │
+   │                                                                 │
+   │  4. Copy the sidebar + JS block from Security.html — only the   │
+   │     nav links change per page.                                  │
+   └─────────────────────────────────────────────────────────────────┘
+
+   ════════════════════════════════════════════════════════════════════
+   STYLE GUIDE — WHAT TO USE WHERE
+   ════════════════════════════════════════════════════════════════════
+
+   ── PAGE STRUCTURE ─────────────────────────────────────────────────
+
+   The page skeleton every notes file uses:
+
+     <body>
+       <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+       <button id="hamburger">...</button>
+       <div id="sidebar-overlay"></div>
+       <nav id="sidebar">...</nav>
+       <main id="main">
+         .hero          ← top banner with title + stats
+         .part-header   ← "Part 1 / Part 2" dividers between big groups
+         .section       ← one topic block (maps to a sidebar nav link)
+         ...
+       </main>
+     </body>
+
+   ── HEADINGS INSIDE .section ───────────────────────────────────────
+
+   Use headings in this order — never skip levels:
+
+     <div class="section" id="my-topic">
+       <h3>🔑 Section Title</h3>       ← blue underline, maps to sidebar link
+         <h4>Sub-topic</h4>            ← blue, no border, 16 px
+           <h5>Detail heading</h5>     ← orange, uppercase, 14 px
+
+   Rules:
+   • h3 = one per .section (the section title).
+   • h4 = group of related cards / paragraphs inside a section.
+   • h5 = optional detail label inside a card or callout.
+   • Never use h1/h2 in the body — h1 is inside .hero, h2 inside .part-header.
+
+   ── PART HEADER  (between big topic groups) ────────────────────────
+
+     <div class="part-header">
+       <div class="part-number" style="background:var(--gradient-blue);">01</div>
+       <div>
+         <h2>Foundations</h2>
+         <p>Brief subtitle describing what this part covers.</p>
+       </div>
+     </div>
+
+   Gradient options for part-number background:
+     var(--gradient-blue)   var(--gradient-green)  var(--gradient-purple)
+     var(--gradient-red)    var(--gradient-orange)
+
+   ── CARDS ──────────────────────────────────────────────────────────
+
+   .card           → full-width content block, dark bg, subtle border.
+                     Use for any chunk of prose/code that belongs together.
+     <div class="card">
+       <h4>Card title</h4>
+       <p>Content...</p>
+     </div>
+
+   .card-grid      → responsive 2-column grid of cards.
+     <div class="card-grid">
+       <div class="card-mini"><h4>Title</h4><p>...</p></div>
+       <div class="card-mini"><h4>Title</h4><p>...</p></div>
+     </div>
+
+   .card-mini / .card-sm  → smaller padding card, used inside .card-grid.
+
+   When to use which:
+   • Single prose block or a code example with text → .card
+   • 2–4 short comparison items side by side → .card-grid + .card-mini
+   • A Q&A answer → .qa-a (see below), not .card
+
+   ── CALLOUTS (coloured info boxes) ─────────────────────────────────
+
+   Use when you want to highlight a rule, warning, tip, or danger.
+
+     <div class="callout info">          ← blue  — tip / note
+     <div class="callout warn">          ← orange — caution
+     <div class="callout danger">        ← red    — never do this
+     <div class="callout success">       ← green  — best practice
+     <div class="callout purple">        ← purple — interview / exam tip
+
+   Inner structure:
+     <div class="callout warn">
+       <div class="icon">⚠️</div>
+       <div class="body">
+         <strong>Watch out</strong>
+         <p>Explanation text here.</p>
+       </div>
+     </div>
+
+   ── CODE BLOCKS ─────────────────────────────────────────────────────
+
+   Always wrap code in the full structure — never use bare <pre>:
+
+     <div class="code-block">
+       <div class="code-header">
+         <span class="code-lang">Java</span>
+         <span class="code-title">Optional descriptive title</span>
+       </div>
+       <pre><code>// your code here</code></pre>
+     </div>
+
+   code-lang values (controls the label colour):
+     Java  YAML  XML  SQL  Bash  JSON  Properties  HTTP  Text
+
+   Syntax highlighting spans inside <code>:
+     <span class="kw">public</span>          ← red    — keywords: public class if return
+     <span class="kw2">@Service</span>       ← pink   — annotations: @Bean @Autowired
+     <span class="type">HttpSecurity</span>  ← blue   — types: String List MyClass
+     <span class="str">"hello"</span>        ← light blue — string literals
+     <span class="num">42</span>             ← blue   — numbers
+     <span class="cmt">// comment</span>     ← grey italic — comments
+     <span class="fn">doFilter</span>       ← purple — method/function names
+     <span class="const">MAX_SIZE</span>      ← yellow — constants / static finals
+     <span class="tag">@Override</span>     ← green  — HTML tags, some annotations
+
+   ── TABLES ──────────────────────────────────────────────────────────
+
+   Always wrap tables — the wrapper gives the border + scroll:
+
+     <div class="table-wrapper">
+       <table>
+         <thead>
+           <tr><th>Column A</th><th>Column B</th><th>Status</th></tr>
+         </thead>
+         <tbody>
+           <tr>
+             <td>Value</td>
+             <td>Description</td>
+             <td><span class="pill pill-green">Recommended</span></td>
+           </tr>
+         </tbody>
+       </table>
+     </div>
+
+   For status / recommendation columns use .pill badges (see below).
+   For ✅/❌ comparison tables use .diff-good / .diff-bad on <td> text.
+
+   ── Q&A BLOCKS ──────────────────────────────────────────────────────
+
+   Use for interview prep sections or guided self-study:
+
+     <div class="qa-container">
+       <div class="qa-item">
+         <div class="qa-q">What is Spring Security?</div>
+         <div class="qa-a">
+           Answer text, can contain any other component
+           (tables, code-block, lists, pills, etc.)
+         </div>
+       </div>
+     </div>
+
+   ── PILL BADGES (status labels in tables / inline) ──────────────────
+
+   Small rounded coloured badges. Use in table "Status" columns or inline:
+
+     <span class="pill pill-green">Recommended</span>   ← green
+     <span class="pill pill-blue">Use when needed</span> ← blue
+     <span class="pill pill-orange">Deprecated</span>    ← orange
+     <span class="pill pill-red">Avoid</span>            ← red
+     <span class="pill pill-purple">Experimental</span>  ← purple
+     <span class="pill pill-cyan">New in 3.x</span>      ← cyan
+     <span class="pill pill-yellow">Review</span>        ← yellow
+
+   Rule: use pills only for status/recommendation cells.
+   Use .tag for topic labels / capability badges (see below).
+
+   ── TAG CHIPS (topic / technology labels) ───────────────────────────
+
+   Smaller square-ish chips, typically used for listing capabilities:
+
+     <span class="tag tag-blue">Spring Boot</span>
+     <span class="tag tag-green">OAuth2</span>
+     <span class="tag tag-red">Deprecated</span>
+     <span class="tag tag-yellow">Config</span>
+     <span class="tag tag-purple">Reactive</span>
+     <span class="tag tag-orange">Performance</span>
+     <span class="tag tag-cyan">Cloud</span>
+
+   ── GRADIENT BANNERS ────────────────────────────────────────────────
+
+   Full-width coloured banner for section summaries or key rules:
+
+     <div class="banner banner-blue">
+       <h4>Key Rule</h4>
+       <p>Never store secrets in source code.</p>
+     </div>
+
+   Colours: banner-blue  banner-green  banner-purple  banner-red  banner-orange
+
+   ── STEPS (numbered process) ────────────────────────────────────────
+
+     <div class="steps">
+       <div class="step">
+         <div class="step-num">1</div>
+         <div class="step-body">
+           <div class="step-title">Generate a keystore</div>
+           <div class="step-desc">Run keytool -genkeypair ...</div>
+         </div>
+       </div>
+       <div class="step">
+         <div class="step-num">2</div>
+         ...
+       </div>
+     </div>
+
+   ── TIMELINE ────────────────────────────────────────────────────────
+
+   Use for evolution / history or ordered phases:
+
+     <div class="timeline">
+       <div class="timeline-item">
+         <div class="ti-title">Spring Security 3.0 (2009)</div>
+         <div class="ti-body">First major standalone release.</div>
+       </div>
+       <div class="timeline-item">...</div>
+     </div>
+
+   ── COMPARISON GRID (side-by-side pros/cons) ────────────────────────
+
+     <div class="compare">
+       <div class="compare-card">
+         <h4>✅ Do this</h4>
+         <ul><li>Point one</li></ul>
+       </div>
+       <div class="compare-card">
+         <h4>❌ Not this</h4>
+         <ul><li>Point one</li></ul>
+       </div>
+     </div>
+
+   ── DIAGRAMS (ASCII / text art) ─────────────────────────────────────
+
+   For flow diagrams using plain text / Unicode box-drawing:
+
+     <div class="diagram">
+<span class="d-purple">[ Client ]</span> ──► <span class="d-blue">[ Gateway ]</span> ──► <span class="d-green">[ Service ]</span>
+                              └──► <span class="d-db">[ Cache ]</span>
+     </div>
+
+   Colour spans inside .diagram:
+     d-blue  d-green  d-orange  d-red  d-purple  d-yellow  d-cyan
+
+   For architecture box diagrams (coloured inline boxes):
+
+     <div class="arch-diagram">
+       <div class="arch-row">
+         <span class="d-box d-client">Browser</span>
+         <span class="arrow">──►</span>
+         <span class="d-box d-gateway">API Gateway</span>
+       </div>
+     </div>
+
+   d-box variants: d-client  d-gateway  d-service  d-db  d-mq  d-eureka  d-config
+
+   ── KEY POINT BOX ───────────────────────────────────────────────────
+
+   Green-tinted emphasis box for one critical takeaway per topic:
+
+     <div class="key-point">
+       <span class="kp-icon">💡</span>
+       <p><strong>Always</strong> use BCrypt for password hashing — never MD5 or SHA-1.</p>
+     </div>
+
+   ── STATE MACHINE (circuit breaker / lifecycle states) ──────────────
+
+     <div class="state-machine">
+       <div class="state-box state-closed"><div class="state-name">CLOSED</div><div class="state-desc">Normal — requests pass through</div></div>
+       <div class="state-box state-open">  <div class="state-name">OPEN</div>  <div class="state-desc">Failing — requests blocked</div></div>
+       <div class="state-box state-half">  <div class="state-name">HALF-OPEN</div><div class="state-desc">Testing — one probe request</div></div>
+     </div>
+
+   ════════════════════════════════════════════════════════════════════
+   COLOUR QUICK REFERENCE
+   ════════════════════════════════════════════════════════════════════
+
+   Accent colour → when to use it
+   ─────────────────────────────────────────────────────────────────
+   --accent-blue   #58a6ff  → links, h4 headings, primary UI elements
+   --accent-green  #3fb950  → success, recommended, best practice
+   --accent-orange #d29922  → warnings, caution, deprecated
+   --accent-red    #f85149  → errors, danger, "never do", broken
+   --accent-purple #bc8cff  → interview tips, annotations, methods
+   --accent-cyan   #39d5d3  → h4 in Spring Cloud, new features, cloud
+   --accent-yellow #e3b341  → constants, important notes
+   --accent-pink   #f778ba  → annotations (@Bean etc.) in syntax hl
+
+   Text hierarchy
+   ─────────────────────────────────────────────────────────────────
+   --text-primary   #e6edf3  → headings, strong, important labels
+   --text-secondary #8b949e  → body text, paragraphs, td content
+   --text-muted     #6e7681  → metadata, nav labels, subtle hints
+
+   Background layers (darkest → lightest)
+   ─────────────────────────────────────────────────────────────────
+   --bg-primary   #0d1117   → page background
+   --bg-secondary #161b22   → sidebar, surface cards
+   --bg-card      #1c2128   → card backgrounds, answer blocks
+   --bg-tertiary  #21262d   → code block headers, table thead
+   code bg        #010409   → code block body (darkest)
+
+   ════════════════════════════════════════════════════════════════════
+   COMPONENT INDEX  (find the CSS section number below)
+   ════════════════════════════════════════════════════════════════════
+
+    1. CSS Custom Properties   — all --variables
+    2. Reset & Base            — *, html, body
+    3. Scrollbar               — ::-webkit-scrollbar
+    4. Hamburger Button        — #hamburger
+    5. Sidebar                 — #sidebar  .sidebar-header  .toc-link
+    6. Main Content Area       — #main  .progress-bar  .top-btn
+    7. Hero Section            — .hero  .hero-badges
+    8. Part Header             — .part-header  .part-number
+    9. Section & Headings      — .section  h3/h4/h5  .section-header
+   10. Cards                   — .card  .card-grid  .card-mini  .card-sm
+   11. Callouts                — .callout.info/warn/danger/success/purple
+   12. Code Blocks             — .code-block  .code-header  pre  code
+   13. Syntax Highlighting     — .kw  .kw2  .type  .str  .cmt  .fn  .const
+   14. Tables                  — .table-wrapper  table  thead  th  td
+   15. Q&A Blocks              — .qa-container  .qa-item  .qa-q  .qa-a
+   16. Pill Badges             — .pill  .pill-green/blue/red/orange/purple
+   17. Tag Chips               — .tag  .tag-blue/green/red/yellow/purple
+   18. Lists                   — ul  ol  li  .checklist
+   19. Diagrams                — .diagram  .arch-diagram  .d-box  .d-*
+   20. Timeline                — .timeline  .timeline-item  .ti-title
+   21. Step Indicators         — .steps  .step  .step-num  .step-body
+   22. Gradient Banners        — .banner  .banner-blue/green/purple/red
+   23. Comparison Grid         — .compare  .compare-card
+   24. State Machine           — .state-machine  .state-box  .state-*
+   25. Highlight Grid          — .highlight-grid  .highlight-card
+   26. Special Elements        — .key-point  .crypto-visual  .hash-demo
+   27. Responsive              — @media breakpoints
+   ════════════════════════════════════════════════════════════════════
+*/
+
+/* ══════════════════════════════════════════════════════
+   1. CSS CUSTOM PROPERTIES
+   ══════════════════════════════════════════════════════ */
+:root {
+  /* ── Background layers ── */
+  --bg-primary:   #0d1117;   /* page background */
+  --bg-secondary: #161b22;   /* sidebar, surface elements */
+  --bg-tertiary:  #21262d;   /* code headers, table heads, hover */
+  --bg-card:      #1c2128;   /* cards, answer blocks */
+
+  /* ── Borders ── */
+  --border:       #30363d;
+  --border-bright:#484f58;
+
+  /* ── Text ── */
+  --text-primary:   #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted:     #6e7681;
+
+  /* ── Accent colours ── */
+  --accent-blue:   #58a6ff;
+  --accent-green:  #3fb950;
+  --accent-orange: #d29922;
+  --accent-red:    #f85149;
+  --accent-purple: #bc8cff;
+  --accent-cyan:   #39d5d3;
+  --accent-pink:   #f778ba;
+  --accent-yellow: #e3b341;
+
+  /* ── Gradients (used in .banner-* and .part-header) ── */
+  --gradient-blue:   linear-gradient(135deg, #1a237e, #0d47a1, #01579b);
+  --gradient-green:  linear-gradient(135deg, #1b5e20, #2e7d32, #388e3c);
+  --gradient-purple: linear-gradient(135deg, #4a148c, #6a1b9a, #7b1fa2);
+  --gradient-red:    linear-gradient(135deg, #b71c1c, #c62828, #d32f2f);
+  --gradient-orange: linear-gradient(135deg, #e65100, #ef6c00, #f57c00);
+
+  /* ── Shadows ── */
+  --shadow:    0 8px 32px rgba(0,0,0,0.4);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+
+  /* ── Shape ── */
+  --radius:    12px;
+  --radius-sm: 6px;
+
+  /* ── Alias variables (for backward-compat with Spring Cloud.html) ── */
+  --bg:          var(--bg-primary);
+  --surface:     var(--bg-secondary);
+  --surface2:    var(--bg-card);
+  --surface3:    var(--bg-tertiary);
+  --text:        var(--text-primary);
+  --primary:     var(--accent-blue);
+  --primary-dim: #1f6feb;
+  --green:       var(--accent-green);
+  --yellow:      var(--accent-orange);
+  --red:         var(--accent-red);
+  --purple:      var(--accent-purple);
+  --cyan:        var(--accent-cyan);
+  --orange:      #fb8500;
+  --text-dim:    var(--text-muted);
+  --code-bg:     #010409;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   2. RESET & BASE
+   ══════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* ══════════════════════════════════════════════════════
+   3. SCROLLBAR
+   ══════════════════════════════════════════════════════ */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+
+
+/* ══════════════════════════════════════════════════════
+   4. HAMBURGER TOGGLE BUTTON
+   ══════════════════════════════════════════════════════ */
+#hamburger {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+#hamburger:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-blue);
+}
+
+#hamburger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* Animate to X when collapsed */
+body.sidebar-collapsed #hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+body.sidebar-collapsed #hamburger span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+body.sidebar-collapsed #hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+
+/* ══════════════════════════════════════════════════════
+   5. SIDEBAR
+   ══════════════════════════════════════════════════════ */
+#sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 150;
+  padding: 20px 0;
+  transition: transform 0.3s ease;
+}
+
+#sidebar::-webkit-scrollbar       { width: 4px; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+body.sidebar-collapsed #sidebar { transform: translateX(-280px); }
+
+/* Mobile overlay */
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 140;
+}
+body.sidebar-open #sidebar-overlay { display: block; }
+
+/* Sidebar header — Security.html uses #sidebar .logo, Spring Cloud uses .sidebar-header */
+#sidebar .logo,
+.sidebar-header {
+  padding: 14px 20px 20px 56px; /* 56px clears the hamburger button */
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+#sidebar .logo h2,
+.sidebar-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+#sidebar .logo p,
+.sidebar-header p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Nav links */
+#sidebar nav a,
+.toc-link {
+  display: block;
+  padding: 6px 20px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 12.5px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#sidebar nav a:hover,
+.toc-link:hover,
+.toc-link.active {
+  color: var(--accent-blue);
+  background: rgba(88,166,255,0.05);
+  border-left-color: var(--accent-blue);
+}
+
+/* Sidebar logo icon (new page style — Java Core, JPA, Spring Boot) */
+.sidebar-logo {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.sidebar-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+/* Make sidebar-header flex so logo + text sit side by side */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sidebar toc grouping (new page style) */
+.toc-section {
+  margin-bottom: 4px;
+}
+
+/* Section label dividers inside the sidebar */
+#sidebar nav .section-label,
+.toc-section-title,
+.toc-label,
+.sidebar-section-label {
+  padding: 12px 20px 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+/* Number prefix used in toc links (Spring Cloud style) */
+.toc-num {
+  display: inline-block;
+  width: 20px;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   6. MAIN CONTENT AREA
+   ══════════════════════════════════════════════════════ */
+#main {
+  margin-left: 280px;
+  /* Dynamically centers content in available space */
+  padding: 40px max(60px, calc((100vw - 280px - 860px) / 2));
+  transition: margin-left 0.3s ease, padding 0.3s ease;
+}
+
+body.sidebar-collapsed #main {
+  margin-left: 0;
+  padding: 40px max(72px, calc((100vw - 860px) / 2));
+}
+
+/* Progress bar (scroll indicator) */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 280px;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+  z-index: 200;
+  transition: left 0.3s ease;
+}
+body.sidebar-collapsed .progress-bar { left: 0; }
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  width: 0%;
+  transition: width 0.1s;
+}
+
+/* Back-to-top button */
+.top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  background: #1f6feb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.top-btn:hover { opacity: 1; }
+
+
+/* ══════════════════════════════════════════════════════
+   7. HERO SECTION
+   ══════════════════════════════════════════════════════ */
+/*
+ * Override the .hero background gradient in your page's <style> block
+ * to give each topic its own colour. Example:
+ *   .hero { background: linear-gradient(135deg, #0d1117 0%, #161b22 40%, #1a237e22 100%); }
+ */
+.hero {
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a237e22 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 60px 48px;
+  margin-bottom: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(88,166,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(88,166,255,0.1);
+  border: 1px solid rgba(88,166,255,0.3);
+  color: var(--accent-blue);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: 42px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 50%, #bc8cff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.hero p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.8;
+}
+
+.hero .stats   { display: flex; gap: 32px; margin-top: 32px; flex-wrap: wrap; }
+.hero .stat    { text-align: left; }
+.hero .stat .num   { font-size: 28px; font-weight: 700; color: var(--accent-blue); }
+.hero .stat .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Hero badges row (Spring Cloud style) */
+.hero-badges {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   8. PART HEADER  (e.g., "Part 1: Core Concepts")
+   ══════════════════════════════════════════════════════ */
+.part-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 64px 0 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.part-header .part-number {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.part-header h2     { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+.part-header p      { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+
+/* ══════════════════════════════════════════════════════
+   9. SECTION & HEADINGS
+   ══════════════════════════════════════════════════════ */
+.section { margin-bottom: 56px; scroll-margin-top: 24px; }
+
+.section h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section h3 .anchor {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  margin: 24px 0 12px;
+}
+
+.section h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-orange);
+  margin: 20px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section p  { color: var(--text-secondary); margin-bottom: 12px; line-height: 1.8; }
+
+/* Spring Cloud section header style */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #1f6feb, var(--accent-blue));
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+h2.section-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+
+h3.sub-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  margin: 28px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+h3.sub-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 18px;
+  background: var(--accent-blue);
+  border-radius: 2px;
+}
+
+h4 { font-size: 15px; font-weight: 700; color: var(--accent-cyan); margin: 20px 0 8px; }
+p  { margin-bottom: 12px; color: var(--text-primary); }
+
+hr.section-hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+
+/* ══════════════════════════════════════════════════════
+   10. CARDS
+   ══════════════════════════════════════════════════════ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card h4 { margin-top: 0; }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Small card variants */
+.card-mini,
+.card-sm {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.card-mini h4  { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.card-mini p   { font-size: 12px; margin-bottom: 0; }
+
+.card-title    { font-size: 14px; font-weight: 700; color: var(--accent-blue); margin-bottom: 8px; }
+.card-icon     { font-size: 22px; margin-bottom: 8px; }
+
+
+/* ══════════════════════════════════════════════════════
+   11. CALLOUTS
+   ══════════════════════════════════════════════════════
+   Usage:
+     <div class="callout info">
+       <div class="icon">💡</div>
+       <div class="body"><strong>Title</strong><p>Text</p></div>
+     </div>
+   Types: info | warn | danger | success | purple
+   ══════════════════════════════════════════════════════ */
+.callout {
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 20px 0;
+  border-left: 3px solid;
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.callout .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.callout .body { flex: 1; }
+.callout .body strong,
+.callout .callout-title {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.callout .body p { font-size: 13px; margin: 0; }
+
+.callout.info,
+.callout-info    { background: rgba(88,166,255,0.08);  border-color: var(--accent-blue); }
+.callout.info .body strong,
+.callout-info .callout-title { color: var(--accent-blue); }
+
+.callout.warn,
+.callout-warn    { background: rgba(210,153,34,0.08);  border-color: var(--accent-orange); }
+.callout.warn .body strong,
+.callout-warn .callout-title { color: var(--accent-orange); }
+
+.callout.danger,
+.callout-danger  { background: rgba(248,81,73,0.08);   border-color: var(--accent-red); }
+.callout.danger .body strong,
+.callout-danger .callout-title { color: var(--accent-red); }
+
+.callout.success,
+.callout-success { background: rgba(63,185,80,0.08);   border-color: var(--accent-green); }
+.callout.success .body strong,
+.callout-success .callout-title { color: var(--accent-green); }
+
+.callout.purple,
+.callout-purple  { background: rgba(188,140,255,0.08); border-color: var(--accent-purple); }
+.callout.purple .body strong,
+.callout-purple .callout-title { color: var(--accent-purple); }
+
+
+/* ══════════════════════════════════════════════════════
+   12. CODE BLOCKS
+   ══════════════════════════════════════════════════════
+   Usage:
+     <div class="code-block">
+       <div class="code-header">
+         <span class="code-lang">Java</span>
+         <span class="code-title">Optional title</span>
+       </div>
+       <pre><code>...your code...</code></pre>
+     </div>
+   ══════════════════════════════════════════════════════ */
+.code-block {
+  background: #010409;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 16px 0;
+  overflow: hidden;
+}
+
+.code-block .code-header {
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.code-block .code-lang {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.code-block .code-title { font-size: 12px; color: var(--text-secondary); }
+
+.code-block pre {
+  padding: 20px;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+.code-block code { font-family: inherit; color: var(--text-primary); }
+
+/* Bare pre/code (outside .code-block — new section fallback) */
+pre {
+  background: #010409;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  color: var(--text-primary);
+  margin: 16px 0;
+}
+
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* Inline code (not inside <pre>) */
+:not(pre) > code {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent-blue);
+  font-size: 12.5px;
+}
+
+/* Inline code inside table cells and paragraphs */
+td code, p code, li code {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent-blue);
+  border: 1px solid var(--border);
+}
+
+
+/* ══════════════════════════════════════════════════════
+   13. SYNTAX HIGHLIGHTING SPANS
+   ══════════════════════════════════════════════════════
+   Apply with <span class="kw">public</span> etc.
+   ══════════════════════════════════════════════════════ */
+.kw    { color: #ff7b72; }           /* keywords: public, class, if, return */
+.kw2   { color: #f778ba; }           /* annotations: @Bean, @Service */
+.type  { color: #79c0ff; }           /* types: String, List, HttpSecurity */
+.str   { color: #a5d6ff; }           /* string literals */
+.num   { color: #79c0ff; }           /* number literals */
+.cmt   { color: #8b949e; font-style: italic; } /* comments */
+.fn    { color: #d2a8ff; }           /* method/function names */
+.const { color: #e3b341; }           /* constants, static finals */
+.tag   { color: #7ee787; }           /* XML/HTML tags */
+
+/* Spring Cloud syntax class aliases */
+.keyword    { color: #ff7b72; }
+.string     { color: #a5d6ff; }
+.comment    { color: #8b949e; font-style: italic; }
+.annotation { color: #d2a8ff; }
+.number     { color: #79c0ff; }
+.prop       { color: #7ce38b; }
+
+
+/* ══════════════════════════════════════════════════════
+   14. TABLES
+   ══════════════════════════════════════════════════════
+   Usage:
+     <div class="table-wrapper">
+       <table>
+         <thead><tr><th>Col1</th><th>Col2</th></tr></thead>
+         <tbody>
+           <tr><td>...</td><td>...</td></tr>
+         </tbody>
+       </table>
+     </div>
+   ══════════════════════════════════════════════════════ */
+.table-wrapper,
+.table-wrap {
+  overflow-x: auto;
+  margin: 16px 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+table             { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr          { background: var(--bg-tertiary); }
+th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td      { background: rgba(88,166,255,0.03); }
+tr:nth-child(even)     { background: rgba(255,255,255,0.015); }
+
+/* Diff highlight helpers (use inside td) */
+.diff-good    { color: var(--accent-green); font-weight: 600; }
+.diff-bad     { color: var(--accent-red);   font-weight: 600; }
+.diff-neutral { color: var(--accent-orange); font-weight: 600; }
+
+
+/* ══════════════════════════════════════════════════════
+   15. Q&A BLOCKS
+   ══════════════════════════════════════════════════════
+   Usage (card style — default):
+     <div class="qa-container">
+       <div class="qa-item">
+         <div class="qa-q">Question text?</div>
+         <div class="qa-a">Answer text...</div>
+       </div>
+     </div>
+   ══════════════════════════════════════════════════════ */
+.qa-container { margin: 20px 0; }
+
+.qa-item { margin-bottom: 32px; }
+
+/* Question — styled like h4 */
+.qa-q {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  margin: 0 0 12px 0;
+  background: none;
+  border: none;
+}
+
+/* Answer — card style */
+.qa-a {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.qa-a strong { color: var(--text-primary); }
+.qa-a table  { margin: 12px 0; width: 100%; }
+.qa-a pre    { margin: 12px 0; }
+
+
+/* ══════════════════════════════════════════════════════
+   16. PILL BADGES
+   ══════════════════════════════════════════════════════
+   Usage: <span class="pill pill-green">Recommended</span>
+   Colours: pill-green | pill-blue | pill-orange | pill-red | pill-purple
+   ══════════════════════════════════════════════════════ */
+.pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.pill-blue   { background: rgba(88,166,255,0.15);  color: var(--accent-blue); }
+.pill-green  { background: rgba(63,185,80,0.15);   color: var(--accent-green); }
+.pill-orange { background: rgba(210,153,34,0.15);  color: var(--accent-orange); }
+.pill-red    { background: rgba(248,81,73,0.15);   color: var(--accent-red); }
+.pill-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+.pill-cyan   { background: rgba(57,213,211,0.15);  color: var(--accent-cyan); }
+.pill-yellow { background: rgba(227,179,65,0.15);  color: var(--accent-yellow); }
+
+
+/* ══════════════════════════════════════════════════════
+   17. TAG CHIPS  (smaller than pills, used as labels)
+   ══════════════════════════════════════════════════════
+   Usage: <span class="tag tag-blue">Spring Boot</span>
+   ══════════════════════════════════════════════════════ */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin: 2px;
+}
+
+.tag-blue   { background: rgba(88,166,255,0.15);  color: var(--accent-blue); }
+.tag-green  { background: rgba(63,185,80,0.15);   color: var(--accent-green); }
+.tag-red    { background: rgba(248,81,73,0.15);   color: var(--accent-red); }
+.tag-yellow { background: rgba(210,153,34,0.15);  color: var(--accent-orange); }
+.tag-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+.tag-orange { background: rgba(251,133,0,0.15);   color: var(--orange); }
+.tag-cyan   { background: rgba(57,213,211,0.15);  color: var(--accent-cyan); }
+
+/* Circular badge (used in hero stats etc.) */
+.badge-blue   { background: rgba(88,166,255,0.15);  color: var(--accent-blue);   border: 1px solid rgba(88,166,255,0.3); }
+.badge-green  { background: rgba(63,185,80,0.15);   color: var(--accent-green);  border: 1px solid rgba(63,185,80,0.3); }
+.badge-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); border: 1px solid rgba(188,140,255,0.3); }
+.badge-orange { background: rgba(251,133,0,0.15);   color: var(--orange);         border: 1px solid rgba(251,133,0,0.3); }
+
+.badge, .topic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.topic-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin: 4px;
+}
+
+.topic-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   18. LISTS
+   ══════════════════════════════════════════════════════ */
+ul, ol        { padding-left: 20px; margin-bottom: 12px; }
+li            { color: var(--text-secondary); margin-bottom: 6px; font-size: 14px; line-height: 1.7; }
+li strong     { color: var(--text-primary); }
+li::marker    { color: var(--accent-blue); }
+
+li code {
+  background: var(--bg-tertiary);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--accent-blue);
+}
+
+/* Checklist */
+.checklist { list-style: none; padding: 0; }
+.checklist li {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+.checklist li::before { content: '☐'; font-size: 16px; color: var(--text-muted); flex-shrink: 0; }
+
+
+/* ══════════════════════════════════════════════════════
+   19. DIAGRAMS  (ASCII / text-art)
+   ══════════════════════════════════════════════════════
+   Usage:
+     <div class="diagram">
+       <span class="d-blue">[ Client ]</span> ──► <span class="d-green">[ Service ]</span>
+     </div>
+   ══════════════════════════════════════════════════════ */
+.diagram {
+  background: #010409;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-x: auto;
+  color: var(--text-secondary);
+  margin: 16px 0;
+  white-space: pre;
+}
+
+.d-blue   { color: var(--accent-blue); }
+.d-green  { color: var(--accent-green); }
+.d-orange { color: var(--accent-orange); }
+.d-red    { color: var(--accent-red); }
+.d-purple { color: var(--accent-purple); }
+.d-yellow { color: var(--accent-yellow); }
+.d-cyan   { color: var(--accent-cyan); }
+
+/* Architecture diagram (Spring Cloud style) */
+.arch-diagram {
+  background: #010409;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin: 20px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.arch-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.arch-arrow-v { text-align: center; color: var(--text-muted); font-size: 20px; margin: 4px 0; }
+
+.diagram-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* D-box: coloured boxes inside arch diagrams */
+.d-box {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.d-client   { background: rgba(188,140,255,0.2); color: var(--accent-purple); border: 1px solid rgba(188,140,255,0.3); }
+.d-gateway  { background: rgba(88,166,255,0.2);  color: var(--accent-blue);   border: 1px solid rgba(88,166,255,0.3); }
+.d-service  { background: rgba(63,185,80,0.2);   color: var(--accent-green);  border: 1px solid rgba(63,185,80,0.3); }
+.d-db       { background: rgba(210,153,34,0.2);  color: var(--accent-orange); border: 1px solid rgba(210,153,34,0.3); }
+.d-mq       { background: rgba(251,133,0,0.2);   color: var(--orange);         border: 1px solid rgba(251,133,0,0.3); }
+.d-eureka   { background: rgba(57,213,211,0.2);  color: var(--accent-cyan);   border: 1px solid rgba(57,213,211,0.3); }
+.d-config   { background: rgba(248,81,73,0.2);   color: var(--accent-red);    border: 1px solid rgba(248,81,73,0.3); }
+
+/* Flow diagram (inline) */
+.flow-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: #010409;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 16px 0;
+}
+
+.arrow { color: var(--text-muted); font-size: 18px; }
+
+
+/* ══════════════════════════════════════════════════════
+   20. TIMELINE
+   ══════════════════════════════════════════════════════
+   Usage:
+     <div class="timeline">
+       <div class="timeline-item">
+         <div class="ti-title">Step name</div>
+         <div class="ti-body">Description text</div>
+       </div>
+     </div>
+   ══════════════════════════════════════════════════════ */
+.timeline { position: relative; padding-left: 32px; margin: 16px 0; }
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: 18px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  border: 2px solid var(--bg-primary);
+}
+
+.timeline-item .ti-title,
+.timeline-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+
+.timeline-item .ti-body,
+.timeline-desc  { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+
+/* ══════════════════════════════════════════════════════
+   21. STEP INDICATORS
+   ══════════════════════════════════════════════════════
+   Usage:
+     <div class="steps">
+       <div class="step">
+         <div class="step-num">1</div>
+         <div class="step-body">
+           <div class="step-title">Title</div>
+           <div class="step-desc">Description</div>
+         </div>
+       </div>
+     </div>
+   ══════════════════════════════════════════════════════ */
+.steps { margin: 16px 0; }
+
+.step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.step-body .step-title,
+.step-content h4 { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.step-body .step-desc,
+.step-content p  { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+
+
+/* ══════════════════════════════════════════════════════
+   22. GRADIENT BANNERS
+   ══════════════════════════════════════════════════════
+   Usage: <div class="banner banner-blue"><h4>...</h4><p>...</p></div>
+   Colours: banner-blue | banner-green | banner-purple | banner-red | banner-orange
+   ══════════════════════════════════════════════════════ */
+.banner {
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin: 24px 0;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.banner::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  width: 150px;
+  height: 150px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.banner h4 { font-size: 16px; margin-bottom: 8px; color: white; }
+.banner p  { font-size: 13px; opacity: 0.85; margin: 0; color: rgba(255,255,255,0.85); }
+
+.banner-blue   { background: var(--gradient-blue); }
+.banner-green  { background: var(--gradient-green); }
+.banner-purple { background: var(--gradient-purple); }
+.banner-red    { background: var(--gradient-red); }
+.banner-orange { background: var(--gradient-orange); }
+
+
+/* ══════════════════════════════════════════════════════
+   23. COMPARISON GRID
+   ══════════════════════════════════════════════════════
+   Usage:
+     <div class="compare">
+       <div class="compare-card"><h4>Option A</h4><ul>...</ul></div>
+       <div class="compare-card"><h4>Option B</h4><ul>...</ul></div>
+     </div>
+   ══════════════════════════════════════════════════════ */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.compare-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.compare-card h4 { font-size: 13px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.compare-card ul { padding-left: 16px; }
+.compare-card li { font-size: 12px; margin-bottom: 4px; }
+
+
+/* ══════════════════════════════════════════════════════
+   24. STATE MACHINE  (circuit breaker states etc.)
+   ══════════════════════════════════════════════════════ */
+.state-machine {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.state-box    { padding: 16px; border-radius: 8px; text-align: center; border: 2px solid; }
+.state-closed { background: rgba(63,185,80,0.1);  border-color: var(--accent-green); }
+.state-open   { background: rgba(248,81,73,0.1);  border-color: var(--accent-red); }
+.state-half   { background: rgba(210,153,34,0.1); border-color: var(--accent-orange); }
+
+.state-name               { font-weight: 800; font-size: 16px; margin-bottom: 8px; }
+.state-closed .state-name { color: var(--accent-green); }
+.state-open   .state-name { color: var(--accent-red); }
+.state-half   .state-name { color: var(--accent-orange); }
+.state-desc               { font-size: 12px; color: var(--text-secondary); }
+
+
+/* ══════════════════════════════════════════════════════
+   25. HIGHLIGHT GRID  (stat cards)
+   ══════════════════════════════════════════════════════ */
+.highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.highlight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.highlight-num {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.highlight-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+
+/* ══════════════════════════════════════════════════════
+   26. SPECIAL ELEMENTS
+   ══════════════════════════════════════════════════════ */
+
+/* Key point callout (green accent) */
+.key-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(63,185,80,0.05);
+  border: 1px solid rgba(63,185,80,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin: 12px 0;
+}
+
+.key-point .kp-icon { color: var(--accent-green); font-size: 16px; flex-shrink: 0; }
+.key-point p        { font-size: 13px; margin: 0; color: var(--text-secondary); }
+.key-point strong   { color: var(--text-primary); }
+
+/* Crypto visual demo box */
+.crypto-visual {
+  background: #010409;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin: 16px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.hash-demo {
+  display: grid;
+  grid-template-columns: auto 40px auto;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.hash-input  { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--accent-green); }
+.hash-output { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--accent-orange); word-break: break-all; font-size: 10px; }
+.arrow-sym   { color: var(--accent-blue); font-size: 18px; text-align: center; }
+.flow-arrow  { color: var(--accent-blue); font-size: 20px; text-align: center; margin: 8px 0; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+/* Page footer (alternate used by some pages) */
+.page-footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.page-footer strong { color: var(--accent-blue); }
+
+/* ══════════════════════════════════════════════════════
+   28. TOP NAV BAR (.topnav)
+   ══════════════════════════════════════════════════════ */
+.topnav {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topnav-left  { display: flex; align-items: center; gap: 12px; }
+.nav-series   { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+.nav-title    { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.nav-divider  { color: var(--border); }
+.nav-badge    {
+  background: linear-gradient(90deg, var(--accent-blue), #0ea5e9);
+  color: #fff; font-size: 11px; font-weight: 700;
+  padding: 3px 12px; border-radius: 20px;
+}
+
+/* ══════════════════════════════════════════════════════
+   29. TOC GRID (horizontal section navigator)
+   ══════════════════════════════════════════════════════ */
+.toc {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 48px;
+}
+.toc-title {
+  font-size: 13px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;
+}
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+.toc-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 8px;
+  background: rgba(255,255,255,0.03); border: 1px solid transparent;
+  text-decoration: none; color: var(--text-muted); font-size: 13px; font-weight: 500;
+  transition: all 0.15s;
+}
+.toc-item:hover { border-color: var(--accent-blue); color: var(--text-primary); background: rgba(88,166,255,0.08); }
+.toc-num {
+  width: 24px; height: 24px; border-radius: 6px; background: var(--border);
+  color: var(--text-muted); font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════
+   30. SECTION HEADER (.section-header, .section-icon)
+   ══════════════════════════════════════════════════════ */
+.section        { margin-bottom: 60px; }
+.section-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 28px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.section-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex-shrink: 0;
+}
+.ic-green  { background: rgba(52,211,153,0.15); }
+.ic-blue   { background: rgba(88,166,255,0.15); }
+.ic-purple { background: rgba(163,113,247,0.15); }
+.ic-red    { background: rgba(255,107,107,0.15); }
+.ic-yellow { background: rgba(255,210,77,0.15); }
+.ic-cyan   { background: rgba(78,205,196,0.15); }
+.ic-pink   { background: rgba(236,72,153,0.15); }
+.ic-orange { background: rgba(255,140,0,0.15); }
+
+.section-meta  { flex: 1; }
+.section-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+.section-title { font-size: 26px; font-weight: 800; color: var(--text-primary); }
+.section-sub   { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
+/* ══════════════════════════════════════════════════════
+   31. CONTENT CARD (.content-card)
+   ══════════════════════════════════════════════════════ */
+.content-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.content-card h3 {
+  font-size: 17px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.content-card h4 { font-size: 14px; font-weight: 700; color: var(--accent-blue); margin: 16px 0 8px; }
+.content-card p  { color: var(--text-muted); font-size: 14px; margin-bottom: 10px; }
+.content-card p:last-child { margin-bottom: 0; }
+
+/* ══════════════════════════════════════════════════════
+   32. CODE WRAP (.code-wrap, .code-header)
+   ══════════════════════════════════════════════════════ */
+.code-wrap {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.code-header {
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.code-lang  { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.code-label { font-size: 11px; color: var(--text-muted); }
+
+/* ══════════════════════════════════════════════════════
+   33. INFO BOX / BOX CALLOUT VARIANTS
+   ══════════════════════════════════════════════════════ */
+/* .info-box (used in Collection Framework, OOPs) */
+.info-box {
+  border-radius: 12px; padding: 16px 20px; margin: 16px 0;
+  display: flex; gap: 12px; align-items: flex-start; font-size: 14px;
+}
+.info-box .ib-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.info-box.tip    { background: rgba(52,211,153,0.08);  border: 1px solid rgba(52,211,153,0.25);  color: #6ee7b7; }
+.info-box.warn   { background: rgba(255,210,77,0.08);  border: 1px solid rgba(255,210,77,0.25);  color: #fde68a; }
+.info-box.note   { background: rgba(163,113,247,0.08); border: 1px solid rgba(163,113,247,0.25); color: #c4b5fd; }
+.info-box.danger { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.25); color: #fca5a5; }
+
+/* .box variants (used in SOLID, Exception Handling, Optional) */
+.box {
+  border-radius: 12px; padding: 16px 20px; margin: 14px 0;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.box-icon { font-size: 18px; flex-shrink: 0; }
+.box-tip    { background: rgba(52,211,153,0.06);  border: 1px solid rgba(52,211,153,0.2);  color: #86efca; }
+.box-warn   { background: rgba(251,191,36,0.06);  border: 1px solid rgba(251,191,36,0.2);  color: #fde68a; }
+.box-info   { background: rgba(96,165,250,0.06);  border: 1px solid rgba(96,165,250,0.2);  color: #93c5fd; }
+.box-red    { background: rgba(255,107,107,0.06); border: 1px solid rgba(255,107,107,0.2); color: #fca5a5; }
+.box-green  { background: rgba(52,211,153,0.06);  border: 1px solid rgba(52,211,153,0.2);  color: #6ee7b7; }
+.box-yellow { background: rgba(251,191,36,0.06);  border: 1px solid rgba(251,191,36,0.2);  color: #fde68a; }
+.box-purple { background: rgba(163,113,247,0.06); border: 1px solid rgba(163,113,247,0.2); color: #c4b5fd; }
+.box-interview { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); color: #fde68a; }
+
+/* ══════════════════════════════════════════════════════
+   34. COMPARISON TABLE (.comp-table)
+   ══════════════════════════════════════════════════════ */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+.comp-table th {
+  background: var(--bg-secondary); color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1px; font-size: 11px;
+  padding: 12px 16px; text-align: left; border-bottom: 2px solid var(--border);
+}
+.comp-table td {
+  padding: 11px 16px; border-bottom: 1px solid rgba(46,54,80,0.5);
+  color: var(--text-primary); vertical-align: top;
+}
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: rgba(255,255,255,0.02); }
+.comp-table td:first-child { color: var(--accent-blue); font-weight: 600; }
+
+/* ══════════════════════════════════════════════════════
+   35. OUTPUT BOX (.output-box)
+   ══════════════════════════════════════════════════════ */
+.output-box {
+  background: #0a0c14;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 12px 0;
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px;
+}
+.output-label { font-size: 10px; font-weight: 700; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.output-line  { color: var(--accent-blue); margin: 2px 0; }
+.output-line.gray { color: var(--text-muted); }
+
+/* ══════════════════════════════════════════════════════
+   36. INTERVIEW Q&A (.iq-card, .iq-item)
+   ══════════════════════════════════════════════════════ */
+.iq-title {
+  font-size: 13px; font-weight: 700; color: var(--accent-yellow);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  margin: 28px 0 14px; display: flex; align-items: center; gap: 8px;
+}
+/* Variant A: .iq-card (used in Collection Framework, JVM, etc.) */
+.iq-card {
+  background: rgba(255,210,77,0.05);
+  border: 1px solid rgba(255,210,77,0.2);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 12px;
+}
+.iq-q {
+  font-size: 14px; font-weight: 600; color: var(--accent-yellow);
+  margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start;
+}
+.iq-q-num {
+  background: rgba(255,210,77,0.15); border-radius: 6px;
+  padding: 1px 7px; font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 2px;
+}
+.iq-a { font-size: 13px; color: var(--text-muted); padding-left: 26px; }
+/* Variant B: .iq-list/.iq-item (used in SOLID, Exception Handling) */
+.iq-list { display: flex; flex-direction: column; gap: 10px; }
+.iq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════
+   37. KEY LIST (.key-list)
+   ══════════════════════════════════════════════════════ */
+.key-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.key-list li {
+  display: flex; align-items: flex-start; gap: 10px; font-size: 14px;
+  color: var(--text-muted); padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px; border-left: 3px solid var(--accent-blue);
+}
+.key-list li.purple { border-left-color: var(--accent-purple); }
+.key-list li.red    { border-left-color: var(--accent-red); }
+.key-list li.yellow { border-left-color: var(--accent-yellow); }
+.key-list li.pink   { border-left-color: #ec4899; }
+.key-list li strong { color: var(--text-primary); }
+
+/* ══════════════════════════════════════════════════════
+   38. DIVIDER
+   ══════════════════════════════════════════════════════ */
+.divider { height: 1px; background: var(--border); margin: 40px 0; }
+
+/* ══════════════════════════════════════════════════════
+   39. HIERARCHY TREE (.hierarchy)
+   ══════════════════════════════════════════════════════ */
+.hierarchy {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 24px; margin: 16px 0;
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px; line-height: 2;
+}
+.h-root  { color: var(--accent-yellow); font-weight: 700; }
+.h-int   { color: #82aaff; }
+.h-class { color: var(--accent-blue); }
+.h-abs   { color: #ec4899; font-style: italic; }
+.h-note  { color: var(--text-muted); font-size: 11px; }
+
+
+/* ══════════════════════════════════════════════════════
+   27. RESPONSIVE
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  #sidebar { width: 240px; }
+  #main    { margin-left: 240px; padding: 32px 32px; }
+}
+
+@media (max-width: 768px) {
+  #sidebar                          { transform: translateX(-280px); }
+  body.sidebar-open #sidebar        { transform: translateX(0); }
+  #main                             { margin-left: 0 !important; padding: 60px 20px 40px; }
+  .hero h1                          { font-size: 28px; }
+  .compare, .state-machine          { grid-template-columns: 1fr; }
+  .progress-bar                     { left: 0; }
+}

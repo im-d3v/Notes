@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Part 10 — Design Patterns | Java Interview Notes</title>
+<link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+
+:root{
+  --bg:#0d1117;
+  --surface:#161b22;
+  --card:#1c2333;
+  --card2:#21262d;
+  --border:#30363d;
+  --accent:#ec4899;
+  --accent2:#f9a8d4;
+  --blue:#58a6ff;
+  --green:#3fb950;
+  --yellow:#d29922;
+  --orange:#f0883e;
+  --purple:#bc8cff;
+  --cyan:#39d353;
+  --red:#f85149;
+  --text:#e6edf3;
+  --muted:#8b949e;
+  --code-bg:#161b22;
+}
+
+html{scroll-behavior:smooth}
+
+/* ══════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════ */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+
+/* ══════════════════════════════════════
+   TOP NAV
+══════════════════════════════════════ */
+.top-nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(13,17,23,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;gap:12px;
+  height:52px;
+}
+.nav-part{
+  font-size:11px;font-weight:700;
+  color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;
+}
+.nav-links{
+  margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;
+}
+.nav-link{
+  font-size:11px;padding:4px 10px;border-radius:6px;
+  background:var(--card);border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;text-decoration:none;
+  transition:all .15s;white-space:nowrap;
+}
+.nav-link:hover{background:var(--card2);color:var(--text);border-color:#484f58}
+
+/* ══════════════════════════════════════
+   HERO HEADER
+══════════════════════════════════════ */
+.hero{
+  background:linear-gradient(135deg,#161b22 0%,#0d1117 60%);
+  border-bottom:1px solid var(--border);
+  padding:52px 24px 44px;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;
+  top:-100px;left:50%;transform:translateX(-50%);
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(236,72,153,.1) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(236,72,153,.1);
+  border:1px solid rgba(236,72,153,.3);
+  color:var(--accent2);
+  font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  padding:6px 16px;border-radius:20px;margin-bottom:20px;
+}
+.hero-sub{
+  color:var(--muted);font-size:15px;max-width:640px;margin:0 auto 28px;
+}
+.hero-chips{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+}
+.chip{
+  font-size:12px;padding:5px 14px;border-radius:20px;
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+}
+.chip-pink{background:rgba(236,72,153,.1);border-color:rgba(236,72,153,.3);color:var(--accent2)}
+.chip-blue{background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.3);color:var(--blue)}
+.chip-green{background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.3);color:var(--green)}
+.chip-purple{background:rgba(188,140,255,.1);border-color:rgba(188,140,255,.3);color:var(--purple)}
+.chip-orange{background:rgba(240,136,62,.1);border-color:rgba(240,136,62,.3);color:var(--orange)}
+
+/* ══════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════ */
+.layout{
+  max-width:1400px;margin:0 auto;
+}
+
+/* ══════════════════════════════════════
+   SECTION
+══════════════════════════════════════ */
+.section{
+  padding-top:48px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:48px;
+}
+.section:last-child{border-bottom:none}
+
+.icon-pink{background:rgba(236,72,153,.15);border:1px solid rgba(236,72,153,.2)}
+.icon-blue{background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.2)}
+.icon-green{background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.2)}
+.icon-purple{background:rgba(188,140,255,.15);border:1px solid rgba(188,140,255,.2)}
+.icon-orange{background:rgba(240,136,62,.15);border:1px solid rgba(240,136,62,.2)}
+.icon-cyan{background:rgba(57,211,83,.15);border:1px solid rgba(57,211,83,.2)}
+.icon-yellow{background:rgba(210,153,34,.15);border:1px solid rgba(210,153,34,.2)}
+.icon-red{background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.2)}
+
+.section-label{
+  font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;
+}
+.section-title{
+  font-size:clamp(20px,3vw,26px);font-weight:800;color:var(--text);
+  margin-bottom:6px;line-height:1.3;
+}
+.section-desc{font-size:13px;color:var(--muted)}
+
+/* ══════════════════════════════════════
+   CARDS
+══════════════════════════════════════ */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:20px 24px;margin-bottom:16px;
+}
+.card-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px;margin-bottom:20px;
+}
+.info-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:18px 20px;
+  border-left:3px solid var(--accent);
+}
+.info-card-title{
+  font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.info-card p,.info-card li{font-size:13px;color:var(--muted);line-height:1.6}
+.info-card ul{list-style:none;display:flex;flex-direction:column;gap:4px}
+.info-card li::before{content:'▸ ';color:var(--accent)}
+
+/* border variants */
+.border-blue{border-left-color:var(--blue)}
+.border-green{border-left-color:var(--green)}
+.border-purple{border-left-color:var(--purple)}
+.border-orange{border-left-color:var(--orange)}
+.border-red{border-left-color:var(--red)}
+.border-yellow{border-left-color:var(--yellow)}
+.border-cyan{border-left-color:var(--cyan)}
+
+/* ══════════════════════════════════════
+   CODE BLOCKS
+══════════════════════════════════════ */
+.code-block{
+  background:#010409;
+  border:1px solid var(--border);
+  border-radius:10px;
+  margin:16px 0;
+  overflow:hidden;
+}
+.code-dots{display:flex;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%}
+.dot-r{background:#ff5f57}.dot-y{background:#febc2e}.dot-g{background:#28c840}
+.code-filename{
+  font-size:12px;color:var(--muted);font-family:'Cascadia Code','Consolas',monospace;
+  margin-left:4px;flex:1;
+}
+code{font-family:inherit}
+
+           /* keywords */
+.kw2{color:#ffa657}          /* secondary keywords */
+.cl{color:#79c0ff}                      /* functions/methods */
+.st{color:#a5d6ff}            /* comments */
+.nm{color:#f0883e}                                 /* operators */
+.ty{color:#ffa657}           /* types */
+.rt{color:#ff7b72}           /* return */
+
+/* ══════════════════════════════════════
+   INTERVIEW TIPS
+══════════════════════════════════════ */
+.interview-box{
+  background:rgba(236,72,153,.06);
+  border:1px solid rgba(236,72,153,.2);
+  border-radius:12px;padding:18px 20px;
+  margin:18px 0;
+}
+.interview-box-title{
+  font-size:13px;font-weight:700;color:var(--accent2);
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.interview-q{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:8px;padding:12px 14px;margin-bottom:10px;
+}
+.interview-q .q{font-size:13px;color:var(--text);margin-bottom:6px;font-weight:600}
+.interview-q .a{font-size:12px;color:var(--muted);line-height:1.6}
+.interview-q .a strong{color:var(--accent2)}
+
+/* ══════════════════════════════════════
+   CALLOUT BOXES
+══════════════════════════════════════ */
+.callout{
+  border-radius:10px;padding:14px 18px;margin:14px 0;
+  display:flex;align-items:flex-start;gap:12px;
+  font-size:13px;line-height:1.6;
+}
+.callout-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.callout-note{background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);color:#a5c8ff}
+.callout-warn{background:rgba(210,153,34,.07);border:1px solid rgba(210,153,34,.25);color:#e3b341}
+.callout-tip{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.2);color:#7ee787}
+.callout-danger{background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.2);color:#ffa198}
+
+/* ══════════════════════════════════════
+   COMPARISON TABLE
+══════════════════════════════════════ */
+.compare-table{
+  width:100%;border-collapse:collapse;font-size:13px;
+  margin:16px 0;border-radius:10px;overflow:hidden;
+}
+.compare-table th{
+  background:var(--card2);color:var(--muted);
+  text-transform:uppercase;font-size:11px;letter-spacing:1px;
+  padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);
+}
+.compare-table td{
+  padding:11px 14px;border-bottom:1px solid rgba(48,54,61,.5);
+  color:var(--text);vertical-align:top;
+}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table tr:hover td{background:rgba(255,255,255,.02)}
+.compare-table .highlight-row td{background:rgba(236,72,153,.05)}
+
+/* ══════════════════════════════════════
+   BADGES & TAGS
+══════════════════════════════════════ */
+.badge{
+  display:inline-block;font-size:10px;font-weight:700;
+  padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;
+}
+.badge-pink{background:rgba(236,72,153,.15);color:var(--accent2);border:1px solid rgba(236,72,153,.3)}
+.badge-blue{background:rgba(88,166,255,.12);color:var(--blue);border:1px solid rgba(88,166,255,.25)}
+.badge-green{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.25)}
+.badge-orange{background:rgba(240,136,62,.12);color:var(--orange);border:1px solid rgba(240,136,62,.25)}
+.badge-red{background:rgba(248,81,73,.12);color:var(--red);border:1px solid rgba(248,81,73,.25)}
+.badge-purple{background:rgba(188,140,255,.12);color:var(--purple);border:1px solid rgba(188,140,255,.25)}
+
+/* ══════════════════════════════════════
+   STEPS
+══════════════════════════════════════ */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{
+  display:flex;gap:16px;position:relative;padding-bottom:24px;
+}
+.step:last-child{padding-bottom:0}
+.step-left{display:flex;flex-direction:column;align-items:center}
+.step-num{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#9333ea);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.step-line{
+  width:2px;flex:1;background:var(--border);
+  margin-top:6px;
+}
+.step:last-child .step-line{display:none}
+.step-content{flex:1;padding-top:4px}
+.step-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px}
+.step-
+/* ══════════════════════════════════════
+   PROS/CONS
+══════════════════════════════════════ */
+.pros-cons{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;
+}
+.pros,.cons{
+  border-radius:10px;padding:14px 16px;
+}
+.pros{background:rgba(63,185,80,.06);border:1px solid rgba(63,185,80,.2)}
+.cons{background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.2)}
+.pros-title{font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px}
+.cons-title{font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px}
+.pros li,.cons li{
+  font-size:12px;color:var(--muted);margin-bottom:4px;list-style:none;
+}
+.pros li::before{content:'✓ ';color:var(--green);font-weight:700}
+.cons li::before{content:'✗ ';color:var(--red);font-weight:700}
+
+/* ══════════════════════════════════════
+   PATTERN OVERVIEW GRID
+══════════════════════════════════════ */
+.pattern-overview{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;margin:20px 0;
+}
+.pattern-mini{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:16px;cursor:pointer;
+  transition:all .2s;
+}
+.pattern-mini:hover{
+  border-color:var(--accent);
+  background:rgba(236,72,153,.05);
+  transform:translateY(-2px);
+}
+.pattern-mini-icon{font-size:24px;margin-bottom:8px}
+.pattern-mini-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.pattern-mini-desc{font-size:11px;color:var(--muted)}
+.pattern-mini-type{
+  font-size:10px;font-weight:700;margin-top:8px;
+  padding:2px 8px;border-radius:4px;
+  display:inline-block;
+  background:rgba(88,166,255,.1);color:var(--blue);
+}
+
+/* ══════════════════════════════════════
+   RELATIONSHIP DIAGRAM
+══════════════════════════════════════ */
+.rel-diagram{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:24px;margin:16px 0;
+  text-align:center;overflow-x:auto;
+}
+.rel-boxes{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;flex-wrap:wrap;
+}
+.rel-box{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 16px;
+  font-size:13px;font-weight:700;color:var(--text);
+}
+.rel-box.main-box{
+  background:rgba(236,72,153,.1);border-color:rgba(236,72,153,.3);
+  color:var(--accent2);
+}
+.rel-arrow{font-size:18px;color:var(--muted)}
+.rel-label{
+  font-size:11px;color:var(--muted);margin-top:4px;text-align:center;
+}
+
+.output-text{
+  font-family:'Cascadia Code','Consolas',monospace;
+  font-size:13px;color:var(--green);line-height:1.6;
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media(max-width:900px){
+  .content{padding:0 16px 60px}
+  .pros-cons{grid-template-columns:1fr}
+  .card-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .nav-links{display:none}
+  .hero{padding:36px 16px 28px}
+  pre{font-size:12px}
+}
+
+    /* ── Collapse old grid sidebar in favour of the new collapsible sidebar ── */
+
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>🏗️ Design Patterns</h2>
+      <p>Part 10 — Architecture</p>
+    </div>
+    <nav>
+      <div class="section-label">Patterns</div>
+      <a href="#overview">Overview & Types</a>
+      <a href="#singleton">Singleton Pattern</a>
+      <a href="#factory">Factory Pattern</a>
+      <a href="#strategy">Strategy Pattern</a>
+      <a href="#builder">Builder Pattern</a>
+      <a href="#decorator">Decorator Pattern</a>
+      <a href="#parking">Parking Lot Design</a>
+      <a href="#relations">Composition vs Aggregation</a>
+      <a href="#immutable">Immutable Class</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ═══════════════════════════════════════
+     TOP NAVIGATION
+════════════════════════════════════════ -->
+<nav class="top-nav">
+  <span class="nav-part">Part 10</span>
+  <span class="nav-divider">/</span>
+  <span class="nav-title">🏗️ Design Patterns</span>
+  <div class="nav-links">
+    <a class="nav-link" href="#overview">Overview</a>
+    <a class="nav-link" href="#singleton">Singleton</a>
+    <a class="nav-link" href="#factory">Factory</a>
+    <a class="nav-link" href="#strategy">Strategy</a>
+    <a class="nav-link" href="#builder">Builder</a>
+    <a class="nav-link" href="#decorator">Decorator</a>
+    <a class="nav-link" href="#parking">Parking Lot</a>
+    <a class="nav-link" href="#relations">Relations</a>
+    <a class="nav-link" href="#immutable">Immutable</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<header class="hero">
+  <div class="hero-badge">📚 Part 10 of 20 · Design Patterns</div>
+  <h1>Design Patterns in Java</h1>
+  <p class="hero-sub">
+    Creational, Structural, Behavioral patterns — from theory to production code.
+    Every pattern asked in real interviews with full implementations.
+  </p>
+  <div class="hero-chips">
+    <span class="chip chip-pink">🔒 Singleton (Eager/Lazy/DCL/Enum)</span>
+    <span class="chip chip-blue">🏭 Factory Pattern</span>
+    <span class="chip chip-green">🎯 Strategy Pattern</span>
+    <span class="chip chip-purple">🔨 Builder Pattern</span>
+    <span class="chip chip-orange">🎨 Decorator Pattern</span>
+    <span class="chip">🅿️ Parking Lot Design</span>
+    <span class="chip">🔗 Composition vs Aggregation</span>
+    <span class="chip">🔒 Immutable Class</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════
+     LAYOUT
+════════════════════════════════════════ -->
+<div class="layout">
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- ═══════════════════════════════════
+         SECTION 0 — OVERVIEW
+    ════════════════════════════════════ -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <div class="section-icon icon-pink">🗺️</div>
+        <div class="section-meta">
+          <div class="section-label">Introduction</div>
+          <div class="section-title">What are Design Patterns?</div>
+          <div class="section-desc">Reusable solutions to commonly occurring problems in software design</div>
+        </div>
+      </div>
+
+      <div class="callout callout-note">
+        <span class="callout-icon">📌</span>
+        <div>Design patterns are <strong>not code</strong> — they are <strong>templates / blueprints</strong> describing how to solve a recurring design problem. First introduced by the <strong>"Gang of Four"</strong> (GoF) in 1994 — 23 patterns across 3 categories.</div>
+      </div>
+
+      <!-- 3 Categories -->
+      <div class="card-grid" style="margin-top:20px">
+        <div class="info-card border-blue">
+          <div class="info-card-title">🏗️ Creational Patterns</div>
+          <ul>
+            <li>Deal with <strong>object creation</strong></li>
+            <li>Singleton, Factory, Abstract Factory</li>
+            <li>Builder, Prototype</li>
+          </ul>
+        </div>
+        <div class="info-card border-green">
+          <div class="info-card-title">🧱 Structural Patterns</div>
+          <ul>
+            <li>Deal with <strong>object composition</strong></li>
+            <li>Decorator, Adapter, Facade</li>
+            <li>Composite, Proxy, Bridge, Flyweight</li>
+          </ul>
+        </div>
+        <div class="info-card border-purple">
+          <div class="info-card-title">🎭 Behavioral Patterns</div>
+          <ul>
+            <li>Deal with <strong>object communication</strong></li>
+            <li>Strategy, Observer, Command</li>
+            <li>Iterator, Template Method, State</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Quick Overview Grid -->
+      <h3 style="color:var(--text);font-size:16px;margin:24px 0 14px">Patterns Covered in This Note</h3>
+      <div class="pattern-overview">
+        <div class="pattern-mini">
+          <div class="pattern-mini-icon">🔒</div>
+          <div class="pattern-mini-name">Singleton</div>
+          <div class="pattern-mini-desc">One instance only, global access</div>
+          <div class="pattern-mini-type">Creational</div>
+        </div>
+        <div class="pattern-mini">
+          <div class="pattern-mini-icon">🏭</div>
+          <div class="pattern-mini-name">Factory</div>
+          <div class="pattern-mini-desc">Create objects without specifying class</div>
+          <div class="pattern-mini-type">Creational</div>
+        </div>
+        <div class="pattern-mini">
+          <div class="pattern-mini-icon">🔨</div>
+          <div class="pattern-mini-name">Builder</div>
+          <div class="pattern-mini-desc">Construct complex objects step by step</div>
+          <div class="pattern-mini-type">Creational</div>
+        </div>
+        <div class="pattern-mini">
+          <div class="pattern-mini-icon">🎨</div>
+          <div class="pattern-mini-name">Decorator</div>
+          <div class="pattern-mini-desc">Add behavior without altering class</div>
+          <div class="pattern-mini-type">Structural</div>
+        </div>
+        <div class="pattern-mini">
+          <div class="pattern-mini-icon">🎯</div>
+          <div class="pattern-mini-name">Strategy</div>
+          <div class="pattern-mini-desc">Switch algorithms at runtime</div>
+          <div class="pattern-mini-type">Behavioral</div>
+        </div>
+      </div>
+
+      <!-- Why Learn Patterns -->
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <div>
+          <strong>Why interviewers ask design patterns?</strong><br/>
+          They test your ability to write <strong>maintainable, scalable, SOLID</strong> code.
+          If you know patterns, you can <em>recognize problems and apply proven solutions</em> immediately.
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 1 — SINGLETON
+    ════════════════════════════════════ -->
+    <section class="section" id="singleton">
+      <div class="section-header">
+        <div class="section-icon icon-pink">🔒</div>
+        <div class="section-meta">
+          <div class="section-label">Creational Pattern · Most Asked</div>
+          <div class="section-title">Singleton Pattern</div>
+          <div class="section-desc">Ensure a class has only ONE instance throughout the application</div>
+        </div>
+      </div>
+
+      <!-- What & Why -->
+      <div class="card-grid">
+        <div class="info-card">
+          <div class="info-card-title">❓ What Problem Does It Solve?</div>
+          <ul>
+            <li>Prevent multiple instances of resource-heavy objects</li>
+            <li>Provide a single global access point</li>
+            <li>Control shared state (e.g., config, DB connection)</li>
+            <li>Avoid inconsistent state across instances</li>
+          </ul>
+        </div>
+        <div class="info-card border-green">
+          <div class="info-card-title">🌍 Real-World Use Cases</div>
+          <ul>
+            <li>Database connection pool</li>
+            <li>Logger (single log instance)</li>
+            <li>Spring IoC Container itself</li>
+            <li>Configuration manager</li>
+            <li>Thread pool manager</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 1A: Eager -->
+      <h3 style="color:var(--text);font-size:17px;margin:28px 0 12px;display:flex;align-items:center;gap:10px">
+        <span class="badge badge-blue">Type 1</span> Eager Initialization
+      </h3>
+      <div class="callout callout-note">
+        <span class="callout-icon">📌</span>
+        <div>Instance is created <strong>when the class is loaded</strong> — even if it's never used. Simple but wastes memory if instance is heavy.</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">EagerSingleton.java</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">public class</span> <span class="cl">EagerSingleton</span> {
+
+    <span class="cm">// Instance created at class loading time</span>
+    <span class="kw">private static final</span> <span class="cl">EagerSingleton</span> INSTANCE
+            = <span class="kw">new</span> <span class="cl">EagerSingleton</span>();
+
+    <span class="cm">// Private constructor — prevents new EagerSingleton()</span>
+    <span class="kw">private</span> <span class="fn">EagerSingleton</span>() {
+        <span class="cm">// initialization code</span>
+    }
+
+    <span class="kw">public static</span> <span class="cl">EagerSingleton</span> <span class="fn">getInstance</span>() {
+        <span class="kw">return</span> INSTANCE;
+    }
+
+    <span class="kw">public void</span> <span class="fn">doSomething</span>() {
+        System.out.<span class="fn">println</span>(<span class="st">"Eager Singleton working!"</span>);
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="cl">EagerSingleton</span> s1 = <span class="cl">EagerSingleton</span>.<span class="fn">getInstance</span>();
+<span class="cl">EagerSingleton</span> s2 = <span class="cl">EagerSingleton</span>.<span class="fn">getInstance</span>();
+System.out.<span class="fn">println</span>(s1 == s2); <span class="cm">// true — same instance</span></code></pre>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros">
+          <div class="pros-title">✅ Pros</div>
+          <ul>
+            <li>Thread-safe by default (JVM class loading is thread-safe)</li>
+            <li>Simple to implement</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="cons-title">❌ Cons</div>
+          <ul>
+            <li>Instance created even if never used</li>
+            <li>Wastes memory for heavy objects</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 1B: Lazy -->
+      <h3 style="color:var(--text);font-size:17px;margin:28px 0 12px;display:flex;align-items:center;gap:10px">
+        <span class="badge badge-green">Type 2</span> Lazy Initialization
+      </h3>
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <div>Instance created <strong>only when first needed</strong>. But <strong>NOT thread-safe!</strong> Two threads can both pass the null check simultaneously and create two instances.</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">LazySingleton.java</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">public class</span> <span class="cl">LazySingleton</span> {
+
+    <span class="kw">private static</span> <span class="cl">LazySingleton</span> instance; <span class="cm">// null by default</span>
+
+    <span class="kw">private</span> <span class="fn">LazySingleton</span>() {}
+
+    <span class="kw">public static</span> <span class="cl">LazySingleton</span> <span class="fn">getInstance</span>() {
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) {             <span class="cm">// ⚠️ NOT thread-safe</span>
+            instance = <span class="kw">new</span> <span class="cl">LazySingleton</span>();
+        }
+        <span class="kw">return</span> instance;
+    }
+}</code></pre>
+      </div>
+
+      <!-- 1C: Synchronized (naive fix) -->
+      <h3 style="color:var(--text);font-size:17px;margin:28px 0 12px;display:flex;align-items:center;gap:10px">
+        <span class="badge badge-orange">Type 3</span> Synchronized Method (Thread-Safe but Slow)
+      </h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">SynchronizedSingleton.java</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">public class</span> <span class="cl">SynchronizedSingleton</span> {
+
+    <span class="kw">private static</span> <span class="cl">SynchronizedSingleton</span> instance;
+
+    <span class="kw">private</span> <span class="fn">SynchronizedSingleton</span>() {}
+
+    <span class="cm">// Thread-safe but synchronized on every call = SLOW</span>
+    <span class="kw">public static synchronized</span> <span class="cl">SynchronizedSingleton</span> <span class="fn">getInstance</span>() {
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) {
+            instance = <span class="kw">new</span> <span class="cl">SynchronizedSingleton</span>();
+        }
+        <span class="kw">return</span> instance;
+    }
+}</code></pre>
+      </div>
+
+      <!-- 1D: Double-Checked Locking — STAR TOPIC -->
+      <h3 style="color:var(--text);font-size:17px;margin:28px 0 12px;display:flex;align-items:center;gap:10px">
+        <span class="badge badge-pink">Type 4 ⭐</span> Double-Checked Locking (DCL) — Best Practice
+      </h3>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">🌟</span>
+        <div>
+          <strong>Most asked in interviews!</strong> DCL checks null <em>twice</em> —
+          once without lock (fast path) and once inside the synchronized block (safe path).
+          The <strong>volatile</strong> keyword is CRITICAL here.
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">DCLSingleton.java</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">public class</span> <span class="cl">DCLSingleton</span> {
+
+    <span class="cm">// volatile prevents instruction reordering</span>
+    <span class="kw">private static volatile</span> <span class="cl">DCLSingleton</span> instance;
+
+    <span class="kw">private</span> <span class="fn">DCLSingleton</span>() {
+        <span class="cm">// Prevent reflection attack</span>
+        <span class="kw">if</span> (instance != <span class="kw">null</span>) {
+            <span class="kw">throw new</span> <span class="cl">RuntimeException</span>(<span class="st">"Use getInstance()"</span>);
+        }
+    }
+
+    <span class="kw">public static</span> <span class="cl">DCLSingleton</span> <span class="fn">getInstance</span>() {
+        <span class="cm">// ✅ Check 1: No lock needed if already created (performance)</span>
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) {
+            <span class="cm">// Only one thread enters this block at a time</span>
+            <span class="kw">synchronized</span> (<span class="cl">DCLSingleton</span>.<span class="kw">class</span>) {
+                <span class="cm">// ✅ Check 2: Another thread may have created it</span>
+                <span class="kw">if</span> (instance == <span class="kw">null</span>) {
+                    instance = <span class="kw">new</span> <span class="cl">DCLSingleton</span>();
+                }
+            }
+        }
+        <span class="kw">return</span> instance;
+    }
+}</code></pre>
+      </div>
+
+      <!-- Why volatile explanation -->
+      <div class="card" style="background:rgba(88,166,255,.04);border-color:rgba(88,166,255,.2)">
+        <h4 style="color:var(--blue);font-size:14px;margin-bottom:12px">🤔 Why is <code style="color:var(--orange)">volatile</code> needed in DCL?</h4>
+        <div class="steps">
+          <div class="step">
+            <div class="step-left"><div class="step-num">1</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-title">Object Creation has 3 steps in bytecode</div>
+              <div class="step-body"><code style="color:var(--orange)">new DCLSingleton()</code> internally: (a) Allocate memory, (b) Initialize object, (c) Assign reference to variable</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-num">2</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-title">JVM/CPU can reorder instructions</div>
+              <div class="step-body">Without <code style="color:var(--orange)">volatile</code>, steps can be reordered: (a) → (c) → (b). So another thread sees a non-null but <strong>partially initialized</strong> object!</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-num">3</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-title">volatile prevents reordering</div>
+              <div class="step-body"><code style="color:var(--orange)">volatile</code> creates a memory barrier — guarantees assignment happens AFTER full initialization.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1E: Enum Singleton -->
+      <h3 style="color:var(--text);font-size:17px;margin:28px 0 12px;display:flex;align-items:center;gap:10px">
+        <span class="badge badge-purple">Type 5 ⭐</span> Enum Singleton (Joshua Bloch's Recommendation)
+      </h3>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💎</span>
+        <div><strong>Best way to implement Singleton</strong> as per Effective Java. It handles serialization, reflection, and thread safety automatically!</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">EnumSingleton.java</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">public enum</span> <span class="cl">EnumSingleton</span> {
+    INSTANCE; <span class="cm">// One and only instance</span>
+
+    <span class="kw">private int</span> counter = <span class="nm">0</span>;
+
+    <span class="kw">public void</span> <span class="fn">doSomething</span>() {
+        counter++;
+        System.out.<span class="fn">println</span>(<span class="st">"Counter: "</span> + counter);
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="cl">EnumSingleton</span>.<span class="cl">INSTANCE</span>.<span class="fn">doSomething</span>();
+<span class="cl">EnumSingleton</span>.<span class="cl">INSTANCE</span>.<span class="fn">doSomething</span>();
+<span class="cm">// Output: Counter: 1, Counter: 2 (same instance)</span></code></pre>
+      </div>
+
+      <!-- Ways to Break Singleton -->
+      <h3 style="color:var(--red);font-size:17px;margin:28px 0 12px">⚠️ 3 Ways to Break Singleton (and How to Fix)</h3>
+
+      <div class="card-grid">
+        <div class="info-card border-red">
+          <div class="info-card-title">🪞 1. Reflection Attack</div>
+          <ul>
+            <li>Access private constructor via reflection</li>
+            <li><strong>Fix:</strong> Throw exception if instance already exists in constructor</li>
+            <li>Or use <strong>Enum</strong> (Enum prevents reflection)</li>
+          </ul>
+        </div>
+        <div class="info-card border-red">
+          <div class="info-card-title">📦 2. Serialization Attack</div>
+          <ul>
+            <li>Deserializing creates a new object</li>
+            <li><strong>Fix:</strong> Implement <code>readResolve()</code> method that returns existing instance</li>
+            <li>Or use <strong>Enum</strong> (handles serialization natively)</li>
+          </ul>
+        </div>
+        <div class="info-card border-red">
+          <div class="info-card-title">🧬 3. Cloning Attack</div>
+          <ul>
+            <li>Calling <code>clone()</code> creates a new instance</li>
+            <li><strong>Fix:</strong> Override <code>clone()</code> and throw <code>CloneNotSupportedException</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">BreakingSingleton.java — How to break + fix</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="cm">// ─── REFLECTION ATTACK ───────────────────────────────</span>
+<span class="cl">Constructor</span>&lt;<span class="cl">DCLSingleton</span>&gt; constructor
+        = <span class="cl">DCLSingleton</span>.<span class="kw">class</span>.<span class="fn">getDeclaredConstructor</span>();
+constructor.<span class="fn">setAccessible</span>(<span class="kw">true</span>);
+<span class="cl">DCLSingleton</span> brokenInstance = constructor.<span class="fn">newInstance</span>();
+<span class="cm">// Creates a NEW instance — breaks singleton!</span>
+
+<span class="cm">// FIX: In constructor check if instance already exists</span>
+<span class="kw">private</span> <span class="fn">DCLSingleton</span>() {
+    <span class="kw">if</span> (instance != <span class="kw">null</span>) {
+        <span class="kw">throw new</span> <span class="cl">IllegalStateException</span>(<span class="st">"Already instantiated!"</span>);
+    }
+}
+
+<span class="cm">// ─── SERIALIZATION FIX ───────────────────────────────</span>
+<span class="kw">protected</span> <span class="cl">Object</span> <span class="fn">readResolve</span>() {
+    <span class="kw">return</span> <span class="fn">getInstance</span>(); <span class="cm">// Return existing instead of deserialized</span>
+}
+
+<span class="cm">// ─── CLONING FIX ─────────────────────────────────────</span>
+<span class="an">@Override</span>
+<span class="kw">protected</span> <span class="cl">Object</span> <span class="fn">clone</span>() <span class="kw">throws</span> <span class="cl">CloneNotSupportedException</span> {
+    <span class="kw">throw new</span> <span class="cl">CloneNotSupportedException</span>(<span class="st">"Cloning not allowed!"</span>);
+}</code></pre>
+      </div>
+
+      <!-- DCL Interview Question -->
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Frequently Asked Interview Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: What happens if I remove the first null check in DCL and keep only the synchronized block?</div>
+          <div class="a">A: It would still work correctly, but <strong>every single call</strong> to getInstance() would acquire a lock — even after the object is created. This causes <strong>unnecessary synchronization overhead</strong> and kills performance in multi-threaded applications. The outer null check is the <strong>performance optimization</strong>.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: Why is Enum the best way to implement Singleton?</div>
+          <div class="a">A: Because JVM <strong>guarantees Enum instances are unique</strong> and handles (1) thread safety, (2) serialization, (3) protection from reflection attacks — all automatically. You get a bullet-proof Singleton in 3 lines of code.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: Singleton is Eager — what problem does it solve?</div>
+          <div class="a">A: It resolves the problem of <strong>multiple inconsistent instances</strong> of resource-heavy or stateful objects (like DB connections, logger, config). Before Singleton pattern, developers unknowingly created multiple instances causing resource waste and inconsistent state.</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 2 — FACTORY
+    ════════════════════════════════════ -->
+    <section class="section" id="factory">
+      <div class="section-header">
+        <div class="section-icon icon-blue">🏭</div>
+        <div class="section-meta">
+          <div class="section-label">Creational Pattern</div>
+          <div class="section-title">Factory Pattern</div>
+          <div class="section-desc">Create objects without exposing creation logic — let subclass/factory decide which class to instantiate</div>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="info-card border-blue">
+          <div class="info-card-title">❓ What Problem Does It Solve?</div>
+          <ul>
+            <li>Avoid tight coupling between client and concrete classes</li>
+            <li>Open/Closed principle — add new types without modifying existing code</li>
+            <li>Centralize object creation logic</li>
+          </ul>
+        </div>
+        <div class="info-card border-orange">
+          <div class="info-card-title">🌍 Real Use Cases</div>
+          <ul>
+            <li>Payment gateway (Credit Card, PayPal, UPI)</li>
+            <li>Notification service (SMS, Email, Push)</li>
+            <li>Logger factory (FileLogger, DBLogger)</li>
+            <li>Spring's <code>BeanFactory</code> itself</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Factory Implementation -->
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">PaymentFactory.java — Complete Implementation</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="cm">// ─── STEP 1: Define the common interface ──────────────</span>
+<span class="kw">public interface</span> <span class="cl">Payment</span> {
+    <span class="kw">void</span> <span class="fn">processPayment</span>(<span class="ty">double</span> amount);
+    <span class="ty">String</span> <span class="fn">getPaymentType</span>();
+}
+
+<span class="cm">// ─── STEP 2: Concrete implementations ─────────────────</span>
+<span class="kw">public class</span> <span class="cl">CreditCardPayment</span> <span class="kw">implements</span> <span class="cl">Payment</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">processPayment</span>(<span class="ty">double</span> amount) {
+        System.out.<span class="fn">println</span>(<span class="st">"Processing ₹"</span> + amount + <span class="st">" via Credit Card"</span>);
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getPaymentType</span>() { <span class="kw">return</span> <span class="st">"CREDIT_CARD"</span>; }
+}
+
+<span class="kw">public class</span> <span class="cl">UPIPayment</span> <span class="kw">implements</span> <span class="cl">Payment</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">processPayment</span>(<span class="ty">double</span> amount) {
+        System.out.<span class="fn">println</span>(<span class="st">"Processing ₹"</span> + amount + <span class="st">" via UPI"</span>);
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getPaymentType</span>() { <span class="kw">return</span> <span class="st">"UPI"</span>; }
+}
+
+<span class="kw">public class</span> <span class="cl">PayPalPayment</span> <span class="kw">implements</span> <span class="cl">Payment</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">processPayment</span>(<span class="ty">double</span> amount) {
+        System.out.<span class="fn">println</span>(<span class="st">"Processing ₹"</span> + amount + <span class="st">" via PayPal"</span>);
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getPaymentType</span>() { <span class="kw">return</span> <span class="st">"PAYPAL"</span>; }
+}
+
+<span class="cm">// ─── STEP 3: Enum for type-safe selection ─────────────</span>
+<span class="kw">public enum</span> <span class="cl">PaymentType</span> {
+    CREDIT_CARD, UPI, PAYPAL, NET_BANKING
+}
+
+<span class="cm">// ─── STEP 4: The Factory ───────────────────────────────</span>
+<span class="kw">public class</span> <span class="cl">PaymentFactory</span> {
+
+    <span class="cm">// Static factory method</span>
+    <span class="kw">public static</span> <span class="cl">Payment</span> <span class="fn">createPayment</span>(<span class="cl">PaymentType</span> type) {
+        <span class="kw">return switch</span> (type) {
+            <span class="kw">case</span> CREDIT_CARD  <span class="op">-></span> <span class="kw">new</span> <span class="cl">CreditCardPayment</span>();
+            <span class="kw">case</span> UPI          <span class="op">-></span> <span class="kw">new</span> <span class="cl">UPIPayment</span>();
+            <span class="kw">case</span> PAYPAL       <span class="op">-></span> <span class="kw">new</span> <span class="cl">PayPalPayment</span>();
+            <span class="kw">default</span>           <span class="op">-></span> <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(
+                                      <span class="st">"Unsupported payment: "</span> + type);
+        };
+    }
+}
+
+<span class="cm">// ─── STEP 5: Client usage ──────────────────────────────</span>
+<span class="kw">public class</span> <span class="cl">CheckoutService</span> {
+
+    <span class="kw">public void</span> <span class="fn">processOrder</span>(<span class="cl">PaymentType</span> type, <span class="ty">double</span> amount) {
+        <span class="cl">Payment</span> payment = <span class="cl">PaymentFactory</span>.<span class="fn">createPayment</span>(type);
+        payment.<span class="fn">processPayment</span>(amount);
+        System.out.<span class="fn">println</span>(<span class="st">"Type: "</span> + payment.<span class="fn">getPaymentType</span>());
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="ty">String</span>[] args) {
+        <span class="cl">CheckoutService</span> service = <span class="kw">new</span> <span class="cl">CheckoutService</span>();
+        service.<span class="fn">processOrder</span>(<span class="cl">PaymentType</span>.UPI, <span class="nm">500.0</span>);
+        service.<span class="fn">processOrder</span>(<span class="cl">PaymentType</span>.CREDIT_CARD, <span class="nm">1200.0</span>);
+        service.<span class="fn">processOrder</span>(<span class="cl">PaymentType</span>.PAYPAL, <span class="nm">300.0</span>);
+    }
+}</code></pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">📤 Output</div>
+        <div class="output-text">Processing ₹500.0 via UPI
+Type: UPI
+Processing ₹1200.0 via Credit Card
+Type: CREDIT_CARD
+Processing ₹300.0 via PayPal
+Type: PAYPAL</div>
+      </div>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <div><strong>Why use Enum instead of String?</strong> Enum provides <strong>compile-time type safety</strong>. If you pass a wrong string like <code>"CREDIT CARD"</code> (with space), it fails at runtime. With Enum, it fails at compile time — caught by IDE immediately.</div>
+      </div>
+
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Interview Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: What is the difference between Factory and Abstract Factory?</div>
+          <div class="a">A: <strong>Factory</strong> creates objects of <em>one product type</em> (e.g., different payments). <strong>Abstract Factory</strong> creates <em>families of related objects</em> (e.g., a UIFactory that creates Button + TextBox + Dialog all in consistent theme — Dark/Light).</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: How does Factory relate to SOLID?</div>
+          <div class="a">A: Factory supports <strong>OCP (Open-Closed Principle)</strong> — you can add new payment types by adding a new class + enum constant, without modifying existing code. It also satisfies <strong>DIP</strong> — client depends on abstract <code>Payment</code>, not concrete <code>CreditCardPayment</code>.</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 3 — STRATEGY
+    ════════════════════════════════════ -->
+    <section class="section" id="strategy">
+      <div class="section-header">
+        <div class="section-icon icon-green">🎯</div>
+        <div class="section-meta">
+          <div class="section-label">Behavioral Pattern</div>
+          <div class="section-title">Strategy Pattern</div>
+          <div class="section-desc">Define a family of algorithms, encapsulate each one, and make them interchangeable at runtime</div>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="info-card border-green">
+          <div class="info-card-title">❓ What Problem Does It Solve?</div>
+          <ul>
+            <li>Eliminate multiple <code>if-else</code> / <code>switch</code> for algorithm selection</li>
+            <li>Change behavior at runtime without changing the class</li>
+            <li>Follows OCP — add new strategies without modifying existing</li>
+          </ul>
+        </div>
+        <div class="info-card border-blue">
+          <div class="info-card-title">🌍 Real Use Cases</div>
+          <ul>
+            <li>Sorting strategy (Bubble, Quick, Merge) — switch at runtime</li>
+            <li>Discount strategy (Festival, Coupon, Clearance)</li>
+            <li>Tax calculation strategy by region</li>
+            <li>Compression (ZIP, RAR, GZIP)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Discount Strategy Example -->
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">DiscountStrategy.java — E-commerce Discount System</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="cm">// ─── STEP 1: Strategy Interface ────────────────────────</span>
+<span class="kw">public interface</span> <span class="cl">DiscountStrategy</span> {
+    <span class="ty">double</span> <span class="fn">applyDiscount</span>(<span class="ty">double</span> originalPrice);
+    <span class="ty">String</span> <span class="fn">getStrategyName</span>();
+}
+
+<span class="cm">// ─── STEP 2: Concrete Strategies ──────────────────────</span>
+<span class="kw">public class</span> <span class="cl">NoDiscount</span> <span class="kw">implements</span> <span class="cl">DiscountStrategy</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">double</span> <span class="fn">applyDiscount</span>(<span class="ty">double</span> price) { <span class="kw">return</span> price; }
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getStrategyName</span>() { <span class="kw">return</span> <span class="st">"No Discount"</span>; }
+}
+
+<span class="kw">public class</span> <span class="cl">FestivalDiscount</span> <span class="kw">implements</span> <span class="cl">DiscountStrategy</span> {
+    <span class="kw">private final double</span> discountPercent;
+
+    <span class="kw">public</span> <span class="fn">FestivalDiscount</span>(<span class="ty">double</span> percent) {
+        <span class="kw">this</span>.discountPercent = percent;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">double</span> <span class="fn">applyDiscount</span>(<span class="ty">double</span> price) {
+        <span class="kw">return</span> price - (price * discountPercent / <span class="nm">100</span>);
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getStrategyName</span>() {
+        <span class="kw">return</span> <span class="st">"Festival Discount ("</span> + discountPercent + <span class="st">"%)"</span>;
+    }
+}
+
+<span class="kw">public class</span> <span class="cl">CouponDiscount</span> <span class="kw">implements</span> <span class="cl">DiscountStrategy</span> {
+    <span class="kw">private final double</span> flatDiscount;
+
+    <span class="kw">public</span> <span class="fn">CouponDiscount</span>(<span class="ty">double</span> flat) {
+        <span class="kw">this</span>.flatDiscount = flat;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">double</span> <span class="fn">applyDiscount</span>(<span class="ty">double</span> price) {
+        <span class="kw">return</span> Math.<span class="fn">max</span>(<span class="nm">0</span>, price - flatDiscount);
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getStrategyName</span>() {
+        <span class="kw">return</span> <span class="st">"Coupon Flat ₹"</span> + flatDiscount;
+    }
+}
+
+<span class="cm">// ─── STEP 3: Context class ─────────────────────────────</span>
+<span class="kw">public class</span> <span class="cl">ShoppingCart</span> {
+
+    <span class="kw">private</span> <span class="cl">DiscountStrategy</span> discountStrategy; <span class="cm">// injected</span>
+    <span class="kw">private</span> <span class="ty">double</span> totalAmount;
+
+    <span class="kw">public</span> <span class="fn">ShoppingCart</span>(<span class="ty">double</span> amount) {
+        <span class="kw">this</span>.totalAmount = amount;
+        <span class="kw">this</span>.discountStrategy = <span class="kw">new</span> <span class="cl">NoDiscount</span>(); <span class="cm">// default</span>
+    }
+
+    <span class="cm">// ✅ Strategy can be CHANGED at runtime!</span>
+    <span class="kw">public void</span> <span class="fn">setDiscountStrategy</span>(<span class="cl">DiscountStrategy</span> strategy) {
+        <span class="kw">this</span>.discountStrategy = strategy;
+    }
+
+    <span class="kw">public void</span> <span class="fn">checkout</span>() {
+        <span class="ty">double</span> finalPrice = discountStrategy.<span class="fn">applyDiscount</span>(totalAmount);
+        System.out.<span class="fn">printf</span>(<span class="st">"Strategy: %s | Original: ₹%.2f | Final: ₹%.2f%n"</span>,
+                discountStrategy.<span class="fn">getStrategyName</span>(), totalAmount, finalPrice);
+    }
+}
+
+<span class="cm">// ─── STEP 4: Usage ─────────────────────────────────────</span>
+<span class="kw">public static void</span> <span class="fn">main</span>(<span class="ty">String</span>[] args) {
+    <span class="cl">ShoppingCart</span> cart = <span class="kw">new</span> <span class="cl">ShoppingCart</span>(<span class="nm">1000.0</span>);
+
+    cart.<span class="fn">checkout</span>();                                       <span class="cm">// No discount</span>
+
+    cart.<span class="fn">setDiscountStrategy</span>(<span class="kw">new</span> <span class="cl">FestivalDiscount</span>(<span class="nm">20</span>));   <span class="cm">// 20% off</span>
+    cart.<span class="fn">checkout</span>();
+
+    cart.<span class="fn">setDiscountStrategy</span>(<span class="kw">new</span> <span class="cl">CouponDiscount</span>(<span class="nm">150</span>));    <span class="cm">// Flat ₹150 off</span>
+    cart.<span class="fn">checkout</span>();
+}</code></pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">📤 Output</div>
+        <div class="output-text">Strategy: No Discount | Original: ₹1000.00 | Final: ₹1000.00
+Strategy: Festival Discount (20.0%) | Original: ₹1000.00 | Final: ₹800.00
+Strategy: Coupon Flat ₹150.0 | Original: ₹1000.00 | Final: ₹850.00</div>
+      </div>
+
+      <!-- Lambda-based Strategy -->
+      <h3 style="color:var(--text);font-size:16px;margin:24px 0 12px">🚀 Strategy with Lambda (Modern Java)</h3>
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <div>Since <code>DiscountStrategy</code> is a functional interface (one method), you can pass <strong>lambdas directly</strong> without creating separate classes!</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">LambdaStrategy.java</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="cl">ShoppingCart</span> cart = <span class="kw">new</span> <span class="cl">ShoppingCart</span>(<span class="nm">1000.0</span>);
+
+<span class="cm">// Lambda as a Strategy — no class needed!</span>
+cart.<span class="fn">setDiscountStrategy</span>(price -> price * <span class="nm">0.85</span>); <span class="cm">// 15% off inline</span>
+cart.<span class="fn">checkout</span>();
+
+<span class="cm">// Store and reuse lambdas</span>
+<span class="cl">DiscountStrategy</span> newYearDeal = price -> price - <span class="nm">200</span>;
+<span class="cl">DiscountStrategy</span> flashSale   = price -> price * <span class="nm">0.5</span>; <span class="cm">// 50% off</span>
+
+cart.<span class="fn">setDiscountStrategy</span>(flashSale);
+cart.<span class="fn">checkout</span>();</code></pre>
+      </div>
+
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Interview Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: Where have you used Strategy pattern in your STEP project?</div>
+          <div class="a">A: <em>Example answer:</em> "In my STEP project, I used Strategy for <strong>discount calculation</strong>. Different product categories had different discount rules — electronics had percentage discount, clothing had flat discount, and clearance items had minimum price guarantee. Instead of if-else in checkout, each rule was a <code>DiscountStrategy</code> implementation injected at runtime based on product category."</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: What is the difference between Strategy and Factory?</div>
+          <div class="a">A: <strong>Factory</strong> is about <em>object creation</em> — which class to instantiate. <strong>Strategy</strong> is about <em>behavior selection</em> — which algorithm to execute. They often work together — Factory creates the right Strategy based on input.</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 4 — BUILDER
+    ════════════════════════════════════ -->
+    <section class="section" id="builder">
+      <div class="section-header">
+        <div class="section-icon icon-purple">🔨</div>
+        <div class="section-meta">
+          <div class="section-label">Creational Pattern</div>
+          <div class="section-title">Builder Pattern</div>
+          <div class="section-desc">Construct complex objects step by step — separate construction from representation</div>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="info-card border-purple">
+          <div class="info-card-title">❓ What Problem Does It Solve?</div>
+          <ul>
+            <li>Avoid "telescoping constructor" anti-pattern</li>
+            <li>Handle optional fields without many overloaded constructors</li>
+            <li>Construct objects in multiple steps</li>
+            <li>Create immutable objects with many fields</li>
+          </ul>
+        </div>
+        <div class="info-card border-blue">
+          <div class="info-card-title">🌍 Real Use Cases</div>
+          <ul>
+            <li>Building HTTP requests (OkHttp, HttpClient)</li>
+            <li>Creating entity objects in tests</li>
+            <li>StringBuilder itself is a Builder!</li>
+            <li>Lombok's <code>@Builder</code> annotation</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Telescoping Constructor Problem -->
+      <h3 style="color:var(--red);font-size:16px;margin:20px 0 10px">❌ The Problem — Telescoping Constructor</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">BAD_Example.java — Telescoping Constructor Anti-Pattern</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">public class</span> <span class="cl">User</span> {
+    <span class="kw">public</span> <span class="fn">User</span>(<span class="ty">String</span> name) { ... }
+    <span class="kw">public</span> <span class="fn">User</span>(<span class="ty">String</span> name, <span class="ty">String</span> email) { ... }
+    <span class="kw">public</span> <span class="fn">User</span>(<span class="ty">String</span> name, <span class="ty">String</span> email, <span class="ty">String</span> phone) { ... }
+    <span class="kw">public</span> <span class="fn">User</span>(<span class="ty">String</span> name, <span class="ty">String</span> email, <span class="ty">String</span> phone, <span class="ty">String</span> address) { ... }
+    <span class="kw">public</span> <span class="fn">User</span>(<span class="ty">String</span> name, <span class="ty">String</span> email, <span class="ty">String</span> phone, <span class="ty">String</span> address, <span class="ty">int</span> age) { ... }
+    <span class="cm">// Ugly! Hard to read, hard to maintain!</span>
+}
+
+<span class="cm">// Client code is a mystery:</span>
+<span class="cl">User</span> u = <span class="kw">new</span> <span class="cl">User</span>(<span class="st">"John"</span>, <span class="st">"john@mail.com"</span>, <span class="kw">null</span>, <span class="kw">null</span>, <span class="nm">25</span>);
+<span class="cm">// What does null, null mean? Which position is what?</span></code></pre>
+      </div>
+
+      <!-- Builder Solution -->
+      <h3 style="color:var(--green);font-size:16px;margin:24px 0 10px">✅ The Solution — Builder Pattern</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">User.java — Builder Pattern (Thread-Safe & Immutable)</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">public final class</span> <span class="cl">User</span> {
+
+    <span class="cm">// ✅ Required fields — final for immutability</span>
+    <span class="kw">private final</span> <span class="ty">Long</span>   id;
+    <span class="kw">private final</span> <span class="ty">String</span> name;
+    <span class="kw">private final</span> <span class="ty">String</span> email;
+
+    <span class="cm">// ✅ Optional fields</span>
+    <span class="kw">private final</span> <span class="ty">String</span> phone;
+    <span class="kw">private final</span> <span class="ty">String</span> address;
+    <span class="kw">private final</span> <span class="ty">int</span>    age;
+    <span class="kw">private final</span> <span class="ty">String</span> role;
+
+    <span class="cm">// Private constructor — only Builder can call</span>
+    <span class="kw">private</span> <span class="fn">User</span>(<span class="cl">Builder</span> builder) {
+        <span class="kw">this</span>.id      = builder.id;
+        <span class="kw">this</span>.name    = builder.name;
+        <span class="kw">this</span>.email   = builder.email;
+        <span class="kw">this</span>.phone   = builder.phone;
+        <span class="kw">this</span>.address = builder.address;
+        <span class="kw">this</span>.age     = builder.age;
+        <span class="kw">this</span>.role    = builder.role;
+    }
+
+    <span class="cm">// Getters only — no setters (immutable!)</span>
+    <span class="kw">public</span> <span class="ty">Long</span>   <span class="fn">getId</span>()      { <span class="kw">return</span> id; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getName</span>()    { <span class="kw">return</span> name; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getEmail</span>()   { <span class="kw">return</span> email; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getPhone</span>()   { <span class="kw">return</span> phone; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getAddress</span>() { <span class="kw">return</span> address; }
+    <span class="kw">public</span> <span class="ty">int</span>    <span class="fn">getAge</span>()     { <span class="kw">return</span> age; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">toString</span>() {
+        <span class="kw">return</span> <span class="st">"User{id="</span>+id+<span class="st">", name='"</span>+name+<span class="st">"', email='"</span>+email+<span class="st">"', role='"</span>+role+<span class="st">"'}"</span>;
+    }
+
+    <span class="cm">// ══════════════════════════════════════════
+       STATIC INNER BUILDER CLASS
+    ══════════════════════════════════════════ </span>
+    <span class="kw">public static class</span> <span class="cl">Builder</span> {
+
+        <span class="cm">// Required fields — set via constructor</span>
+        <span class="kw">private final</span> <span class="ty">Long</span>   id;
+        <span class="kw">private final</span> <span class="ty">String</span> name;
+        <span class="kw">private final</span> <span class="ty">String</span> email;
+
+        <span class="cm">// Optional fields — set via fluent methods</span>
+        <span class="kw">private</span> <span class="ty">String</span> phone   = <span class="kw">null</span>;
+        <span class="kw">private</span> <span class="ty">String</span> address = <span class="kw">null</span>;
+        <span class="kw">private</span> <span class="ty">int</span>    age     = <span class="nm">0</span>;
+        <span class="kw">private</span> <span class="ty">String</span> role    = <span class="st">"USER"</span>; <span class="cm">// default</span>
+
+        <span class="cm">// Required fields via constructor</span>
+        <span class="kw">public</span> <span class="fn">Builder</span>(<span class="ty">Long</span> id, <span class="ty">String</span> name, <span class="ty">String</span> email) {
+            <span class="kw">if</span> (name == <span class="kw">null</span> || name.<span class="fn">isBlank</span>())
+                <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="st">"Name required"</span>);
+            <span class="kw">if</span> (email == <span class="kw">null</span> || !email.<span class="fn">contains</span>(<span class="st">"@"</span>))
+                <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="st">"Valid email required"</span>);
+            <span class="kw">this</span>.id    = id;
+            <span class="kw">this</span>.name  = name;
+            <span class="kw">this</span>.email = email;
+        }
+
+        <span class="cm">// Fluent setter methods — each returns 'this' for chaining</span>
+        <span class="kw">public</span> <span class="cl">Builder</span> <span class="fn">phone</span>(<span class="ty">String</span> phone) {
+            <span class="kw">this</span>.phone = phone;
+            <span class="kw">return this</span>;
+        }
+
+        <span class="kw">public</span> <span class="cl">Builder</span> <span class="fn">address</span>(<span class="ty">String</span> address) {
+            <span class="kw">this</span>.address = address;
+            <span class="kw">return this</span>;
+        }
+
+        <span class="kw">public</span> <span class="cl">Builder</span> <span class="fn">age</span>(<span class="ty">int</span> age) {
+            <span class="kw">if</span> (age < <span class="nm">0</span> || age > <span class="nm">150</span>)
+                <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="st">"Invalid age"</span>);
+            <span class="kw">this</span>.age = age;
+            <span class="kw">return this</span>;
+        }
+
+        <span class="kw">public</span> <span class="cl">Builder</span> <span class="fn">role</span>(<span class="ty">String</span> role) {
+            <span class="kw">this</span>.role = role;
+            <span class="kw">return this</span>;
+        }
+
+        <span class="cm">// Terminal build() — creates immutable User</span>
+        <span class="kw">public</span> <span class="cl">User</span> <span class="fn">build</span>() {
+            <span class="kw">return new</span> <span class="cl">User</span>(<span class="kw">this</span>);
+        }
+    }
+}
+
+<span class="cm">// ─── Usage — Clean, readable, immutable ───────────────</span>
+<span class="cl">User</span> admin = <span class="kw">new</span> <span class="cl">User</span>.<span class="cl">Builder</span>(<span class="nm">1L</span>, <span class="st">"Alice"</span>, <span class="st">"alice@example.com"</span>)
+        .<span class="fn">phone</span>(<span class="st">"+91-9999999999"</span>)
+        .<span class="fn">address</span>(<span class="st">"Delhi, India"</span>)
+        .<span class="fn">age</span>(<span class="nm">28</span>)
+        .<span class="fn">role</span>(<span class="st">"ADMIN"</span>)
+        .<span class="fn">build</span>();
+
+<span class="cm">// Minimal — only required fields</span>
+<span class="cl">User</span> guest = <span class="kw">new</span> <span class="cl">User</span>.<span class="cl">Builder</span>(<span class="nm">2L</span>, <span class="st">"Bob"</span>, <span class="st">"bob@example.com"</span>).<span class="fn">build</span>();
+
+System.out.<span class="fn">println</span>(admin);
+System.out.<span class="fn">println</span>(guest);</code></pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">📤 Output</div>
+        <div class="output-text">User{id=1, name='Alice', email='alice@example.com', role='ADMIN'}
+User{id=2, name='Bob', email='bob@example.com', role='USER'}</div>
+      </div>
+
+      <!-- Lombok Builder -->
+      <h3 style="color:var(--text);font-size:16px;margin:24px 0 10px">🔖 Lombok @Builder — Production Shortcut</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">LombokUser.java — Lombok generates Builder automatically</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">import</span> lombok.*;
+
+<span class="an">@Data</span>
+<span class="an">@Builder</span>
+<span class="an">@NoArgsConstructor</span>
+<span class="an">@AllArgsConstructor</span>
+<span class="kw">public class</span> <span class="cl">LombokUser</span> {
+    <span class="kw">private</span> <span class="ty">Long</span>   id;
+    <span class="kw">private</span> <span class="ty">String</span> name;
+    <span class="kw">private</span> <span class="ty">String</span> email;
+    <span class="an">@Builder.Default</span>
+    <span class="kw">private</span> <span class="ty">String</span> role = <span class="st">"USER"</span>;
+}
+
+<span class="cm">// Lombok generates the entire Builder automatically!</span>
+<span class="cl">LombokUser</span> user = <span class="cl">LombokUser</span>.builder()
+        .id(<span class="nm">1L</span>)
+        .name(<span class="st">"Alice"</span>)
+        .email(<span class="st">"alice@example.com"</span>)
+        .role(<span class="st">"ADMIN"</span>)
+        .build();</code></pre>
+      </div>
+
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Interview Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: How is Builder thread-safe?</div>
+          <div class="a">A: The Builder accumulates state in a <strong>local object</strong> (not shared between threads). The final <code>User</code> object is <strong>immutable</strong> (all final fields, no setters) — once built, it can be safely shared between threads without synchronization.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: Builder vs Constructor — when to prefer Builder?</div>
+          <div class="a">A: Use <strong>Builder</strong> when (1) class has <strong>4+ parameters</strong>, (2) many are <strong>optional</strong>, (3) you need <strong>validation at build time</strong>, (4) you want <strong>readable code</strong> with named parameters. Use Constructor when object has 1-3 required fields only.</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 5 — DECORATOR
+    ════════════════════════════════════ -->
+    <section class="section" id="decorator">
+      <div class="section-header">
+        <div class="section-icon icon-orange">🎨</div>
+        <div class="section-meta">
+          <div class="section-label">Structural Pattern</div>
+          <div class="section-title">Decorator Pattern</div>
+          <div class="section-desc">Add behavior to objects dynamically without changing their class — wrapping, not subclassing</div>
+        </div>
+      </div>
+
+      <div class="callout callout-note">
+        <span class="callout-icon">📌</span>
+        <div><strong>"Prefer composition over inheritance"</strong> — Decorator is the textbook implementation of this principle. Instead of creating subclasses for every combination, wrap objects with decorators.</div>
+      </div>
+
+      <div class="card-grid">
+        <div class="info-card border-orange">
+          <div class="info-card-title">❓ What Problem Does It Solve?</div>
+          <ul>
+            <li>Avoid class explosion from inheritance combinations</li>
+            <li>Add/remove features at runtime, not compile-time</li>
+            <li>Follow Open-Closed Principle (add features without modifying)</li>
+          </ul>
+        </div>
+        <div class="info-card border-green">
+          <div class="info-card-title">🌍 Real Use Cases (Not Pizza/Coffee!)</div>
+          <ul>
+            <li>Java I/O Streams (<code>BufferedInputStream</code> wraps <code>FileInputStream</code>)</li>
+            <li>HTTP middleware / filter chains</li>
+            <li>Logging decorators in Spring AOP</li>
+            <li>UI components (scroll, border, shadow wrapping)</li>
+            <li>Data encryption layer on top of storage</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Notification Decorator Example -->
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">NotificationDecorator.java — Multi-channel Notification System</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="cm">// ─── STEP 1: Component Interface ──────────────────────</span>
+<span class="kw">public interface</span> <span class="cl">NotificationService</span> {
+    <span class="kw">void</span> <span class="fn">send</span>(<span class="ty">String</span> message, <span class="ty">String</span> recipient);
+}
+
+<span class="cm">// ─── STEP 2: Concrete Component (base) ────────────────</span>
+<span class="kw">public class</span> <span class="cl">EmailNotification</span> <span class="kw">implements</span> <span class="cl">NotificationService</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ty">String</span> msg, <span class="ty">String</span> recipient) {
+        System.out.<span class="fn">println</span>(<span class="st">"📧 EMAIL → ["</span> + recipient + <span class="st">"] : "</span> + msg);
+    }
+}
+
+<span class="cm">// ─── STEP 3: Abstract Decorator ───────────────────────</span>
+<span class="cm">// Implements same interface AND holds a reference to wrapped object</span>
+<span class="kw">public abstract class</span> <span class="cl">NotificationDecorator</span> <span class="kw">implements</span> <span class="cl">NotificationService</span> {
+
+    <span class="kw">protected final</span> <span class="cl">NotificationService</span> wrapped; <span class="cm">// delegation</span>
+
+    <span class="kw">public</span> <span class="fn">NotificationDecorator</span>(<span class="cl">NotificationService</span> service) {
+        <span class="kw">this</span>.wrapped = service;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ty">String</span> msg, <span class="ty">String</span> recipient) {
+        wrapped.<span class="fn">send</span>(msg, recipient); <span class="cm">// delegate to wrapped</span>
+    }
+}
+
+<span class="cm">// ─── STEP 4: Concrete Decorators ──────────────────────</span>
+<span class="kw">public class</span> <span class="cl">SMSDecorator</span> <span class="kw">extends</span> <span class="cl">NotificationDecorator</span> {
+
+    <span class="kw">public</span> <span class="fn">SMSDecorator</span>(<span class="cl">NotificationService</span> service) {
+        <span class="kw">super</span>(service);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ty">String</span> msg, <span class="ty">String</span> recipient) {
+        <span class="kw">super</span>.<span class="fn">send</span>(msg, recipient);            <span class="cm">// original email first</span>
+        System.out.<span class="fn">println</span>(<span class="st">"📱 SMS  → ["</span> + recipient + <span class="st">"] : "</span> + msg);
+    }
+}
+
+<span class="kw">public class</span> <span class="cl">SlackDecorator</span> <span class="kw">extends</span> <span class="cl">NotificationDecorator</span> {
+
+    <span class="kw">public</span> <span class="fn">SlackDecorator</span>(<span class="cl">NotificationService</span> service) {
+        <span class="kw">super</span>(service);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ty">String</span> msg, <span class="ty">String</span> recipient) {
+        <span class="kw">super</span>.<span class="fn">send</span>(msg, recipient);            <span class="cm">// all previous channels</span>
+        System.out.<span class="fn">println</span>(<span class="st">"💬 SLACK→ ["</span> + recipient + <span class="st">"] : "</span> + msg);
+    }
+}
+
+<span class="kw">public class</span> <span class="cl">LoggingDecorator</span> <span class="kw">extends</span> <span class="cl">NotificationDecorator</span> {
+
+    <span class="kw">public</span> <span class="fn">LoggingDecorator</span>(<span class="cl">NotificationService</span> service) {
+        <span class="kw">super</span>(service);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ty">String</span> msg, <span class="ty">String</span> recipient) {
+        System.out.<span class="fn">println</span>(<span class="st">"📋 LOG  → Sending notification to: "</span> + recipient);
+        <span class="kw">super</span>.<span class="fn">send</span>(msg, recipient);
+        System.out.<span class="fn">println</span>(<span class="st">"📋 LOG  → Notification sent successfully!"</span>);
+    }
+}
+
+<span class="cm">// ─── STEP 5: Dynamic composition ──────────────────────</span>
+<span class="kw">public static void</span> <span class="fn">main</span>(<span class="ty">String</span>[] args) {
+
+    <span class="cm">// Basic: Email only</span>
+    <span class="cl">NotificationService</span> emailOnly = <span class="kw">new</span> <span class="cl">EmailNotification</span>();
+
+    <span class="cm">// Email + SMS</span>
+    <span class="cl">NotificationService</span> emailSms
+            = <span class="kw">new</span> <span class="cl">SMSDecorator</span>(<span class="kw">new</span> <span class="cl">EmailNotification</span>());
+
+    <span class="cm">// Email + SMS + Slack + Logging — all stacked!</span>
+    <span class="cl">NotificationService</span> allChannels
+            = <span class="kw">new</span> <span class="cl">LoggingDecorator</span>(
+                <span class="kw">new</span> <span class="cl">SlackDecorator</span>(
+                    <span class="kw">new</span> <span class="cl">SMSDecorator</span>(
+                        <span class="kw">new</span> <span class="cl">EmailNotification</span>()
+                    )
+                )
+              );
+
+    System.out.<span class="fn">println</span>(<span class="st">"=== Email Only ==="</span>);
+    emailOnly.<span class="fn">send</span>(<span class="st">"Server down!"</span>, <span class="st">"admin@company.com"</span>);
+
+    System.out.<span class="fn">println</span>(<span class="st">"\n=== All Channels ==="</span>);
+    allChannels.<span class="fn">send</span>(<span class="st">"CRITICAL: DB unreachable"</span>, <span class="st">"ops@company.com"</span>);
+}</code></pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">📤 Output</div>
+        <div class="output-text">=== Email Only ===
+📧 EMAIL → [admin@company.com] : Server down!
+
+=== All Channels ===
+📋 LOG  → Sending notification to: ops@company.com
+📧 EMAIL → [ops@company.com] : CRITICAL: DB unreachable
+📱 SMS  → [ops@company.com] : CRITICAL: DB unreachable
+💬 SLACK→ [ops@company.com] : CRITICAL: DB unreachable
+📋 LOG  → Notification sent successfully!</div>
+      </div>
+
+      <!-- Java IO Connection -->
+      <div class="card" style="background:rgba(240,136,62,.04);border-color:rgba(240,136,62,.2)">
+        <h4 style="color:var(--orange);font-size:14px;margin-bottom:10px">☕ Decorator in Java I/O (Real Java Usage)</h4>
+        <div class="code-block" style="margin:0">
+          <pre><code><span class="cm">// Java's own Decorator pattern in I/O!</span>
+<span class="cl">InputStream</span> raw       = <span class="kw">new</span> <span class="cl">FileInputStream</span>(<span class="st">"file.txt"</span>);
+<span class="cl">InputStream</span> buffered  = <span class="kw">new</span> <span class="cl">BufferedInputStream</span>(raw);
+<span class="cl">InputStream</span> encrypted = <span class="kw">new</span> <span class="cl">CipherInputStream</span>(buffered, cipher);
+<span class="cl">DataInputStream</span> data  = <span class="kw">new</span> <span class="cl">DataInputStream</span>(encrypted);
+<span class="cm">// FileInputStream is the base, rest are decorators!</span></code></pre>
+        </div>
+      </div>
+
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Interview Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: Give a real-world example of Decorator (not pizza or coffee)</div>
+          <div class="a">A: <strong>Java I/O Streams</strong> — <code>FileInputStream</code> is the base. You wrap it with <code>BufferedInputStream</code> for buffering, then with <code>GZIPInputStream</code> for compression, then with <code>CipherInputStream</code> for encryption. Each decorator adds a feature without modifying the original. Another example: <strong>Spring Security filter chain</strong> — each security filter wraps the request adding authentication, authorization, CSRF checks as decorators.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: Decorator vs Inheritance — what's the difference?</div>
+          <div class="a">A: <strong>Inheritance</strong> is <em>static</em> (decided at compile time). <strong>Decorator</strong> is <em>dynamic</em> (decided at runtime). With inheritance, you need a new class for every combination (EmailSMSNotification, EmailSlackNotification, etc.) — this causes class explosion. Decorator lets you compose features on-the-fly by stacking wrappers.</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 6 — PARKING LOT
+    ════════════════════════════════════ -->
+    <section class="section" id="parking">
+      <div class="section-header">
+        <div class="section-icon icon-cyan">🅿️</div>
+        <div class="section-meta">
+          <div class="section-label">System Design + Inner Classes</div>
+          <div class="section-title">Parking Lot Design</div>
+          <div class="section-desc">Classic system design question using inner classes, enums, and OOP principles</div>
+        </div>
+      </div>
+
+      <div class="callout callout-note">
+        <span class="callout-icon">📌</span>
+        <div>This question tests your ability to <strong>model real-world systems</strong> using OOP. Key focus: proper use of <strong>inner classes</strong>, enums, and encapsulation.</div>
+      </div>
+
+      <!-- Requirements -->
+      <div class="card" style="background:rgba(57,211,83,.04);border-color:rgba(57,211,83,.2);margin-bottom:20px">
+        <h4 style="color:var(--cyan);font-size:14px;margin-bottom:12px">📋 Requirements</h4>
+        <div class="card-grid" style="margin:0">
+          <div>
+            <ul style="list-style:none;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px">
+              <li>✅ Multiple floors in parking lot</li>
+              <li>✅ Different vehicle types (Car, Bike, Truck)</li>
+              <li>✅ Different spot sizes (Small, Medium, Large)</li>
+              <li>✅ Park a vehicle — find available spot</li>
+            </ul>
+          </div>
+          <div>
+            <ul style="list-style:none;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px">
+              <li>✅ Unpark a vehicle — free the spot</li>
+              <li>✅ Generate ticket on parking</li>
+              <li>✅ Calculate fee on exit</li>
+              <li>✅ Check available spots</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">ParkingLot.java — Complete Design with Inner Classes</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">import</span> java.time.*;
+<span class="kw">import</span> java.util.*;
+
+<span class="kw">public class</span> <span class="cl">ParkingLot</span> {
+
+    <span class="cm">// ══ INNER ENUMS ═══════════════════════════════</span>
+
+    <span class="kw">public enum</span> <span class="cl">VehicleType</span> { BIKE, CAR, TRUCK }
+
+    <span class="kw">public enum</span> <span class="cl">SpotSize</span>    { SMALL, MEDIUM, LARGE }
+
+    <span class="cm">// ══ INNER CLASS: Vehicle ═══════════════════════</span>
+
+    <span class="kw">public static class</span> <span class="cl">Vehicle</span> {
+        <span class="kw">private final</span> <span class="ty">String</span>      licensePlate;
+        <span class="kw">private final</span> <span class="cl">VehicleType</span> type;
+
+        <span class="kw">public</span> <span class="fn">Vehicle</span>(<span class="ty">String</span> plate, <span class="cl">VehicleType</span> type) {
+            <span class="kw">this</span>.licensePlate = plate;
+            <span class="kw">this</span>.type         = type;
+        }
+
+        <span class="kw">public</span> <span class="ty">String</span>      <span class="fn">getLicensePlate</span>() { <span class="kw">return</span> licensePlate; }
+        <span class="kw">public</span> <span class="cl">VehicleType</span> <span class="fn">getType</span>()         { <span class="kw">return</span> type; }
+
+        <span class="an">@Override</span>
+        <span class="kw">public</span> <span class="ty">String</span> <span class="fn">toString</span>() {
+            <span class="kw">return</span> type + <span class="st">"["</span> + licensePlate + <span class="st">"]"</span>;
+        }
+    }
+
+    <span class="cm">// ══ INNER CLASS: ParkingSpot ════════════════════</span>
+
+    <span class="kw">public static class</span> <span class="cl">ParkingSpot</span> {
+        <span class="kw">private final</span> <span class="ty">String</span>    spotId;
+        <span class="kw">private final</span> <span class="cl">SpotSize</span>  size;
+        <span class="kw">private</span>       <span class="ty">boolean</span>   occupied = <span class="kw">false</span>;
+        <span class="kw">private</span>       <span class="cl">Vehicle</span>   currentVehicle;
+
+        <span class="kw">public</span> <span class="fn">ParkingSpot</span>(<span class="ty">String</span> id, <span class="cl">SpotSize</span> size) {
+            <span class="kw">this</span>.spotId = id;
+            <span class="kw">this</span>.size   = size;
+        }
+
+        <span class="kw">public boolean</span> <span class="fn">isAvailable</span>() { <span class="kw">return</span> !occupied; }
+
+        <span class="kw">public boolean</span> <span class="fn">canFit</span>(<span class="cl">Vehicle</span> v) {
+            <span class="kw">return switch</span> (v.<span class="fn">getType</span>()) {
+                <span class="kw">case</span> BIKE  <span class="op">-></span> size == <span class="cl">SpotSize</span>.SMALL
+                             || size == <span class="cl">SpotSize</span>.MEDIUM;
+                <span class="kw">case</span> CAR   <span class="op">-></span> size == <span class="cl">SpotSize</span>.MEDIUM
+                             || size == <span class="cl">SpotSize</span>.LARGE;
+                <span class="kw">case</span> TRUCK <span class="op">-></span> size == <span class="cl">SpotSize</span>.LARGE;
+            };
+        }
+
+        <span class="kw">public void</span> <span class="fn">occupy</span>(<span class="cl">Vehicle</span> v) {
+            <span class="kw">this</span>.occupied       = <span class="kw">true</span>;
+            <span class="kw">this</span>.currentVehicle = v;
+        }
+
+        <span class="kw">public void</span> <span class="fn">vacate</span>() {
+            <span class="kw">this</span>.occupied       = <span class="kw">false</span>;
+            <span class="kw">this</span>.currentVehicle = <span class="kw">null</span>;
+        }
+
+        <span class="kw">public</span> <span class="ty">String</span>   <span class="fn">getSpotId</span>()        { <span class="kw">return</span> spotId; }
+        <span class="kw">public</span> <span class="cl">SpotSize</span> <span class="fn">getSize</span>()          { <span class="kw">return</span> size; }
+        <span class="kw">public</span> <span class="cl">Vehicle</span>  <span class="fn">getCurrentVehicle</span>() { <span class="kw">return</span> currentVehicle; }
+    }
+
+    <span class="cm">// ══ INNER CLASS: Ticket ═════════════════════════</span>
+
+    <span class="kw">public static class</span> <span class="cl">Ticket</span> {
+        <span class="kw">private static int</span> ticketCounter = <span class="nm">1000</span>;
+
+        <span class="kw">private final</span> <span class="ty">String</span>        ticketId;
+        <span class="kw">private final</span> <span class="cl">Vehicle</span>       vehicle;
+        <span class="kw">private final</span> <span class="cl">ParkingSpot</span>   spot;
+        <span class="kw">private final</span> <span class="cl">LocalDateTime</span> entryTime;
+
+        <span class="kw">public</span> <span class="fn">Ticket</span>(<span class="cl">Vehicle</span> v, <span class="cl">ParkingSpot</span> spot) {
+            <span class="kw">this</span>.ticketId  = <span class="st">"TKT-"</span> + (++ticketCounter);
+            <span class="kw">this</span>.vehicle   = v;
+            <span class="kw">this</span>.spot      = spot;
+            <span class="kw">this</span>.entryTime = <span class="cl">LocalDateTime</span>.<span class="fn">now</span>();
+        }
+
+        <span class="kw">public double</span> <span class="fn">calculateFee</span>() {
+            <span class="ty">long</span> hours = <span class="cl">Duration</span>
+                    .<span class="fn">between</span>(entryTime, <span class="cl">LocalDateTime</span>.<span class="fn">now</span>())
+                    .<span class="fn">toHours</span>() + <span class="nm">1</span>; <span class="cm">// minimum 1 hour</span>
+            <span class="kw">double</span> ratePerHour = <span class="kw">switch</span> (vehicle.<span class="fn">getType</span>()) {
+                <span class="kw">case</span> BIKE  <span class="op">-></span> <span class="nm">20.0</span>;
+                <span class="kw">case</span> CAR   <span class="op">-></span> <span class="nm">50.0</span>;
+                <span class="kw">case</span> TRUCK <span class="op">-></span> <span class="nm">100.0</span>;
+            };
+            <span class="kw">return</span> hours * ratePerHour;
+        }
+
+        <span class="an">@Override</span>
+        <span class="kw">public</span> <span class="ty">String</span> <span class="fn">toString</span>() {
+            <span class="kw">return</span> <span class="ty">String</span>.<span class="fn">format</span>(
+                <span class="st">"Ticket[%s] Vehicle:%s Spot:%s Entry:%s"</span>,
+                ticketId, vehicle, spot.<span class="fn">getSpotId</span>(),
+                entryTime.<span class="fn">toLocalTime</span>()
+            );
+        }
+
+        <span class="kw">public</span> <span class="cl">ParkingSpot</span> <span class="fn">getSpot</span>()    { <span class="kw">return</span> spot; }
+        <span class="kw">public</span> <span class="ty">String</span>      <span class="fn">getTicketId</span>() { <span class="kw">return</span> ticketId; }
+    }
+
+    <span class="cm">// ══ INNER CLASS: ParkingFloor ══════════════════</span>
+
+    <span class="kw">public static class</span> <span class="cl">ParkingFloor</span> {
+        <span class="kw">private final</span> <span class="ty">int</span>                   floorNumber;
+        <span class="kw">private final</span> <span class="cl">List</span>&lt;<span class="cl">ParkingSpot</span>&gt;    spots;
+
+        <span class="kw">public</span> <span class="fn">ParkingFloor</span>(<span class="ty">int</span> num, <span class="ty">int</span> small, <span class="ty">int</span> medium, <span class="ty">int</span> large) {
+            <span class="kw">this</span>.floorNumber = num;
+            <span class="kw">this</span>.spots       = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;();
+            <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; small;  i++) spots.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">ParkingSpot</span>(<span class="st">"F"</span>+num+<span class="st">"-S"</span>+i,  <span class="cl">SpotSize</span>.SMALL));
+            <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; medium; i++) spots.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">ParkingSpot</span>(<span class="st">"F"</span>+num+<span class="st">"-M"</span>+i, <span class="cl">SpotSize</span>.MEDIUM));
+            <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; large;  i++) spots.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">ParkingSpot</span>(<span class="st">"F"</span>+num+<span class="st">"-L"</span>+i,  <span class="cl">SpotSize</span>.LARGE));
+        }
+
+        <span class="cm">// Find first available spot that fits the vehicle</span>
+        <span class="kw">public</span> <span class="cl">Optional</span>&lt;<span class="cl">ParkingSpot</span>&gt; <span class="fn">findAvailableSpot</span>(<span class="cl">Vehicle</span> v) {
+            <span class="kw">return</span> spots.<span class="fn">stream</span>()
+                    .<span class="fn">filter</span>(s -> s.<span class="fn">isAvailable</span>() &amp;&amp; s.<span class="fn">canFit</span>(v))
+                    .<span class="fn">findFirst</span>();
+        }
+
+        <span class="kw">public long</span> <span class="fn">getAvailableCount</span>() {
+            <span class="kw">return</span> spots.<span class="fn">stream</span>().<span class="fn">filter</span>(<span class="cl">ParkingSpot</span>::<span class="fn">isAvailable</span>).<span class="fn">count</span>();
+        }
+    }
+
+    <span class="cm">// ══ MAIN ParkingLot FIELDS ═════════════════════</span>
+
+    <span class="kw">private final</span> <span class="ty">String</span>                   name;
+    <span class="kw">private final</span> <span class="cl">List</span>&lt;<span class="cl">ParkingFloor</span>&gt;      floors;
+    <span class="kw">private final</span> <span class="cl">Map</span>&lt;<span class="ty">String</span>, <span class="cl">Ticket</span>&gt;    activeTickets; <span class="cm">// plate → ticket</span>
+
+    <span class="kw">public</span> <span class="fn">ParkingLot</span>(<span class="ty">String</span> name, <span class="ty">int</span> numFloors) {
+        <span class="kw">this</span>.name          = name;
+        <span class="kw">this</span>.floors        = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;();
+        <span class="kw">this</span>.activeTickets = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+
+        <span class="cm">// Each floor: 10 small, 10 medium, 5 large spots</span>
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">1</span>; i &lt;= numFloors; i++) {
+            floors.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">ParkingFloor</span>(i, <span class="nm">10</span>, <span class="nm">10</span>, <span class="nm">5</span>));
+        }
+    }
+
+    <span class="cm">// Park a vehicle</span>
+    <span class="kw">public</span> <span class="cl">Ticket</span> <span class="fn">park</span>(<span class="cl">Vehicle</span> vehicle) {
+        <span class="kw">if</span> (activeTickets.<span class="fn">containsKey</span>(vehicle.<span class="fn">getLicensePlate</span>())) {
+            <span class="kw">throw new</span> <span class="cl">IllegalStateException</span>(<span class="st">"Vehicle already parked!"</span>);
+        }
+
+        <span class="kw">for</span> (<span class="cl">ParkingFloor</span> floor : floors) {
+            <span class="cl">Optional</span>&lt;<span class="cl">ParkingSpot</span>&gt; spot = floor.<span class="fn">findAvailableSpot</span>(vehicle);
+            <span class="kw">if</span> (spot.<span class="fn">isPresent</span>()) {
+                spot.<span class="fn">get</span>().<span class="fn">occupy</span>(vehicle);
+                <span class="cl">Ticket</span> ticket = <span class="kw">new</span> <span class="cl">Ticket</span>(vehicle, spot.<span class="fn">get</span>());
+                activeTickets.<span class="fn">put</span>(vehicle.<span class="fn">getLicensePlate</span>(), ticket);
+                System.out.<span class="fn">println</span>(<span class="st">"✅ Parked: "</span> + ticket);
+                <span class="kw">return</span> ticket;
+            }
+        }
+        <span class="kw">throw new</span> <span class="cl">IllegalStateException</span>(<span class="st">"No available spot for "</span> + vehicle);
+    }
+
+    <span class="cm">// Unpark a vehicle and get fee</span>
+    <span class="kw">public double</span> <span class="fn">unpark</span>(<span class="ty">String</span> ticketId) {
+        <span class="cl">Ticket</span> ticket = activeTickets.<span class="fn">values</span>().<span class="fn">stream</span>()
+                .<span class="fn">filter</span>(t -> t.<span class="fn">getTicketId</span>().<span class="fn">equals</span>(ticketId))
+                .<span class="fn">findFirst</span>()
+                .<span class="fn">orElseThrow</span>(() -> <span class="kw">new</span> <span class="cl">IllegalArgumentException</span>(<span class="st">"Ticket not found"</span>));
+
+        <span class="ty">double</span> fee = ticket.<span class="fn">calculateFee</span>();
+        ticket.<span class="fn">getSpot</span>().<span class="fn">vacate</span>();
+        activeTickets.<span class="fn">remove</span>(ticket.<span class="fn">getSpot</span>().<span class="fn">getCurrentVehicle</span>() != <span class="kw">null</span>
+                ? ticket.<span class="fn">getSpot</span>().<span class="fn">getCurrentVehicle</span>().<span class="fn">getLicensePlate</span>()
+                : <span class="st">""</span>);
+        System.out.<span class="fn">printf</span>(<span class="st">"🚗 Unparked. Fee: ₹%.2f%n"</span>, fee);
+        <span class="kw">return</span> fee;
+    }
+
+    <span class="kw">public void</span> <span class="fn">displayStatus</span>() {
+        System.out.<span class="fn">println</span>(<span class="st">"\n📊 Parking Lot: "</span> + name);
+        floors.<span class="fn">forEach</span>(f -> System.out.<span class="fn">println</span>(
+            <span class="st">"  Floor "</span> + f.floorNumber + <span class="st">": "</span> + f.<span class="fn">getAvailableCount</span>() + <span class="st">" spots free"</span>
+        ));
+    }
+
+    <span class="cm">// ─── DEMO ──────────────────────────────────────</span>
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="ty">String</span>[] args) {
+        <span class="cl">ParkingLot</span> lot = <span class="kw">new</span> <span class="cl">ParkingLot</span>(<span class="st">"City Center Parking"</span>, <span class="nm">3</span>);
+
+        <span class="cl">Vehicle</span> car1  = <span class="kw">new</span> <span class="cl">Vehicle</span>(<span class="st">"DL01AB1234"</span>, <span class="cl">VehicleType</span>.CAR);
+        <span class="cl">Vehicle</span> bike1 = <span class="kw">new</span> <span class="cl">Vehicle</span>(<span class="st">"DL02CD5678"</span>, <span class="cl">VehicleType</span>.BIKE);
+        <span class="cl">Vehicle</span> truck = <span class="kw">new</span> <span class="cl">Vehicle</span>(<span class="st">"HR05EF9999"</span>, <span class="cl">VehicleType</span>.TRUCK);
+
+        <span class="cl">Ticket</span> t1 = lot.<span class="fn">park</span>(car1);
+        <span class="cl">Ticket</span> t2 = lot.<span class="fn">park</span>(bike1);
+        <span class="cl">Ticket</span> t3 = lot.<span class="fn">park</span>(truck);
+
+        lot.<span class="fn">displayStatus</span>();
+    }
+}</code></pre>
+      </div>
+
+      <div class="output-box">
+        <div class="output-label">📤 Sample Output</div>
+        <div class="output-text">✅ Parked: Ticket[TKT-1001] Vehicle:CAR[DL01AB1234] Spot:F1-M0 Entry:10:30:15
+✅ Parked: Ticket[TKT-1002] Vehicle:BIKE[DL02CD5678] Spot:F1-S0 Entry:10:30:15
+✅ Parked: Ticket[TKT-1003] Vehicle:TRUCK[HR05EF9999] Spot:F1-L0 Entry:10:30:15
+
+📊 Parking Lot: City Center Parking
+  Floor 1: 22 spots free
+  Floor 2: 25 spots free
+  Floor 3: 25 spots free</div>
+      </div>
+
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Interview Follow-up Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: How would you make this thread-safe for concurrent parking requests?</div>
+          <div class="a">A: Use <strong>synchronized</strong> on the <code>park()</code> and <code>unpark()</code> methods, or use <strong>ReentrantLock</strong> per floor. <code>activeTickets</code> should be a <code>ConcurrentHashMap</code>. For better performance, lock per floor rather than the entire lot.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: Why use inner classes instead of separate files?</div>
+          <div class="a">A: <code>Vehicle</code>, <code>ParkingSpot</code>, <code>Ticket</code>, and <code>ParkingFloor</code> are <strong>domain objects tightly coupled</strong> to <code>ParkingLot</code>. Making them inner classes (static) provides logical grouping, better encapsulation, and prevents these classes from being misused in other contexts.</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 7 — RELATIONS
+    ════════════════════════════════════ -->
+    <section class="section" id="relations">
+      <div class="section-header">
+        <div class="section-icon icon-yellow">🔗</div>
+        <div class="section-meta">
+          <div class="section-label">OOP Relationships</div>
+          <div class="section-title">Composition vs Aggregation vs Association</div>
+          <div class="section-desc">The three ways objects can relate to each other in OOP</div>
+        </div>
+      </div>
+
+      <!-- Quick Comparison Table -->
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Aspect</th>
+            <th>Association</th>
+            <th>Aggregation</th>
+            <th>Composition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Definition</strong></td>
+            <td>Objects know about each other</td>
+            <td>HAS-A (weak ownership)</td>
+            <td>HAS-A (strong ownership)</td>
+          </tr>
+          <tr>
+            <td><strong>Ownership</strong></td>
+            <td>No ownership</td>
+            <td>Child can exist independently</td>
+            <td>Child CANNOT exist without parent</td>
+          </tr>
+          <tr>
+            <td><strong>Lifecycle</strong></td>
+            <td>Independent</td>
+            <td>Independent</td>
+            <td>Child dies with parent</td>
+          </tr>
+          <tr class="highlight-row">
+            <td><strong>Real Example</strong></td>
+            <td>Teacher ↔ Student</td>
+            <td>Department — Professors</td>
+            <td>House — Rooms</td>
+          </tr>
+          <tr>
+            <td><strong>UML</strong></td>
+            <td>Simple line →</td>
+            <td>Hollow diamond ◇→</td>
+            <td>Filled diamond ◆→</td>
+          </tr>
+          <tr>
+            <td><strong>Java Code</strong></td>
+            <td>Method parameter / return</td>
+            <td>Field (set via constructor/setter)</td>
+            <td>Field (created inside constructor)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Diagrams -->
+      <div class="card-grid" style="margin-top:20px">
+        <div class="rel-diagram">
+          <h4 style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">Association</h4>
+          <div class="rel-boxes">
+            <div class="rel-box main-box">Teacher</div>
+            <div class="rel-arrow">→ uses →</div>
+            <div class="rel-box">Student</div>
+          </div>
+          <div class="rel-label" style="margin-top:10px;font-size:12px">Both live independently</div>
+        </div>
+        <div class="rel-diagram">
+          <h4 style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">Aggregation (Weak HAS-A)</h4>
+          <div class="rel-boxes">
+            <div class="rel-box main-box">Department</div>
+            <div class="rel-arrow">◇→</div>
+            <div class="rel-box">Professor</div>
+          </div>
+          <div class="rel-label" style="margin-top:10px;font-size:12px">Professor survives without Department</div>
+        </div>
+        <div class="rel-diagram">
+          <h4 style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">Composition (Strong HAS-A)</h4>
+          <div class="rel-boxes">
+            <div class="rel-box main-box">House</div>
+            <div class="rel-arrow">◆→</div>
+            <div class="rel-box">Room</div>
+          </div>
+          <div class="rel-label" style="margin-top:10px;font-size:12px">Room cannot exist without House</div>
+        </div>
+      </div>
+
+      <!-- Code Examples -->
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">Relationships.java — Hands-On Code</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="cm">// ═══════════════════════════════════════════════
+   1. ASSOCIATION — "uses-a" relationship
+   Objects are aware of each other, no ownership
+═══════════════════════════════════════════════ </span>
+<span class="kw">class</span> <span class="cl">Teacher</span> {
+    <span class="kw">private</span> <span class="ty">String</span> name;
+
+    <span class="kw">public</span> <span class="fn">Teacher</span>(<span class="ty">String</span> name) { <span class="kw">this</span>.name = name; }
+
+    <span class="cm">// Teacher uses Student (parameter) — association</span>
+    <span class="kw">public void</span> <span class="fn">teach</span>(<span class="cl">Student</span> student) {
+        System.out.<span class="fn">println</span>(name + <span class="st">" is teaching "</span> + student.<span class="fn">getName</span>());
+    }
+}
+
+<span class="kw">class</span> <span class="cl">Student</span> {
+    <span class="kw">private</span> <span class="ty">String</span> name;
+    <span class="kw">public</span> <span class="fn">Student</span>(<span class="ty">String</span> n) { name = n; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getName</span>() { <span class="kw">return</span> name; }
+}
+
+<span class="cm">// ═══════════════════════════════════════════════
+   2. AGGREGATION — "has-a" weak ownership
+   Child can exist without parent
+═══════════════════════════════════════════════ </span>
+<span class="kw">class</span> <span class="cl">Professor</span> {
+    <span class="kw">private</span> <span class="ty">String</span> name;
+    <span class="kw">public</span> <span class="fn">Professor</span>(<span class="ty">String</span> n) { name = n; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getName</span>() { <span class="kw">return</span> name; }
+}
+
+<span class="kw">class</span> <span class="cl">Department</span> {
+    <span class="kw">private</span> <span class="ty">String</span>           deptName;
+    <span class="kw">private</span> <span class="cl">List</span>&lt;<span class="cl">Professor</span>&gt; professors; <span class="cm">// passed in, not created here</span>
+
+    <span class="cm">// Professors are PASSED IN — they exist independently</span>
+    <span class="kw">public</span> <span class="fn">Department</span>(<span class="ty">String</span> name, <span class="cl">List</span>&lt;<span class="cl">Professor</span>&gt; profs) {
+        <span class="kw">this</span>.deptName   = name;
+        <span class="kw">this</span>.professors = profs; <span class="cm">// Aggregation: shared reference</span>
+    }
+    <span class="cm">// If Department is deleted, Professors still exist elsewhere!</span>
+}
+
+<span class="cm">// ═══════════════════════════════════════════════
+   3. COMPOSITION — "has-a" STRONG ownership
+   Child CANNOT exist without parent
+═══════════════════════════════════════════════ </span>
+<span class="kw">class</span> <span class="cl">Room</span> {
+    <span class="kw">private</span> <span class="ty">String</span> type;
+    <span class="kw">public</span> <span class="fn">Room</span>(<span class="ty">String</span> type) { <span class="kw">this</span>.type = type; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getType</span>() { <span class="kw">return</span> type; }
+}
+
+<span class="kw">class</span> <span class="cl">House</span> {
+    <span class="kw">private final</span> <span class="cl">Room</span> bedroom;   <span class="cm">// Room CREATED inside House</span>
+    <span class="kw">private final</span> <span class="cl">Room</span> kitchen;
+    <span class="kw">private final</span> <span class="cl">Room</span> bathroom;
+
+    <span class="kw">public</span> <span class="fn">House</span>() {
+        <span class="cm">// Rooms are CREATED here — they exist ONLY within this House</span>
+        <span class="kw">this</span>.bedroom  = <span class="kw">new</span> <span class="cl">Room</span>(<span class="st">"Bedroom"</span>);
+        <span class="kw">this</span>.kitchen  = <span class="kw">new</span> <span class="cl">Room</span>(<span class="st">"Kitchen"</span>);
+        <span class="kw">this</span>.bathroom = <span class="kw">new</span> <span class="cl">Room</span>(<span class="st">"Bathroom"</span>);
+        <span class="cm">// House demolished → Rooms are gone too!</span>
+    }
+
+    <span class="kw">public void</span> <span class="fn">describe</span>() {
+        System.out.<span class="fn">println</span>(<span class="st">"House has: "</span>
+            + bedroom.<span class="fn">getType</span>() + <span class="st">", "</span>
+            + kitchen.<span class="fn">getType</span>() + <span class="st">", "</span>
+            + bathroom.<span class="fn">getType</span>());
+    }
+}
+
+<span class="cm">// ─── Usage Demo ────────────────────────────────</span>
+<span class="kw">public class</span> <span class="cl">Main</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="ty">String</span>[] args) {
+
+        <span class="cm">// Association — temporary use</span>
+        <span class="cl">Teacher</span> t = <span class="kw">new</span> <span class="cl">Teacher</span>(<span class="st">"Mr. Sharma"</span>);
+        <span class="cl">Student</span> s = <span class="kw">new</span> <span class="cl">Student</span>(<span class="st">"Aditya"</span>);
+        t.<span class="fn">teach</span>(s);  <span class="cm">// Both exist independently</span>
+
+        <span class="cm">// Aggregation — shared ownership</span>
+        <span class="cl">Professor</span> p1 = <span class="kw">new</span> <span class="cl">Professor</span>(<span class="st">"Dr. Mehta"</span>);
+        <span class="cl">Professor</span> p2 = <span class="kw">new</span> <span class="cl">Professor</span>(<span class="st">"Dr. Khan"</span>);
+        <span class="cl">Department</span> dept = <span class="kw">new</span> <span class="cl">Department</span>(<span class="st">"CS"</span>, <span class="cl">List</span>.<span class="fn">of</span>(p1, p2));
+        <span class="cm">// p1, p2 still accessible even without dept</span>
+
+        <span class="cm">// Composition — strong ownership</span>
+        <span class="cl">House</span> house = <span class="kw">new</span> <span class="cl">House</span>();
+        house.<span class="fn">describe</span>();
+        <span class="cm">// Rooms are not accessible from outside — fully owned by House</span>
+    }
+}</code></pre>
+      </div>
+
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Interview Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: What is the key technical difference between Aggregation and Composition in code?</div>
+          <div class="a">A: In <strong>Aggregation</strong>, the child object is <em>passed as a parameter</em> (constructed outside) — so it can exist independently. In <strong>Composition</strong>, the child is <em>created inside the parent's constructor</em> (<code>new Room()</code> inside <code>House</code>) — so it exists only within the parent's scope and is garbage collected together.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: IS-A vs HAS-A?</div>
+          <div class="a">A: <strong>IS-A = Inheritance</strong> — Dog IS-A Animal (<code>class Dog extends Animal</code>). <strong>HAS-A = Composition/Aggregation</strong> — Car HAS-A Engine (<code>class Car { Engine e; }</code>). Rule: <em>"Prefer HAS-A over IS-A"</em> because inheritance creates tight coupling, while composition is more flexible.</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ═══════════════════════════════════
+         SECTION 8 — IMMUTABLE CLASS
+    ════════════════════════════════════ -->
+    <section class="section" id="immutable">
+      <div class="section-header">
+        <div class="section-icon icon-red">🔒</div>
+        <div class="section-meta">
+          <div class="section-label">Java Design</div>
+          <div class="section-title">Immutable Class</div>
+          <div class="section-desc">Create objects whose state cannot change after construction — thread-safe by design</div>
+        </div>
+      </div>
+
+      <!-- 5 Rules -->
+      <h3 style="color:var(--text);font-size:16px;margin-bottom:14px">📜 5 Rules to Create Immutable Class</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-left"><div class="step-num">1</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Declare class as <code>final</code></div>
+            <div class="step-body">Prevents subclassing which could override methods and break immutability</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">2</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Make all fields <code>private final</code></div>
+            <div class="step-body"><code>private</code> prevents external access, <code>final</code> prevents reassignment after construction</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">3</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">No setters — only getters</div>
+            <div class="step-body">Setters would allow mutation after creation. Only provide read-only access</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">4</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Initialize all fields in constructor</div>
+            <div class="step-body">All values must be set at construction time — no lazy initialization</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">5</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Deep copy mutable objects (e.g., List, Date)</div>
+            <div class="step-body">If a field is a mutable object (List, Date), return a copy — not the original reference. Otherwise the object can be mutated externally!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <span class="code-filename">ImmutableEmployee.java — Production-Grade Immutable Class</span>
+          <span class="code-lang">Java</span>
+        </div>
+        <pre><code><span class="kw">import</span> java.util.*;
+
+<span class="cm">// Rule 1: final class — prevents subclassing</span>
+<span class="kw">public final class</span> <span class="cl">ImmutableEmployee</span> {
+
+    <span class="cm">// Rule 2: private final fields</span>
+    <span class="kw">private final</span> <span class="ty">int</span>          id;
+    <span class="kw">private final</span> <span class="ty">String</span>       name;
+    <span class="kw">private final</span> <span class="ty">double</span>       salary;
+    <span class="kw">private final</span> <span class="cl">List</span>&lt;<span class="ty">String</span>&gt; skills;    <span class="cm">// mutable! — needs deep copy</span>
+    <span class="kw">private final</span> <span class="cl">Date</span>         joiningDate; <span class="cm">// mutable! — needs deep copy</span>
+
+    <span class="cm">// Rule 4: All fields initialized in constructor</span>
+    <span class="kw">public</span> <span class="fn">ImmutableEmployee</span>(<span class="ty">int</span> id, <span class="ty">String</span> name, <span class="ty">double</span> salary,
+                              <span class="cl">List</span>&lt;<span class="ty">String</span>&gt; skills, <span class="cl">Date</span> joiningDate) {
+        <span class="kw">this</span>.id     = id;
+        <span class="kw">this</span>.name   = name;
+        <span class="kw">this</span>.salary = salary;
+
+        <span class="cm">// Rule 5: Deep copy of mutable objects</span>
+        <span class="kw">this</span>.skills      = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(skills);   <span class="cm">// defensive copy</span>
+        <span class="kw">this</span>.joiningDate = <span class="kw">new</span> <span class="cl">Date</span>(joiningDate.<span class="fn">getTime</span>()); <span class="cm">// defensive copy</span>
+    }
+
+    <span class="cm">// Rule 3: Only getters — NO setters</span>
+    <span class="kw">public int</span>    <span class="fn">getId</span>()     { <span class="kw">return</span> id; }
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">getName</span>()  { <span class="kw">return</span> name; }
+    <span class="kw">public</span> <span class="ty">double</span> <span class="fn">getSalary</span>() { <span class="kw">return</span> salary; }
+
+    <span class="cm">// Rule 5: Return COPY of mutable fields</span>
+    <span class="kw">public</span> <span class="cl">List</span>&lt;<span class="ty">String</span>&gt; <span class="fn">getSkills</span>() {
+        <span class="kw">return</span> <span class="cl">Collections</span>.<span class="fn">unmodifiableList</span>(skills); <span class="cm">// read-only view</span>
+    }
+
+    <span class="kw">public</span> <span class="cl">Date</span> <span class="fn">getJoiningDate</span>() {
+        <span class="kw">return new</span> <span class="cl">Date</span>(joiningDate.<span class="fn">getTime</span>()); <span class="cm">// copy, not original</span>
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">toString</span>() {
+        <span class="kw">return</span> <span class="st">"Employee{id="</span>+id+<span class="st">", name='"</span>+name+<span class="st">"', salary="</span>+salary+<span class="st">"}"</span>;
+    }
+}
+
+<span class="cm">// ─── Proof of immutability ─────────────────────</span>
+<span class="kw">public class</span> <span class="cl">Demo</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="ty">String</span>[] args) {
+        <span class="cl">List</span>&lt;<span class="ty">String</span>&gt; skills = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">List</span>.<span class="fn">of</span>(<span class="st">"Java"</span>, <span class="st">"Spring"</span>));
+        <span class="cl">Date</span> date = <span class="kw">new</span> <span class="cl">Date</span>();
+
+        <span class="cl">ImmutableEmployee</span> emp = <span class="kw">new</span> <span class="cl">ImmutableEmployee</span>(<span class="nm">1</span>, <span class="st">"Alice"</span>, <span class="nm">60000</span>, skills, date);
+        System.out.<span class="fn">println</span>(emp.<span class="fn">getSkills</span>()); <span class="cm">// [Java, Spring]</span>
+
+        <span class="cm">// Try to modify original list — emp should NOT be affected</span>
+        skills.<span class="fn">add</span>(<span class="st">"Python"</span>);
+        System.out.<span class="fn">println</span>(emp.<span class="fn">getSkills</span>()); <span class="cm">// [Java, Spring] — unchanged! ✅</span>
+
+        <span class="cm">// Try to modify returned date</span>
+        emp.<span class="fn">getJoiningDate</span>().<span class="fn">setTime</span>(<span class="nm">0</span>); <span class="cm">// modifying returned copy</span>
+        System.out.<span class="fn">println</span>(emp.<span class="fn">getJoiningDate</span>()); <span class="cm">// original date unchanged! ✅</span>
+
+        <span class="cm">// emp is completely immutable — thread-safe!</span>
+    }
+}</code></pre>
+      </div>
+
+      <!-- String as Immutable -->
+      <div class="card" style="background:rgba(88,166,255,.04);border-color:rgba(88,166,255,.2)">
+        <h4 style="color:var(--blue);font-size:14px;margin-bottom:10px">☕ Why is String Immutable in Java?</h4>
+        <div class="card-grid" style="margin:0">
+          <div class="info-card border-blue" style="background:transparent;border:none;padding:0">
+            <ul>
+              <li><strong>Security</strong> — Class loading uses String for class names. Mutability would be a security risk</li>
+              <li><strong>String Pool</strong> — Multiple references can point to same object safely</li>
+              <li><strong>Thread Safety</strong> — Immutable objects can be shared without synchronization</li>
+              <li><strong>Hashcode Caching</strong> — hashCode is computed once and cached (used in HashMap)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="interview-box">
+        <div class="interview-box-title">🎤 Interview Questions</div>
+        <div class="interview-q">
+          <div class="q">Q: What is the main risk if you forget Rule 5 (deep copy)?</div>
+          <div class="a">A: If you store a direct reference to a mutable <code>List</code> or <code>Date</code>, the caller can <strong>mutate your internal state</strong> after creation. For example: <code>List&lt;String&gt; skills = new ArrayList&lt;&gt;()</code>, if you store it directly — <code>skills.add("hacked")</code> outside would change the employee's skills! This is called <strong>"mutable reference leakage"</strong>.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: Are Java Records immutable?</div>
+          <div class="a">A: Java <strong>Records</strong> (Java 16+) are <em>shallowly immutable</em> — fields are final and only getters are generated. But if a record holds a mutable object (like <code>List</code>), that object can still be mutated. For deep immutability in Records, you still need defensive copies.</div>
+        </div>
+        <div class="interview-q">
+          <div class="q">Q: Why is immutability important in microservices?</div>
+          <div class="a">A: In Spring Boot, <strong>DTO objects</strong> passed between services should be immutable — this prevents accidental mutation during processing, simplifies debugging, and is naturally thread-safe in async processing pipelines.</div>
+        </div>
+      </div>
+
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer style="
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:24px;text-align:center;font-size:13px;color:var(--muted);
+">
+  <div style="max-width:800px;margin:0 auto">
+    <div style="font-size:18px;margin-bottom:8px">🏗️</div>
+    <div><strong style="color:var(--text)">Part 10 — Design Patterns</strong> · Java Interview Notes Series</div>
+    <div style="margin-top:8px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+      <span>✅ Singleton (Eager/Lazy/DCL/Enum/Break)</span>
+      <span>✅ Factory Pattern</span>
+      <span>✅ Strategy Pattern</span>
+      <span>✅ Builder Pattern</span>
+      <span>✅ Decorator Pattern</span>
+      <span>✅ Parking Lot Design</span>
+      <span>✅ Composition vs Aggregation</span>
+      <span>✅ Immutable Class</span>
+    </div>
+    <div style="margin-top:16px;color:#484f58;font-size:12px">
+      Next → Part 11: SOLID Principles
+    </div>
+  </div>
+</footer>
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>x`

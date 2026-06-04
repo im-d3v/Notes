@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF #15 — AlgoSensei Cheat Sheet: All 28 Patterns</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #1a1030 40%, #0d1117 100%); }
+
+    /* ─── Cheat-sheet density helpers ─── */
+    .pattern-table-wrap { overflow-x: auto; }
+    .pattern-table-wrap table td,
+    .pattern-table-wrap table th { font-size: 12px; padding: 8px 10px; vertical-align: top; }
+    .pattern-table-wrap table td:first-child { font-weight: 700; color: var(--accent-cyan); white-space: nowrap; }
+
+    .complexity-table td, .complexity-table th { font-size: 12px; padding: 7px 10px; }
+    .complexity-table td:nth-child(2) { color: var(--accent-green); font-family: monospace; }
+    .complexity-table td:nth-child(3) { color: var(--accent-blue); font-family: monospace; }
+
+    /* tier badge */
+    .tier { display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 10px; font-weight: 700; letter-spacing: .4px; }
+    .tier-1 { background: rgba(63,185,80,.18); color: #3fb950; border: 1px solid #3fb95044; }
+    .tier-2 { background: rgba(88,166,255,.18); color: #58a6ff; border: 1px solid #58a6ff44; }
+    .tier-3 { background: rgba(188,140,255,.18); color: #bc8cff; border: 1px solid #bc8cff44; }
+
+    /* trap numbered list */
+    .trap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+    .trap-item { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0;
+                 border-bottom: 1px solid #21262d; font-size: 12.5px; line-height: 1.5; }
+    .trap-num  { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+                 background: rgba(248,81,73,.18); color: #f85149; font-size: 10px;
+                 font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+    /* checklist steps */
+    .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .check-item { background: #1c2128; border: 1px solid #30363d; border-radius: 8px;
+                  padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+    .check-num  { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+                  background: linear-gradient(135deg,#58a6ff,#bc8cff);
+                  color: #fff; font-size: 12px; font-weight: 700;
+                  display: flex; align-items: center; justify-content: center; }
+    .check-body strong { display: block; color: #e6edf3; font-size: 13px; margin-bottom: 3px; }
+    .check-body span   { color: #8b949e; font-size: 11.5px; }
+
+    /* pattern pairs */
+    .pair-wrap  { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
+    .pair-left  { background: #161b22; padding: 16px; border-right: 1px solid #30363d; }
+    .pair-right { background: #1c2128; padding: 16px; }
+    .pair-left h5, .pair-right h5 { margin-bottom: 8px !important; text-transform: none !important; }
+    .pair-divider { text-align: center; padding: 8px; background: #21262d; color: #bc8cff;
+                    font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+    .pair-badge { display: inline-block; background: rgba(57,213,211,.15); color: #39d5d3;
+                  border: 1px solid #39d5d344; border-radius: 6px; padding: 2px 8px;
+                  font-size: 10px; font-weight: 700; margin-bottom: 6px; }
+    .pair-list li { font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+    .pair-list li strong { color: #e6edf3; }
+
+    /* flowchart */
+    .flow-node { display: inline-flex; align-items: center; justify-content: center;
+                 padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 600;
+                 white-space: nowrap; cursor: default; transition: transform .15s, box-shadow .15s; }
+    .flow-node:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+    .fn-q  { background: rgba(88,166,255,.18); color: #58a6ff; border: 1px solid #58a6ff55; }
+    .fn-a  { background: rgba(63,185,80,.18);  color: #3fb950; border: 1px solid #3fb95055; }
+    .fn-w  { background: rgba(210,153,34,.18); color: #d29922; border: 1px solid #d2992255; }
+    .fn-p  { background: rgba(188,140,255,.18);color: #bc8cff; border: 1px solid #bc8cff55; }
+    .fn-r  { background: rgba(248,81,73,.18);  color: #f85149; border: 1px solid #f8514955; }
+
+    .flow-row  { display: flex; align-items: center; gap: 8px; margin: 5px 0; flex-wrap: wrap; }
+    .flow-arr  { color: #58a6ff; font-size: 14px; }
+    .flow-yes  { color: #3fb950; font-size: 10px; font-weight: 700; }
+    .flow-no   { color: #f85149; font-size: 10px; font-weight: 700; }
+    .flow-indent { margin-left: 32px; }
+    .flow-vline { width: 2px; height: 14px; background: #30363d; margin-left: 20px; }
+
+    /* lc link styling */
+    .lc-link { color: var(--accent-blue); text-decoration: none; font-size: 11px; }
+    .lc-link:hover { text-decoration: underline; }
+    .diff-e { color: #3fb950; }
+    .diff-m { color: #d29922; }
+    .diff-h { color: #f85149; }
+
+    /* section density */
+    .section { padding: 32px 40px; }
+    @media(max-width: 768px) {
+      .trap-grid, .check-grid, .pair-wrap { grid-template-columns: 1fr; }
+      .section { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- Hamburger -->
+<button id="hamburger" aria-label="Toggle menu">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <rect y="3"  width="20" height="2" rx="1" fill="currentColor"/>
+    <rect y="9"  width="20" height="2" rx="1" fill="currentColor"/>
+    <rect y="15" width="20" height="2" rx="1" fill="currentColor"/>
+  </svg>
+</button>
+
+<div id="sidebar-overlay"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🗺️</div>
+    <div>
+      <div class="sidebar-title">AlgoSensei</div>
+      <div class="sidebar-subtitle">PDF #15 — Cheat Sheet</div>
+    </div>
+  </div>
+
+  <div style="padding: 10px 16px 6px;">
+    <a href="../index.html" class="toc-link" style="color:var(--accent-orange);font-weight:700;">
+      ← Home
+    </a>
+  </div>
+
+  <div style="padding: 4px 16px 8px; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+    Sections
+  </div>
+
+  <a href="#section-master-table"    class="toc-link">① Master Pattern Table</a>
+  <a href="#section-complexity"      class="toc-link">② Complexity Reference</a>
+  <a href="#section-flowchart"       class="toc-link">③ Decision Flowchart</a>
+  <a href="#section-traps"           class="toc-link">④ 30 Common Traps</a>
+  <a href="#section-checklist"       class="toc-link">⑤ Interview Checklist</a>
+  <a href="#section-pairs"           class="toc-link">⑥ Pattern Pairs</a>
+
+  <div style="padding: 16px; margin-top: auto; border-top: 1px solid #21262d;">
+    <div style="font-size: 10px; color: var(--text-muted);">AlgoSensei Series</div>
+    <div style="font-size: 11px; color: var(--accent-purple); margin-top: 4px;">PDF #15 of 15</div>
+  </div>
+</nav>
+
+<!-- Main -->
+<main id="main">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">PDF #15 · AlgoSensei Series</div>
+      <h1>🗺️ The AlgoSensei Cheat Sheet</h1>
+      <p class="hero-subtitle">All 28 patterns at a glance. Dense. Clean. Every word earns its place.<br/>
+      Open this 5 minutes before the interview. Run the ritual. Win.</p>
+      <div class="hero-badges">
+        <span class="tag tag-purple">28 Patterns</span>
+        <span class="tag tag-blue">Complexity Tables</span>
+        <span class="tag tag-green">Decision Flow</span>
+        <span class="tag tag-red">30 Traps</span>
+        <span class="tag tag-orange">Interview Ritual</span>
+        <span class="tag tag-cyan">Pattern Pairs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  SECTION 1 — MASTER PATTERN TABLE                         -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>Master Pattern Reference Table</h2>
+      <p>Every pattern. One row. Recognize → Operate → Template → Problems.</p>
+    </div>
+  </div>
+
+  <div class="section" id="section-master-table">
+    <h3>📋 All 28 Patterns — Quick Reference</h3>
+
+    <div class="callout info" style="margin-bottom:18px;">
+      <div class="icon">📖</div>
+      <div class="body">
+        <strong>Tier Legend</strong>
+        <p>
+          <span class="tier tier-1">T1 Foundational</span>&nbsp; Core building blocks — appear in 80% of problems. &nbsp;
+          <span class="tier tier-2">T2 Intermediate</span>&nbsp; Require pattern combination instinct. &nbsp;
+          <span class="tier tier-3">T3 Advanced</span>&nbsp; Deep specialization — high-signal in hard problems.
+        </p>
+      </div>
+    </div>
+
+    <div class="pattern-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Pattern</th><th>Tier</th>
+            <th>Recognize When…</th>
+            <th>Core Operation</th>
+            <th>Key Template Signature</th>
+            <th>Top 3 Problems</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- T1 FOUNDATIONAL -->
+          <tr>
+            <td style="color:#6e7681;">01</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Two Pointers</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Sorted array, pair/triplet sum, in-place removal</td>
+            <td>Shrink search space from both ends</td>
+            <td><code style="font-size:11px;">left=0, right=n-1; while(left&lt;right)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#167</a><br/>
+              <a href="https://leetcode.com/problems/3sum/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#15</a><br/>
+              <a href="https://leetcode.com/problems/container-with-most-water/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#11</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">02</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Sliding Window</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Contiguous subarray/substring, min/max/count window</td>
+            <td>Expand right, shrink left on violation</td>
+            <td><code style="font-size:11px;">Map+freq, while(invalid) left++</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/longest-substring-without-repeating-characters/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#3</a><br/>
+              <a href="https://leetcode.com/problems/minimum-window-substring/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#76</a><br/>
+              <a href="https://leetcode.com/problems/maximum-subarray/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#438</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">03</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Prefix Sum</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Range sum queries, subarray sum = k</td>
+            <td>Build prefix array, query in O(1)</td>
+            <td><code style="font-size:11px;">pre[i]=pre[i-1]+a[i]; map.get(sum-k)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/subarray-sum-equals-k/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#560</a><br/>
+              <a href="https://leetcode.com/problems/range-sum-query-immutable/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#303</a><br/>
+              <a href="https://leetcode.com/problems/product-of-array-except-self/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#238</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">04</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Fast & Slow Pointers</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Cycle detection, middle of list, duplicate in array</td>
+            <td>Slow moves 1x, fast moves 2x — they meet in cycles</td>
+            <td><code style="font-size:11px;">slow=slow.next; fast=fast.next.next</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/linked-list-cycle/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#141</a><br/>
+              <a href="https://leetcode.com/problems/find-the-duplicate-number/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#287</a><br/>
+              <a href="https://leetcode.com/problems/linked-list-cycle-ii/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#142</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">05</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Binary Search</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Sorted input, "find position/boundary", answer is monotonic</td>
+            <td>Eliminate half the search space each step</td>
+            <td><code style="font-size:11px;">while(lo&lt;=hi) mid=(lo+hi)/2</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/search-in-rotated-sorted-array/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#33</a><br/>
+              <a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#153</a><br/>
+              <a href="https://leetcode.com/problems/median-of-two-sorted-arrays/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#4</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">06</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">BFS</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Shortest path in unweighted graph, level-order, spread</td>
+            <td>Queue — process level by level</td>
+            <td><code style="font-size:11px;">Queue&lt;Node&gt; q; while(!q.isEmpty())</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/binary-tree-level-order-traversal/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#102</a><br/>
+              <a href="https://leetcode.com/problems/number-of-islands/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#200</a><br/>
+              <a href="https://leetcode.com/problems/word-ladder/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#127</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">07</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">DFS</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Explore all paths, connected components, tree path</td>
+            <td>Recurse / stack — go deep before wide</td>
+            <td><code style="font-size:11px;">void dfs(node,visited){visit;for(n:adj)dfs(n)}</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/number-of-islands/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#200</a><br/>
+              <a href="https://leetcode.com/problems/path-sum-ii/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#113</a><br/>
+              <a href="https://leetcode.com/problems/pacific-atlantic-water-flow/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#417</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">08</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Merge Intervals</td>
+            <td><span class="tier tier-1">T1</span></td>
+            <td>Overlapping intervals, meeting rooms, schedule conflicts</td>
+            <td>Sort by start, merge if overlap</td>
+            <td><code style="font-size:11px;">sort by start; if(cur[0]&lt;=last[1]) merge</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/merge-intervals/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#56</a><br/>
+              <a href="https://leetcode.com/problems/insert-interval/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#57</a><br/>
+              <a href="https://leetcode.com/problems/non-overlapping-intervals/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#435</a>
+            </td>
+          </tr>
+          <!-- T2 INTERMEDIATE -->
+          <tr>
+            <td style="color:#6e7681;">09</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Backtracking</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Generate all combinations/permutations/subsets</td>
+            <td>Choose → Explore → Unchoose</td>
+            <td><code style="font-size:11px;">res.add(path); bt(i+1); path.remove(last)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/subsets/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#78</a><br/>
+              <a href="https://leetcode.com/problems/permutations/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#46</a><br/>
+              <a href="https://leetcode.com/problems/n-queens/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#51</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">10</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Top K Elements</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>K largest/smallest/frequent, streaming data</td>
+            <td>Min-heap of size K — discard when size > K</td>
+            <td><code style="font-size:11px;">PriorityQueue(K); if(pq.size()&gt;k) pq.poll()</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/kth-largest-element-in-an-array/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#215</a><br/>
+              <a href="https://leetcode.com/problems/top-k-frequent-elements/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#347</a><br/>
+              <a href="https://leetcode.com/problems/find-k-pairs-with-smallest-sums/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#373</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">11</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Two Heaps</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Median of stream, balance two groups</td>
+            <td>Max-heap for lower half, min-heap for upper half</td>
+            <td><code style="font-size:11px;">maxH(lower) + minH(upper); rebalance sizes</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/find-median-from-data-stream/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#295</a><br/>
+              <a href="https://leetcode.com/problems/sliding-window-median/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#480</a><br/>
+              <a href="https://leetcode.com/problems/ipo/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#502</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">12</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Monotonic Stack</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Next greater/smaller element, span, histogram</td>
+            <td>Maintain stack in increasing/decreasing order</td>
+            <td><code style="font-size:11px;">while(!st.empty()&&a[st.peek()]&lt;a[i]) pop</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/daily-temperatures/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#739</a><br/>
+              <a href="https://leetcode.com/problems/largest-rectangle-in-histogram/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#84</a><br/>
+              <a href="https://leetcode.com/problems/trapping-rain-water/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#42</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">13</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Topological Sort</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Task ordering, prerequisites, DAG dependency</td>
+            <td>BFS with in-degree count (Kahn's) or DFS post-order</td>
+            <td><code style="font-size:11px;">inDegree[]; queue(0-degree); process neighbors</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/course-schedule/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#207</a><br/>
+              <a href="https://leetcode.com/problems/course-schedule-ii/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#210</a><br/>
+              <a href="https://leetcode.com/problems/alien-dictionary/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#269</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">14</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Union Find</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Connected components, cycle detection, dynamic connectivity</td>
+            <td>find() with path compression + union() by rank</td>
+            <td><code style="font-size:11px;">parent[find(x)]=find(y); rank-based merge</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/number-of-provinces/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#547</a><br/>
+              <a href="https://leetcode.com/problems/redundant-connection/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#684</a><br/>
+              <a href="https://leetcode.com/problems/number-of-operations-to-make-network-connected/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#1319</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">15</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">K-way Merge</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Merge K sorted lists/arrays, find Kth smallest</td>
+            <td>Min-heap with (val, listIdx, elemIdx)</td>
+            <td><code style="font-size:11px;">heap.offer(head of each list); poll+push-next</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/merge-k-sorted-lists/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#23</a><br/>
+              <a href="https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#378</a><br/>
+              <a href="https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#632</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">16</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Cyclic Sort</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Array with values in range [1..n], find missing/duplicate</td>
+            <td>Place each number at its correct index position</td>
+            <td><code style="font-size:11px;">while(a[i]!=i+1) swap(a, i, a[i]-1)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/missing-number/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#268</a><br/>
+              <a href="https://leetcode.com/problems/find-all-duplicates-in-an-array/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#442</a><br/>
+              <a href="https://leetcode.com/problems/find-all-numbers-disappeared-in-an-array/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#448</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">17</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Modified Binary Search</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>BS on answer space, rotated array, bitonic, fractional</td>
+            <td>Determine which half satisfies the property</td>
+            <td><code style="font-size:11px;">if(feasible(mid)) hi=mid; else lo=mid+1</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#1011</a><br/>
+              <a href="https://leetcode.com/problems/koko-eating-bananas/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#875</a><br/>
+              <a href="https://leetcode.com/problems/split-array-largest-sum/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#410</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">18</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">In-Place LL Reversal</td>
+            <td><span class="tier tier-2">T2</span></td>
+            <td>Reverse a linked list or sublist without extra space</td>
+            <td>Rewire next pointers while traversing</td>
+            <td><code style="font-size:11px;">prev=null; next=cur.next; cur.next=prev; prev=cur</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/reverse-linked-list/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#206</a><br/>
+              <a href="https://leetcode.com/problems/reverse-linked-list-ii/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#92</a><br/>
+              <a href="https://leetcode.com/problems/reverse-nodes-in-k-group/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#25</a>
+            </td>
+          </tr>
+          <!-- T3 ADVANCED -->
+          <tr>
+            <td style="color:#6e7681;">19</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">DP — 0/1 Knapsack</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>"Include or exclude" choice, total capacity/budget, boolean</td>
+            <td>dp[i][w] = max(skip, take) — 2D table bottom-up</td>
+            <td><code style="font-size:11px;">dp[i][w]=max(dp[i-1][w], v+dp[i-1][w-wt])</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/partition-equal-subset-sum/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#416</a><br/>
+              <a href="https://leetcode.com/problems/target-sum/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#494</a><br/>
+              <a href="https://leetcode.com/problems/ones-and-zeroes/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#474</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">20</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">DP — Unbounded Knapsack</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Unlimited item use, coin change, cutting</td>
+            <td>Same item can repeat — iterate forward in capacity loop</td>
+            <td><code style="font-size:11px;">for w: dp[w]=min(dp[w], dp[w-coin]+1)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/coin-change/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#322</a><br/>
+              <a href="https://leetcode.com/problems/coin-change-ii/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#518</a><br/>
+              <a href="https://leetcode.com/problems/minimum-cost-for-tickets/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#983</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">21</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">DP — Fibonacci</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Current state depends on 1-2 prior states</td>
+            <td>Bottom-up: each cell = f(prev, prev-prev)</td>
+            <td><code style="font-size:11px;">dp[i]=dp[i-1]+dp[i-2] (or min/max variant)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/climbing-stairs/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#70</a><br/>
+              <a href="https://leetcode.com/problems/house-robber/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#198</a><br/>
+              <a href="https://leetcode.com/problems/decode-ways/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#91</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">22</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">DP — LCS</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Two sequences compared, longest common pattern</td>
+            <td>2D table: match = diag+1, else max(left, up)</td>
+            <td><code style="font-size:11px;">dp[i][j]=dp[i-1][j-1]+1 or max(dp[i-1][j],dp[i][j-1])</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/longest-common-subsequence/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#1143</a><br/>
+              <a href="https://leetcode.com/problems/edit-distance/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#72</a><br/>
+              <a href="https://leetcode.com/problems/longest-increasing-subsequence/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#300</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">23</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">DP — Palindrome</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Palindrome substring/subsequence, cut string into palindromes</td>
+            <td>Expand from center or dp[i][j] for substring [i..j]</td>
+            <td><code style="font-size:11px;">dp[i][j]=(s[i]==s[j])&&dp[i+1][j-1]</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/longest-palindromic-substring/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#5</a><br/>
+              <a href="https://leetcode.com/problems/longest-palindromic-subsequence/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#516</a><br/>
+              <a href="https://leetcode.com/problems/palindrome-partitioning-ii/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#132</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">24</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Greedy</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Locally optimal choice → globally optimal, provable by exchange argument</td>
+            <td>Sort + always pick the locally best option</td>
+            <td><code style="font-size:11px;">sort; for(item): if(feasible) greedyPick(item)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/jump-game/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#55</a><br/>
+              <a href="https://leetcode.com/problems/gas-station/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#134</a><br/>
+              <a href="https://leetcode.com/problems/task-scheduler/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#621</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">25</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Trie</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Prefix search, autocomplete, word dictionary, longest prefix</td>
+            <td>Tree where each node = one character; share prefixes</td>
+            <td><code style="font-size:11px;">Node{Node[26] ch; boolean end}; insert/search</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/implement-trie-prefix-tree/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#208</a><br/>
+              <a href="https://leetcode.com/problems/word-search-ii/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#212</a><br/>
+              <a href="https://leetcode.com/problems/design-add-and-search-words-data-structure/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#211</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">26</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Bitwise XOR</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Find single/missing/non-duplicate, swap without temp</td>
+            <td>XOR cancels pairs: a⊕a=0, a⊕0=a</td>
+            <td><code style="font-size:11px;">int x=0; for(int n:arr) x^=n; return x</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/single-number/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#136</a><br/>
+              <a href="https://leetcode.com/problems/missing-number/" target="_blank" class="lc-link"><span class="diff-e">🟢</span> LC#268</a><br/>
+              <a href="https://leetcode.com/problems/single-number-iii/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#260</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">27</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Segment Tree / BIT</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Range queries with updates, mutable prefix sums</td>
+            <td>BIT: point update, prefix query in O(log n)</td>
+            <td><code style="font-size:11px;">bit[i]+=v; for(i+=i&(-i)); query: i-=i&(-i)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/range-sum-query-mutable/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#307</a><br/>
+              <a href="https://leetcode.com/problems/count-of-smaller-numbers-after-self/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#315</a><br/>
+              <a href="https://leetcode.com/problems/reverse-pairs/" target="_blank" class="lc-link"><span class="diff-h">🔴</span> LC#493</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6e7681;">28</td>
+            <td style="color:var(--accent-cyan);font-weight:700;">Dijkstra / Weighted BFS</td>
+            <td><span class="tier tier-3">T3</span></td>
+            <td>Shortest path in weighted graph, min cost to reach</td>
+            <td>Min-heap on (cost, node); relax edges greedily</td>
+            <td><code style="font-size:11px;">PQ&lt;int[]&gt; on cost; dist[node]=min(dist,cost+w)</code></td>
+            <td>
+              <a href="https://leetcode.com/problems/network-delay-time/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#743</a><br/>
+              <a href="https://leetcode.com/problems/cheapest-flights-within-k-stops/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#787</a><br/>
+              <a href="https://leetcode.com/problems/path-with-minimum-effort/" target="_blank" class="lc-link"><span class="diff-m">🟡</span> LC#1631</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  SECTION 2 — COMPLEXITY                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">02</div>
+    <div>
+      <h2>Complexity Quick Reference</h2>
+      <p>Time · Space · Gotchas — one table.</p>
+    </div>
+  </div>
+
+  <div class="section" id="section-complexity">
+    <h3>⏱️ Pattern → Time → Space → Notes</h3>
+
+    <div class="table-wrapper complexity-table">
+      <table>
+        <thead>
+          <tr><th>Pattern</th><th>Time</th><th>Space</th><th>Critical Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Two Pointers</td><td>O(n)</td><td>O(1)</td><td>Requires sorted input. 3Sum = O(n²) due to outer loop.</td></tr>
+          <tr><td>Sliding Window</td><td>O(n)</td><td>O(k)</td><td>k = window size / charset. Each element enters & exits once.</td></tr>
+          <tr><td>Prefix Sum</td><td>O(n) build, O(1) query</td><td>O(n)</td><td>HashMap variant for sum=k is O(n) time O(n) space.</td></tr>
+          <tr><td>Fast & Slow</td><td>O(n)</td><td>O(1)</td><td>Cycle detection proof: Floyd's algorithm guarantees meeting.</td></tr>
+          <tr><td>Binary Search</td><td>O(log n)</td><td>O(1)</td><td>BS on answer space: O(n·log(maxVal)).</td></tr>
+          <tr><td>BFS</td><td>O(V+E)</td><td>O(V)</td><td>Queue can hold all nodes at widest level.</td></tr>
+          <tr><td>DFS</td><td>O(V+E)</td><td>O(H)</td><td>H = tree height. Worst case O(n) for skewed tree.</td></tr>
+          <tr><td>Merge Intervals</td><td>O(n log n)</td><td>O(n)</td><td>Sort dominates. Output list is the space cost.</td></tr>
+          <tr><td>Backtracking</td><td>O(2ⁿ) or O(n!)</td><td>O(n)</td><td>Pruning critical. Subsets=2ⁿ. Permutations=n!.</td></tr>
+          <tr><td>Top K Elements</td><td>O(n log k)</td><td>O(k)</td><td>Better than O(n log n) sort when k ≪ n.</td></tr>
+          <tr><td>Two Heaps</td><td>O(n log n)</td><td>O(n)</td><td>Each insert/rebalance = O(log n).</td></tr>
+          <tr><td>Monotonic Stack</td><td>O(n)</td><td>O(n)</td><td>Each element pushed/popped at most once.</td></tr>
+          <tr><td>Topological Sort</td><td>O(V+E)</td><td>O(V+E)</td><td>Adjacency list + in-degree array. Cycle → no valid order.</td></tr>
+          <tr><td>Union Find</td><td>O(α(n)) ≈ O(1)</td><td>O(n)</td><td>With path compression + union by rank. α = inverse Ackermann.</td></tr>
+          <tr><td>K-way Merge</td><td>O(n log k)</td><td>O(k)</td><td>k lists in heap. n = total elements.</td></tr>
+          <tr><td>Cyclic Sort</td><td>O(n)</td><td>O(1)</td><td>In-place. Each element moved at most once.</td></tr>
+          <tr><td>Modified BS</td><td>O(n log m)</td><td>O(1)</td><td>m = answer range. Feasibility check = O(n).</td></tr>
+          <tr><td>In-Place LL Rev</td><td>O(n)</td><td>O(1)</td><td>Three-pointer technique. No extra list needed.</td></tr>
+          <tr><td>DP 0/1 Knapsack</td><td>O(n·W)</td><td>O(W)</td><td>Space optimized: 1D array, iterate W backwards.</td></tr>
+          <tr><td>DP Unbounded KS</td><td>O(n·W)</td><td>O(W)</td><td>Same table but iterate W forwards (allow reuse).</td></tr>
+          <tr><td>DP Fibonacci</td><td>O(n)</td><td>O(1)</td><td>Two variables. No array needed.</td></tr>
+          <tr><td>DP LCS</td><td>O(m·n)</td><td>O(min(m,n))</td><td>Space optimized to 1 row if reading row by row.</td></tr>
+          <tr><td>DP Palindrome</td><td>O(n²)</td><td>O(n²) or O(1)</td><td>Expand-from-center: O(n²) time, O(1) space.</td></tr>
+          <tr><td>Greedy</td><td>O(n log n)</td><td>O(1)</td><td>Sort dominates. Greedy step itself is O(n).</td></tr>
+          <tr><td>Trie</td><td>O(L) per op</td><td>O(N·L)</td><td>L = word length. N = number of words.</td></tr>
+          <tr><td>Bitwise XOR</td><td>O(n)</td><td>O(1)</td><td>Constant extra space. XOR is associative + commutative.</td></tr>
+          <tr><td>Segment Tree / BIT</td><td>O(log n) update+query</td><td>O(n)</td><td>BIT is simpler code; Seg Tree handles more query types.</td></tr>
+          <tr><td>Dijkstra</td><td>O((V+E) log V)</td><td>O(V)</td><td>Fails on negative weights. Use Bellman-Ford instead.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  SECTION 3 — DECISION FLOWCHART                           -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">03</div>
+    <div>
+      <h2>Pattern Decision Flowchart</h2>
+      <p>Read the problem. Hit the first matching question. Follow the arrow. Trust it.</p>
+    </div>
+  </div>
+
+  <div class="section" id="section-flowchart">
+    <h3>🌊 The 90-Second Pattern Selector</h3>
+
+    <div class="card">
+      <div class="diagram" id="flowchart-diagram" style="font-size:12px;line-height:2.2;">
+
+<span class="d-purple" style="font-size:14px;font-weight:700;">▶ START — Read the Problem</span>
+
+<div class="flow-vline"></div>
+
+<div class="flow-row">
+  <span class="flow-node fn-q">Is input a linear array or string?</span>
+</div>
+<div class="flow-vline"></div>
+<div class="flow-row flow-indent">
+  <span class="flow-yes">YES →</span>
+  <span class="flow-node fn-q">Contiguous subarray/substring required?</span>
+</div>
+<div class="flow-row" style="margin-left:120px;">
+  <span class="flow-yes">YES →</span>
+  <span class="flow-node fn-a">🪟 Sliding Window</span>
+  <span style="color:#6e7681;font-size:11px;margin-left:12px;">fixed k → simple window; variable → shrink-on-violation</span>
+</div>
+<div class="flow-row" style="margin-left:120px;">
+  <span class="flow-no">NO  →</span>
+  <span class="flow-node fn-q">Sorted or pair/triplet sum?</span>
+</div>
+<div class="flow-row" style="margin-left:180px;">
+  <span class="flow-yes">YES →</span>
+  <span class="flow-node fn-a">👆 Two Pointers</span>
+  <span style="color:#6e7681;font-size:11px;margin-left:12px;">unsorted → sort first; 3Sum → outer loop + two pointers inside</span>
+</div>
+<div class="flow-row" style="margin-left:180px;">
+  <span class="flow-no">NO  →</span>
+  <span class="flow-node fn-q">Range sum queries / subarray sum = k?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">∑ Prefix Sum</span>
+</div>
+<div class="flow-row" style="margin-left:180px;">
+  <span style="color:#6e7681;font-size:11px;"></span>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <span class="flow-no">else →</span>
+  <span class="flow-node fn-q">Find position / answer is monotonic?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🔍 Binary Search on Answer</span>
+</div>
+<div class="flow-row" style="margin-left:180px;">
+  <span style="color:#6e7681;font-size:11px;"></span>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <span class="flow-no">else →</span>
+  <span class="flow-node fn-a">🔄 Cyclic Sort</span>
+  <span style="color:#6e7681;font-size:11px;margin-left:8px;">(values 1..n, find missing/duplicate)</span>
+</div>
+
+<div class="flow-vline" style="margin-left:0;margin-top:8px;"></div>
+
+<div class="flow-row">
+  <span class="flow-node fn-q">Is input a Linked List?</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-yes">YES →</span>
+  <span class="flow-node fn-q">Cycle / middle?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🐢🐇 Fast &amp; Slow Pointers</span>
+</div>
+<div class="flow-row" style="margin-left:120px;">
+  <span style="color:#6e7681;font-size:11px;"></span>
+  <span class="flow-no">else →</span>
+  <span class="flow-node fn-a">↩️ In-Place Reversal</span>
+  <span style="color:#6e7681;font-size:11px;margin-left:8px;">(reverse / reorder)</span>
+</div>
+
+<div class="flow-vline" style="margin-left:0;margin-top:8px;"></div>
+
+<div class="flow-row">
+  <span class="flow-node fn-q">Is input a Tree or Graph?</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-yes">YES →</span>
+  <span class="flow-node fn-q">Shortest path?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-q">Weighted?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🗺️ Dijkstra</span>
+</div>
+<div class="flow-row" style="margin-left:200px;">
+  <span class="flow-no">Unweighted →</span>
+  <span class="flow-node fn-a">🌊 BFS</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-no">NO  →</span>
+  <span class="flow-node fn-q">Task ordering / prerequisites?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">📋 Topological Sort</span>
+</div>
+<div class="flow-row flow-indent">
+  <span style="color:transparent;">NO </span>
+  <span class="flow-no">else →</span>
+  <span class="flow-node fn-q">Connected components / cycle?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🔗 Union Find</span>
+</div>
+<div class="flow-row flow-indent">
+  <span style="color:transparent;">NO </span>
+  <span class="flow-no">else →</span>
+  <span class="flow-node fn-a">🌲 DFS</span>
+  <span style="color:#6e7681;font-size:11px;margin-left:8px;">(paths, components, tree traversal)</span>
+</div>
+
+<div class="flow-vline" style="margin-left:0;margin-top:8px;"></div>
+
+<div class="flow-row">
+  <span class="flow-node fn-q">Need K largest/smallest/frequent?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🏆 Top K (Min-Heap)</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Median of stream / two balanced groups?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">⚖️ Two Heaps</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Merge K sorted lists / Kth smallest?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🔀 K-way Merge</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Generate all combinations / permutations?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🔙 Backtracking</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Overlapping intervals / schedule?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">📅 Merge Intervals</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Prefix search / word dictionary?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🌳 Trie</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Next greater/smaller element / histogram?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">📚 Monotonic Stack</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Find single/non-duplicate without extra space?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">⊕ Bitwise XOR</span>
+</div>
+<div class="flow-row">
+  <span class="flow-node fn-q">Range query with updates?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🌲 BIT / Segment Tree</span>
+</div>
+
+<div class="flow-vline" style="margin-left:0;margin-top:8px;"></div>
+
+<div class="flow-row">
+  <span class="flow-node fn-w" style="font-weight:800;">⚡ Optimization / counting problems → TRY DP NEXT</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-node fn-q">Current state uses 1-2 prior?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🐇 DP Fibonacci</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-node fn-q">Include/exclude each item?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🎒 DP 0/1 Knapsack</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-node fn-q">Unlimited item reuse?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">♻️ DP Unbounded KS</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-node fn-q">Two sequences compared?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🔤 DP LCS</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-node fn-q">Palindrome-related?</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🪞 DP Palindrome</span>
+</div>
+<div class="flow-row flow-indent">
+  <span class="flow-node fn-q">Locally optimal = globally optimal? (provable)</span>
+  <span class="flow-yes" style="margin-left:8px;">→</span>
+  <span class="flow-node fn-a">🥇 Greedy</span>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  SECTION 4 — 30 TRAPS                                     -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">04</div>
+    <div>
+      <h2>30 Common Traps — One Line Each</h2>
+      <p>Quick-fire. Every single one has cost someone an offer.</p>
+    </div>
+  </div>
+
+  <div class="section" id="section-traps">
+    <h3>💣 The 30 Traps — Memorize Before You Walk In</h3>
+
+    <div class="trap-grid" id="trap-grid">
+      <div class="trap-item"><div class="trap-num">1</div><div>Two Pointers on unsorted input — <strong>sort first</strong>, otherwise answers are wrong.</div></div>
+      <div class="trap-item"><div class="trap-num">2</div><div>Sliding Window with fixed K — don't shrink with while; just pop when <code>size > k</code>.</div></div>
+      <div class="trap-item"><div class="trap-num">3</div><div>Prefix Sum off-by-one — <code>pre[0]=0</code>, query <code>pre[r+1]-pre[l]</code>, not <code>pre[r]-pre[l-1]</code>.</div></div>
+      <div class="trap-item"><div class="trap-num">4</div><div>Binary Search — always check: is your invariant <code>lo &lt;= hi</code> or <code>lo &lt; hi</code>? Mix them → infinite loop.</div></div>
+      <div class="trap-item"><div class="trap-num">5</div><div>BFS for shortest path — DFS gives A path, not THE shortest. Use BFS on unweighted graphs.</div></div>
+      <div class="trap-item"><div class="trap-num">6</div><div>Forgetting to mark visited in BFS/DFS — graph problems loop forever without a visited set.</div></div>
+      <div class="trap-item"><div class="trap-num">7</div><div>Backtracking — not removing the element from path before returning = incorrect result set.</div></div>
+      <div class="trap-item"><div class="trap-num">8</div><div>DP 0/1 Knapsack — iterating capacity forwards (not backwards) causes item reuse = becomes Unbounded.</div></div>
+      <div class="trap-item"><div class="trap-num">9</div><div>DP memoization — checking <code>memo[i] == null</code> fails when 0 is a valid answer; use <code>memo[i] == -1</code> sentinel.</div></div>
+      <div class="trap-item"><div class="trap-num">10</div><div>Greedy "feels right" but isn't — always ask: does a counterexample exist? DP is safer when unsure.</div></div>
+      <div class="trap-item"><div class="trap-num">11</div><div>Topological Sort — if queue empties before all nodes are processed, there's a cycle in the graph.</div></div>
+      <div class="trap-item"><div class="trap-num">12</div><div>Union Find without path compression — degrades to O(n) per operation. Always compress.</div></div>
+      <div class="trap-item"><div class="trap-num">13</div><div>Fast & Slow — after finding cycle, reset one pointer to head to find entry point — don't forget this step.</div></div>
+      <div class="trap-item"><div class="trap-num">14</div><div>Two Heaps rebalance — max-heap size must equal OR be one more than min-heap. Off-by-one corrupts median.</div></div>
+      <div class="trap-item"><div class="trap-num">15</div><div>Merge Intervals — sorting by end instead of start causes missed merges.</div></div>
+      <div class="trap-item"><div class="trap-num">16</div><div>Dijkstra on negative weights — wrong answers guaranteed. Use Bellman-Ford for negative edges.</div></div>
+      <div class="trap-item"><div class="trap-num">17</div><div>Monotonic Stack — for "next greater element from the right", iterate right-to-left, not left-to-right.</div></div>
+      <div class="trap-item"><div class="trap-num">18</div><div>Trie wildcard search — must recurse on all children when char is <code>'.'</code>, not just one branch.</div></div>
+      <div class="trap-item"><div class="trap-num">19</div><div>Cyclic Sort — values starting at 0 (not 1) → adjust index to <code>a[i] = index directly</code>, don't subtract 1.</div></div>
+      <div class="trap-item"><div class="trap-num">20</div><div>LCS vs LIS — LCS compares two strings; LIS finds increasing subsequence in one array. Different DP.</div></div>
+      <div class="trap-item"><div class="trap-num">21</div><div>Integer overflow in Binary Search — <code>mid = lo + (hi - lo) / 2</code>, never <code>(lo + hi) / 2</code>.</div></div>
+      <div class="trap-item"><div class="trap-num">22</div><div>Sliding window char frequency — when count goes negative, don't stop; just let it go. Check formed count.</div></div>
+      <div class="trap-item"><div class="trap-num">23</div><div>Graph DFS — forgetting to unmark visited during backtracking in permutation-style path problems.</div></div>
+      <div class="trap-item"><div class="trap-num">24</div><div>K-way Merge — pushing null nodes to heap → NullPointerException. Always null-check before pushing.</div></div>
+      <div class="trap-item"><div class="trap-num">25</div><div>DP palindrome table direction — must fill diagonally (by length), not row by row.</div></div>
+      <div class="trap-item"><div class="trap-num">26</div><div>XOR to find two missing — <code>x^y = xor_all</code>; must use a set bit to partition into two groups. Don't skip step 2.</div></div>
+      <div class="trap-item"><div class="trap-num">27</div><div>Backtracking subsets with duplicates — sort first AND skip <code>nums[i] == nums[i-1]</code> at same recursion depth.</div></div>
+      <div class="trap-item"><div class="trap-num">28</div><div>BFS level tracking — must capture <code>q.size()</code> BEFORE the inner for-loop, not inside it.</div></div>
+      <div class="trap-item"><div class="trap-num">29</div><div>In-place LL reversal — saving <code>next</code> before rewiring is mandatory; losing reference = infinite loop.</div></div>
+      <div class="trap-item"><div class="trap-num">30</div><div>Modified Binary Search on answer — if <code>feasible(mid)</code> doesn't terminate correctly, BS loops. Verify boundary.</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  SECTION 5 — INTERVIEW CHECKLIST                          -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">05</div>
+    <div>
+      <h2>The Interview Ritual</h2>
+      <p>10 questions. 10 seconds each. 90-second setup before you write a single line.</p>
+    </div>
+  </div>
+
+  <div class="section" id="section-checklist">
+    <h3>✅ The 90-Second Pre-Code Ritual</h3>
+
+    <div class="callout purple" style="margin-bottom:20px;">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>The Rule</strong>
+        <p>Never write code before completing this checklist. Interviewers reward structured thinking over fast typing. Take the 90 seconds. It will save you 20 minutes of wrong-direction code.</p>
+      </div>
+    </div>
+
+    <div class="check-grid">
+      <div class="check-item">
+        <div class="check-num">1</div>
+        <div class="check-body">
+          <strong>What exactly is the input? What is the output?</strong>
+          <span>Repeat it back. Confirm types: int[]? String? List&lt;List&gt;? Graph? Tree?</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">2</div>
+        <div class="check-body">
+          <strong>What are the constraints? (n = ?)</strong>
+          <span>n ≤ 20 → brute/backtrack OK. n ≤ 10⁴ → O(n²) OK. n ≤ 10⁶ → must be O(n log n) or better.</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">3</div>
+        <div class="check-body">
+          <strong>Is the input sorted? Can I sort it?</strong>
+          <span>Sorting unlocks Two Pointers, Binary Search, Merge Intervals. Check if allowed.</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">4</div>
+        <div class="check-body">
+          <strong>Edge cases — what breaks naive solutions?</strong>
+          <span>Empty input, single element, all same, negative numbers, integer overflow, duplicates.</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">5</div>
+        <div class="check-body">
+          <strong>Which pattern does this look like?</strong>
+          <span>Run the flowchart mentally. Name the pattern out loud: "This looks like sliding window."</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">6</div>
+        <div class="check-body">
+          <strong>What is the brute-force solution first?</strong>
+          <span>Always state it. Even if O(n³). It shows you can solve it — then you optimize from there.</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">7</div>
+        <div class="check-body">
+          <strong>Where is the redundant work in brute force?</strong>
+          <span>What are you recomputing? That's exactly what the pattern eliminates.</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">8</div>
+        <div class="check-body">
+          <strong>What data structure do I need?</strong>
+          <span>HashMap for frequency/lookup. Heap for K-elements. Stack for matching/monotone. Queue for BFS.</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">9</div>
+        <div class="check-body">
+          <strong>What is the target time and space complexity?</strong>
+          <span>State it before coding: "I'm aiming for O(n log n) time and O(k) space."</span>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-num">10</div>
+        <div class="check-body">
+          <strong>Walk through a small example before coding.</strong>
+          <span>2-3 elements. Trace manually. Catch logic errors BEFORE they become code bugs.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner banner-green" style="margin-top:20px;">
+      <h4>🏁 After Coding — 3 Final Checks</h4>
+      <p>
+        <strong>(A)</strong> Trace through your small example again with the actual code.&nbsp;&nbsp;
+        <strong>(B)</strong> Check all edge cases: empty, single, duplicates.&nbsp;&nbsp;
+        <strong>(C)</strong> Re-state the complexity — both time AND space.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  SECTION 6 — PATTERN PAIRS                                -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">06</div>
+    <div>
+      <h2>Pattern Pairs — "These Look Similar But…"</h2>
+      <p>The most common sources of wrong pattern selection in interviews.</p>
+    </div>
+  </div>
+
+  <div class="section" id="section-pairs">
+    <h3>🔀 The 5 Most Confused Pattern Pairs</h3>
+
+    <!-- PAIR 1 -->
+    <div class="pair-wrap">
+      <div class="pair-left">
+        <span class="pair-badge">PAIR 1A</span>
+        <h5 style="color:var(--accent-blue);">👆 Two Pointers</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Comparing elements from opposite ends</li>
+          <li><strong>Input:</strong> Usually sorted (or must be sorted)</li>
+          <li><strong>Window size:</strong> Not fixed — pointers move independently</li>
+          <li><strong>Shrinks from:</strong> Both ends toward center</li>
+          <li><strong>State:</strong> Two indices only, no frequency map needed</li>
+          <li><strong>Signal words:</strong> "pair", "triplet", "sorted array", "palindrome check"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/" target="_blank" class="lc-link">LC#167 Two Sum II</a></li>
+        </ul>
+      </div>
+      <div class="pair-right">
+        <span class="pair-badge" style="background:rgba(63,185,80,.15);color:#3fb950;border-color:#3fb95044;">PAIR 1B</span>
+        <h5 style="color:var(--accent-green);">🪟 Sliding Window</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Processing a contiguous subarray/substring</li>
+          <li><strong>Input:</strong> NOT required to be sorted</li>
+          <li><strong>Window size:</strong> Fixed K or dynamic (shrink on violation)</li>
+          <li><strong>Moves:</strong> Right pointer expands, left pointer shrinks</li>
+          <li><strong>State:</strong> Frequency HashMap or running sum maintained</li>
+          <li><strong>Signal words:</strong> "subarray", "substring", "contiguous", "at most K"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/minimum-window-substring/" target="_blank" class="lc-link">LC#76 Min Window Substring</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair-divider">⚡ KEY DISTINCTION: Two Pointers = sorted + compare ends · Sliding Window = contiguous + maintain state</div>
+
+    <!-- PAIR 2 -->
+    <div class="pair-wrap" style="margin-top:18px;">
+      <div class="pair-left">
+        <span class="pair-badge">PAIR 2A</span>
+        <h5 style="color:var(--accent-blue);">🌊 BFS</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Finding <strong>shortest</strong> path or minimum steps</li>
+          <li><strong>Structure:</strong> Queue (FIFO) — level by level</li>
+          <li><strong>Explores:</strong> All neighbors at distance d before d+1</li>
+          <li><strong>Guarantees:</strong> First path found = shortest path</li>
+          <li><strong>Space:</strong> O(w) — w = max width of tree/graph</li>
+          <li><strong>Signal words:</strong> "minimum steps", "shortest path", "level order"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/word-ladder/" target="_blank" class="lc-link">LC#127 Word Ladder</a></li>
+        </ul>
+      </div>
+      <div class="pair-right">
+        <span class="pair-badge" style="background:rgba(63,185,80,.15);color:#3fb950;border-color:#3fb95044;">PAIR 2B</span>
+        <h5 style="color:var(--accent-green);">🌲 DFS</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Exploring <strong>all</strong> paths or any valid path</li>
+          <li><strong>Structure:</strong> Stack / recursion (LIFO) — depth first</li>
+          <li><strong>Explores:</strong> One complete branch before backtracking</li>
+          <li><strong>Guarantees:</strong> Finds A path — not necessarily shortest</li>
+          <li><strong>Space:</strong> O(h) — h = max depth (recursion stack)</li>
+          <li><strong>Signal words:</strong> "all paths", "connected", "cycle", "exists a path"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/path-sum-ii/" target="_blank" class="lc-link">LC#113 Path Sum II</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair-divider">⚡ KEY DISTINCTION: BFS = SHORTEST PATH · DFS = ALL PATHS / EXISTENCE</div>
+
+    <!-- PAIR 3 -->
+    <div class="pair-wrap" style="margin-top:18px;">
+      <div class="pair-left">
+        <span class="pair-badge">PAIR 3A</span>
+        <h5 style="color:var(--accent-blue);">🔙 Backtracking</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Generate ALL valid combinations/permutations</li>
+          <li><strong>Pattern:</strong> Choose → recurse → unchoose (3-step ritual)</li>
+          <li><strong>Pruning:</strong> Cut branches early if constraint already violated</li>
+          <li><strong>State:</strong> Mutable path list that gets modified in-place</li>
+          <li><strong>Output:</strong> A list of ALL valid results</li>
+          <li><strong>Signal words:</strong> "all subsets", "all permutations", "generate all"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/n-queens/" target="_blank" class="lc-link">LC#51 N-Queens</a></li>
+        </ul>
+      </div>
+      <div class="pair-right">
+        <span class="pair-badge" style="background:rgba(63,185,80,.15);color:#3fb950;border-color:#3fb95044;">PAIR 3B</span>
+        <h5 style="color:var(--accent-green);">🌲 DFS (no backtrack)</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Explore nodes, mark visited, check connectivity</li>
+          <li><strong>Pattern:</strong> Visit → mark → recurse on unvisited neighbors</li>
+          <li><strong>Pruning:</strong> Skip visited nodes (no "undo" of visited marking)</li>
+          <li><strong>State:</strong> Boolean visited[] array, not modified on return</li>
+          <li><strong>Output:</strong> A single answer (count, yes/no, distance)</li>
+          <li><strong>Signal words:</strong> "connected components", "flood fill", "island count"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/number-of-islands/" target="_blank" class="lc-link">LC#200 Number of Islands</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair-divider">⚡ KEY DISTINCTION: Backtracking UNDOES state on return · DFS keeps visited state permanent</div>
+
+    <!-- PAIR 4 -->
+    <div class="pair-wrap" style="margin-top:18px;">
+      <div class="pair-left">
+        <span class="pair-badge">PAIR 4A</span>
+        <h5 style="color:var(--accent-blue);">🎒 Dynamic Programming</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Overlapping subproblems + optimal substructure</li>
+          <li><strong>Approach:</strong> Try ALL choices, memoize results</li>
+          <li><strong>Guarantees:</strong> Global optimum always found</li>
+          <li><strong>Cost:</strong> Higher time/space — fills full table</li>
+          <li><strong>Proof:</strong> Not needed — enumerate and cache</li>
+          <li><strong>Signal words:</strong> "max/min", "how many ways", "can you achieve"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/edit-distance/" target="_blank" class="lc-link">LC#72 Edit Distance</a></li>
+        </ul>
+      </div>
+      <div class="pair-right">
+        <span class="pair-badge" style="background:rgba(63,185,80,.15);color:#3fb950;border-color:#3fb95044;">PAIR 4B</span>
+        <h5 style="color:var(--accent-green);">🥇 Greedy</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Local optimum = global optimum (provable)</li>
+          <li><strong>Approach:</strong> Make the BEST choice NOW, never revisit</li>
+          <li><strong>Guarantees:</strong> Global optimum ONLY IF exchange argument holds</li>
+          <li><strong>Cost:</strong> Lower — O(n log n) max, often O(n)</li>
+          <li><strong>Proof:</strong> Must verify with exchange argument or counterexample</li>
+          <li><strong>Signal words:</strong> "minimum cost", "maximum tasks", "intervals"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/jump-game/" target="_blank" class="lc-link">LC#55 Jump Game</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair-divider">⚡ KEY DISTINCTION: DP = exhaustive + safe · Greedy = one-pass + needs proof · When unsure, use DP</div>
+
+    <!-- PAIR 5 -->
+    <div class="pair-wrap" style="margin-top:18px;">
+      <div class="pair-left">
+        <span class="pair-badge">PAIR 5A</span>
+        <h5 style="color:var(--accent-blue);">🔗 Union Find</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Dynamic connectivity, group membership queries</li>
+          <li><strong>Input type:</strong> Undirected graph (edges can come in any order)</li>
+          <li><strong>Cycle detect:</strong> Two nodes in same component = adding edge = cycle</li>
+          <li><strong>Output:</strong> Is node A connected to node B? How many groups?</li>
+          <li><strong>Direction:</strong> Does NOT care about direction of edges</li>
+          <li><strong>Signal words:</strong> "connected", "same group", "merge", "cycle in undirected"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/redundant-connection/" target="_blank" class="lc-link">LC#684 Redundant Connection</a></li>
+        </ul>
+      </div>
+      <div class="pair-right">
+        <span class="pair-badge" style="background:rgba(63,185,80,.15);color:#3fb950;border-color:#3fb95044;">PAIR 5B</span>
+        <h5 style="color:var(--accent-green);">📋 Topological Sort</h5>
+        <ul class="pair-list">
+          <li><strong>Use when:</strong> Ordering tasks with dependency constraints</li>
+          <li><strong>Input type:</strong> Directed acyclic graph (DAG)</li>
+          <li><strong>Cycle detect:</strong> If not all nodes processed = cycle exists</li>
+          <li><strong>Output:</strong> A valid linear ordering of all nodes</li>
+          <li><strong>Direction:</strong> REQUIRES directed edges — order matters</li>
+          <li><strong>Signal words:</strong> "prerequisites", "order tasks", "build order", "DAG"</li>
+          <li><strong>Example:</strong> <a href="https://leetcode.com/problems/course-schedule-ii/" target="_blank" class="lc-link">LC#210 Course Schedule II</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair-divider">⚡ KEY DISTINCTION: Union Find = undirected connectivity · Topological Sort = directed ordering</div>
+
+    <!-- Final callout -->
+    <div class="callout success" style="margin-top:24px;">
+      <div class="icon">🎓</div>
+      <div class="body">
+        <strong>The Meta-Rule That Wins Interviews</strong>
+        <p>
+          When two patterns feel equally valid: <strong>state both out loud</strong>.
+          Say: "This could be DP or Greedy — let me check if greedy holds by seeing if a counterexample exists."
+          That sentence alone signals senior-level thinking to your interviewer.
+        </p>
+      </div>
+    </div>
+
+    <!-- Java Code template reminder -->
+    <div class="card" style="margin-top:24px;">
+      <h4>☕ Java Template Quick-Recall</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4 style="font-size:12px;">Sliding Window (Variable)</h4>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Variable Window</span></div>
+            <pre><code><span class="type">Map</span>&lt;<span class="type">Character</span>, <span class="type">Integer</span>&gt; map = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+<span class="kw">int</span> left = <span class="num">0</span>, res = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> right = <span class="num">0</span>; right &lt; s.<span class="fn">length</span>(); right++) {
+    map.<span class="fn">merge</span>(s.<span class="fn">charAt</span>(right), <span class="num">1</span>, <span class="type">Integer</span>::sum);
+    <span class="kw">while</span> (invalid(map)) {
+        map.<span class="fn">merge</span>(s.<span class="fn">charAt</span>(left++), -<span class="num">1</span>, <span class="type">Integer</span>::sum);
+    }
+    res = <span class="type">Math</span>.<span class="fn">max</span>(res, right - left + <span class="num">1</span>);
+}</code></pre>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h4 style="font-size:12px;">Binary Search (Answer Space)</h4>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">BS on Answer</span></div>
+            <pre><code><span class="kw">int</span> lo = <span class="fn">minAnswer</span>(), hi = <span class="fn">maxAnswer</span>();
+<span class="kw">while</span> (lo &lt; hi) {
+    <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>;
+    <span class="kw">if</span> (<span class="fn">feasible</span>(mid)) {
+        hi = mid;       <span class="cmt">// try smaller</span>
+    } <span class="kw">else</span> {
+        lo = mid + <span class="num">1</span>;  <span class="cmt">// need bigger</span>
+    }
+}
+<span class="kw">return</span> lo;</code></pre>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h4 style="font-size:12px;">DP 0/1 Knapsack (Space Optimized)</h4>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">1D Knapsack</span></div>
+            <pre><code><span class="kw">int</span>[] dp = <span class="kw">new</span> <span class="kw">int</span>[W + <span class="num">1</span>];
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    <span class="cmt">// iterate BACKWARDS — prevents reuse</span>
+    <span class="kw">for</span> (<span class="kw">int</span> w = W; w &gt;= wt[i]; w--) {
+        dp[w] = <span class="type">Math</span>.<span class="fn">max</span>(dp[w],
+                    dp[w - wt[i]] + val[i]);
+    }
+}</code></pre>
+          </div>
+        </div>
+        <div class="card-mini">
+          <h4 style="font-size:12px;">Union Find (Path Compression)</h4>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Union Find</span></div>
+            <pre><code><span class="kw">int</span>[] parent = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="kw">int</span>[] rank   = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="cmt">// Arrays.fill(parent, 0..n-1)</span>
+<span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span> x) {
+    <span class="kw">if</span> (parent[x] != x)
+        parent[x] = <span class="fn">find</span>(parent[x]);
+    <span class="kw">return</span> parent[x];
+}
+<span class="kw">void</span> <span class="fn">union</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+    <span class="kw">int</span> ra=<span class="fn">find</span>(a), rb=<span class="fn">find</span>(b);
+    <span class="kw">if</span>(rank[ra]&lt;rank[rb]) parent[ra]=rb;
+    <span class="kw">else if</span>(rank[ra]&gt;rank[rb]) parent[rb]=ra;
+    <span class="kw">else</span> { parent[rb]=ra; rank[ra]++; }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The final banner -->
+    <div class="banner banner-purple" style="margin-top:24px;">
+      <h4>🏆 You're Ready. You've Learned All 28 Patterns.</h4>
+      <p>
+        This is the last page of the AlgoSensei series. Every pattern has a reason it exists.
+        Every trap was someone else's lesson. Every decision point is a question you've already
+        answered. Close the laptop. Breathe. You know this.
+        <strong>Now go show them.</strong>
+      </p>
+    </div>
+
+  </div><!-- /section -->
+
+  <!-- Back to top -->
+  <button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+</main>
+
+<script>
+  /* ── Sidebar ─────────────────────────────────── */
+  const hamburger = document.getElementById('hamburger');
+  const sidebar   = document.getElementById('sidebar');
+  const overlay   = document.getElementById('sidebar-overlay');
+
+  hamburger.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+  });
+
+  /* ── Progress bar ────────────────────────────── */
+  window.addEventListener('scroll', () => {
+    const el   = document.getElementById('progress');
+    const doc  = document.documentElement;
+    const pct  = (doc.scrollTop / (doc.scrollHeight - doc.clientHeight)) * 100;
+    el.style.width = pct + '%';
+
+    document.getElementById('topBtn').style.opacity = doc.scrollTop > 400 ? '1' : '0';
+  });
+
+  /* ── Active nav link ─────────────────────────── */
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.toc-link');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  /* ── Trap items stagger animation ───────────── */
+  const trapItems = document.querySelectorAll('.trap-item');
+  trapItems.forEach((item, i) => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(10px)';
+    item.style.transition = `opacity .3s ease ${i * 0.025}s, transform .3s ease ${i * 0.025}s`;
+  });
+
+  const trapObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        trapItems.forEach(item => {
+          item.style.opacity = '1';
+          item.style.transform = 'translateY(0)';
+        });
+        trapObs.disconnect();
+      }
+    });
+  }, { threshold: 0.1 });
+
+  const trapGrid = document.getElementById('trap-grid');
+  if (trapGrid) trapObs.observe(trapGrid);
+
+  /* ── Check items stagger animation ──────────── */
+  const checkItems = document.querySelectorAll('.check-item');
+  checkItems.forEach((item, i) => {
+    item.style.opacity = '0';
+    item.style.transform = 'scale(0.95)';
+    item.style.transition = `opacity .35s ease ${i * 0.06}s, transform .35s ease ${i * 0.06}s`;
+  });
+
+  const checkObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        checkItems.forEach(item => {
+          item.style.opacity = '1';
+          item.style.transform = 'scale(1)';
+        });
+        checkObs.disconnect();
+      }
+    });
+  }, { threshold: 0.1 });
+
+  const checkSection = document.getElementById('section-checklist');
+  if (checkSection) checkObs.observe(checkSection);
+
+  /* ── Flow nodes pulse on hover ───────────────── */
+  document.querySelectorAll('.flow-node').forEach(node => {
+    node.addEventListener('mouseenter', () => {
+      node.style.filter = 'brightness(1.3)';
+    });
+    node.addEventListener('mouseleave', () => {
+      node.style.filter = '';
+    });
+  });
+
+  /* ── Pattern table row hover highlight ───────── */
+  document.querySelectorAll('.pattern-table-wrap tbody tr').forEach(row => {
+    row.addEventListener('mouseenter', () => {
+      row.style.background = 'rgba(88,166,255,0.07)';
+      row.style.transition = 'background .15s';
+    });
+    row.addEventListener('mouseleave', () => {
+      row.style.background = '';
+    });
+  });
+</script>
+</body>
+</html>

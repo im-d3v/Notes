@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Part 11 — SOLID Principles | Java Interview Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    
+    :root {
+      --bg:          #0d0f1a;
+      --surface:     #13162a;
+      --card:        #1a1e35;
+      --card2:       #1e2238;
+      --border:      #2a2f52;
+      --border-soft: #232745;
+
+      --s-color:  #f472b6;   /* pink   — SRP  */
+      --o-color:  #34d399;   /* green  — OCP  */
+      --l-color:  #60a5fa;   /* blue   — LSP  */
+      --i-color:  #fbbf24;   /* yellow — ISP  */
+      --d-color:  #a78bfa;   /* purple — DIP  */
+
+      --accent:   #6c63ff;
+      --accent2:  #00d4aa;
+      --text:     #e8eaf6;
+      --muted:    #7b82b0;
+      --code-bg:  #0a0c1a;
+      --good:     #22c55e;
+      --bad:      #ef4444;
+      --warn:     #f59e0b;
+    }
+
+    
+    /* ════════ HEADER ════════ */
+    header {
+      background: linear-gradient(135deg, #13162a 0%, #0d0f1a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(244,114,182,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 50%, rgba(167,139,250,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .header-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(108,99,255,0.12);
+      border: 1px solid rgba(108,99,255,0.3);
+      color: #a78bfa;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: clamp(28px, 6vw, 52px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff 20%, #f472b6 50%, #a78bfa 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 640px;
+      margin: 0 auto 24px;
+    }
+
+    /* SOLID colorful letters in header */
+    .solid-letters {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .solid-letter {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 22px;
+      line-height: 1;
+      border: 2px solid;
+      transition: transform 0.2s;
+    }
+
+    .solid-letter:hover { transform: translateY(-4px); }
+
+    .sl-s { color: var(--s-color); border-color: rgba(244,114,182,0.4); background: rgba(244,114,182,0.08); }
+    .sl-o { color: var(--o-color); border-color: rgba(52,211,153,0.4);  background: rgba(52,211,153,0.08); }
+    .sl-l { color: var(--l-color); border-color: rgba(96,165,250,0.4);  background: rgba(96,165,250,0.08); }
+    .sl-i { color: var(--i-color); border-color: rgba(251,191,36,0.4);  background: rgba(251,191,36,0.08); }
+    .sl-d { color: var(--d-color); border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.08); }
+
+    .solid-letter span {
+      font-size: 9px;
+      font-weight: 600;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* ════════ NAV / TOC ════════ */
+    #main nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      overflow-x: auto;
+    }
+
+    .nav-inner {
+      display: flex;
+      gap: 0;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .nav-link:hover { color: var(--text); }
+    .nav-link.s:hover { border-color: var(--s-color); color: var(--s-color); }
+    .nav-link.o:hover { border-color: var(--o-color); color: var(--o-color); }
+    .nav-link.l:hover { border-color: var(--l-color); color: var(--l-color); }
+    .nav-link.i:hover { border-color: var(--i-color); color: var(--i-color); }
+    .nav-link.d:hover { border-color: var(--d-color); color: var(--d-color); }
+
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+
+    .intro-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      border-top: 3px solid;
+      text-align: center;
+    }
+
+    .intro-card .ic-letter {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .intro-card .ic-name {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .intro-card .ic-tag {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ic-s { border-color: var(--s-color); }
+    .ic-o { border-color: var(--o-color); }
+    .ic-l { border-color: var(--l-color); }
+    .ic-i { border-color: var(--i-color); }
+    .ic-d { border-color: var(--d-color); }
+
+    /* ════════ PRINCIPLE SECTION ════════ */
+    .principle-section {
+      margin-bottom: 72px;
+    }
+
+    .principle-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 28px;
+      padding: 24px 28px;
+      border-radius: 18px;
+      border: 1px solid;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .principle-header::before {
+      content: '';
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 120px;
+      font-weight: 900;
+      opacity: 0.04;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .ph-s { background: rgba(244,114,182,0.05); border-color: rgba(244,114,182,0.25); }
+    .ph-s::before { content: 'S'; }
+    .ph-o { background: rgba(52,211,153,0.05);  border-color: rgba(52,211,153,0.25); }
+    .ph-o::before { content: 'O'; }
+    .ph-l { background: rgba(96,165,250,0.05);  border-color: rgba(96,165,250,0.25); }
+    .ph-l::before { content: 'L'; }
+    .ph-i { background: rgba(251,191,36,0.05);  border-color: rgba(251,191,36,0.25); }
+    .ph-i::before { content: 'I'; }
+    .ph-d { background: rgba(167,139,250,0.05); border-color: rgba(167,139,250,0.25); }
+    .ph-d::before { content: 'D'; }
+
+    .ph-num {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 900;
+      flex-shrink: 0;
+      border: 2px solid;
+    }
+
+    .ph-num.s { color: var(--s-color); border-color: rgba(244,114,182,0.4); background: rgba(244,114,182,0.1); }
+    .ph-num.o { color: var(--o-color); border-color: rgba(52,211,153,0.4);  background: rgba(52,211,153,0.1); }
+    .ph-num.l { color: var(--l-color); border-color: rgba(96,165,250,0.4);  background: rgba(96,165,250,0.1); }
+    .ph-num.i { color: var(--i-color); border-color: rgba(251,191,36,0.4);  background: rgba(251,191,36,0.1); }
+    .ph-num.d { color: var(--d-color); border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.1); }
+
+    .ph-info { flex: 1; }
+
+    .ph-info h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .ph-info .ph-short {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .ph-info .ph-definition {
+      font-size: 14px;
+      font-style: italic;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border-left: 3px solid;
+    }
+
+    .def-s { background: rgba(244,114,182,0.08); border-color: var(--s-color); color: #fda4c8; }
+    .def-o { background: rgba(52,211,153,0.08);  border-color: var(--o-color); color: #86efca; }
+    .def-l { background: rgba(96,165,250,0.08);  border-color: var(--l-color); color: #93c5fd; }
+    .def-i { background: rgba(251,191,36,0.08);  border-color: var(--i-color); color: #fde68a; }
+    .def-d { background: rgba(167,139,250,0.08); border-color: var(--d-color); color: #c4b5fd; }
+
+    /* ════════ CONTENT CARDS ════════ */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    @media(max-width: 768px) {
+      .content-grid { grid-template-columns: 1fr; }
+    }
+
+    
+    .content-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .cc-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cc-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ════════ CODE BLOCKS ════════ */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    
+    .code-header .ch-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .label-bad  { color: var(--bad); }
+    .label-good { color: var(--good); }
+    .label-note { color: var(--warn); }
+    .label-info { color: #60a5fa; }
+    .label-ex   { color: var(--muted); }
+
+    .code-header .ch-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .ch-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    pre {
+      padding: 18px;
+      overflow-x: auto;
+      line-height: 1.65;
+    }
+
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 12.5px;
+      color: #e8eaf6;
+    }
+
+      /* keywords */
+    .cl   { color: #60a5fa; }              /* return type */
+    .pkg  { color: #93c5fd; }  /* package/import */
+
+    /* ════════ GOOD / BAD BADGES ════════ */
+    .badge-bad {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .badge-good {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: #86efca;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    
+    
+    
+    
+    
+    
+    .box strong { color: #fff; }
+
+    /* ════════ MNEMONIC CARD ════════ */
+    .mnemonic {
+      background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(167,139,250,0.1));
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin: 14px 0;
+      text-align: center;
+    }
+
+    .mnemonic .m-title {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .mnemonic .m-text {
+      font-size: 20px;
+      font-weight: 800;
+      color: #c4b5fd;
+    }
+
+    .mnemonic .m-expand {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ════════ COMPARISON TABLE ════════ */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0;
+    }
+
+    th {
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--text);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    
+    
+    .iq-item:hover { border-color: var(--accent); }
+
+    .iq-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: rgba(108,99,255,0.15);
+      color: #a78bfa;
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      line-height: 22px;
+      flex-shrink: 0;
+    }
+
+    .iq-ans {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ════════ REAL-WORLD BADGE ════════ */
+    .rw-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(251,191,36,0.1);
+      border: 1px solid rgba(251,191,36,0.3);
+      color: var(--warn);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ════════ SECTION DIVIDER ════════ */
+    .section-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 56px 0;
+      position: relative;
+    }
+
+    .section-sep::after {
+      content: '◆';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg);
+      padding: 0 12px;
+      color: var(--border);
+      font-size: 10px;
+    }
+
+    /* ════════ SUMMARY TABLE SECTION ════════ */
+    .summary-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px;
+      margin-top: 48px;
+    }
+
+    .summary-section h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      text-align: center;
+      background: linear-gradient(90deg, var(--s-color), var(--d-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ════════ DI vs IOC vs DIP card ════════ */
+    .trio-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    @media(max-width:680px) { .trio-grid { grid-template-columns: 1fr; } }
+
+    .trio-card {
+      border-radius: 14px;
+      padding: 20px;
+      border: 1px solid;
+      text-align: center;
+    }
+
+    .trio-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .trio-type {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      opacity: 0.6;
+      margin-bottom: 10px;
+    }
+
+    .trio-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .trio-dip {
+      background: rgba(244,114,182,0.06);
+      border-color: rgba(244,114,182,0.25);
+    }
+    .trio-dip .trio-title { color: var(--s-color); }
+
+    .trio-di {
+      background: rgba(52,211,153,0.06);
+      border-color: rgba(52,211,153,0.25);
+    }
+    .trio-di .trio-title { color: var(--o-color); }
+
+    .trio-ioc {
+      background: rgba(96,165,250,0.06);
+      border-color: rgba(96,165,250,0.25);
+    }
+    .trio-ioc .trio-title { color: var(--l-color); }
+
+    /* step list */
+    .step-list {
+      list-style: none;
+      counter-reset: steps;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-list li {
+      counter-increment: steps;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13px;
+    }
+
+    .step-list li::before {
+      content: counter(steps);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(108,99,255,0.2);
+      color: #a78bfa;
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      line-height: 24px;
+      flex-shrink: 0;
+    }
+
+    /* ════════ Footer ════════ */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer-nav {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .fn-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>🏛️ SOLID Principles</h2>
+      <p>Part 11 — Architecture</p>
+    </div>
+    <nav>
+      <div class="section-label">SOLID</div>
+      <a href="#srp">Single Responsibility (S)</a>
+      <a href="#ocp">Open / Closed (O)</a>
+      <a href="#lsp">Liskov Substitution (L)</a>
+      <a href="#isp">Interface Segregation (I)</a>
+      <a href="#dip">Dependency Inversion (D)</a>
+      <div class="section-label">Beyond SOLID</div>
+      <a href="#di-ioc">Dependency Injection & IoC</a>
+      <a href="#clean">Clean Code Rules</a>
+      <a href="#summary">Summary & Cheat Sheet</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ═══════════════════════════════════ HEADER ═══════════════════════════════════ -->
+<header>
+  <div class="header-eyebrow">📘 Part 11 of 20 &nbsp;|&nbsp; Software Design</div>
+  <h1>SOLID Principles</h1>
+  <p>Five design principles that make software easy to maintain, extend, and test. The backbone of clean object-oriented design.</p>
+  <div class="solid-letters">
+    <div class="solid-letter sl-s">S<span>SRP</span></div>
+    <div class="solid-letter sl-o">O<span>OCP</span></div>
+    <div class="solid-letter sl-l">L<span>LSP</span></div>
+    <div class="solid-letter sl-i">I<span>ISP</span></div>
+    <div class="solid-letter sl-d">D<span>DIP</span></div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════ NAV ═══════════════════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-link s" href="#srp">
+      <span class="nav-dot" style="background:var(--s-color)"></span>S — SRP
+    </a>
+    <a class="nav-link o" href="#ocp">
+      <span class="nav-dot" style="background:var(--o-color)"></span>O — OCP
+    </a>
+    <a class="nav-link l" href="#lsp">
+      <span class="nav-dot" style="background:var(--l-color)"></span>L — LSP
+    </a>
+    <a class="nav-link i" href="#isp">
+      <span class="nav-dot" style="background:var(--i-color)"></span>I — ISP
+    </a>
+    <a class="nav-link d" href="#dip">
+      <span class="nav-dot" style="background:var(--d-color)"></span>D — DIP
+    </a>
+    <a class="nav-link" href="#di-ioc">⚡ DI vs IoC vs DIP</a>
+    <a class="nav-link" href="#clean">🧹 Clean Code</a>
+    <a class="nav-link" href="#summary">📊 Summary</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════ MAIN ═══════════════════════════════════ -->
+<div class="main-content">
+
+  <!-- ──── INTRO CARDS ──── -->
+  <div class="intro-grid">
+    <div class="intro-card ic-s">
+      <div class="ic-letter" style="color:var(--s-color)">S</div>
+      <div class="ic-name" style="color:var(--s-color)">SRP</div>
+      <div class="ic-tag">Single Responsibility Principle</div>
+    </div>
+    <div class="intro-card ic-o">
+      <div class="ic-letter" style="color:var(--o-color)">O</div>
+      <div class="ic-name" style="color:var(--o-color)">OCP</div>
+      <div class="ic-tag">Open / Closed Principle</div>
+    </div>
+    <div class="intro-card ic-l">
+      <div class="ic-letter" style="color:var(--l-color)">L</div>
+      <div class="ic-name" style="color:var(--l-color)">LSP</div>
+      <div class="ic-tag">Liskov Substitution Principle</div>
+    </div>
+    <div class="intro-card ic-i">
+      <div class="ic-letter" style="color:var(--i-color)">I</div>
+      <div class="ic-name" style="color:var(--i-color)">ISP</div>
+      <div class="ic-tag">Interface Segregation Principle</div>
+    </div>
+    <div class="intro-card ic-d">
+      <div class="ic-letter" style="color:var(--d-color)">D</div>
+      <div class="ic-name" style="color:var(--d-color)">DIP</div>
+      <div class="ic-tag">Dependency Inversion Principle</div>
+    </div>
+  </div>
+
+  <div class="box box-info">
+    <span class="box-icon">💡</span>
+    <div>
+      <strong>Who coined SOLID?</strong> Robert C. Martin (Uncle Bob) introduced these principles in early 2000s.
+      The acronym <strong>SOLID</strong> was later popularized by Michael Feathers.
+      These are <em>design principles</em> — not design patterns. They guide how to structure your code.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       S — SINGLE RESPONSIBILITY PRINCIPLE
+  ══════════════════════════════════════════════════ -->
+  <section id="srp" class="principle-section">
+
+    <div class="principle-header ph-s">
+      <div class="ph-num s">S</div>
+      <div class="ph-info">
+        <h2>Single Responsibility Principle</h2>
+        <div class="ph-short">The "S" in SOLID</div>
+        <div class="ph-definition def-s">
+          "A class should have <strong>only one reason to change</strong> — meaning it should have only one job or responsibility."
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-info">
+      <span class="box-icon">🧠</span>
+      <div>
+        <strong>Simple way to remember:</strong> If you can describe what a class does using the word <strong>"AND"</strong>, it probably violates SRP.
+        <em>"This class reads data AND validates it AND saves it to DB"</em> → violates SRP.
+      </div>
+    </div>
+
+    <!-- Violation Example -->
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="cc-title"><span class="dot" style="background:var(--bad)"></span>
+          <span class="badge-bad">❌ Violation</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-bad">Bad — Multiple Responsibilities</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ❌ This class has 3 responsibilities:</span>
+<span class="cm">// 1. Business logic (generate report)</span>
+<span class="cm">// 2. Formatting (format report)</span>
+<span class="cm">// 3. Persistence (save to file)</span>
+<span class="kw">public class</span> <span class="cl">Report</span> {
+
+    <span class="kw">private</span> <span class="ret">String</span> title;
+    <span class="kw">private</span> <span class="ret">String</span> content;
+
+    <span class="cm">// Responsibility 1: Business logic</span>
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">generateReport</span>() {
+        <span class="kw">return</span> <span class="str">"Report: "</span> + title + <span class="str">"\n"</span> + content;
+    }
+
+    <span class="cm">// Responsibility 2: Formatting</span>
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">formatAsHTML</span>() {
+        <span class="kw">return</span> <span class="str">"&lt;h1&gt;"</span> + title + <span class="str">"&lt;/h1&gt;"</span>
+              + <span class="str">"&lt;p&gt;"</span> + content + <span class="str">"&lt;/p&gt;"</span>;
+    }
+
+    <span class="cm">// Responsibility 3: Saving to file</span>
+    <span class="kw">public void</span> <span class="fn">saveToFile</span>(<span class="ret">String</span> fileName) {
+        <span class="cm">// file writing logic...</span>
+    }
+}</code></pre>
+        </div>
+        <div class="box box-warn" style="margin:0;font-size:12px;">
+          <span class="box-icon">⚠️</span>
+          <div>If formatting changes, this class changes. If file saving changes, this class changes. If business logic changes, this class changes. <strong>3 reasons to change!</strong></div>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="cc-title"><span class="dot" style="background:var(--good)"></span>
+          <span class="badge-good">✅ Fixed — SRP Applied</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-good">Good — Each Class has 1 Job</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ✅ Class 1: Only holds report data</span>
+<span class="kw">public class</span> <span class="cl">Report</span> {
+    <span class="kw">private</span> <span class="ret">String</span> title;
+    <span class="kw">private</span> <span class="ret">String</span> content;
+
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">generateReport</span>() {
+        <span class="kw">return</span> <span class="str">"Report: "</span> + title + content;
+    }
+    <span class="cm">// getters, setters...</span>
+}
+
+<span class="cm">// ✅ Class 2: Only responsible for formatting</span>
+<span class="kw">public class</span> <span class="cl">ReportFormatter</span> {
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">formatAsHTML</span>(<span class="cl">Report</span> report) {
+        <span class="kw">return</span> <span class="str">"&lt;h1&gt;"</span> + report.getTitle()
+              + <span class="str">"&lt;/h1&gt;&lt;p&gt;"</span>
+              + report.getContent() + <span class="str">"&lt;/p&gt;"</span>;
+    }
+}
+
+<span class="cm">// ✅ Class 3: Only responsible for persistence</span>
+<span class="kw">public class</span> <span class="cl">ReportSaver</span> {
+    <span class="kw">public void</span> <span class="fn">saveToFile</span>(
+            <span class="cl">Report</span> report, <span class="ret">String</span> fileName) {
+        <span class="cm">// file writing logic...</span>
+    }
+}</code></pre>
+        </div>
+        <div class="box box-tip" style="margin:0;font-size:12px;">
+          <span class="box-icon">✅</span>
+          <div>Now each class has <strong>exactly one reason to change</strong>. Easy to test, easy to maintain.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real world example asked in interview -->
+    <div class="content-card" style="margin-bottom:16px;">
+      <div class="cc-title"><span class="dot" style="background:var(--s-color)"></span> Real-World Spring Boot Example <span class="rw-badge">🏆 Interview Favourite</span></div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="ch-label label-good">SRP in Spring Boot — Layered Architecture</span>
+          <div class="ch-dots">
+            <div class="ch-dot" style="background:#ff5f57"></div>
+            <div class="ch-dot" style="background:#febc2e"></div>
+            <div class="ch-dot" style="background:#28c840"></div>
+          </div>
+        </div>
+        <pre><code><span class="cm">// ✅ Controller — only handles HTTP requests/responses</span>
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="str">"/users"</span>)
+<span class="kw">public class</span> <span class="cl">UserController</span> {
+    <span class="kw">private final</span> <span class="cl">UserService</span> userService;
+    <span class="kw">public</span> <span class="cl">UserController</span>(<span class="cl">UserService</span> userService) {
+        <span class="kw">this</span>.userService = userService;
+    }
+    <span class="an">@PostMapping</span>
+    <span class="kw">public</span> <span class="cl">ResponseEntity</span>&lt;<span class="cl">User</span>&gt; <span class="fn">createUser</span>(<span class="an">@RequestBody</span> <span class="cl">UserDTO</span> dto) {
+        <span class="kw">return</span> <span class="cl">ResponseEntity</span>.<span class="fn">ok</span>(userService.<span class="fn">createUser</span>(dto));
+    }
+}
+
+<span class="cm">// ✅ Service — only handles business logic</span>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cl">UserService</span> {
+    <span class="kw">private final</span> <span class="cl">UserRepository</span> repo;
+    <span class="kw">private final</span> <span class="cl">EmailService</span>    emailService;
+
+    <span class="kw">public</span> <span class="cl">User</span> <span class="fn">createUser</span>(<span class="cl">UserDTO</span> dto) {
+        <span class="cl">User</span> user = <span class="fn">mapToUser</span>(dto);
+        <span class="cl">User</span> saved = repo.<span class="fn">save</span>(user);
+        emailService.<span class="fn">sendWelcomeEmail</span>(saved);
+        <span class="kw">return</span> saved;
+    }
+}
+
+<span class="cm">// ✅ Repository — only handles data access</span>
+<span class="kw">public interface</span> <span class="cl">UserRepository</span> <span class="kw">extends</span> <span class="cl">JpaRepository</span>&lt;<span class="cl">User</span>, <span class="cl">Long</span>&gt; { }
+
+<span class="cm">// ✅ EmailService — only handles email sending</span>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cl">EmailService</span> {
+    <span class="kw">public void</span> <span class="fn">sendWelcomeEmail</span>(<span class="cl">User</span> user) { <span class="cm">/* send email */</span> }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="box box-interview">
+      <span class="box-icon">🎯</span>
+      <div>
+        <strong>Interview Answer:</strong> "A class should have only one reason to change.
+        In Spring Boot, we follow this via layered architecture — Controller handles HTTP,
+        Service handles business logic, Repository handles DB operations.
+        If I put DB logic inside Controller, it violates SRP because the Controller would now
+        change for both HTTP-related AND DB-related reasons."
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       O — OPEN / CLOSED PRINCIPLE
+  ══════════════════════════════════════════════════ -->
+  <section id="ocp" class="principle-section">
+
+    <div class="principle-header ph-o">
+      <div class="ph-num o">O</div>
+      <div class="ph-info">
+        <h2>Open / Closed Principle</h2>
+        <div class="ph-short">The "O" in SOLID</div>
+        <div class="ph-definition def-o">
+          "Software entities should be <strong>open for extension</strong> but <strong>closed for modification</strong>."
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-info">
+      <span class="box-icon">🧠</span>
+      <div>
+        <strong>Simple way to remember:</strong> You should be able to <strong>add new features</strong> by adding new code,
+        <strong>NOT by changing existing code</strong>. Once a class is tested and working, you shouldn't need to modify it to add new behaviour — just extend it.
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-bad">❌ Violation</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-bad">Every new shape requires modifying the class</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ❌ Adding new shape requires changing this class</span>
+<span class="kw">public class</span> <span class="cl">AreaCalculator</span> {
+
+    <span class="kw">public double</span> <span class="fn">calculateArea</span>(<span class="cl">Object</span> shape) {
+        <span class="kw">if</span> (shape <span class="kw">instanceof</span> <span class="cl">Circle</span> c) {
+            <span class="kw">return</span> Math.PI * c.radius * c.radius;
+        }
+        <span class="kw">else if</span> (shape <span class="kw">instanceof</span> <span class="cl">Rectangle</span> r) {
+            <span class="kw">return</span> r.width * r.height;
+        }
+        <span class="cm">// ❌ Adding Triangle → must MODIFY this method!</span>
+        <span class="kw">else if</span> (shape <span class="kw">instanceof</span> <span class="cl">Triangle</span> t) {
+            <span class="kw">return</span> <span class="num">0.5</span> * t.base * t.height;
+        }
+        <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="str">"Unknown shape"</span>);
+    }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-good">✅ Fixed — OCP Applied</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-good">New shapes added without modifying existing code</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ✅ Define abstraction — closed for modification</span>
+<span class="kw">public interface</span> <span class="cl">Shape</span> {
+    <span class="kw">double</span> <span class="fn">calculateArea</span>();
+}
+
+<span class="cm">// ✅ Extend by adding new classes — open for extension</span>
+<span class="kw">public class</span> <span class="cl">Circle</span> <span class="kw">implements</span> <span class="cl">Shape</span> {
+    <span class="kw">private double</span> radius;
+    <span class="an">@Override</span>
+    <span class="kw">public double</span> <span class="fn">calculateArea</span>() {
+        <span class="kw">return</span> Math.PI * radius * radius;
+    }
+}
+
+<span class="kw">public class</span> <span class="cl">Rectangle</span> <span class="kw">implements</span> <span class="cl">Shape</span> {
+    <span class="kw">private double</span> width, height;
+    <span class="an">@Override</span>
+    <span class="kw">public double</span> <span class="fn">calculateArea</span>() {
+        <span class="kw">return</span> width * height;
+    }
+}
+
+<span class="cm">// ✅ AreaCalculator never changes!</span>
+<span class="kw">public class</span> <span class="cl">AreaCalculator</span> {
+    <span class="kw">public double</span> <span class="fn">calculate</span>(<span class="cl">Shape</span> shape) {
+        <span class="kw">return</span> shape.<span class="fn">calculateArea</span>(); <span class="cm">// polymorphism</span>
+    }
+}
+
+<span class="cm">// ✅ Adding Triangle: ZERO changes to existing code!</span>
+<span class="kw">public class</span> <span class="cl">Triangle</span> <span class="kw">implements</span> <span class="cl">Shape</span> {
+    <span class="kw">private double</span> base, height;
+    <span class="an">@Override</span>
+    <span class="kw">public double</span> <span class="fn">calculateArea</span>() {
+        <span class="kw">return</span> <span class="num">0.5</span> * base * height;
+    }
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- OCP in Spring Boot — Strategy Pattern -->
+    <div class="content-card" style="margin-bottom:16px;">
+      <div class="cc-title"><span class="dot" style="background:var(--o-color)"></span> OCP in Spring Boot — Payment Strategy Example <span class="rw-badge">🏆 Asked in Interview</span></div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="ch-label label-good">Strategy Pattern + OCP — Add new payment without changing existing code</span>
+          <div class="ch-dots">
+            <div class="ch-dot" style="background:#ff5f57"></div>
+            <div class="ch-dot" style="background:#febc2e"></div>
+            <div class="ch-dot" style="background:#28c840"></div>
+          </div>
+        </div>
+        <pre><code><span class="cm">// ✅ Define abstraction (closed for modification)</span>
+<span class="kw">public interface</span> <span class="cl">PaymentStrategy</span> {
+    <span class="kw">void</span> <span class="fn">pay</span>(<span class="kw">double</span> amount);
+}
+
+<span class="cm">// ✅ Concrete implementations (open for extension)</span>
+<span class="an">@Component</span>(<span class="str">"creditCard"</span>)
+<span class="kw">public class</span> <span class="cl">CreditCardPayment</span> <span class="kw">implements</span> <span class="cl">PaymentStrategy</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">pay</span>(<span class="kw">double</span> amount) {
+        System.out.<span class="fn">println</span>(<span class="str">"Paid $"</span> + amount + <span class="str">" via Credit Card"</span>);
+    }
+}
+
+<span class="an">@Component</span>(<span class="str">"upi"</span>)
+<span class="kw">public class</span> <span class="cl">UPIPayment</span> <span class="kw">implements</span> <span class="cl">PaymentStrategy</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">pay</span>(<span class="kw">double</span> amount) {
+        System.out.<span class="fn">println</span>(<span class="str">"Paid $"</span> + amount + <span class="str">" via UPI"</span>);
+    }
+}
+
+<span class="cm">// ✅ Context class — NEVER changes when new payment added</span>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cl">PaymentService</span> {
+    <span class="kw">private final</span> Map&lt;String, <span class="cl">PaymentStrategy</span>&gt; strategies;
+
+    <span class="kw">public</span> <span class="cl">PaymentService</span>(Map&lt;String, <span class="cl">PaymentStrategy</span>&gt; strategies) {
+        <span class="kw">this</span>.strategies = strategies;
+    }
+
+    <span class="kw">public void</span> <span class="fn">processPayment</span>(<span class="ret">String</span> type, <span class="kw">double</span> amount) {
+        strategies.<span class="fn">getOrDefault</span>(type,
+            a -> System.out.<span class="fn">println</span>(<span class="str">"Unknown payment"</span>))
+            .<span class="fn">pay</span>(amount);
+    }
+    <span class="cm">// ✅ Adding "PayPal" payment = add new @Component class only!</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="box box-interview">
+      <span class="box-icon">🎯</span>
+      <div><strong>Interview Answer:</strong> "OCP means your classes should be open to extension but closed to modification.
+      In my STEP project, I used the <strong>Strategy Pattern</strong> for payment methods —
+      instead of if-else chains, each payment type implements a <code>PaymentStrategy</code> interface.
+      Adding a new payment type requires <em>zero changes</em> to existing code."</div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       L — LISKOV SUBSTITUTION PRINCIPLE
+  ══════════════════════════════════════════════════ -->
+  <section id="lsp" class="principle-section">
+
+    <div class="principle-header ph-l">
+      <div class="ph-num l">L</div>
+      <div class="ph-info">
+        <h2>Liskov Substitution Principle</h2>
+        <div class="ph-short">The "L" in SOLID — introduced by Barbara Liskov (1987)</div>
+        <div class="ph-definition def-l">
+          "Objects of a subclass should be <strong>replaceable with objects of the superclass</strong> without breaking the program.
+          If S is a subtype of T, then objects of T may be replaced with objects of S."
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-info">
+      <span class="box-icon">🧠</span>
+      <div>
+        <strong>Simple way to remember:</strong> A child class should <em>NOT</em> surprise the caller.
+        If you use a parent class reference pointing to a child object,
+        the program should work <strong>exactly as expected</strong> — no exceptions thrown, no broken contracts.
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-bad">❌ Classic LSP Violation</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-bad">Penguin can't fly — breaks the contract</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ❌ Violation — classic Bird/Penguin problem</span>
+<span class="kw">class</span> <span class="cl">Bird</span> {
+    <span class="kw">public void</span> <span class="fn">fly</span>() {
+        System.out.<span class="fn">println</span>(<span class="str">"Bird is flying..."</span>);
+    }
+}
+
+<span class="kw">class</span> <span class="cl">Sparrow</span> <span class="kw">extends</span> <span class="cl">Bird</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">fly</span>() {
+        System.out.<span class="fn">println</span>(<span class="str">"Sparrow flying..."</span>); <span class="cm">// ✅ OK</span>
+    }
+}
+
+<span class="kw">class</span> <span class="cl">Penguin</span> <span class="kw">extends</span> <span class="cl">Bird</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">fly</span>() {
+        <span class="cm">// ❌ Penguins CAN'T fly! Breaking the contract</span>
+        <span class="kw">throw new</span> <span class="cl">UnsupportedOperationException</span>(
+            <span class="str">"Penguins cannot fly!"</span>);
+    }
+}
+
+<span class="cm">// Usage — program BREAKS at runtime!</span>
+<span class="kw">public void</span> <span class="fn">makeBirdFly</span>(<span class="cl">Bird</span> bird) {
+    bird.<span class="fn">fly</span>(); <span class="cm">// ❌ Throws exception for Penguin!</span>
+}
+
+<span class="cm">// Child cannot substitute parent safely</span></code></pre>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-good">✅ Fixed — LSP Applied</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-good">Proper hierarchy — separate interfaces</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ✅ Base class — only what ALL birds can do</span>
+<span class="kw">abstract class</span> <span class="cl">Bird</span> {
+    <span class="kw">public abstract void</span> <span class="fn">eat</span>();
+    <span class="kw">public abstract void</span> <span class="fn">makeSound</span>();
+}
+
+<span class="cm">// ✅ Separate interface for flying birds only</span>
+<span class="kw">public interface</span> <span class="cl">Flyable</span> {
+    <span class="kw">void</span> <span class="fn">fly</span>();
+}
+
+<span class="cm">// ✅ Sparrow CAN fly</span>
+<span class="kw">class</span> <span class="cl">Sparrow</span> <span class="kw">extends</span> <span class="cl">Bird</span>
+        <span class="kw">implements</span> <span class="cl">Flyable</span> {
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">eat</span>() { <span class="cm">/* ... */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">makeSound</span>() { <span class="cm">/* chirp */</span> }
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">fly</span>() {
+        System.out.<span class="fn">println</span>(<span class="str">"Sparrow flying!"</span>);
+    }
+}
+
+<span class="cm">// ✅ Penguin CANNOT fly — no Flyable interface</span>
+<span class="kw">class</span> <span class="cl">Penguin</span> <span class="kw">extends</span> <span class="cl">Bird</span> {
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">eat</span>() { <span class="cm">/* ... */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">makeSound</span>() { <span class="cm">/* honk */</span> }
+    <span class="kw">public void</span> <span class="fn">swim</span>() {
+        System.out.<span class="fn">println</span>(<span class="str">"Penguin swimming!"</span>); <span class="cm">// ✅</span>
+    }
+}
+
+<span class="cm">// ✅ makeBirdFly only accepts Flyable</span>
+<span class="kw">public void</span> <span class="fn">makeBirdFly</span>(<span class="cl">Flyable</span> bird) {
+    bird.<span class="fn">fly</span>(); <span class="cm">// Safe — no surprise exceptions!</span>
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- LSP with Java Generics & Collections -->
+    <div class="content-card" style="margin-bottom:16px;">
+      <div class="cc-title"><span class="dot" style="background:var(--l-color)"></span> LSP in Real Application — Account Example <span class="rw-badge">💼 Real World</span></div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="ch-label label-good">Bank Account — proper substitution</span>
+          <div class="ch-dots">
+            <div class="ch-dot" style="background:#ff5f57"></div>
+            <div class="ch-dot" style="background:#febc2e"></div>
+            <div class="ch-dot" style="background:#28c840"></div>
+          </div>
+        </div>
+        <pre><code><span class="kw">abstract class</span> <span class="cl">BankAccount</span> {
+    <span class="kw">protected double</span> balance;
+
+    <span class="kw">public abstract void</span> <span class="fn">deposit</span>(<span class="kw">double</span> amount);
+    <span class="kw">public abstract void</span> <span class="fn">withdraw</span>(<span class="kw">double</span> amount);
+
+    <span class="cm">// LSP contract: deposit must increase balance</span>
+    <span class="cm">// LSP contract: withdraw must decrease balance or throw InsufficientFundsException</span>
+}
+
+<span class="kw">class</span> <span class="cl">SavingsAccount</span> <span class="kw">extends</span> <span class="cl">BankAccount</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">deposit</span>(<span class="kw">double</span> amount) {
+        balance += amount; <span class="cm">// ✅ Respects contract</span>
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">withdraw</span>(<span class="kw">double</span> amount) {
+        <span class="kw">if</span> (amount &gt; balance) <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="str">"Insufficient funds"</span>);
+        balance -= amount; <span class="cm">// ✅ Respects contract</span>
+    }
+}
+
+<span class="kw">class</span> <span class="cl">FixedDepositAccount</span> <span class="kw">extends</span> <span class="cl">BankAccount</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">deposit</span>(<span class="kw">double</span> amount) {
+        balance += amount; <span class="cm">// ✅ Respects contract</span>
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">withdraw</span>(<span class="kw">double</span> amount) {
+        <span class="cm">// ❌ VIOLATION if we just throw exception silently</span>
+        <span class="cm">// ✅ CORRECT: Document the restriction clearly</span>
+        <span class="kw">throw new</span> <span class="cl">UnsupportedOperationException</span>(
+            <span class="str">"FD accounts cannot withdraw before maturity"</span>);
+        <span class="cm">// ✅ Better: separate interface for withdrawable accounts</span>
+    }
+}
+
+<span class="cm">// Service works with any BankAccount</span>
+<span class="kw">public void</span> <span class="fn">processDeposit</span>(<span class="cl">BankAccount</span> account, <span class="kw">double</span> amount) {
+    account.<span class="fn">deposit</span>(amount); <span class="cm">// ✅ Safe substitution</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="box box-interview">
+      <span class="box-icon">🎯</span>
+      <div>
+        <strong>Interview Answer:</strong> "LSP says a subclass must be usable wherever the parent class is used, without breaking the program.
+        The classic violation is Penguin extends Bird with a fly() that throws an exception.
+        The fix is to use interfaces — <code>Flyable</code> — only implemented by birds that can actually fly.
+        In real apps, I ensure child classes honour the <em>contract</em> of the parent without surprising the caller."
+      </div>
+    </div>
+
+    <!-- LSP Rules -->
+    <div class="content-card" style="margin-top:16px;">
+      <div class="cc-title"><span class="dot" style="background:var(--l-color)"></span> LSP Rules to Remember</div>
+      <table>
+        <tr>
+          <th>Rule</th>
+          <th>Description</th>
+          <th>Example</th>
+        </tr>
+        <tr>
+          <td style="color:#60a5fa;font-weight:700;">Precondition</td>
+          <td>Subclass cannot <strong>strengthen</strong> preconditions</td>
+          <td>If parent accepts any int, child cannot restrict to positive only</td>
+        </tr>
+        <tr>
+          <td style="color:#60a5fa;font-weight:700;">Postcondition</td>
+          <td>Subclass cannot <strong>weaken</strong> postconditions</td>
+          <td>If parent guarantees non-null return, child must too</td>
+        </tr>
+        <tr>
+          <td style="color:#60a5fa;font-weight:700;">Exception</td>
+          <td>Subclass cannot throw <strong>new checked exceptions</strong></td>
+          <td>If parent's method throws IOException, child can't add SQLException</td>
+        </tr>
+        <tr>
+          <td style="color:#60a5fa;font-weight:700;">Invariant</td>
+          <td>Subclass must <strong>preserve invariants</strong> of parent</td>
+          <td>If parent guarantees balance >= 0, child must too</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       I — INTERFACE SEGREGATION PRINCIPLE
+  ══════════════════════════════════════════════════ -->
+  <section id="isp" class="principle-section">
+
+    <div class="principle-header ph-i">
+      <div class="ph-num i">I</div>
+      <div class="ph-info">
+        <h2>Interface Segregation Principle</h2>
+        <div class="ph-short">The "I" in SOLID</div>
+        <div class="ph-definition def-i">
+          "A client should <strong>never be forced to implement an interface</strong> that it doesn't use.
+          Many client-specific interfaces are better than one general-purpose interface."
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-info">
+      <span class="box-icon">🧠</span>
+      <div>
+        <strong>Simple way to remember:</strong> Don't create <em>"fat interfaces"</em>.
+        If a class is forced to implement methods it doesn't need and just writes
+        <code>throw new UnsupportedOperationException()</code> — that's an ISP violation.
+        <strong>Break the big interface into smaller, focused ones.</strong>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-bad">❌ Fat Interface Violation</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-bad">Bloated Animal interface forces all to implement everything</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ❌ ONE fat interface — forces all animals to implement EVERYTHING</span>
+<span class="kw">public interface</span> <span class="cl">Animal</span> {
+    <span class="kw">void</span> <span class="fn">eat</span>();
+    <span class="kw">void</span> <span class="fn">fly</span>();    <span class="cm">// ❌ Not all animals fly</span>
+    <span class="kw">void</span> <span class="fn">swim</span>();   <span class="cm">// ❌ Not all animals swim</span>
+    <span class="kw">void</span> <span class="fn">run</span>();    <span class="cm">// ❌ Not all animals run</span>
+    <span class="kw">void</span> <span class="fn">bark</span>();   <span class="cm">// ❌ Not all animals bark</span>
+}
+
+<span class="cm">// ❌ Dog forced to implement fly() and swim()</span>
+<span class="kw">class</span> <span class="cl">Dog</span> <span class="kw">implements</span> <span class="cl">Animal</span> {
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">eat</span>()  { <span class="cm">/* eats */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">run</span>()  { <span class="cm">/* runs */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">bark</span>() { <span class="cm">/* barks */</span> }
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">fly</span>() {
+        <span class="kw">throw new</span> <span class="cl">UnsupportedOperationException</span>(
+            <span class="str">"Dogs can't fly!"</span>); <span class="cm">// ❌ Forced!</span>
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">swim</span>() {
+        <span class="kw">throw new</span> <span class="cl">UnsupportedOperationException</span>(
+            <span class="str">"This dog can't swim!"</span>); <span class="cm">// ❌ Forced!</span>
+    }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-good">✅ Fixed — ISP Applied</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-good">Segregated interfaces — implement only what you need</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ✅ Small, focused interfaces (ISP)</span>
+<span class="kw">public interface</span> <span class="cl">Eatable</span>  { <span class="kw">void</span> <span class="fn">eat</span>();  }
+<span class="kw">public interface</span> <span class="cl">Flyable</span>  { <span class="kw">void</span> <span class="fn">fly</span>();  }
+<span class="kw">public interface</span> <span class="cl">Swimmable</span>{ <span class="kw">void</span> <span class="fn">swim</span>(); }
+<span class="kw">public interface</span> <span class="cl">Runnable</span> { <span class="kw">void</span> <span class="fn">run</span>();  }
+<span class="kw">public interface</span> <span class="cl">Barkable</span> { <span class="kw">void</span> <span class="fn">bark</span>(); }
+
+<span class="cm">// ✅ Dog only implements what it needs</span>
+<span class="kw">class</span> <span class="cl">Dog</span> <span class="kw">implements</span>
+        <span class="cl">Eatable</span>, <span class="cl">Runnable</span>, <span class="cl">Barkable</span> {
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">eat</span>()  { <span class="cm">/* eats */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">run</span>()  { <span class="cm">/* runs */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">bark</span>() { <span class="cm">/* barks */</span> }
+    <span class="cm">// ✅ No forced methods!</span>
+}
+
+<span class="cm">// ✅ Eagle only implements what it needs</span>
+<span class="kw">class</span> <span class="cl">Eagle</span> <span class="kw">implements</span>
+        <span class="cl">Eatable</span>, <span class="cl">Flyable</span> {
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">eat</span>() { <span class="cm">/* eats */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">fly</span>() { <span class="cm">/* flies */</span> }
+}
+
+<span class="cm">// ✅ Duck implements multiple</span>
+<span class="kw">class</span> <span class="cl">Duck</span> <span class="kw">implements</span>
+        <span class="cl">Eatable</span>, <span class="cl">Flyable</span>, <span class="cl">Swimmable</span> {
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">eat</span>()  { <span class="cm">/* eats */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">fly</span>()  { <span class="cm">/* flies */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">swim</span>() { <span class="cm">/* swims */</span> }
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ISP in Spring / Repository Pattern -->
+    <div class="content-card" style="margin-bottom:16px;">
+      <div class="cc-title"><span class="dot" style="background:var(--i-color)"></span> ISP in Spring Boot — Repository Interfaces <span class="rw-badge">💼 Real World</span></div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="ch-label label-good">Spring Data JPA follows ISP naturally</span>
+          <div class="ch-dots">
+            <div class="ch-dot" style="background:#ff5f57"></div>
+            <div class="ch-dot" style="background:#febc2e"></div>
+            <div class="ch-dot" style="background:#28c840"></div>
+          </div>
+        </div>
+        <pre><code><span class="cm">// ✅ Spring Data JPA is a great ISP example!</span>
+<span class="cm">// Repository — basic contract</span>
+<span class="kw">public interface</span> <span class="cl">Repository</span>&lt;T, ID&gt; { }
+
+<span class="cm">// CrudRepository — adds CRUD operations</span>
+<span class="kw">public interface</span> <span class="cl">CrudRepository</span>&lt;T, ID&gt;
+        <span class="kw">extends</span> <span class="cl">Repository</span>&lt;T, ID&gt; {
+    T <span class="fn">save</span>(T entity);
+    Optional&lt;T&gt; <span class="fn">findById</span>(ID id);
+    <span class="kw">void</span> <span class="fn">deleteById</span>(ID id);
+}
+
+<span class="cm">// PagingAndSortingRepository — adds pagination</span>
+<span class="kw">public interface</span> <span class="cl">PagingAndSortingRepository</span>&lt;T, ID&gt;
+        <span class="kw">extends</span> <span class="cl">CrudRepository</span>&lt;T, ID&gt; {
+    <span class="cl">Page</span>&lt;T&gt; <span class="fn">findAll</span>(<span class="cl">Pageable</span> pageable);
+}
+
+<span class="cm">// JpaRepository — adds JPA-specific methods</span>
+<span class="kw">public interface</span> <span class="cl">JpaRepository</span>&lt;T, ID&gt;
+        <span class="kw">extends</span> <span class="cl">PagingAndSortingRepository</span>&lt;T, ID&gt; {
+    List&lt;T&gt; <span class="fn">findAll</span>();
+    <span class="kw">void</span> <span class="fn">flush</span>();
+}
+
+<span class="cm">// ✅ Use only what you need in your app!</span>
+<span class="kw">public interface</span> <span class="cl">UserRepository</span>
+        <span class="kw">extends</span> <span class="cl">CrudRepository</span>&lt;<span class="cl">User</span>, <span class="cl">Long</span>&gt; {
+    <span class="cm">// If you only need basic CRUD, don't extend JpaRepository!</span>
+}
+
+<span class="cm">// ✅ Custom ISP example in services</span>
+<span class="kw">public interface</span> <span class="cl">Readable</span>&lt;T&gt; {
+    List&lt;T&gt; <span class="fn">findAll</span>();
+    Optional&lt;T&gt; <span class="fn">findById</span>(<span class="cl">Long</span> id);
+}
+
+<span class="kw">public interface</span> <span class="cl">Writable</span>&lt;T&gt; {
+    T <span class="fn">save</span>(T entity);
+    <span class="kw">void</span> <span class="fn">delete</span>(<span class="cl">Long</span> id);
+}
+
+<span class="cm">// Read-only service only gets read capability</span>
+<span class="kw">public class</span> <span class="cl">ReportService</span> <span class="kw">implements</span> <span class="cl">Readable</span>&lt;<span class="cl">Report</span>&gt; {
+    <span class="cm">// Only read operations — no accidental writes!</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="box box-interview">
+      <span class="box-icon">🎯</span>
+      <div>
+        <strong>Interview Answer:</strong> "ISP says don't force clients to depend on methods they don't use.
+        A classic example: a fat <code>Animal</code> interface with fly(), swim(), bark() forces Dog to implement fly().
+        The fix is to split into <code>Flyable</code>, <code>Swimmable</code>, <code>Barkable</code>.
+        Spring Data JPA actually demonstrates ISP beautifully — <code>Repository</code>, <code>CrudRepository</code>,
+        <code>JpaRepository</code> are separate interfaces with increasing capabilities."
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       D — DEPENDENCY INVERSION PRINCIPLE
+  ══════════════════════════════════════════════════ -->
+  <section id="dip" class="principle-section">
+
+    <div class="principle-header ph-d">
+      <div class="ph-num d">D</div>
+      <div class="ph-info">
+        <h2>Dependency Inversion Principle</h2>
+        <div class="ph-short">The "D" in SOLID — Most important in Spring!</div>
+        <div class="ph-definition def-d">
+          "High-level modules should <strong>not depend on low-level modules</strong>. Both should depend on <strong>abstractions</strong>.
+          Abstractions should not depend on details. Details should depend on abstractions."
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-info">
+      <span class="box-icon">🧠</span>
+      <div>
+        <strong>Simple way to remember:</strong> Depend on <em>interfaces</em>, not on <em>concrete classes</em>.
+        Your high-level business logic (<code>OrderService</code>) should depend on an abstraction (<code>PaymentGateway</code> interface),
+        not on a specific implementation (<code>StripePaymentGateway</code>).
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-bad">❌ Tight Coupling Violation</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-bad">High-level depends on low-level concrete class</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ❌ Tight coupling — high depends on low</span>
+<span class="kw">class</span> <span class="cl">PDFFormatter</span> {
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">format</span>(<span class="ret">String</span> content) {
+        <span class="kw">return</span> <span class="str">"PDF: "</span> + content;
+    }
+}
+
+<span class="kw">class</span> <span class="cl">ReportGenerator</span> {
+    <span class="cm">// ❌ Directly depends on PDFFormatter (concrete class)</span>
+    <span class="kw">private</span> <span class="cl">PDFFormatter</span> formatter = <span class="kw">new</span> <span class="cl">PDFFormatter</span>();
+
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">generate</span>(<span class="ret">String</span> data) {
+        <span class="kw">return</span> formatter.<span class="fn">format</span>(data);
+    }
+    <span class="cm">// ❌ To switch to HTML output: MUST MODIFY this class</span>
+    <span class="cm">// ❌ Cannot unit test without real PDFFormatter</span>
+    <span class="cm">// ❌ Cannot mock in tests</span>
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="cc-title"><span class="badge-good">✅ Fixed — DIP Applied</span></div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-good">Both depend on abstraction (interface)</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ✅ Abstraction (interface)</span>
+<span class="kw">public interface</span> <span class="cl">Formatter</span> {
+    <span class="ret">String</span> <span class="fn">format</span>(<span class="ret">String</span> content);
+}
+
+<span class="cm">// ✅ Low-level depends on abstraction</span>
+<span class="kw">class</span> <span class="cl">PDFFormatter</span> <span class="kw">implements</span> <span class="cl">Formatter</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">format</span>(<span class="ret">String</span> content) {
+        <span class="kw">return</span> <span class="str">"PDF: "</span> + content;
+    }
+}
+
+<span class="kw">class</span> <span class="cl">HTMLFormatter</span> <span class="kw">implements</span> <span class="cl">Formatter</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">format</span>(<span class="ret">String</span> content) {
+        <span class="kw">return</span> <span class="str">"&lt;p&gt;"</span> + content + <span class="str">"&lt;/p&gt;"</span>;
+    }
+}
+
+<span class="cm">// ✅ High-level depends on abstraction (not concrete)</span>
+<span class="kw">class</span> <span class="cl">ReportGenerator</span> {
+    <span class="kw">private final</span> <span class="cl">Formatter</span> formatter; <span class="cm">// interface!</span>
+
+    <span class="cm">// ✅ Injected from outside (Constructor DI)</span>
+    <span class="kw">public</span> <span class="cl">ReportGenerator</span>(<span class="cl">Formatter</span> formatter) {
+        <span class="kw">this</span>.formatter = formatter;
+    }
+
+    <span class="kw">public</span> <span class="ret">String</span> <span class="fn">generate</span>(<span class="ret">String</span> data) {
+        <span class="kw">return</span> formatter.<span class="fn">format</span>(data);
+    }
+    <span class="cm">// ✅ Swap PDF → HTML: zero code change here!</span>
+    <span class="cm">// ✅ Mock Formatter easily in unit tests</span>
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIP in Spring Boot -->
+    <div class="content-card" style="margin-bottom:16px;">
+      <div class="cc-title"><span class="dot" style="background:var(--d-color)"></span> DIP in Spring Boot — @Autowired on interface <span class="rw-badge">🌱 Spring Core</span></div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="ch-label label-good">Spring IoC perfectly implements DIP</span>
+          <div class="ch-dots">
+            <div class="ch-dot" style="background:#ff5f57"></div>
+            <div class="ch-dot" style="background:#febc2e"></div>
+            <div class="ch-dot" style="background:#28c840"></div>
+          </div>
+        </div>
+        <pre><code><span class="cm">// ✅ Abstraction layer</span>
+<span class="kw">public interface</span> <span class="cl">NotificationService</span> {
+    <span class="kw">void</span> <span class="fn">send</span>(<span class="ret">String</span> message, <span class="ret">String</span> recipient);
+}
+
+<span class="cm">// ✅ Concrete implementation 1</span>
+<span class="an">@Service</span>
+<span class="an">@Primary</span>
+<span class="kw">public class</span> <span class="cl">EmailNotificationService</span>
+        <span class="kw">implements</span> <span class="cl">NotificationService</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ret">String</span> msg, <span class="ret">String</span> recipient) {
+        System.out.<span class="fn">println</span>(<span class="str">"Email sent to: "</span> + recipient);
+    }
+}
+
+<span class="cm">// ✅ Concrete implementation 2</span>
+<span class="an">@Service</span>
+<span class="an">@Qualifier</span>(<span class="str">"sms"</span>)
+<span class="kw">public class</span> <span class="cl">SMSNotificationService</span>
+        <span class="kw">implements</span> <span class="cl">NotificationService</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ret">String</span> msg, <span class="ret">String</span> recipient) {
+        System.out.<span class="fn">println</span>(<span class="str">"SMS sent to: "</span> + recipient);
+    }
+}
+
+<span class="cm">// ✅ High-level module depends on interface — DIP!</span>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cl">OrderService</span> {
+
+    <span class="kw">private final</span> <span class="cl">NotificationService</span> notificationService;
+
+    <span class="cm">// ✅ Spring injects the concrete impl at runtime</span>
+    <span class="cm">// ✅ OrderService has ZERO knowledge of Email vs SMS</span>
+    <span class="kw">public</span> <span class="cl">OrderService</span>(<span class="cl">NotificationService</span> notificationService) {
+        <span class="kw">this</span>.notificationService = notificationService;
+    }
+
+    <span class="kw">public void</span> <span class="fn">placeOrder</span>(<span class="cl">Order</span> order) {
+        <span class="cm">// business logic...</span>
+        notificationService.<span class="fn">send</span>(
+            <span class="str">"Order placed: #"</span> + order.<span class="fn">getId</span>(),
+            order.<span class="fn">getUserEmail</span>()
+        );
+    }
+}
+
+<span class="cm">// ✅ Unit Test — mock the interface easily!</span>
+<span class="an">@ExtendWith</span>(<span class="cl">MockitoExtension</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="cl">OrderServiceTest</span> {
+    <span class="an">@Mock</span>
+    <span class="cl">NotificationService</span> notificationService; <span class="cm">// mocked interface</span>
+    <span class="an">@InjectMocks</span>
+    <span class="cl">OrderService</span> orderService;
+
+    <span class="an">@Test</span>
+    <span class="kw">void</span> <span class="fn">placeOrder_shouldSendNotification</span>() {
+        orderService.<span class="fn">placeOrder</span>(<span class="kw">new</span> <span class="cl">Order</span>(<span class="num">1L</span>, <span class="str">"test@test.com"</span>));
+        verify(notificationService).<span class="fn">send</span>(any(), any());
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="box box-interview">
+      <span class="box-icon">🎯</span>
+      <div>
+        <strong>Interview Answer:</strong> "DIP says high-level modules should not depend on low-level modules —
+        both should depend on abstractions. In Spring Boot, this is the foundation —
+        we inject interfaces (<code>NotificationService</code>), not concrete classes.
+        Spring IoC container manages which concrete bean gets injected at runtime.
+        This makes testing easy (we can mock interfaces), and we can swap implementations
+        (Email → SMS) with zero code changes in the business layer."
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       DI vs IoC vs DIP
+  ══════════════════════════════════════════════════ -->
+  <section id="di-ioc">
+
+    <div style="text-align:center;margin-bottom:28px;">
+      <h2 style="font-size:26px;font-weight:800;color:var(--text);margin-bottom:8px;">
+        ⚡ DIP vs DI vs IoC — The Confusing Trio
+      </h2>
+      <p style="color:var(--muted);font-size:14px;">Most interviewers ask this. Know the exact difference!</p>
+    </div>
+
+    <div class="box box-warn">
+      <span class="box-icon">⚠️</span>
+      <div>
+        <strong>Common Mistake:</strong> Many candidates confuse DIP (design principle),
+        Dependency Injection (design pattern), and IoC (architectural principle).
+        They are <em>related but different concepts</em>.
+      </div>
+    </div>
+
+    <div class="trio-grid">
+      <div class="trio-card trio-dip">
+        <div class="trio-title">DIP</div>
+        <div class="trio-type">Design Principle (SOLID)</div>
+        <div class="trio-desc">
+          "Depend on abstractions, not concretions."<br><br>
+          It's a <strong>guideline / principle</strong> — a rule that tells you
+          <em>what</em> you should aim for in your design.
+          It does NOT say HOW to achieve it.
+        </div>
+      </div>
+      <div class="trio-card trio-di">
+        <div class="trio-title">Dependency Injection</div>
+        <div class="trio-type">Design Pattern</div>
+        <div class="trio-desc">
+          "Provide dependencies from outside, don't create them inside."<br><br>
+          It's a <strong>pattern / technique</strong> — a concrete way to
+          <em>implement</em> DIP. Constructor DI, Setter DI, Field DI are all forms of this.
+        </div>
+      </div>
+      <div class="trio-card trio-ioc">
+        <div class="trio-title">IoC</div>
+        <div class="trio-type">Architectural Principle</div>
+        <div class="trio-desc">
+          "The control of object creation is inverted — given to a container."<br><br>
+          It's a broader <strong>architectural concept</strong>.
+          Spring IoC Container creates, manages, and injects beans —
+          <em>YOU don't call <code>new</code></em>.
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card" style="margin-top:16px;">
+      <div class="cc-title"><span class="dot" style="background:var(--accent2)"></span> How They Relate Together</div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="ch-label label-info">DIP → achieved via → DI → powered by → IoC Container</span>
+          <div class="ch-dots">
+            <div class="ch-dot" style="background:#ff5f57"></div>
+            <div class="ch-dot" style="background:#febc2e"></div>
+            <div class="ch-dot" style="background:#28c840"></div>
+          </div>
+        </div>
+        <pre><code><span class="cm">// ──────────────────────────────────────────────</span>
+<span class="cm">// 1. DIP (principle) says: depend on abstractions</span>
+<span class="cm">// ──────────────────────────────────────────────</span>
+<span class="kw">public interface</span> <span class="cl">MessageSender</span> {   <span class="cm">// ← abstraction</span>
+    <span class="kw">void</span> <span class="fn">send</span>(<span class="ret">String</span> msg);
+}
+
+<span class="cm">// ──────────────────────────────────────────────</span>
+<span class="cm">// 2. DI (pattern) says: inject from outside</span>
+<span class="cm">// ──────────────────────────────────────────────</span>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cl">AlertService</span> {
+
+    <span class="kw">private final</span> <span class="cl">MessageSender</span> sender; <span class="cm">// DIP: depends on interface</span>
+
+    <span class="cm">// Constructor DI — injected from outside (not created here)</span>
+    <span class="kw">public</span> <span class="cl">AlertService</span>(<span class="cl">MessageSender</span> sender) { <span class="cm">// DI pattern</span>
+        <span class="kw">this</span>.sender = sender;
+    }
+
+    <span class="kw">public void</span> <span class="fn">sendAlert</span>(<span class="ret">String</span> msg) {
+        sender.<span class="fn">send</span>(msg);
+    }
+}
+
+<span class="cm">// ──────────────────────────────────────────────</span>
+<span class="cm">// 3. IoC (Spring container) wires everything</span>
+<span class="cm">// ──────────────────────────────────────────────</span>
+<span class="an">@Component</span>
+<span class="kw">public class</span> <span class="cl">EmailSender</span> <span class="kw">implements</span> <span class="cl">MessageSender</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="ret">String</span> msg) {
+        System.out.<span class="fn">println</span>(<span class="str">"Email: "</span> + msg);
+    }
+}
+<span class="cm">// Spring IoC container auto-creates EmailSender bean</span>
+<span class="cm">// and injects it into AlertService — YOU don't call new!</span>
+<span class="cm">// Control of object creation is INVERTED to the container</span></code></pre>
+      </div>
+
+      <table style="margin-top:16px;">
+        <tr>
+          <th>Concept</th>
+          <th>Type</th>
+          <th>What it says</th>
+          <th>Spring Example</th>
+        </tr>
+        <tr>
+          <td style="color:var(--s-color);font-weight:700;">DIP</td>
+          <td>Design Principle</td>
+          <td>Depend on abstractions</td>
+          <td>Inject interface, not concrete class</td>
+        </tr>
+        <tr>
+          <td style="color:var(--o-color);font-weight:700;">DI</td>
+          <td>Design Pattern</td>
+          <td>Provide dependencies externally</td>
+          <td>@Autowired, constructor injection</td>
+        </tr>
+        <tr>
+          <td style="color:var(--l-color);font-weight:700;">IoC</td>
+          <td>Architectural Principle</td>
+          <td>Invert control of object creation</td>
+          <td>Spring ApplicationContext, @Bean</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="box box-interview" style="margin-top:20px;">
+      <span class="box-icon">🎯</span>
+      <div>
+        <strong>Perfect Interview Answer:</strong>
+        <em>"DIP is a <strong>design principle</strong> — it says depend on abstractions, not concretions.
+        Dependency Injection is a <strong>design pattern</strong> that implements DIP by providing dependencies from outside.
+        IoC is an <strong>architectural principle</strong> where the control of object creation is given to a container (Spring).
+        So: DIP tells WHAT, DI tells HOW, IoC tells WHO does it."</em>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       CLEAN CODE
+  ══════════════════════════════════════════════════ -->
+  <section id="clean">
+    <div style="margin-bottom:28px;">
+      <h2 style="font-size:24px;font-weight:800;color:var(--text);margin-bottom:8px;">
+        🧹 Clean Code Principles
+      </h2>
+      <p style="color:var(--muted);font-size:14px;">Related to SOLID — often asked together in interviews</p>
+    </div>
+
+    <div class="content-grid">
+      <!-- DRY -->
+      <div class="content-card">
+        <div class="cc-title"><span class="dot" style="background:#f472b6"></span> DRY — Don't Repeat Yourself</div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-bad">❌ Magic Numbers / Repeated Constants</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ❌ Magic numbers — meaning unclear, hard to maintain</span>
+<span class="kw">if</span> (user.<span class="fn">getAge</span>() &gt;= <span class="num">18</span>) { <span class="cm">/* allow */</span> }
+<span class="kw">if</span> (password.<span class="fn">length</span>() &gt;= <span class="num">8</span>) { <span class="cm">/* allow */</span> }
+<span class="kw">if</span> (session.<span class="fn">getDuration</span>() &gt; <span class="num">1800</span>) { <span class="cm">/* expire */</span> }
+
+<span class="cm">// ❌ Duplicated connection string in multiple classes</span>
+<span class="ret">String</span> url1 = <span class="str">"jdbc:mysql://localhost:3306/mydb"</span>;
+<span class="ret">String</span> url2 = <span class="str">"jdbc:mysql://localhost:3306/mydb"</span>;</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-good">✅ Constants class / interface — DRY principle</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ✅ Option 1: Constants class (recommended)</span>
+<span class="kw">public final class</span> <span class="cl">AppConstants</span> {
+    <span class="kw">private</span> <span class="cl">AppConstants</span>() {} <span class="cm">// prevent instantiation</span>
+
+    <span class="kw">public static final int</span> MINIMUM_AGE       = <span class="num">18</span>;
+    <span class="kw">public static final int</span> MIN_PASSWORD_LEN  = <span class="num">8</span>;
+    <span class="kw">public static final int</span> SESSION_TIMEOUT   = <span class="num">1800</span>;
+    <span class="kw">public static final</span> <span class="ret">String</span> DB_URL = <span class="str">"jdbc:mysql://..."</span>;
+}
+
+<span class="cm">// ✅ Option 2: Enum for related constants</span>
+<span class="kw">public enum</span> <span class="cl">UserStatus</span> {
+    <span class="cl">ACTIVE</span>, <span class="cl">INACTIVE</span>, <span class="cl">SUSPENDED</span>, <span class="cl">DELETED</span>
+}
+
+<span class="cm">// ✅ Option 3: @Value from application.properties (Spring)</span>
+<span class="an">@Value</span>(<span class="str">"${app.minimum.age}"</span>)
+<span class="kw">private int</span> minimumAge;
+
+<span class="cm">// ✅ Usage is now self-documenting</span>
+<span class="kw">if</span> (user.<span class="fn">getAge</span>() &gt;= <span class="cl">AppConstants</span>.MINIMUM_AGE) { }</code></pre>
+        </div>
+      </div>
+
+      <!-- Clean Naming & Guard Clauses -->
+      <div class="content-card">
+        <div class="cc-title"><span class="dot" style="background:#34d399"></span> Clean Naming & Guard Clauses</div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-bad">❌ Bad naming & deep nesting</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ❌ Meaningless names</span>
+<span class="kw">int</span> d; <span class="kw">String</span> s; <span class="kw">void</span> <span class="fn">proc</span>() {}
+
+<span class="cm">// ❌ Comment explaining what code DOES (code should be self-explanatory)</span>
+<span class="cm">// Check if age > 18</span>
+<span class="kw">if</span> (user.<span class="fn">getAge</span>() &gt; <span class="num">18</span>) { }
+
+<span class="cm">// ❌ Method name doing 3 things</span>
+<span class="kw">public void</span> <span class="fn">processDataAndSaveToDbIfValid</span>() {}
+
+<span class="cm">// ❌ Deep nesting (arrow code)</span>
+<span class="kw">if</span> (user != <span class="kw">null</span>) {
+    <span class="kw">if</span> (user.<span class="fn">isActive</span>()) {
+        <span class="kw">if</span> (user.<span class="fn">hasPermission</span>(<span class="str">"ADMIN"</span>)) {
+            <span class="kw">if</span> (request.<span class="fn">isValid</span>()) {
+                <span class="cm">// actual logic here... 😱</span>
+            }
+        }
+    }
+}</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="ch-label label-good">✅ Guard Clauses — early returns to reduce nesting</span>
+            <div class="ch-dots">
+              <div class="ch-dot" style="background:#ff5f57"></div>
+              <div class="ch-dot" style="background:#febc2e"></div>
+              <div class="ch-dot" style="background:#28c840"></div>
+            </div>
+          </div>
+          <pre><code><span class="cm">// ✅ Self-documenting code</span>
+<span class="kw">boolean</span> isAdult = user.<span class="fn">getAge</span>() &gt;= MINIMUM_AGE;
+
+<span class="cm">// ✅ Meaningful method names (each does ONE thing)</span>
+<span class="kw">public void</span> <span class="fn">processPayment</span>(<span class="cl">PaymentRequest</span> request) {}
+<span class="kw">public void</span> <span class="fn">validateRequest</span>(<span class="cl">PaymentRequest</span> request) {}
+<span class="kw">public void</span> <span class="fn">saveTransaction</span>(<span class="cl">Transaction</span> txn) {}
+
+<span class="cm">// ✅ Guard Clauses — fail fast, reduce nesting</span>
+<span class="kw">public void</span> <span class="fn">processRequest</span>(<span class="cl">User</span> user, <span class="cl">Request</span> request) {
+    <span class="kw">if</span> (user == <span class="kw">null</span>)             <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="str">"User is null"</span>);
+    <span class="kw">if</span> (!user.<span class="fn">isActive</span>())         <span class="kw">throw new</span> <span class="cl">UserInactiveException</span>(<span class="str">"User inactive"</span>);
+    <span class="kw">if</span> (!user.<span class="fn">hasPermission</span>(<span class="str">"ADMIN"</span>)) <span class="kw">throw new</span> <span class="cl">AccessDeniedException</span>(<span class="str">"No permission"</span>);
+    <span class="kw">if</span> (!request.<span class="fn">isValid</span>())       <span class="kw">throw new</span> <span class="cl">InvalidRequestException</span>(<span class="str">"Invalid"</span>);
+
+    <span class="cm">// ✅ Happy path — no nesting!</span>
+    <span class="fn">executeRequest</span>(request);
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clean Code Rules Quick List -->
+    <div class="content-card full-width" style="margin-top:0;">
+      <div class="cc-title"><span class="dot" style="background:#a78bfa"></span> Quick Clean Code Rules — Interview Cheat Sheet</div>
+      <table>
+        <tr>
+          <th>Rule</th>
+          <th>Bad Example</th>
+          <th>Good Example</th>
+        </tr>
+        <tr>
+          <td style="color:#f472b6;font-weight:700;">Naming</td>
+          <td><code style="color:var(--bad)">int d;</code></td>
+          <td><code style="color:var(--good)">int daysUntilExpiry;</code></td>
+        </tr>
+        <tr>
+          <td style="color:#f472b6;font-weight:700;">Functions</td>
+          <td><code style="color:var(--bad)">saveAndNotify()</code></td>
+          <td><code style="color:var(--good)">save() + notify()</code> — one job each</td>
+        </tr>
+        <tr>
+          <td style="color:#f472b6;font-weight:700;">Magic Numbers</td>
+          <td><code style="color:var(--bad)">if (age > 18)</code></td>
+          <td><code style="color:var(--good)">if (age >= LEGAL_AGE)</code></td>
+        </tr>
+        <tr>
+          <td style="color:#f472b6;font-weight:700;">Comments</td>
+          <td><code style="color:var(--bad)">// loop through items</code></td>
+          <td>Code should be self-documenting; comment WHY, not WHAT</td>
+        </tr>
+        <tr>
+          <td style="color:#f472b6;font-weight:700;">Nesting</td>
+          <td>3+ levels of if-else</td>
+          <td>Guard clauses — early return</td>
+        </tr>
+        <tr>
+          <td style="color:#f472b6;font-weight:700;">DRY</td>
+          <td>Same logic in 3 places</td>
+          <td>Extract to shared utility/constant</td>
+        </tr>
+        <tr>
+          <td style="color:#f472b6;font-weight:700;">Parameters</td>
+          <td><code style="color:var(--bad)">create(String, int, boolean, String)</code></td>
+          <td>Use Parameter Object / Builder pattern</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       SUMMARY
+  ══════════════════════════════════════════════════ -->
+  <section id="summary">
+    <div class="summary-section">
+      <h3>📊 SOLID Principles — Complete Summary</h3>
+      <table>
+        <tr>
+          <th>Letter</th>
+          <th>Principle</th>
+          <th>One-Line Rule</th>
+          <th>Violation Sign</th>
+          <th>Fix</th>
+        </tr>
+        <tr>
+          <td style="color:var(--s-color);font-weight:800;font-size:20px;">S</td>
+          <td>Single Responsibility</td>
+          <td>One class = one job</td>
+          <td>Class has AND in description</td>
+          <td>Split into multiple classes</td>
+        </tr>
+        <tr>
+          <td style="color:var(--o-color);font-weight:800;font-size:20px;">O</td>
+          <td>Open / Closed</td>
+          <td>Extend, don't modify</td>
+          <td>if-else / switch for types</td>
+          <td>Use interfaces + polymorphism</td>
+        </tr>
+        <tr>
+          <td style="color:var(--l-color);font-weight:800;font-size:20px;">L</td>
+          <td>Liskov Substitution</td>
+          <td>Child must safely replace parent</td>
+          <td>Child throws UnsupportedOp</td>
+          <td>Redesign hierarchy, use interfaces</td>
+        </tr>
+        <tr>
+          <td style="color:var(--i-color);font-weight:800;font-size:20px;">I</td>
+          <td>Interface Segregation</td>
+          <td>No fat interfaces</td>
+          <td>Class implements but does nothing</td>
+          <td>Split interface into smaller ones</td>
+        </tr>
+        <tr>
+          <td style="color:var(--d-color);font-weight:800;font-size:20px;">D</td>
+          <td>Dependency Inversion</td>
+          <td>Depend on abstractions</td>
+          <td><code>new ConcreteClass()</code> inside class</td>
+          <td>Inject interface via constructor DI</td>
+        </tr>
+      </table>
+
+      <div class="mnemonic" style="margin-top:24px;">
+        <div class="m-title">🧠 Memory Trick</div>
+        <div class="m-text">S.O.L.I.D = <span style="color:var(--s-color)">S</span>plit · <span style="color:var(--o-color)">O</span>pen · <span style="color:var(--l-color)">L</span>iskov · <span style="color:var(--i-color)">I</span>nterfaces · <span style="color:var(--d-color)">D</span>epend</div>
+        <div class="m-expand">One job · Extend don't modify · Safe substitution · Small interfaces · Use abstractions</div>
+      </div>
+    </div>
+
+    <!-- Interview Q&A -->
+    <div style="margin-top:32px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">
+        🎯 Top Interview Questions on SOLID
+      </div>
+      <ul class="iq-list">
+        <li class="iq-item">
+          <span class="iq-num">1</span>
+          <div>
+            <div>What does SOLID stand for? Explain each principle in one line.</div>
+            <div class="iq-ans">S=One reason to change, O=Extend not modify, L=Substitute child for parent, I=Small interfaces, D=Depend on abstractions</div>
+          </div>
+        </li>
+        <li class="iq-item">
+          <span class="iq-num">2</span>
+          <div>
+            <div>What is Liskov Substitution Principle? Show a violation and fix.</div>
+            <div class="iq-ans">Bird/Penguin example — Penguin extends Bird but fly() throws exception. Fix: separate Flyable interface</div>
+          </div>
+        </li>
+        <li class="iq-item">
+          <span class="iq-num">3</span>
+          <div>
+            <div>Difference between DIP, Dependency Injection, and IoC?</div>
+            <div class="iq-ans">DIP=principle (depend on abstractions), DI=pattern (inject from outside), IoC=architectural (Spring container manages)</div>
+          </div>
+        </li>
+        <li class="iq-item">
+          <span class="iq-num">4</span>
+          <div>
+            <div>How does Strategy Pattern relate to OCP?</div>
+            <div class="iq-ans">Strategy Pattern is an implementation of OCP — new strategies (classes) can be added without modifying the context class</div>
+          </div>
+        </li>
+        <li class="iq-item">
+          <span class="iq-num">5</span>
+          <div>
+            <div>Where did you apply SOLID in your STEP project?</div>
+            <div class="iq-ans">SRP: layered architecture. OCP+Strategy: payment methods. DIP: @Service injecting @Repository interfaces. ISP: separate service interfaces</div>
+          </div>
+        </li>
+        <li class="iq-item">
+          <span class="iq-num">6</span>
+          <div>
+            <div>How does Spring Boot follow SOLID principles?</div>
+            <div class="iq-ans">SRP: Controller/Service/Repo layers. DIP: @Autowired on interfaces. ISP: Repository hierarchy. OCP: @Component + polymorphism</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+</div><!-- /main-content -->
+
+<!-- ═══════════════════════════════════ FOOTER ═══════════════════════════════════ -->
+<footer>
+  <div class="footer-nav">
+    <a class="fn-link" href="#">← Part 10: Design Patterns</a>
+    <a class="fn-link" href="#">🏠 Master Plan</a>
+    <a class="fn-link" href="#">Part 12: Spring Core →</a>
+  </div>
+  <div>Java Interview Notes Series &nbsp;|&nbsp; Part 11 of 20 &nbsp;|&nbsp; SOLID Principles</div>
+  <div style="margin-top:4px;color:#3d4468;font-size:11px;">Save this file locally. No internet required.</div>
+</footer>
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>

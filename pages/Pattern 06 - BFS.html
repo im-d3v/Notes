@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pattern 06 — BFS: Level by Level, Layer by Layer</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0a1628 40%, #0d2240 100%);
+    }
+    .bfs-wave {
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap; margin: 16px 0;
+    }
+    .wave-node {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; flex-shrink: 0;
+    }
+    .wave-0 { background: rgba(88,166,255,0.9); color: #0d1117; }
+    .wave-1 { background: rgba(88,166,255,0.65); color: #e6edf3; }
+    .wave-2 { background: rgba(88,166,255,0.4); color: #e6edf3; }
+    .wave-3 { background: rgba(88,166,255,0.2); color: #8b949e; border: 1px solid #58a6ff44; }
+    .wave-arrow { color: #58a6ff; font-size: 18px; }
+    .visited-bug { background: rgba(248,81,73,0.08); border: 1px solid #f8514966; border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+    .visited-correct { background: rgba(63,185,80,0.08); border: 1px solid #3fb95066; border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+    .dir-grid {
+      display: grid; grid-template-columns: repeat(3, 48px);
+      gap: 4px; margin: 12px auto; width: fit-content;
+    }
+    .dir-cell {
+      width: 48px; height: 48px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; background: var(--bg-tertiary); border: 1px solid var(--border-color);
+    }
+    .dir-cell.active { background: rgba(88,166,255,0.2); border-color: #58a6ff; }
+    .dir-cell.active8 { background: rgba(188,140,255,0.2); border-color: #bc8cff; }
+    .dir-cell.center { background: rgba(248,81,73,0.2); border-color: #f85149; }
+    .orange-cell { color: #e3b341; font-weight: 700; }
+    .fresh-cell { color: #3fb950; font-weight: 700; }
+    .empty-cell { color: #6e7681; }
+    .grid-vis {
+      display: grid; gap: 3px; margin: 12px 0; width: fit-content;
+    }
+    .grid-vis-row { display: flex; gap: 3px; }
+    .gv-cell {
+      width: 40px; height: 40px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+    }
+    .gv-rotten { background: rgba(248,81,73,0.25); border-color: #f85149; }
+    .gv-fresh  { background: rgba(63,185,80,0.15); border-color: #3fb950; }
+    .gv-wall   { background: #010409; }
+    .gv-done   { background: rgba(88,166,255,0.2); border-color: #58a6ff; }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ── Hamburger ─────────────────────────────────────────── -->
+<button id="hamburger" aria-label="Toggle navigation">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <rect y="3"  width="20" height="2" rx="1" fill="currentColor"/>
+    <rect y="9"  width="20" height="2" rx="1" fill="currentColor"/>
+    <rect y="15" width="20" height="2" rx="1" fill="currentColor"/>
+  </svg>
+</button>
+
+<div id="sidebar-overlay"></div>
+
+<!-- ── Sidebar ───────────────────────────────────────────── -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="12" cy="12" r="6" stroke="#58a6ff" stroke-width="2" opacity=".6"/>
+        <circle cx="12" cy="12" r="2" fill="#58a6ff"/>
+      </svg>
+      Pattern 06
+    </div>
+    <div class="sidebar-subtitle">BFS: Level by Level</div>
+  </div>
+
+  <div class="sidebar-section-label">Navigation</div>
+  <a href="../index.html" class="toc-link">🏠 Home</a>
+
+  <div class="sidebar-section-label">Contents</div>
+  <a href="#mental-model"    class="toc-link">🌊 Mental Model</a>
+  <a href="#core-template"   class="toc-link">⚙️ Core Template</a>
+  <a href="#tree-bfs"        class="toc-link">🌳 A — Tree Level-Order</a>
+  <a href="#grid-bfs"        class="toc-link">🗺️ B — Grid / Matrix BFS</a>
+  <a href="#graph-bfs"       class="toc-link">🕸️ C — Graph BFS</a>
+  <a href="#multisource-bfs" class="toc-link">🔥 D — Multi-Source BFS</a>
+  <a href="#visited-bug"     class="toc-link">🐛 The Visited Set Bug</a>
+  <a href="#bfs-vs-dfs"      class="toc-link">⚖️ BFS vs DFS</a>
+  <a href="#direction-arrays" class="toc-link">🧭 Direction Arrays</a>
+  <a href="#walkthrough"     class="toc-link">🔍 Walkthrough: #994</a>
+  <a href="#practice"        class="toc-link">📋 Practice Problems</a>
+</nav>
+
+<!-- ── Main ─────────────────────────────────────────────── -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Algorithm Patterns — Sheet 06</div>
+      <h1>BFS: Level by Level,<br>Layer by Layer</h1>
+      <p class="hero-subtitle">
+        Breadth-First Search is the algorithm of fairness — every node at 
+        distance <em>d</em> is visited before any node at distance <em>d+1</em>.
+        That single guarantee is why it finds shortest paths in unweighted graphs.
+      </p>
+      <div class="hero-badges">
+        <span class="tag tag-blue">Queue-Based</span>
+        <span class="tag tag-green">Shortest Path</span>
+        <span class="tag tag-purple">Tree Traversal</span>
+        <span class="tag tag-orange">Grid BFS</span>
+        <span class="tag tag-cyan">Multi-Source</span>
+        <span class="tag tag-red">Java</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- PART 1                                               -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>Foundation — The Mental Model &amp; Core Template</h2>
+      <p>Why BFS works, how it's structured, and the one rule that prevents every bug.</p>
+    </div>
+  </div>
+
+  <!-- MENTAL MODEL -->
+  <div class="section" id="mental-model">
+    <div class="section-header">
+      <h3>🌊 The Mental Model — Ripples in a Pond</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Drop a stone in still water. The first ripple covers the closest water.
+        The second ripple covers the next ring. Each ring is <strong>exactly one step further</strong>
+        than the previous — no ring can jump over another.
+      </p>
+      <p>
+        BFS works identically. Start at a source node. Visit all nodes 1 hop away.
+        Then all nodes 2 hops away. Then 3. You <em>cannot</em> reach a node 3 hops away
+        without having already processed everything at hops 1 and 2.
+      </p>
+      <p>
+        <strong>This is the proof of shortest path:</strong> the first time you reach a node,
+        it's guaranteed to be via the fewest possible steps — because you explored all shorter
+        paths first.
+      </p>
+    </div>
+
+    <div class="bfs-wave">
+      <div class="wave-node wave-0">Src</div>
+      <div class="wave-arrow">──►</div>
+      <div class="wave-node wave-1">d=1</div>
+      <div class="wave-node wave-1">d=1</div>
+      <div class="wave-arrow">──►</div>
+      <div class="wave-node wave-2">d=2</div>
+      <div class="wave-node wave-2">d=2</div>
+      <div class="wave-node wave-2">d=2</div>
+      <div class="wave-arrow">──►</div>
+      <div class="wave-node wave-3">d=3</div>
+      <div class="wave-node wave-3">d=3</div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Why it only works on unweighted graphs:</strong> once you add edge weights,
+        a "longer" path (more hops) can actually be cheaper. That's when you need Dijkstra.
+        BFS treats every edge weight as exactly 1.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Queue is the Core Mechanism</h4>
+      <p>
+        A <strong>queue</strong> enforces FIFO order — the first node you enqueue
+        is the first you dequeue. This is exactly why BFS processes nodes level by level:
+        all level-<em>k</em> nodes were enqueued before any level-<em>k+1</em> node,
+        so they're dequeued first.
+      </p>
+      <p>
+        DFS uses a stack (or the call stack with recursion). A stack reverses order —
+        go as deep as possible before backtracking. Swap the queue for a stack in
+        BFS code and you have DFS. Same graph, completely different traversal.
+      </p>
+    </div>
+  </div>
+
+  <!-- CORE TEMPLATE -->
+  <div class="section" id="core-template">
+    <div class="section-header">
+      <h3>⚙️ The Core BFS Template — Fully Annotated</h3>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Universal BFS Template (Graph / Grid / Tree)</span>
+      </div>
+      <pre><code><span class="kw">import</span> java.util.*;
+
+<span class="kw">public int</span> <span class="fn">bfs</span>(Node start, Node target) {
+    <span class="cmt">// ── Step 1: Guard — handle null / empty input ──────────────</span>
+    <span class="kw">if</span> (start == <span class="kw">null</span>) <span class="kw">return</span> <span class="num">-1</span>;
+
+    <span class="cmt">// ── Step 2: Queue for frontier, Set for visited ─────────────</span>
+    Queue&lt;Node&gt; queue   = <span class="kw">new</span> LinkedList&lt;&gt;();
+    Set&lt;Node&gt;   visited = <span class="kw">new</span> HashSet&lt;&gt;();
+
+    <span class="cmt">// ── Step 3: Seed the queue — mark visited BEFORE enqueue ────</span>
+    queue.offer(start);
+    visited.add(start);   <span class="cmt">// ← CRITICAL: mark here, not after dequeue</span>
+
+    <span class="kw">int</span> level = <span class="num">0</span>;         <span class="cmt">// tracks current distance from source</span>
+
+    <span class="cmt">// ── Step 4: Main loop — process until queue empty ────────────</span>
+    <span class="kw">while</span> (!queue.isEmpty()) {
+
+        <span class="cmt">// ── Step 5: Process entire current level ──────────────────</span>
+        <span class="kw">int</span> size = queue.size();  <span class="cmt">// snapshot size BEFORE expanding</span>
+
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+            Node curr = queue.poll();
+
+            <span class="cmt">// ── Step 6: Check if we reached the goal ──────────────</span>
+            <span class="kw">if</span> (curr == target) <span class="kw">return</span> level;
+
+            <span class="cmt">// ── Step 7: Expand neighbors ──────────────────────────</span>
+            <span class="kw">for</span> (Node neighbor : curr.neighbors) {
+                <span class="kw">if</span> (!visited.contains(neighbor)) {
+                    visited.add(neighbor);      <span class="cmt">// mark BEFORE enqueue</span>
+                    queue.offer(neighbor);
+                }
+            }
+        }
+
+        level++;  <span class="cmt">// finished one level, advance distance counter</span>
+    }
+
+    <span class="kw">return</span> <span class="num">-1</span>;  <span class="cmt">// target not reachable</span>
+}</code></pre>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>📌 The 5 BFS Ingredients</h4>
+        <ul>
+          <li><strong>Queue</strong> — the frontier</li>
+          <li><strong>Visited set</strong> — prevent cycles</li>
+          <li><strong>Source seeding</strong> — add start before loop</li>
+          <li><strong>Level counter</strong> — snapshot <code>size</code> each round</li>
+          <li><strong>Goal check</strong> — return as soon as found</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>⚡ Queue Sizing Trick</h4>
+        <p>
+          Capture <code>int size = queue.size()</code> <em>before</em> the inner loop.
+          This freezes the count of nodes at the current level. Nodes added during
+          expansion belong to the next level and must not be included in this round's count.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- PART 2                                               -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">02</div>
+    <div>
+      <h2>Four BFS Application Categories</h2>
+      <p>Tree traversal → Grid pathfinding → Graph shortest path → Multi-source flood-fill.</p>
+    </div>
+  </div>
+
+  <!-- CATEGORY A: TREE BFS -->
+  <div class="section" id="tree-bfs">
+    <div class="section-header">
+      <h3>🌳 Category A — Tree Level-Order Traversal</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Tree BFS is the simplest form: <strong>no visited set needed</strong> because
+        trees have no cycles. Parent → child edges only flow downward — you'll never
+        accidentally revisit a node.
+      </p>
+      <p>
+        The canonical output: a <code>List&lt;List&lt;Integer&gt;&gt;</code> where each inner
+        list is one level of the tree. Mastering this template unlocks a dozen
+        tree-based BFS problems.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Binary Tree Level-Order — LC #102</span>
+      </div>
+      <pre><code><span class="kw">public</span> List&lt;List&lt;Integer&gt;&gt; <span class="fn">levelOrder</span>(TreeNode root) {
+    List&lt;List&lt;Integer&gt;&gt; result = <span class="kw">new</span> ArrayList&lt;&gt;();
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span> result;
+
+    Queue&lt;TreeNode&gt; queue = <span class="kw">new</span> LinkedList&lt;&gt;();
+    queue.offer(root);
+
+    <span class="kw">while</span> (!queue.isEmpty()) {
+        <span class="kw">int</span> size = queue.size();
+        List&lt;Integer&gt; level = <span class="kw">new</span> ArrayList&lt;&gt;();
+
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+            TreeNode curr = queue.poll();
+            level.add(curr.val);
+
+            <span class="kw">if</span> (curr.left  != <span class="kw">null</span>) queue.offer(curr.left);
+            <span class="kw">if</span> (curr.right != <span class="kw">null</span>) queue.offer(curr.right);
+        }
+        result.add(level);
+    }
+    <span class="kw">return</span> result;
+}</code></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>Tree BFS — no visited set.</strong> Trees are directed acyclic graphs.
+        Every child has exactly one parent, so backward traversal is impossible.
+        Adding a visited set is harmless but wasteful. Drop it.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Recognition Signals for Tree Level-Order</h4>
+      <ul>
+        <li>Problem mentions <em>"level order"</em>, <em>"level by level"</em>, or <em>"row by row"</em></li>
+        <li>Asks for <em>"right side view"</em> (last node per level)</li>
+        <li>Asks for <em>"average of levels"</em>, <em>"sum per level"</em></li>
+        <li>Asks for <em>"minimum depth"</em> (BFS finds it faster than DFS)</li>
+        <li>Asks for <em>"zigzag traversal"</em> (alternate direction per level)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>Zigzag Variant — One Extra Boolean</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">LC #103 — Binary Tree Zigzag Level Order</span>
+        </div>
+        <pre><code><span class="kw">boolean</span> leftToRight = <span class="kw">true</span>;
+
+<span class="kw">while</span> (!queue.isEmpty()) {
+    <span class="kw">int</span> size = queue.size();
+    LinkedList&lt;Integer&gt; level = <span class="kw">new</span> LinkedList&lt;&gt;();
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+        TreeNode curr = queue.poll();
+        <span class="kw">if</span> (leftToRight)
+            level.addLast(curr.val);   <span class="cmt">// normal order</span>
+        <span class="kw">else</span>
+            level.addFirst(curr.val);  <span class="cmt">// reverse: insert at front</span>
+
+        <span class="kw">if</span> (curr.left  != <span class="kw">null</span>) queue.offer(curr.left);
+        <span class="kw">if</span> (curr.right != <span class="kw">null</span>) queue.offer(curr.right);
+    }
+    result.add(level);
+    leftToRight = !leftToRight;
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY B: GRID BFS -->
+  <div class="section" id="grid-bfs">
+    <div class="section-header">
+      <h3>🗺️ Category B — Grid / Matrix BFS</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        A grid is just a disguised graph. Each cell <code>(r, c)</code> is a node.
+        Edges connect adjacent cells (up/down/left/right, sometimes diagonals).
+        Walls or invalid cells simply mean "no edge exists."
+      </p>
+      <p>
+        <strong>Your visited set is usually the grid itself.</strong> Mark a cell
+        as visited by mutating it (<code>grid[r][c] = '#'</code>) or by keeping a
+        separate <code>boolean[][]</code> — both work. Mutation is faster;
+        a boolean array is safer when you need the original grid later.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Grid BFS — Shortest Path (0 = open, 1 = wall)</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">shortestPath</span>(<span class="kw">int</span>[][] grid, <span class="kw">int</span>[] start, <span class="kw">int</span>[] end) {
+    <span class="kw">int</span> rows = grid.length, cols = grid[<span class="num">0</span>].length;
+    <span class="kw">int</span>[][] dirs = {{<span class="num">-1</span>,<span class="num">0</span>},{<span class="num">1</span>,<span class="num">0</span>},{<span class="num">0</span>,<span class="num">-1</span>},{<span class="num">0</span>,<span class="num">1</span>}};
+
+    Queue&lt;<span class="kw">int</span>[]&gt; queue = <span class="kw">new</span> LinkedList&lt;&gt;();
+    <span class="kw">boolean</span>[][] visited = <span class="kw">new boolean</span>[rows][cols];
+
+    queue.offer(start);
+    visited[start[<span class="num">0</span>]][start[<span class="num">1</span>]] = <span class="kw">true</span>; <span class="cmt">// mark before enqueue!</span>
+    <span class="kw">int</span> steps = <span class="num">0</span>;
+
+    <span class="kw">while</span> (!queue.isEmpty()) {
+        <span class="kw">int</span> size = queue.size();
+
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+            <span class="kw">int</span>[] curr = queue.poll();
+            <span class="kw">if</span> (curr[<span class="num">0</span>] == end[<span class="num">0</span>] &amp;&amp; curr[<span class="num">1</span>] == end[<span class="num">1</span>]) <span class="kw">return</span> steps;
+
+            <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs) {
+                <span class="kw">int</span> nr = curr[<span class="num">0</span>] + d[<span class="num">0</span>];
+                <span class="kw">int</span> nc = curr[<span class="num">1</span>] + d[<span class="num">1</span>];
+                <span class="cmt">// bounds + wall + visited check bundled together</span>
+                <span class="kw">if</span> (nr &lt; <span class="num">0</span> || nr &gt;= rows || nc &lt; <span class="num">0</span> || nc &gt;= cols) <span class="kw">continue</span>;
+                <span class="kw">if</span> (grid[nr][nc] == <span class="num">1</span> || visited[nr][nc]) <span class="kw">continue</span>;
+
+                visited[nr][nc] = <span class="kw">true</span>; <span class="cmt">// mark before enqueue</span>
+                queue.offer(<span class="kw">new int</span>[]{nr, nc});
+            }
+        }
+        steps++;
+    }
+    <span class="kw">return</span> <span class="num">-1</span>;
+}</code></pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Bounds check always comes first.</strong> Check <code>nr</code> and <code>nc</code>
+        are inside the grid before accessing <code>grid[nr][nc]</code>.
+        Accessing out-of-bounds throws <code>ArrayIndexOutOfBoundsException</code> in Java —
+        no automatic null, it crashes. Bounds check → wall check → visited check. In that order.
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY C: GRAPH BFS -->
+  <div class="section" id="graph-bfs">
+    <div class="section-header">
+      <h3>🕸️ Category C — Graph BFS (Unweighted Shortest Path)</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Graph BFS is the general case. The graph is usually given as an
+        <strong>adjacency list</strong> (<code>Map&lt;Node, List&lt;Node&gt;&gt;</code>
+        or <code>int[][]</code> edges). Nodes can be integers, strings, or custom objects.
+      </p>
+      <p>
+        When the "graph" is implicit (e.g., word ladder — the graph is all words
+        1-letter apart), you build edges on-the-fly during BFS instead of pre-computing them.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Word Ladder — LC #127 (Implicit Graph BFS)</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">ladderLength</span>(String beginWord, String endWord, List&lt;String&gt; wordList) {
+    Set&lt;String&gt; wordSet = <span class="kw">new</span> HashSet&lt;&gt;(wordList);
+    <span class="kw">if</span> (!wordSet.contains(endWord)) <span class="kw">return</span> <span class="num">0</span>;
+
+    Queue&lt;String&gt; queue = <span class="kw">new</span> LinkedList&lt;&gt;();
+    Set&lt;String&gt;   visited = <span class="kw">new</span> HashSet&lt;&gt;();
+    queue.offer(beginWord);
+    visited.add(beginWord);
+    <span class="kw">int</span> level = <span class="num">1</span>;
+
+    <span class="kw">while</span> (!queue.isEmpty()) {
+        <span class="kw">int</span> size = queue.size();
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+            String curr = queue.poll();
+            <span class="kw">if</span> (curr.equals(endWord)) <span class="kw">return</span> level;
+
+            <span class="cmt">// Build edges on-the-fly: try every letter at every position</span>
+            <span class="kw">char</span>[] chars = curr.toCharArray();
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; chars.length; j++) {
+                <span class="kw">char</span> original = chars[j];
+                <span class="kw">for</span> (<span class="kw">char</span> c = <span class="str">'a'</span>; c &lt;= <span class="str">'z'</span>; c++) {
+                    chars[j] = c;
+                    String next = <span class="kw">new</span> String(chars);
+                    <span class="kw">if</span> (wordSet.contains(next) &amp;&amp; !visited.contains(next)) {
+                        visited.add(next);
+                        queue.offer(next);
+                    }
+                }
+                chars[j] = original; <span class="cmt">// restore for next position</span>
+            }
+        }
+        level++;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</code></pre>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p>
+        <strong>Implicit graph = generate neighbors dynamically.</strong>
+        Don't build the full adjacency list upfront. Generate only the neighbors
+        of the current node during BFS. This is O(N × L × 26) instead of O(N²) preprocessing.
+      </p>
+    </div>
+  </div>
+
+  <!-- CATEGORY D: MULTI-SOURCE BFS -->
+  <div class="section" id="multisource-bfs">
+    <div class="section-header">
+      <h3>🔥 Category D — Multi-Source BFS</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Normal BFS starts from one source. Multi-source BFS starts from
+        <strong>multiple sources simultaneously</strong>. Think of it as creating a
+        "virtual super-source" connected to all real sources with zero-cost edges.
+      </p>
+      <p>
+        This handles problems like: "every rotten orange simultaneously infects
+        neighbors" or "distance from any gate in a room." The trick is just
+        <strong>seeding all sources into the queue before the loop begins</strong>.
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Multi-Source BFS Template</span>
+      </div>
+      <pre><code><span class="kw">public void</span> <span class="fn">multiSourceBFS</span>(<span class="kw">int</span>[][] grid) {
+    Queue&lt;<span class="kw">int</span>[]&gt; queue = <span class="kw">new</span> LinkedList&lt;&gt;();
+
+    <span class="cmt">// ── PHASE 1: Find all sources, add them ALL to the queue ─────</span>
+    <span class="kw">for</span> (<span class="kw">int</span> r = <span class="num">0</span>; r &lt; grid.length; r++) {
+        <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; grid[<span class="num">0</span>].length; c++) {
+            <span class="kw">if</span> (isSource(grid[r][c])) {
+                queue.offer(<span class="kw">new int</span>[]{r, c});
+                <span class="cmt">// mark visited here if needed</span>
+            }
+        }
+    }
+
+    <span class="cmt">// ── PHASE 2: Standard BFS from here — all sources spread together ─</span>
+    <span class="kw">int</span> steps = <span class="num">0</span>;
+    <span class="kw">while</span> (!queue.isEmpty()) {
+        <span class="kw">int</span> size = queue.size();
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+            <span class="kw">int</span>[] curr = queue.poll();
+            <span class="cmt">// expand neighbors — same as single-source</span>
+        }
+        steps++;
+    }
+}</code></pre>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip:</strong> When you see "minimum time/distance for ALL sources to
+        spread" — it's always multi-source BFS. The interviewers love this because candidates
+        who haven't seen it will try nested BFS (O(n² × m²) instead of O(nm)).
+        Seeding all sources upfront is the elegant O(nm) solution.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- PART 3                                               -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">03</div>
+    <div>
+      <h2>The Critical BFS Bug &amp; Decision Framework</h2>
+      <p>Mark visited before enqueue — and how to choose BFS over DFS instantly.</p>
+    </div>
+  </div>
+
+  <!-- VISITED BUG -->
+  <div class="section" id="visited-bug">
+    <div class="section-header">
+      <h3>🐛 The Visited Set Bug — Mark Before Enqueue, Not After Dequeue</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        This is the <strong>#1 most common BFS bug</strong> in interviews. It doesn't
+        always cause a crash — sometimes it just makes your code painfully slow,
+        which is worse because it's harder to catch.
+      </p>
+    </div>
+
+    <div class="visited-bug">
+      <h4 style="color:var(--accent-red);">❌ Wrong — Mark After Dequeue</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Buggy Version</span></div>
+        <pre><code><span class="kw">while</span> (!queue.isEmpty()) {
+    Node curr = queue.poll();
+    visited.add(curr);  <span class="cmt">// ← TOO LATE: already added multiple times!</span>
+
+    <span class="kw">for</span> (Node neighbor : curr.neighbors) {
+        <span class="kw">if</span> (!visited.contains(neighbor)) {
+            queue.offer(neighbor);  <span class="cmt">// neighbor can be enqueued MULTIPLE times</span>
+        }
+    }
+}</code></pre>
+      </div>
+      <p style="color:var(--accent-red); margin-top:8px;">
+        <strong>What goes wrong:</strong> If nodes A and B both have neighbor C, and A is processed first:
+        C is enqueued. B is processed — C is still not in <code>visited</code> (not dequeued yet),
+        so C is enqueued <em>again</em>. Now C is in the queue twice. This duplicates work
+        and can cause O(n²) behavior or infinite loops in cyclic graphs.
+      </p>
+    </div>
+
+    <div class="visited-correct">
+      <h4 style="color:var(--accent-green);">✅ Correct — Mark Before Enqueue</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Correct Version</span></div>
+        <pre><code><span class="kw">while</span> (!queue.isEmpty()) {
+    Node curr = queue.poll();
+
+    <span class="kw">for</span> (Node neighbor : curr.neighbors) {
+        <span class="kw">if</span> (!visited.contains(neighbor)) {
+            visited.add(neighbor);   <span class="cmt">// ← mark immediately, before adding to queue</span>
+            queue.offer(neighbor);   <span class="cmt">// guaranteed to appear exactly once</span>
+        }
+    }
+}</code></pre>
+      </div>
+      <p style="color:var(--accent-green); margin-top:8px;">
+        <strong>Why it works:</strong> The moment we decide to enqueue a neighbor, we mark it visited.
+        Any other path trying to enqueue the same node will see it's already visited and skip it.
+        Every node enters the queue exactly once.
+      </p>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🚫</div>
+      <div class="body">
+        <strong>The mental rule:</strong> "Visit when you decide to go, not when you arrive."
+        Marking visited = "I've committed to processing this node." The queue is just
+        a waiting room — you're committed the moment you walk in, not when you're called.
+      </div>
+    </div>
+  </div>
+
+  <!-- BFS VS DFS -->
+  <div class="section" id="bfs-vs-dfs">
+    <div class="section-header">
+      <h3>⚖️ BFS vs DFS — The Decision Table</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Both algorithms visit every node. The difference is <em>order</em>.
+        Choose based on what the problem asks for — never just default to one.
+      </p>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario / Question Type</th>
+            <th>Use BFS</th>
+            <th>Use DFS</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Shortest path (unweighted)</td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td><span class="pill pill-red">No</span></td>
+            <td>BFS guarantees minimum hops</td>
+          </tr>
+          <tr>
+            <td>Minimum depth of tree</td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td><span class="pill pill-orange">Possible</span></td>
+            <td>BFS stops at first leaf — DFS explores full tree</td>
+          </tr>
+          <tr>
+            <td>Maximum depth of tree</td>
+            <td><span class="pill pill-orange">Possible</span></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>DFS naturally tracks path length to leaves</td>
+          </tr>
+          <tr>
+            <td>All paths from source to target</td>
+            <td><span class="pill pill-red">No</span></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>DFS backtracks naturally; BFS can't reconstruct all paths easily</td>
+          </tr>
+          <tr>
+            <td>Detect cycle in graph</td>
+            <td><span class="pill pill-orange">Possible</span></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>DFS coloring (white/grey/black) is cleaner</td>
+          </tr>
+          <tr>
+            <td>Connected components count</td>
+            <td><span class="pill pill-green">Either</span></td>
+            <td><span class="pill pill-green">Either</span></td>
+            <td>Both work equally; DFS slightly simpler with recursion</td>
+          </tr>
+          <tr>
+            <td>Topological sort</td>
+            <td><span class="pill pill-orange">Kahn's Algo</span></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>DFS with post-order is the classic approach</td>
+          </tr>
+          <tr>
+            <td>Level-by-level processing</td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td><span class="pill pill-red">No</span></td>
+            <td>BFS naturally produces level groups</td>
+          </tr>
+          <tr>
+            <td>Memory concern (wide graph)</td>
+            <td><span class="pill pill-red">Bad</span></td>
+            <td><span class="pill pill-green">Better</span></td>
+            <td>BFS queue can hold an entire level (can be huge); DFS uses O(depth) stack</td>
+          </tr>
+          <tr>
+            <td>Memory concern (deep graph)</td>
+            <td><span class="pill pill-green">Better</span></td>
+            <td><span class="pill pill-red">Bad</span></td>
+            <td>DFS stack can hit recursion limit on long paths</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🎯</span>
+      <p>
+        <strong>One-line rule:</strong> If the problem contains the word "shortest," "minimum steps,"
+        or "fewest," <em>reach for BFS first</em>. If it says "all paths," "every combination,"
+        "can we reach," <em>reach for DFS first</em>.
+      </p>
+    </div>
+  </div>
+
+  <!-- DIRECTION ARRAYS -->
+  <div class="section" id="direction-arrays">
+    <div class="section-header">
+      <h3>🧭 Direction Arrays — Grid Traversal Templates</h3>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>4-Direction (Standard)</h4>
+        <p>Use when: movement is up/down/left/right only. Maze, island, shortest path.</p>
+        <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+          <div class="dir-grid">
+            <div class="dir-cell"></div>
+            <div class="dir-cell active">↑</div>
+            <div class="dir-cell"></div>
+            <div class="dir-cell active">←</div>
+            <div class="dir-cell center">●</div>
+            <div class="dir-cell active">→</div>
+            <div class="dir-cell"></div>
+            <div class="dir-cell active">↓</div>
+            <div class="dir-cell"></div>
+          </div>
+          <div class="code-block" style="flex:1; min-width:200px;">
+            <div class="code-header"><span class="code-lang">Java</span></div>
+            <pre><code><span class="kw">int</span>[][] dirs = {
+  {<span class="num">-1</span>, <span class="num">0</span>},  <span class="cmt">// up</span>
+  { <span class="num">1</span>, <span class="num">0</span>},  <span class="cmt">// down</span>
+  { <span class="num">0</span>,<span class="num">-1</span>},  <span class="cmt">// left</span>
+  { <span class="num">0</span>, <span class="num">1</span>}   <span class="cmt">// right</span>
+};</code></pre>
+          </div>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4>8-Direction (With Diagonals)</h4>
+        <p>Use when: movement includes diagonals. Knight? No — use BFS with knight offsets.</p>
+        <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+          <div class="dir-grid">
+            <div class="dir-cell active8">↖</div>
+            <div class="dir-cell active">↑</div>
+            <div class="dir-cell active8">↗</div>
+            <div class="dir-cell active">←</div>
+            <div class="dir-cell center">●</div>
+            <div class="dir-cell active">→</div>
+            <div class="dir-cell active8">↙</div>
+            <div class="dir-cell active">↓</div>
+            <div class="dir-cell active8">↘</div>
+          </div>
+          <div class="code-block" style="flex:1; min-width:200px;">
+            <div class="code-header"><span class="code-lang">Java</span></div>
+            <pre><code><span class="kw">int</span>[][] dirs = {
+  {<span class="num">-1</span>,<span class="num">-1</span>},{<span class="num">-1</span>,<span class="num">0</span>},{<span class="num">-1</span>,<span class="num">1</span>},
+  { <span class="num">0</span>,<span class="num">-1</span>},          { <span class="num">0</span>,<span class="num">1</span>},
+  { <span class="num">1</span>,<span class="num">-1</span>},{ <span class="num">1</span>,<span class="num">0</span>},{ <span class="num">1</span>,<span class="num">1</span>}
+};</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Bounds Check Macro — Copy This Everywhere</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Standard neighbor expansion with guard</span></div>
+        <pre><code><span class="kw">for</span> (<span class="kw">int</span>[] d : dirs) {
+    <span class="kw">int</span> nr = r + d[<span class="num">0</span>];
+    <span class="kw">int</span> nc = c + d[<span class="num">1</span>];
+
+    <span class="cmt">// One compound guard — order matters: bounds → content → visited</span>
+    <span class="kw">if</span> (nr &lt; <span class="num">0</span> || nr &gt;= rows ||
+        nc &lt; <span class="num">0</span> || nc &gt;= cols ||
+        grid[nr][nc] == WALL   ||
+        visited[nr][nc]) <span class="kw">continue</span>;
+
+    visited[nr][nc] = <span class="kw">true</span>;
+    queue.offer(<span class="kw">new int</span>[]{nr, nc});
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- PART 4                                               -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">04</div>
+    <div>
+      <h2>Deep Walkthrough — LC #994 Rotting Oranges</h2>
+      <p>Multi-source BFS applied step by step — think aloud, write clean.</p>
+    </div>
+  </div>
+
+  <!-- WALKTHROUGH -->
+  <div class="section" id="walkthrough">
+    <div class="section-header">
+      <h3>🔍 Walkthrough: <a href="https://leetcode.com/problems/rotting-oranges/" target="_blank" style="color:var(--accent-blue)">LC #994 — Rotting Oranges 🟡</a></h3>
+    </div>
+
+    <div class="card">
+      <h4>Problem Statement</h4>
+      <p>
+        You have a grid where <code>0</code> = empty, <code>1</code> = fresh orange,
+        <code>2</code> = rotten orange. Every minute, a rotten orange infects all
+        4-directionally adjacent fresh oranges. Return the minimum minutes until
+        no fresh oranges remain, or <code>-1</code> if impossible.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Recognize the Pattern</div>
+          <div class="step-desc">
+            Multiple rotten oranges spread simultaneously. This is <strong>multi-source BFS</strong>.
+            All rotten oranges are level-0 sources. Fresh oranges at distance <em>k</em>
+            from the nearest rotten orange get infected at minute <em>k</em>.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Scan the Grid — Find Sources &amp; Count Fresh</div>
+          <div class="step-desc">
+            First pass: add all <code>2</code>s to the queue. Count all <code>1</code>s
+            in <code>freshCount</code>. If <code>freshCount == 0</code>, return <code>0</code> immediately.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">BFS — Spread Rot, Decrement freshCount</div>
+          <div class="step-desc">
+            Standard BFS loop. For each rotten orange dequeued, infect unvisited fresh
+            neighbors. Decrement <code>freshCount</code> for each infected orange.
+            Advance <code>minutes</code> after each full level.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Check Remaining Fresh — Return Answer</div>
+          <div class="step-desc">
+            After BFS ends, if <code>freshCount &gt; 0</code>, return <code>-1</code>
+            (isolated fresh oranges exist). Otherwise return <code>minutes</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Visual Trace</h4>
+      <p>Input grid and its BFS levels:</p>
+      <div style="display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start; margin:12px 0;">
+        <div>
+          <p style="color:var(--text-muted); font-size:13px; margin-bottom:8px;">Initial State</p>
+          <div class="grid-vis-row" style="gap:3px;">
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-fresh">🍊</div>
+            <div class="gv-cell gv-fresh">🍊</div>
+          </div>
+          <div class="grid-vis-row" style="gap:3px; margin-top:3px;">
+            <div class="gv-cell gv-fresh">🍊</div>
+            <div class="gv-cell gv-fresh">🍊</div>
+            <div class="gv-cell gv-wall"></div>
+          </div>
+          <div class="grid-vis-row" style="gap:3px; margin-top:3px;">
+            <div class="gv-cell gv-wall"></div>
+            <div class="gv-cell gv-fresh">🍊</div>
+            <div class="gv-cell gv-rotten">🤢</div>
+          </div>
+        </div>
+        <div>
+          <p style="color:var(--text-muted); font-size:13px; margin-bottom:8px;">After Min 1</p>
+          <div class="grid-vis-row" style="gap:3px;">
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-fresh">🍊</div>
+          </div>
+          <div class="grid-vis-row" style="gap:3px; margin-top:3px;">
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-fresh">🍊</div>
+            <div class="gv-cell gv-wall"></div>
+          </div>
+          <div class="grid-vis-row" style="gap:3px; margin-top:3px;">
+            <div class="gv-cell gv-wall"></div>
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-rotten">🤢</div>
+          </div>
+        </div>
+        <div>
+          <p style="color:var(--text-muted); font-size:13px; margin-bottom:8px;">After Min 2 — Done</p>
+          <div class="grid-vis-row" style="gap:3px;">
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-rotten">🤢</div>
+          </div>
+          <div class="grid-vis-row" style="gap:3px; margin-top:3px;">
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-wall"></div>
+          </div>
+          <div class="grid-vis-row" style="gap:3px; margin-top:3px;">
+            <div class="gv-cell gv-wall"></div>
+            <div class="gv-cell gv-rotten">🤢</div>
+            <div class="gv-cell gv-rotten">🤢</div>
+          </div>
+        </div>
+      </div>
+      <p style="color:var(--accent-green);">Answer: <strong>2 minutes</strong></p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #994 — Rotting Oranges (Complete Solution)</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">orangesRotting</span>(<span class="kw">int</span>[][] grid) {
+    <span class="kw">int</span> rows = grid.length, cols = grid[<span class="num">0</span>].length;
+    Queue&lt;<span class="kw">int</span>[]&gt; queue = <span class="kw">new</span> LinkedList&lt;&gt;();
+    <span class="kw">int</span> freshCount = <span class="num">0</span>;
+
+    <span class="cmt">// ── Phase 1: Scan grid ──────────────────────────────────────</span>
+    <span class="kw">for</span> (<span class="kw">int</span> r = <span class="num">0</span>; r &lt; rows; r++) {
+        <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; cols; c++) {
+            <span class="kw">if</span>      (grid[r][c] == <span class="num">2</span>) queue.offer(<span class="kw">new int</span>[]{r, c}); <span class="cmt">// source</span>
+            <span class="kw">else if</span> (grid[r][c] == <span class="num">1</span>) freshCount++;               <span class="cmt">// count fresh</span>
+        }
+    }
+
+    <span class="cmt">// ── Edge case: no fresh oranges ─────────────────────────────</span>
+    <span class="kw">if</span> (freshCount == <span class="num">0</span>) <span class="kw">return</span> <span class="num">0</span>;
+
+    <span class="kw">int</span>[][] dirs = {{<span class="num">-1</span>,<span class="num">0</span>},{<span class="num">1</span>,<span class="num">0</span>},{<span class="num">0</span>,<span class="num">-1</span>},{<span class="num">0</span>,<span class="num">1</span>}};
+    <span class="kw">int</span> minutes = <span class="num">0</span>;
+
+    <span class="cmt">// ── Phase 2: Multi-source BFS ───────────────────────────────</span>
+    <span class="kw">while</span> (!queue.isEmpty() &amp;&amp; freshCount &gt; <span class="num">0</span>) {
+        <span class="kw">int</span> size = queue.size();
+
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+            <span class="kw">int</span>[] curr = queue.poll();
+
+            <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs) {
+                <span class="kw">int</span> nr = curr[<span class="num">0</span>] + d[<span class="num">0</span>];
+                <span class="kw">int</span> nc = curr[<span class="num">1</span>] + d[<span class="num">1</span>];
+
+                <span class="kw">if</span> (nr &lt; <span class="num">0</span> || nr &gt;= rows || nc &lt; <span class="num">0</span> || nc &gt;= cols) <span class="kw">continue</span>;
+                <span class="kw">if</span> (grid[nr][nc] != <span class="num">1</span>) <span class="kw">continue</span>; <span class="cmt">// only infect fresh oranges</span>
+
+                grid[nr][nc] = <span class="num">2</span>;   <span class="cmt">// mutate: marks visited AND converts to rotten</span>
+                freshCount--;
+                queue.offer(<span class="kw">new int</span>[]{nr, nc});
+            }
+        }
+        minutes++;
+    }
+
+    <span class="cmt">// ── Phase 3: Verdict ────────────────────────────────────────</span>
+    <span class="kw">return</span> freshCount == <span class="num">0</span> ? minutes : <span class="num">-1</span>;
+}</code></pre>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>⏱ Complexity</h4>
+        <ul>
+          <li><strong>Time:</strong> O(rows × cols) — each cell processed at most once</li>
+          <li><strong>Space:</strong> O(rows × cols) — queue at worst holds all rotten cells</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>🧠 Key Insight</h4>
+        <p>
+          We use <code>grid[nr][nc] = 2</code> as both the visited marker
+          and the state transition. No separate visited array needed.
+          Mutation = "this cell is claimed."
+        </p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Common trap:</strong> returning <code>minutes</code> after the loop without
+        checking <code>freshCount == 0</code>. If isolated fresh oranges exist (surrounded by walls
+        or empty cells), BFS will terminate but they'll never rot. Always check
+        <code>freshCount</code> before returning.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- PART 5                                               -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">05</div>
+    <div>
+      <h2>Practice Problems — 15 Questions Across All 4 Categories</h2>
+      <p>Grouped by category, sorted by difficulty. Start from Easy in each group.</p>
+    </div>
+  </div>
+
+  <!-- PRACTICE -->
+  <div class="section" id="practice">
+    <div class="section-header">
+      <h3>📋 Practice Problem Set</h3>
+    </div>
+
+    <h4>🌳 Category A — Tree Level-Order</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Insight</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><a href="https://leetcode.com/problems/binary-tree-level-order-traversal/" target="_blank" style="color:var(--accent-blue)">LC #102 — Binary Tree Level Order Traversal</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>The foundational template — master this first</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><a href="https://leetcode.com/problems/binary-tree-right-side-view/" target="_blank" style="color:var(--accent-blue)">LC #199 — Binary Tree Right Side View</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Take <em>last</em> node of each level</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><a href="https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/" target="_blank" style="color:var(--accent-blue)">LC #103 — Binary Tree Zigzag Level Order Traversal</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Use <code>LinkedList</code>; alternate addFirst/addLast</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><a href="https://leetcode.com/problems/minimum-depth-of-binary-tree/" target="_blank" style="color:var(--accent-blue)">LC #111 — Minimum Depth of Binary Tree</a></td>
+            <td><span class="pill pill-green">🟢 Easy</span></td>
+            <td>BFS: return level at first leaf encountered</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-top:28px;">🗺️ Category B — Grid / Matrix BFS</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Insight</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>5</td>
+            <td><a href="https://leetcode.com/problems/number-of-islands/" target="_blank" style="color:var(--accent-blue)">LC #200 — Number of Islands</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>BFS/DFS to flood-fill each island; count starts</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><a href="https://leetcode.com/problems/shortest-path-in-binary-matrix/" target="_blank" style="color:var(--accent-blue)">LC #1091 — Shortest Path in Binary Matrix</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>8-direction BFS; careful with single-cell edge case</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><a href="https://leetcode.com/problems/pacific-atlantic-water-flow/" target="_blank" style="color:var(--accent-blue)">LC #417 — Pacific Atlantic Water Flow</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Reverse BFS from both oceans; find intersection</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><a href="https://leetcode.com/problems/walls-and-gates/" target="_blank" style="color:var(--accent-blue)">LC #286 — Walls and Gates</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Multi-source BFS from all gates simultaneously</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-top:28px;">🕸️ Category C — Graph BFS (Unweighted Shortest Path)</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Insight</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>9</td>
+            <td><a href="https://leetcode.com/problems/word-ladder/" target="_blank" style="color:var(--accent-blue)">LC #127 — Word Ladder</a></td>
+            <td><span class="pill pill-red">🔴 Hard</span></td>
+            <td>Implicit graph; generate neighbors on-the-fly</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><a href="https://leetcode.com/problems/clone-graph/" target="_blank" style="color:var(--accent-blue)">LC #133 — Clone Graph</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>BFS to traverse; HashMap to map old → new nodes</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><a href="https://leetcode.com/problems/jump-game-iii/" target="_blank" style="color:var(--accent-blue)">LC #1306 — Jump Game III</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Array indices as graph nodes; BFS for reachability</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><a href="https://leetcode.com/problems/open-the-lock/" target="_blank" style="color:var(--accent-blue)">LC #752 — Open the Lock</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>State = lock combo string; BFS through state space</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="margin-top:28px;">🔥 Category D — Multi-Source BFS</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Insight</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>13</td>
+            <td><a href="https://leetcode.com/problems/rotting-oranges/" target="_blank" style="color:var(--accent-blue)">LC #994 — Rotting Oranges</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Seed all <code>2</code>s; check residual freshCount at end</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><a href="https://leetcode.com/problems/01-matrix/" target="_blank" style="color:var(--accent-blue)">LC #542 — 01 Matrix</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Multi-source from all <code>0</code>s; distances spread outward</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><a href="https://leetcode.com/problems/as-far-from-land-as-possible/" target="_blank" style="color:var(--accent-blue)">LC #1162 — As Far from Land as Possible</a></td>
+            <td><span class="pill pill-blue">🟡 Medium</span></td>
+            <td>Multi-source from all lands; answer = last BFS level</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="banner banner-blue" style="margin-top:28px;">
+      <h4>🗺️ Recommended Study Order</h4>
+      <p>
+        <strong>Day 1:</strong> LC #102, #111, #199 — nail the tree template.
+        <strong>Day 2:</strong> LC #200, #286, #1091 — grid BFS.
+        <strong>Day 3:</strong> LC #994, #542, #1162 — multi-source BFS.
+        <strong>Day 4:</strong> LC #127, #752 — implicit graph (hardest — do last).
+      </p>
+    </div>
+  </div>
+
+  <!-- FINAL SUMMARY -->
+  <div class="section">
+    <div class="section-header">
+      <h3>🧠 The BFS Cheat Sheet — One Page Summary</h3>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>5 Recognition Signals</h4>
+        <ul>
+          <li>"Minimum steps / shortest path" in unweighted graph</li>
+          <li>"Level by level" or "layer by layer"</li>
+          <li>"Spread simultaneously" from multiple points</li>
+          <li>"Minimum depth" of a tree</li>
+          <li>"Distance from nearest ___"</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>4 Common Traps</h4>
+        <ul>
+          <li>🐛 Marking visited <em>after</em> dequeue instead of before enqueue</li>
+          <li>🐛 Forgetting to snapshot <code>queue.size()</code> before inner loop</li>
+          <li>🐛 Bounds check after grid access (crashes Java)</li>
+          <li>🐛 Returning answer without checking residual fresh/unvisited nodes</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">🏆</div>
+      <div class="body">
+        <strong>The senior engineer's checklist before every BFS problem:</strong>
+        (1) Single or multi-source? (2) Tree (no visited set) or Graph (need visited)? 
+        (3) Need level count? Snapshot size. (4) Grid? Bounds check first, then wall, then visited.
+        (5) Implicit graph? Generate neighbors dynamically.
+      </div>
+    </div>
+  </div>
+
+  <button id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+</main>
+
+<!-- ── JavaScript ─────────────────────────────────────── -->
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scrollTop = document.documentElement.scrollTop;
+    const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    document.getElementById('progress').style.width = (scrollTop / docHeight * 100) + '%';
+  });
+
+  // Hamburger / sidebar toggle
+  const hamburger = document.getElementById('hamburger');
+  const sidebar   = document.getElementById('sidebar');
+  const overlay   = document.getElementById('sidebar-overlay');
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    hamburger.classList.toggle('active');
+  }
+
+  hamburger.addEventListener('click', toggleSidebar);
+  overlay.addEventListener('click', toggleSidebar);
+
+  // Close sidebar on nav link click (mobile)
+  document.querySelectorAll('.toc-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 900) toggleSidebar();
+    });
+  });
+
+  // Active section highlight in sidebar
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Show/hide top button
+  const topBtn = document.getElementById('top-btn');
+  window.addEventListener('scroll', () => {
+    topBtn.style.opacity = window.scrollY > 400 ? '1' : '0';
+    topBtn.style.pointerEvents = window.scrollY > 400 ? 'auto' : 'none';
+  });
+</script>
+</body>
+</html>

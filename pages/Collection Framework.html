@@ -1,0 +1,2509 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Part 02 — Collections Framework | Java Interview Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card: #21253a;
+      --border: #2e3350;
+      --accent: #00d4aa;
+      --a2: #6c63ff;
+      --a3: #ff6b6b;
+      --a4: #ffd93d;
+      --a5: #4ecdc4;
+      --pink: #ec4899;
+      --text: #e8eaf6;
+      --muted: #8b92b8;
+      --code-bg: #13151f;
+    }
+
+
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #0f1a1a 50%, #0f1117 100%);
+      padding: 56px 24px 48px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0, 212, 170, 0.10) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 60px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+
+    .section-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+
+
+
+
+    /* ── QUIZ ── */
+    .quiz-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .quiz-q {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .quiz-badge {
+      background: rgba(255, 107, 107, 0.15);
+      color: var(--a3);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .quiz-reveal {
+      background: rgba(0, 212, 170, 0.08);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 10px;
+    }
+
+    .quiz-reveal-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .quiz-ans {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── INTERNALS DIAGRAM ── */
+    .diagram {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      overflow-x: auto;
+    }
+
+    .diagram .d-title {
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .diagram .diagram .highlight {
+      color: var(--a4);
+    }
+
+    .diagram .arrow {
+      color: var(--a2);
+    }
+
+    /* ── COMPLEXITY BADGE ── */
+    .complex-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .complex-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .complex-op {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .complex-val {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .c-green {
+      color: var(--accent);
+    }
+
+    .c-yellow {
+      color: var(--a4);
+    }
+
+    .c-red {
+      color: var(--a3);
+    }
+
+
+
+    /* ── COLLECTION CARD GRID ── */
+    .coll-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .coll-box {
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid var(--border);
+    }
+
+    .coll-box .cb-head {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .coll-box .cb-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .coll-box .cb-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .cb-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .tag-ordered {
+      background: rgba(0, 212, 170, 0.12);
+      color: var(--accent);
+    }
+
+    .tag-unordered {
+      background: rgba(255, 107, 107, 0.12);
+      color: var(--a3);
+    }
+
+    .tag-sorted {
+      background: rgba(255, 217, 61, 0.12);
+      color: var(--a4);
+    }
+
+    .tag-unique {
+      background: rgba(108, 99, 255, 0.12);
+      color: var(--a2);
+    }
+
+    .tag-null {
+      background: rgba(78, 205, 196, 0.12);
+      color: var(--a5);
+    }
+
+    .tag-thread {
+      background: rgba(236, 72, 153, 0.12);
+      color: var(--pink);
+    }
+
+    .tag-fast {
+      background: rgba(0, 212, 170, 0.12);
+      color: var(--accent);
+    }
+
+    .tag-slow {
+      background: rgba(255, 107, 107, 0.12);
+      color: var(--a3);
+    }
+
+    .cb-green {
+      background: rgba(0, 212, 170, 0.05);
+      border-color: rgba(0, 212, 170, 0.20);
+    }
+
+    .cb-green .cb-head {
+      color: var(--accent);
+    }
+
+    .cb-purple {
+      background: rgba(108, 99, 255, 0.05);
+      border-color: rgba(108, 99, 255, 0.20);
+    }
+
+    .cb-purple .cb-head {
+      color: var(--a2);
+    }
+
+    .cb-red {
+      background: rgba(255, 107, 107, 0.05);
+      border-color: rgba(255, 107, 107, 0.20);
+    }
+
+    .cb-red .cb-head {
+      color: var(--a3);
+    }
+
+    .cb-yellow {
+      background: rgba(255, 217, 61, 0.05);
+      border-color: rgba(255, 217, 61, 0.20);
+    }
+
+    .cb-yellow .cb-head {
+      color: var(--a4);
+    }
+
+    .cb-cyan {
+      background: rgba(78, 205, 196, 0.05);
+      border-color: rgba(78, 205, 196, 0.20);
+    }
+
+    .cb-cyan .cb-head {
+      color: var(--a5);
+    }
+
+    .cb-pink {
+      background: rgba(236, 72, 153, 0.05);
+      border-color: rgba(236, 72, 153, 0.20);
+    }
+
+    .cb-pink .cb-head {
+      color: var(--pink);
+    }
+
+
+    @media (max-width: 600px) {
+      .coll-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .complex-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>🔗 Collections</h2>
+      <p>Part 02 — Core Java</p>
+    </div>
+    <nav>
+      <div class="section-label">Sections</div>
+      <a href="#hierarchy">Collection Hierarchy</a>
+      <a href="#list">List — ArrayList & LinkedList</a>
+      <a href="#hashmap">HashMap Internals</a>
+      <a href="#set">Set — HashSet, TreeSet</a>
+      <a href="#map-types">Map Types</a>
+      <a href="#queue">Queue & Deque</a>
+      <a href="#comparable">Comparable vs Comparator</a>
+      <a href="#cme">ConcurrentModificationException</a>
+      <a href="#custom-lhm">Custom LinkedHashMap</a>
+      <a href="#complexity">Time Complexity</a>
+      <a href="#coding">Coding Problems</a>
+      <a href="#interview">Interview Q&A</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+    <!-- ════ NAV ════ -->
+    <nav class="topnav">
+      <div class="topnav-left">
+        <span class="nav-series">Java Notes</span>
+        <span style="color:var(--border)">›</span>
+        <span class="nav-title">Part 02 — Collections Framework</span>
+      </div>
+      <span class="nav-badge">Part 02 / 20</span>
+    </nav>
+
+    <!-- ════ HERO ════ -->
+    <div class="hero">
+      <div class="hero-part-label">Part 02 of 20 — Core Java</div>
+      <h1>Collections Framework</h1>
+      <p class="hero-desc">
+        Deep dive into Java's collection hierarchy, internals of ArrayList, LinkedList,
+        HashMap, HashSet, TreeMap, and more — with time complexities, coding examples,
+        and 20+ interview questions.
+      </p>
+      <div class="hero-pills">
+        <div class="hero-pill">📦 Hierarchy</div>
+        <div class="hero-pill">📋 List</div>
+        <div class="hero-pill">🗂️ Map</div>
+        <div class="hero-pill">🔵 Set</div>
+        <div class="hero-pill">⚙️ HashMap Internals</div>
+        <div class="hero-pill">⚖️ Comparable vs Comparator</div>
+        <div class="hero-pill">🚨 ConcurrentModificationException</div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <!-- ════ TOC ════ -->
+      <div class="toc">
+        <div class="toc-title">📋 Contents</div>
+        <div class="toc-grid">
+          <a href="#hierarchy" class="toc-item"><span class="toc-num">0</span>Collection Hierarchy</a>
+          <a href="#list" class="toc-item"><span class="toc-num">1</span>List — ArrayList &amp; LinkedList</a>
+          <a href="#hashmap" class="toc-item"><span class="toc-num">2</span>HashMap Internals</a>
+          <a href="#set" class="toc-item"><span class="toc-num">3</span>Set — Hash/Linked/Tree</a>
+          <a href="#map-types" class="toc-item"><span class="toc-num">4</span>Map Types Comparison</a>
+          <a href="#queue" class="toc-item"><span class="toc-num">5</span>Queue &amp; Deque</a>
+          <a href="#comparable" class="toc-item"><span class="toc-num">6</span>Comparable vs Comparator</a>
+          <a href="#cme" class="toc-item"><span class="toc-num">7</span>ConcurrentModException</a>
+          <a href="#custom-lhm" class="toc-item"><span class="toc-num">8</span>Custom LinkedHashMap</a>
+          <a href="#complexity" class="toc-item"><span class="toc-num">9</span>Time Complexity Table</a>
+          <a href="#coding" class="toc-item"><span class="toc-num">10</span>Coding Questions</a>
+          <a href="#interview" class="toc-item"><span class="toc-num">11</span>Interview Q&amp;A</a>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+       SECTION 0 — HIERARCHY
+  ══════════════════════════════════ -->
+      <section id="hierarchy" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-green">🌳</div>
+          <div class="section-meta">
+            <div class="section-label">Section 0</div>
+            <div class="section-title">Collection Hierarchy</div>
+            <div class="section-sub">The full class/interface tree you must know</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>📖 Overview</h3>
+          <p>
+            Java Collections Framework (JCF) provides a unified architecture for storing and
+            manipulating groups of objects. It lives in <code>java.util</code> package.
+            Two root interfaces: <strong>Collection</strong> and <strong>Map</strong>
+            (Map does NOT extend Collection).
+          </p>
+
+          <div class="hierarchy">
+            <pre>
+            <span class="h-root">java.lang.Iterable</span>
+            └── <span class="h-int">Collection (interface)</span>
+            ├── <span class="h-int">List (interface)</span>
+            <span class="h-note">← ordered, duplicates allowed, index-based</span>
+            │ ├── <span class="h-abs">AbstractList (abstract)</span>
+            │ │ ├── <span class="h-class">ArrayList</span>
+            │ │ <span class="h-note">← dynamic array, O(1) get</span>
+            │ │ ├── <span class="h-class">Vector</span>
+            │ │ <span class="h-note">← synchronized ArrayList (legacy)</span>
+            │ │ │ └── <span class="h-class">Stack</span>
+            │ │ <span class="h-note">← LIFO, legacy (use Deque)</span>
+            │ │ └── <span class="h-class">CopyOnWriteArrayList</span>
+            │ │ <span class="h-note">← thread-safe</span>
+            │ └── <span class="h-abs">AbstractSequentialList</span>
+            │ └── <span class="h-class">LinkedList</span>
+            │ <span class="h-note">← doubly linked, also implements Deque</span>
+            │
+            ├── <span class="h-int">Set (interface)</span>
+            <span class="h-note">← no duplicates, unordered (usually)</span>
+            │ ├── <span class="h-class">HashSet</span>
+            │ <span class="h-note">← backed by HashMap, no order</span>
+            │ ├── <span class="h-class">LinkedHashSet</span>
+            │ <span class="h-note">← insertion order maintained</span>
+            │ └── <span class="h-int">SortedSet</span>
+            │ └── <span class="h-int">NavigableSet</span>
+            │ └── <span class="h-class">TreeSet</span>
+            │ <span class="h-note">← sorted natural/custom order, Red-Black tree</span>
+            │
+            └── <span class="h-int">Queue (interface)</span>
+            <span class="h-note">← FIFO by default</span>
+            │ ├── <span class="h-class">PriorityQueue</span>
+            │ <span class="h-note">← min-heap, natural or custom order</span>
+            │ └── <span class="h-int">Deque (interface)</span>
+            │ <span class="h-note">← double-ended queue</span>
+            │ ├── <span class="h-class">ArrayDeque</span>
+            │ <span class="h-note">← preferred over Stack</span>
+            │ └── <span class="h-class">LinkedList</span>
+            │ <span class="h-note">← implements both List &amp; Deque</span>
+
+            <span class="h-root">Map (interface)</span>
+            |<span class="h-note">← does NOT extend Collection, key-value pairs</span>
+            ├── <span class="h-class">HashMap</span>
+            |<span class="h-note">← no order, O(1) avg, null key/value allowed</span>
+            ├── <span class="h-class">LinkedHashMap</span>
+            |<span class="h-note">← insertion/access order</span>
+            ├── <span class="h-class">Hashtable</span>
+            |<span class="h-note">← synchronized, no null (legacy)</span>
+            ├── <span class="h-int">SortedMap</span>
+            │ └── <span class="h-int">NavigableMap</span>
+            │ └── <span class="h-class">TreeMap</span>
+            │ <span class="h-note">← sorted by key, Red-Black tree</span>
+            └── <span class="h-class">ConcurrentHashMap</span>
+            <span class="h-note">← thread-safe, segment locking</span>
+          </pre>
+          </div>
+
+
+          <div class="info-box note">
+            <div class="ib-icon">💡</div>
+            <div>
+              <strong>Key Interview Point:</strong> <code>Map</code> does NOT extend
+              <code>Collection</code>. So iterating a Map requires
+              <code>entrySet()</code>, <code>keySet()</code>, or <code>values()</code>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Pick Guide -->
+        <div class="content-card">
+          <h3>🧭 When to Use Which Collection — Quick Guide</h3>
+          <div class="coll-grid">
+            <div class="coll-box cb-green">
+              <div class="cb-head">ArrayList</div>
+              <div class="cb-desc">Fast random access. Frequent reads, rare inserts/deletes in middle.</div>
+              <div class="cb-tags"><span class="cb-tag tag-ordered">Ordered</span><span class="cb-tag tag-null">Null
+                  OK</span><span class="cb-tag tag-fast">O(1) get</span></div>
+            </div>
+            <div class="coll-box cb-purple">
+              <div class="cb-head">LinkedList</div>
+              <div class="cb-desc">Frequent insert/delete at head or middle. Use as Queue/Deque.</div>
+              <div class="cb-tags"><span class="cb-tag tag-ordered">Ordered</span><span class="cb-tag tag-null">Null
+                  OK</span><span class="cb-tag tag-fast">O(1) insert head</span></div>
+            </div>
+            <div class="coll-box cb-yellow">
+              <div class="cb-head">HashMap</div>
+              <div class="cb-desc">Key-value pairs. Fast lookup by key. No guaranteed order.</div>
+              <div class="cb-tags"><span class="cb-tag tag-unordered">No Order</span><span class="cb-tag tag-null">1
+                  Null Key</span><span class="cb-tag tag-fast">O(1) avg</span></div>
+            </div>
+            <div class="coll-box cb-cyan">
+              <div class="cb-head">LinkedHashMap</div>
+              <div class="cb-desc">HashMap + insertion/access order. LRU cache candidate.</div>
+              <div class="cb-tags"><span class="cb-tag tag-ordered">Ordered</span><span class="cb-tag tag-null">1 Null
+                  Key</span></div>
+            </div>
+            <div class="coll-box cb-red">
+              <div class="cb-head">TreeMap</div>
+              <div class="cb-desc">Sorted keys (natural or custom). Range queries. NavigableMap ops.</div>
+              <div class="cb-tags"><span class="cb-tag tag-sorted">Sorted</span><span class="cb-tag tag-unique">No Null
+                  Key</span><span class="cb-tag tag-slow">O(log n)</span></div>
+            </div>
+            <div class="coll-box cb-green">
+              <div class="cb-head">HashSet</div>
+              <div class="cb-desc">Unique elements. Fast contains check. No order.</div>
+              <div class="cb-tags"><span class="cb-tag tag-unique">Unique</span><span class="cb-tag tag-unordered">No
+                  Order</span><span class="cb-tag tag-fast">O(1) avg</span></div>
+            </div>
+            <div class="coll-box cb-purple">
+              <div class="cb-head">LinkedHashSet</div>
+              <div class="cb-desc">Unique + insertion order maintained. Iteration is predictable.</div>
+              <div class="cb-tags"><span class="cb-tag tag-unique">Unique</span><span
+                  class="cb-tag tag-ordered">Insertion Order</span></div>
+            </div>
+            <div class="coll-box cb-yellow">
+              <div class="cb-head">TreeSet</div>
+              <div class="cb-desc">Unique + sorted. ceiling/floor/headSet/tailSet ops.</div>
+              <div class="cb-tags"><span class="cb-tag tag-unique">Unique</span><span
+                  class="cb-tag tag-sorted">Sorted</span><span class="cb-tag tag-slow">O(log n)</span></div>
+            </div>
+            <div class="coll-box cb-pink">
+              <div class="cb-head">ConcurrentHashMap</div>
+              <div class="cb-desc">Thread-safe HashMap. Segment-level locking. No null keys/values.</div>
+              <div class="cb-tags"><span class="cb-tag tag-thread">Thread-safe</span><span class="cb-tag tag-fast">High
+                  concurrency</span></div>
+            </div>
+            <div class="coll-box cb-cyan">
+              <div class="cb-head">PriorityQueue</div>
+              <div class="cb-desc">Min-heap. Always poll() returns smallest (or custom comparator).</div>
+              <div class="cb-tags"><span class="cb-tag tag-sorted">Heap Order</span><span class="cb-tag tag-slow">O(log
+                  n) add</span></div>
+            </div>
+            <div class="coll-box cb-red">
+              <div class="cb-head">ArrayDeque</div>
+              <div class="cb-desc">Faster than Stack/LinkedList as Stack or Queue. No null allowed.</div>
+              <div class="cb-tags"><span class="cb-tag tag-ordered">LIFO/FIFO</span><span class="cb-tag tag-fast">O(1)
+                  push/pop</span></div>
+            </div>
+            <div class="coll-box cb-pink">
+              <div class="cb-head">CopyOnWriteArrayList</div>
+              <div class="cb-desc">Thread-safe list. Writes create new copy. Good for read-heavy.</div>
+              <div class="cb-tags"><span class="cb-tag tag-thread">Thread-safe</span><span class="cb-tag tag-slow">Slow
+                  writes</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 1 — LIST
+  ══════════════════════════════════ -->
+      <section id="list" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-green">📋</div>
+          <div class="section-meta">
+            <div class="section-label">Section 1</div>
+            <div class="section-title">List — ArrayList &amp; LinkedList</div>
+            <div class="section-sub">Internals, resizing, when to use each</div>
+          </div>
+        </div>
+
+        <!-- ArrayList Internals -->
+        <div class="content-card">
+          <h3>🔷 ArrayList — Internals Deep Dive</h3>
+          <p>
+            ArrayList is backed by a <strong>dynamic array</strong> (<code>Object[]</code> internally).
+            Default initial capacity = <strong>10</strong>. When full, it grows to
+            <strong>1.5x</strong> the current size.
+          </p>
+
+          <div class="diagram">
+            <div class="d-title">ArrayList Internal Structure</div>
+            <span>Object[] elementData = new Object[10]; ← backing array</span>
+            <span>int size = 0; ← current element count</span>
+
+            <span class="highlight">When capacity is full:</span>
+            <span class="arrow">newCapacity = oldCapacity + (oldCapacity >> 1) ← roughly 1.5x</span>
+            <span>→ new array created, all elements copied (Arrays.copyOf)</span>
+
+            <span class="highlight">Example growth: 10 → 15 → 22 → 33 → 49 → ...</span>
+
+            <span class="highlight">Memory layout (index-based):</span>
+            <span>Index: [0] [1] [2] [3] [4] ... [9]</span>
+            <span>Data: "A" "B" "C" "D" null ... null</span>
+            <span>size = 4, capacity = 10</span>
+          </div>
+
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ArrayList — Core
+                Operations</span></div>
+            <pre>
+<span class="cm">// Creation with initial capacity (avoid frequent resizing)</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; list = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="num">100</span>);
+
+<span class="cm">// Add operations</span>
+list.<span class="fn">add</span>(<span class="str">"Apple"</span>);          <span class="cm">// O(1) amortized — append at end</span>
+list.<span class="fn">add</span>(<span class="num">1</span>, <span class="str">"Banana"</span>);      <span class="cm">// O(n) — shift elements right</span>
+list.<span class="fn">addAll</span>(<span class="cl">Arrays</span>.<span class="fn">asList</span>(<span class="str">"C"</span>,<span class="str">"D"</span>));
+
+<span class="cm">// Access — O(1)</span>
+<span class="cl">String</span> item = list.<span class="fn">get</span>(<span class="num">0</span>);
+
+<span class="cm">// Remove</span>
+list.<span class="fn">remove</span>(<span class="num">0</span>);           <span class="cm">// O(n) — by index, shifts elements left</span>
+list.<span class="fn">remove</span>(<span class="str">"Apple"</span>);     <span class="cm">// O(n) — by value, linear search first</span>
+
+<span class="cm">// Search</span>
+<span class="kw">int</span> idx = list.<span class="fn">indexOf</span>(<span class="str">"Banana"</span>); <span class="cm">// O(n)</span>
+<span class="kw">boolean</span> has = list.<span class="fn">contains</span>(<span class="str">"C"</span>); <span class="cm">// O(n)</span>
+
+<span class="cm">// Sort</span>
+<span class="cl">Collections</span>.<span class="fn">sort</span>(list);                        <span class="cm">// natural order</span>
+list.<span class="fn">sort</span>(<span class="cl">Comparator</span>.<span class="fn">reverseOrder</span>());          <span class="cm">// reverse</span>
+list.<span class="fn">sort</span>(<span class="cl">Comparator</span>.<span class="fn">comparingInt</span>(<span class="cl">String</span>::length)); <span class="cm">// by length</span>
+
+<span class="cm">// Convert to array</span>
+<span class="cl">String</span>[] arr = list.<span class="fn">toArray</span>(<span class="kw">new</span> <span class="cl">String</span>[<span class="num">0</span>]);
+
+<span class="cm">// Sublist — returns VIEW (backed by original list)</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; sub = list.<span class="fn">subList</span>(<span class="num">1</span>, <span class="num">3</span>);
+
+<span class="cm">// Unmodifiable list (Java 9+)</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; immutable = <span class="cl">List</span>.<span class="fn">of</span>(<span class="str">"A"</span>, <span class="str">"B"</span>, <span class="str">"C"</span>);</pre>
+          </div>
+
+          <h4>⚡ ArrayList Time Complexities</h4>
+          <div class="complex-grid">
+            <div class="complex-box">
+              <div class="complex-op">get(i)</div>
+              <div class="complex-val c-green">O(1)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">add(end)</div>
+              <div class="complex-val c-green">O(1)*</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">add(i, val)</div>
+              <div class="complex-val c-yellow">O(n)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">remove(i)</div>
+              <div class="complex-val c-yellow">O(n)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">contains</div>
+              <div class="complex-val c-yellow">O(n)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">size()</div>
+              <div class="complex-val c-green">O(1)</div>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--muted)">* amortized O(1) — occasionally O(n) when resizing</p>
+        </div>
+
+        <!-- LinkedList Internals -->
+        <div class="content-card">
+          <h3>🔶 LinkedList — Internals Deep Dive</h3>
+          <p>
+            LinkedList is a <strong>doubly linked list</strong>. Each element is a
+            <code>Node</code> containing data, a pointer to next, and a pointer to previous.
+            Also implements <strong>Deque</strong>.
+          </p>
+
+          <div class="diagram">
+            <div class="d-title">LinkedList Internal Structure</div>
+            <span>Node { Object item; Node next; Node prev; }</span>
+            <span>LinkedList { Node first; Node last; int size; }</span>
+
+            <span class="highlight">Memory layout (doubly linked):</span>
+            <span class="arrow">null ← [prev|"A"|next] ↔ [prev|"B"|next] ↔ [prev|"C"|next] → null</span>
+            <span> ↑ first ↑ last</span>
+
+            <span class="highlight">addFirst("X"):</span>
+            <span class="arrow">null ← [prev|"X"|next] ↔ [prev|"A"|next] ↔ ...</span>
+            <span> ↑ new first (O(1) — just pointer changes)</span>
+          </div>
+
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">LinkedList — As List
+                and Deque</span></div>
+            <pre>
+<span class="cl">LinkedList</span>&lt;<span class="cl">String</span>&gt; ll = <span class="kw">new</span> <span class="cl">LinkedList</span>&lt;&gt;();
+
+<span class="cm">// List operations</span>
+ll.<span class="fn">add</span>(<span class="str">"B"</span>);
+ll.<span class="fn">add</span>(<span class="num">0</span>, <span class="str">"A"</span>);   <span class="cm">// O(1) at head</span>
+ll.<span class="fn">get</span>(<span class="num">1</span>);        <span class="cm">// O(n) — must traverse from head/tail</span>
+
+<span class="cm">// Deque operations (use as Stack or Queue)</span>
+ll.<span class="fn">addFirst</span>(<span class="str">"Head"</span>);   <span class="cm">// O(1)</span>
+ll.<span class="fn">addLast</span>(<span class="str">"Tail"</span>);    <span class="cm">// O(1)</span>
+ll.<span class="fn">peekFirst</span>();        <span class="cm">// O(1) — look without remove</span>
+ll.<span class="fn">pollFirst</span>();        <span class="cm">// O(1) — remove and return first</span>
+ll.<span class="fn">pollLast</span>();         <span class="cm">// O(1) — remove and return last</span>
+
+<span class="cm">// Use as Stack (LIFO)</span>
+ll.<span class="fn">push</span>(<span class="str">"X"</span>);    <span class="cm">// addFirst</span>
+ll.<span class="fn">pop</span>();        <span class="cm">// removeFirst</span>
+
+<span class="cm">// Use as Queue (FIFO)</span>
+ll.<span class="fn">offer</span>(<span class="str">"Y"</span>);   <span class="cm">// addLast</span>
+ll.<span class="fn">poll</span>();       <span class="cm">// removeFirst</span></pre>
+          </div>
+
+          <h4>⚡ LinkedList Time Complexities</h4>
+          <div class="complex-grid">
+            <div class="complex-box">
+              <div class="complex-op">get(i)</div>
+              <div class="complex-val c-yellow">O(n)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">addFirst/Last</div>
+              <div class="complex-val c-green">O(1)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">add(i, val)</div>
+              <div class="complex-val c-yellow">O(n)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">remove head</div>
+              <div class="complex-val c-green">O(1)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">contains</div>
+              <div class="complex-val c-yellow">O(n)</div>
+            </div>
+            <div class="complex-box">
+              <div class="complex-op">size()</div>
+              <div class="complex-val c-green">O(1)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ArrayList vs LinkedList -->
+        <div class="content-card">
+          <h3>📊 ArrayList vs LinkedList — Full Comparison</h3>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>ArrayList</th>
+                <th>LinkedList</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Internal structure</td>
+                <td>Dynamic array (Object[])</td>
+                <td>Doubly linked nodes</td>
+              </tr>
+              <tr>
+                <td>Random access get(i)</td>
+                <td>✅ O(1)</td>
+                <td>❌ O(n)</td>
+              </tr>
+              <tr>
+                <td>Insert at end</td>
+                <td>✅ O(1) amortized</td>
+                <td>✅ O(1)</td>
+              </tr>
+              <tr>
+                <td>Insert at beginning/middle</td>
+                <td>❌ O(n) — shift</td>
+                <td>✅ O(1) after traversal</td>
+              </tr>
+              <tr>
+                <td>Memory</td>
+                <td>Less (no prev/next pointers)</td>
+                <td>More (each node has 2 pointers)</td>
+              </tr>
+              <tr>
+                <td>Cache performance</td>
+                <td>✅ Better (contiguous memory)</td>
+                <td>❌ Poor (nodes scattered)</td>
+              </tr>
+              <tr>
+                <td>Implements Deque</td>
+                <td>❌ No</td>
+                <td>✅ Yes</td>
+              </tr>
+              <tr>
+                <td>Use case</td>
+                <td>Frequent reads, index access</td>
+                <td>Frequent insert/delete at ends</td>
+              </tr>
+              <tr>
+                <td>Null elements</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+              </tr>
+              <tr>
+                <td>Thread safe</td>
+                <td>❌ No</td>
+                <td>❌ No</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="info-box warn">
+            <div class="ib-icon">⚠️</div>
+            <div>
+              <strong>Common Misconception:</strong> People think LinkedList insert is O(1) always.
+              For insert at index i: you still need O(n) traversal to reach position i, then O(1)
+              pointer change. Only insert at head/tail is truly O(1).
+            </div>
+          </div>
+        </div>
+
+        <div class="iq-title">🎯 Interview Questions — List</div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q1</span>How does ArrayList resize? What is the new capacity?</div>
+          <div class="iq-a">When full, new capacity = <code>oldCapacity + (oldCapacity >> 1)</code> = roughly 1.5x. A
+            new array is created and elements are copied using <code>Arrays.copyOf()</code>. Default initial = 10. You
+            can set initial capacity to avoid frequent resizing.</div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q2</span>What is <code>trimToSize()</code> in ArrayList?</div>
+          <div class="iq-a">Trims the backing array to the current size (removes unused slots). Useful after bulk
+            add+removal to free memory. E.g., after adding 1000 elements and removing 700, capacity is still ~1500 but
+            size is 300. <code>trimToSize()</code> makes capacity = 300.</div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q3</span>When would you prefer LinkedList over ArrayList?</div>
+          <div class="iq-a">When you need a <strong>Queue or Deque</strong> (use ArrayDeque actually), frequent
+            insert/delete at the beginning, or implementing a stack. In practice, <strong>ArrayList is almost always
+              better</strong> due to cache locality. Even for frequent inserts, ArrayList's System.arraycopy is very
+            fast.</div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 2 — HASHMAP INTERNALS
+  ══════════════════════════════════ -->
+      <section id="hashmap" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-yellow">⚙️</div>
+          <div class="section-meta">
+            <div class="section-label">Section 2</div>
+            <div class="section-title">HashMap — Internal Working</div>
+            <div class="section-sub">Hashing, buckets, load factor, treeification, Java 8 changes</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>📖 How HashMap Works — Step by Step</h3>
+          <p>
+            HashMap stores key-value pairs in an <strong>array of buckets (Node[])</strong>.
+            Each bucket is a <strong>linked list</strong> (or red-black tree in Java 8+).
+            Internally: <code>transient Node&lt;K,V&gt;[] table</code>.
+          </p>
+
+          <div class="diagram">
+            <div class="d-title">HashMap Structure — Java 8+</div>
+            <span class="highlight">put("name", "Alice") — step by step:</span>
+
+            <span>Step 1: hashCode() on key</span>
+            <span class="arrow"> "name".hashCode() → some int (e.g., 3373752)</span>
+
+            <span>Step 2: hash() — spread bits (prevents clustering)</span>
+            <span class="arrow"> hash = key.hashCode() ^ (key.hashCode() >>> 16)</span>
+
+            <span>Step 3: bucket index = hash &amp; (capacity - 1)</span>
+            <span class="arrow"> index = hash &amp; (16-1) = hash &amp; 15 → e.g., 5</span>
+
+            <span>Step 4: Store in table[5]</span>
+            <span class="arrow"> If empty → create new Node and store</span>
+            <span class="arrow"> If collision → add to linked list at that bucket</span>
+            <span class="arrow"> If same key → replace value (equals() used)</span>
+
+            <span class="highlight">Bucket layout (default capacity = 16):</span>
+            <span>table[0] → null</span>
+            <span>table[1] → Node("city","NY") → null</span>
+            <span>table[5] → Node("name","Alice") → Node("age","30") → null ← collision</span>
+            <span>table[7] → Node("id","001") → null</span>
+            <span>...</span>
+
+            <span class="highlight">Java 8 TREEIFICATION:</span>
+            <span class="arrow"> If bucket chain length ≥ 8 AND total capacity ≥ 64</span>
+            <span class="arrow"> → linked list converts to Red-Black Tree → O(log n) search</span>
+            <span class="arrow"> If elements reduced below 6 → converts back to linked list</span>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>📐 Load Factor &amp; Rehashing</h3>
+          <p>
+            <strong>Default initial capacity</strong> = 16<br>
+            <strong>Default load factor</strong> = 0.75<br>
+            <strong>Threshold</strong> = capacity × load factor = 16 × 0.75 = <strong>12</strong>
+          </p>
+          <p>
+            When the number of entries exceeds the threshold, HashMap <strong>rehashes</strong>:
+            doubles capacity (16 → 32) and redistributes all entries.
+            Rehashing is expensive — O(n).
+          </p>
+
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">HashMap — Important
+                Operations</span></div>
+            <pre>
+<span class="cm">// Creation — specify initial capacity when size is known</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; map = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;(<span class="num">32</span>, <span class="num">0.75f</span>);
+
+<span class="cm">// Basic operations — O(1) average</span>
+map.<span class="fn">put</span>(<span class="str">"one"</span>, <span class="num">1</span>);
+map.<span class="fn">get</span>(<span class="str">"one"</span>);                   <span class="cm">// 1</span>
+map.<span class="fn">getOrDefault</span>(<span class="str">"x"</span>, <span class="num">0</span>);         <span class="cm">// returns 0 if key not found</span>
+map.<span class="fn">containsKey</span>(<span class="str">"one"</span>);           <span class="cm">// true</span>
+map.<span class="fn">containsValue</span>(<span class="num">1</span>);             <span class="cm">// O(n) — linear scan</span>
+map.<span class="fn">putIfAbsent</span>(<span class="str">"two"</span>, <span class="num">2</span>);        <span class="cm">// only puts if key absent</span>
+
+<span class="cm">// Java 8 compute methods</span>
+map.<span class="fn">computeIfAbsent</span>(<span class="str">"three"</span>, k -> k.length()); <span class="cm">// 5</span>
+map.<span class="fn">merge</span>(<span class="str">"one"</span>, <span class="num">10</span>, <span class="cl">Integer</span>::sum);   <span class="cm">// 1+10=11 if key exists</span>
+map.<span class="fn">compute</span>(<span class="str">"one"</span>, (k, v) -> v == <span class="kw">null</span> ? <span class="num">1</span> : v + <span class="num">1</span>); <span class="cm">// increment</span>
+
+<span class="cm">// Iteration — 3 ways</span>
+<span class="cm">// Way 1: entrySet (most efficient — one lookup)</span>
+<span class="kw">for</span> (<span class="cl">Map</span>.<span class="cl">Entry</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; e : map.<span class="fn">entrySet</span>()) {
+    <span class="cl">System</span>.out.println(e.<span class="fn">getKey</span>() + <span class="str">" = "</span> + e.<span class="fn">getValue</span>());
+}
+<span class="cm">// Way 2: keySet + get (extra lookup per key)</span>
+<span class="kw">for</span> (<span class="cl">String</span> key : map.<span class="fn">keySet</span>()) {
+    <span class="cl">System</span>.out.println(key + <span class="str">" = "</span> + map.<span class="fn">get</span>(key));
+}
+<span class="cm">// Way 3: forEach (Java 8+)</span>
+map.<span class="fn">forEach</span>((k, v) -> <span class="cl">System</span>.out.println(k + <span class="str">"="</span> + v));</pre>
+          </div>
+        </div>
+
+        <!-- hashCode and equals -->
+        <div class="content-card">
+          <h3>🔑 hashCode() and equals() — The Contract</h3>
+          <ul class="key-list">
+            <li><strong>If equals() returns true → hashCode() MUST be same</strong></li>
+            <li class="red"><strong>If hashCode() is same → equals() may or may not be true</strong> (collision is ok)
+            </li>
+            <li class="yellow"><strong>Same object → same hashCode</strong> during single JVM run</li>
+            <li class="purple"><strong>Override both or neither</strong> — breaking the contract causes bugs in
+              HashMap/HashSet</li>
+          </ul>
+
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Custom Key in HashMap —
+                Must Override Both</span></div>
+            <pre>
+<span class="kw">class</span> <span class="cl">StudentKey</span> {
+    <span class="kw">private int</span> id;
+    <span class="kw">private</span> <span class="cl">String</span> name;
+
+    <span class="cl">StudentKey</span>(<span class="kw">int</span> id, <span class="cl">String</span> name) {
+        <span class="kw">this</span>.id = id; <span class="kw">this</span>.name = name;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">equals</span>(<span class="cl">Object</span> o) {
+        <span class="kw">if</span> (<span class="kw">this</span> == o) <span class="kw">return true</span>;
+        <span class="kw">if</span> (!(o <span class="kw">instanceof</span> <span class="cl">StudentKey</span>)) <span class="kw">return false</span>;
+        <span class="cl">StudentKey</span> other = (<span class="cl">StudentKey</span>) o;
+        <span class="kw">return this</span>.id == other.id && <span class="cl">Objects</span>.<span class="fn">equals</span>(<span class="kw">this</span>.name, other.name);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public int</span> <span class="fn">hashCode</span>() {
+        <span class="kw">return</span> <span class="cl">Objects</span>.<span class="fn">hash</span>(id, name); <span class="cm">// Java 7+ utility</span>
+    }
+}
+
+<span class="cm">// WITHOUT overriding: two "equal" keys would map to different buckets!</span>
+<span class="cl">Map</span>&lt;<span class="cl">StudentKey</span>, <span class="cl">String</span>&gt; m = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+m.<span class="fn">put</span>(<span class="kw">new</span> <span class="cl">StudentKey</span>(<span class="num">1</span>, <span class="str">"Alice"</span>), <span class="str">"CS"</span>);
+<span class="cl">System</span>.out.println(m.<span class="fn">get</span>(<span class="kw">new</span> <span class="cl">StudentKey</span>(<span class="num">1</span>, <span class="str">"Alice"</span>)));
+<span class="cm">// With override: "CS"  |  Without override: null</span></pre>
+          </div>
+
+          <div class="info-box danger">
+            <div class="ib-icon">🚨</div>
+            <div>
+              <strong>Common Bug:</strong> Using a mutable object as a HashMap key and then modifying it.
+              The hashCode changes after modification → you can never retrieve the value again!
+              Always use <strong>immutable objects</strong> (String, Integer) as HashMap keys.
+            </div>
+          </div>
+        </div>
+
+        <div class="iq-title">🎯 Interview Questions — HashMap</div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q1</span>What happens when two keys have the same hashCode?</div>
+          <div class="iq-a">It's a <strong>collision</strong>. Both are stored in the same bucket as a linked list. Java
+            8+: if ≥8 nodes in one bucket AND capacity ≥64, the linked list converts to a Red-Black Tree for O(log n)
+            performance. On retrieval, <code>equals()</code> is used to find the exact entry.</div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q2</span>Can HashMap have null keys? How many?</div>
+          <div class="iq-a">Yes — exactly <strong>one null key</strong>. Null keys are always placed in bucket[0] (no
+            hashCode called). Multiple null values are allowed. Hashtable does NOT allow null keys or values.</div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q3</span>HashMap vs Hashtable vs ConcurrentHashMap?</div>
+          <div class="iq-a">
+            <strong>HashMap:</strong> Not thread-safe, allows null key/value, fast.<br>
+            <strong>Hashtable:</strong> Synchronized (whole table), no null, legacy, slow.<br>
+            <strong>ConcurrentHashMap:</strong> Thread-safe via segment/bucket locking (Java 8: CAS + synchronized per
+            node), no null key/value, high concurrency. Prefer over Hashtable always.
+          </div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q4</span>Why is String a good HashMap key?</div>
+          <div class="iq-a">String is <strong>immutable</strong> (hashCode can't change after creation), String
+            <strong>caches its hashCode</strong> (computed once, stored in <code>hash</code> field — lazy evaluation,
+            subsequent calls return cached value), and String properly overrides both <code>hashCode()</code> and
+            <code>equals()</code>.
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 3 — SET
+  ══════════════════════════════════ -->
+      <section id="set" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-purple">🔵</div>
+          <div class="section-meta">
+            <div class="section-label">Section 3</div>
+            <div class="section-title">Set — HashSet, LinkedHashSet, TreeSet</div>
+            <div class="section-sub">No duplicates — how each maintains uniqueness</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>🔷 HashSet — Internals</h3>
+          <p>
+            HashSet is <strong>backed by a HashMap</strong> internally! The elements are stored
+            as <strong>keys</strong> in a HashMap, with a constant dummy value
+            (<code>PRESENT = new Object()</code>). So HashSet inherits all HashMap properties.
+          </p>
+
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">HashSet Internals
+                Reveal</span></div>
+            <pre>
+<span class="cm">// HashSet source code (simplified)</span>
+<span class="kw">public class</span> <span class="cl">HashSet</span>&lt;E&gt; {
+    <span class="kw">private</span> <span class="cl">HashMap</span>&lt;E, <span class="cl">Object</span>&gt; map;
+    <span class="kw">private static final</span> <span class="cl">Object</span> PRESENT = <span class="kw">new</span> <span class="cl">Object</span>(); <span class="cm">// dummy value</span>
+
+    <span class="kw">public boolean</span> <span class="fn">add</span>(E e) {
+        <span class="kw">return</span> map.<span class="fn">put</span>(e, PRESENT) == <span class="kw">null</span>; <span class="cm">// true if new, false if duplicate</span>
+    }
+
+    <span class="kw">public boolean</span> <span class="fn">contains</span>(<span class="cl">Object</span> o) {
+        <span class="kw">return</span> map.<span class="fn">containsKey</span>(o);
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="cl">Set</span>&lt;<span class="cl">String</span>&gt; set = <span class="kw">new</span> <span class="cl">HashSet</span>&lt;&gt;();
+set.<span class="fn">add</span>(<span class="str">"Apple"</span>);
+set.<span class="fn">add</span>(<span class="str">"Banana"</span>);
+set.<span class="fn">add</span>(<span class="str">"Apple"</span>);  <span class="cm">// ignored — duplicate</span>
+<span class="cl">System</span>.out.println(set.size()); <span class="cm">// 2</span>
+
+<span class="cm">// IMPORTANT: HashSet uses hashCode() + equals() to determine duplicates</span>
+<span class="cm">// Must override both in custom objects!</span></pre>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>🔶 LinkedHashSet vs TreeSet</h3>
+
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Set Types
+                Comparison</span></div>
+            <pre>
+<span class="cm">// LinkedHashSet — insertion order maintained (backed by LinkedHashMap)</span>
+<span class="cl">Set</span>&lt;<span class="cl">String</span>&gt; linked = <span class="kw">new</span> <span class="cl">LinkedHashSet</span>&lt;&gt;();
+linked.<span class="fn">add</span>(<span class="str">"Banana"</span>);
+linked.<span class="fn">add</span>(<span class="str">"Apple"</span>);
+linked.<span class="fn">add</span>(<span class="str">"Cherry"</span>);
+<span class="cl">System</span>.out.println(linked); <span class="cm">// [Banana, Apple, Cherry] — insertion order</span>
+
+<span class="cm">// TreeSet — natural sorted order (backed by TreeMap = Red-Black Tree)</span>
+<span class="cl">Set</span>&lt;<span class="cl">String</span>&gt; tree = <span class="kw">new</span> <span class="cl">TreeSet</span>&lt;&gt;();
+tree.<span class="fn">add</span>(<span class="str">"Banana"</span>);
+tree.<span class="fn">add</span>(<span class="str">"Apple"</span>);
+tree.<span class="fn">add</span>(<span class="str">"Cherry"</span>);
+<span class="cl">System</span>.out.println(tree); <span class="cm">// [Apple, Banana, Cherry] — alphabetical</span>
+
+<span class="cm">// TreeSet NavigableSet operations</span>
+<span class="cl">TreeSet</span>&lt;<span class="cl">Integer</span>&gt; nums = <span class="kw">new</span> <span class="cl">TreeSet</span>&lt;&gt;(<span class="cl">Set</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">3</span>,<span class="num">5</span>,<span class="num">7</span>,<span class="num">9</span>));
+nums.<span class="fn">floor</span>(<span class="num">6</span>);     <span class="cm">// 5 — greatest element ≤ 6</span>
+nums.<span class="fn">ceiling</span>(<span class="num">6</span>);   <span class="cm">// 7 — smallest element ≥ 6</span>
+nums.<span class="fn">headSet</span>(<span class="num">5</span>);   <span class="cm">// [1, 3] — elements &lt; 5</span>
+nums.<span class="fn">tailSet</span>(<span class="num">5</span>);   <span class="cm">// [5, 7, 9] — elements ≥ 5</span>
+nums.<span class="fn">subSet</span>(<span class="num">3</span>,<span class="num">7</span>);  <span class="cm">// [3, 5] — 3 inclusive to 7 exclusive</span>
+nums.<span class="fn">first</span>();      <span class="cm">// 1</span>
+nums.<span class="fn">last</span>();       <span class="cm">// 9</span>
+
+<span class="cm">// TreeSet with custom Comparator</span>
+<span class="cl">Set</span>&lt;<span class="cl">String</span>&gt; byLen = <span class="kw">new</span> <span class="cl">TreeSet</span>&lt;&gt;(<span class="cl">Comparator</span>.<span class="fn">comparingInt</span>(<span class="cl">String</span>::length));
+byLen.<span class="fn">add</span>(<span class="str">"Banana"</span>); byLen.<span class="fn">add</span>(<span class="str">"Fig"</span>); byLen.<span class="fn">add</span>(<span class="str">"Apple"</span>);
+<span class="cl">System</span>.out.println(byLen); <span class="cm">// [Fig, Apple, Banana] — sorted by length</span></pre>
+          </div>
+
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>HashSet</th>
+                <th>LinkedHashSet</th>
+                <th>TreeSet</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Order</td>
+                <td>No order</td>
+                <td>Insertion order</td>
+                <td>Sorted order</td>
+              </tr>
+              <tr>
+                <td>Backed by</td>
+                <td>HashMap</td>
+                <td>LinkedHashMap</td>
+                <td>TreeMap (Red-Black)</td>
+              </tr>
+              <tr>
+                <td>add/contains</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(log n)</td>
+              </tr>
+              <tr>
+                <td>Null element</td>
+                <td>✅ One null</td>
+                <td>✅ One null</td>
+                <td>❌ No (NPE)</td>
+              </tr>
+              <tr>
+                <td>Custom sort</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅ Comparator</td>
+              </tr>
+              <tr>
+                <td>floor/ceiling</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅ NavigableSet</td>
+              </tr>
+              <tr>
+                <td>Memory</td>
+                <td>Less</td>
+                <td>More (linked list)</td>
+                <td>More (tree nodes)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 4 — MAP TYPES
+  ══════════════════════════════════ -->
+      <section id="map-types" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-cyan">🗂️</div>
+          <div class="section-meta">
+            <div class="section-label">Section 4</div>
+            <div class="section-title">Map Types — Deep Comparison</div>
+            <div class="section-sub">HashMap, LinkedHashMap, TreeMap, ConcurrentHashMap, Hashtable</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>📊 All Map Types — Complete Comparison</h3>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>HashMap</th>
+                <th>LinkedHashMap</th>
+                <th>TreeMap</th>
+                <th>ConcurrentHashMap</th>
+                <th>Hashtable</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Order</td>
+                <td>No guarantee</td>
+                <td>Insertion / Access</td>
+                <td>Key sorted</td>
+                <td>No guarantee</td>
+                <td>No guarantee</td>
+              </tr>
+              <tr>
+                <td>Thread safe</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅ High concurrency</td>
+                <td>✅ But slow</td>
+              </tr>
+              <tr>
+                <td>Null key</td>
+                <td>✅ One</td>
+                <td>✅ One</td>
+                <td>❌ NPE</td>
+                <td>❌ NPE</td>
+                <td>❌ NPE</td>
+              </tr>
+              <tr>
+                <td>Null value</td>
+                <td>✅ Many</td>
+                <td>✅ Many</td>
+                <td>✅ Many</td>
+                <td>❌ NPE</td>
+                <td>❌ NPE</td>
+              </tr>
+              <tr>
+                <td>get/put</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(log n)</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+              </tr>
+              <tr>
+                <td>Backed by</td>
+                <td>Array+LinkedList/Tree</td>
+                <td>Array+DLL+Tree</td>
+                <td>Red-Black Tree</td>
+                <td>Array+DLL/Tree+CAS</td>
+                <td>Array+LinkedList</td>
+              </tr>
+              <tr>
+                <td>Use case</td>
+                <td>General purpose</td>
+                <td>LRU Cache, ordered iter</td>
+                <td>Sorted keys, ranges</td>
+                <td>Multi-thread, high concurrency</td>
+                <td>Legacy only</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="content-card">
+          <h3>🔗 LinkedHashMap — Access Order Mode (LRU Cache)</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">LRU Cache using
+                LinkedHashMap</span></div>
+            <pre>
+<span class="cm">// accessOrder = true → iterates in order of last access (LRU)</span>
+<span class="cm">// accessOrder = false → iterates in insertion order (default)</span>
+
+<span class="kw">class</span> <span class="cl">LRUCache</span>&lt;K, V&gt; <span class="kw">extends</span> <span class="cl">LinkedHashMap</span>&lt;K, V&gt; {
+
+    <span class="kw">private final int</span> capacity;
+
+    <span class="cl">LRUCache</span>(<span class="kw">int</span> capacity) {
+        <span class="kw">super</span>(capacity, <span class="num">0.75f</span>, <span class="kw">true</span>); <span class="cm">// true = access order!</span>
+        <span class="kw">this</span>.capacity = capacity;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">protected boolean</span> <span class="fn">removeEldestEntry</span>(<span class="cl">Map</span>.<span class="cl">Entry</span>&lt;K, V&gt; eldest) {
+        <span class="cm">// Remove oldest entry when size exceeds capacity</span>
+        <span class="kw">return</span> size() > capacity;
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="cl">LRUCache</span>&lt;<span class="cl">Integer</span>, <span class="cl">String</span>&gt; cache = <span class="kw">new</span> <span class="cl">LRUCache</span>&lt;&gt;(<span class="num">3</span>);
+cache.<span class="fn">put</span>(<span class="num">1</span>, <span class="str">"A"</span>);
+cache.<span class="fn">put</span>(<span class="num">2</span>, <span class="str">"B"</span>);
+cache.<span class="fn">put</span>(<span class="num">3</span>, <span class="str">"C"</span>);
+cache.<span class="fn">get</span>(<span class="num">1</span>);      <span class="cm">// access key 1 → moves to end</span>
+cache.<span class="fn">put</span>(<span class="num">4</span>, <span class="str">"D"</span>); <span class="cm">// capacity exceeded → evicts key 2 (LRU)</span>
+<span class="cl">System</span>.out.println(cache.keySet()); <span class="cm">// [3, 1, 4]</span></pre>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>🌳 TreeMap — Sorted Map Operations</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">TreeMap NavigableMap
+                Operations</span></div>
+            <pre>
+<span class="cl">TreeMap</span>&lt;<span class="cl">Integer</span>, <span class="cl">String</span>&gt; tree = <span class="kw">new</span> <span class="cl">TreeMap</span>&lt;&gt;();
+tree.<span class="fn">put</span>(<span class="num">10</span>, <span class="str">"Ten"</span>); tree.<span class="fn">put</span>(<span class="num">20</span>, <span class="str">"Twenty"</span>);
+tree.<span class="fn">put</span>(<span class="num">30</span>, <span class="str">"Thirty"</span>); tree.<span class="fn">put</span>(<span class="num">40</span>, <span class="str">"Forty"</span>);
+
+tree.<span class="fn">firstKey</span>();             <span class="cm">// 10</span>
+tree.<span class="fn">lastKey</span>();              <span class="cm">// 40</span>
+tree.<span class="fn">floorKey</span>(<span class="num">25</span>);           <span class="cm">// 20 — greatest key ≤ 25</span>
+tree.<span class="fn">ceilingKey</span>(<span class="num">25</span>);         <span class="cm">// 30 — smallest key ≥ 25</span>
+tree.<span class="fn">lowerKey</span>(<span class="num">30</span>);           <span class="cm">// 20 — strictly less than 30</span>
+tree.<span class="fn">higherKey</span>(<span class="num">30</span>);          <span class="cm">// 40 — strictly greater than 30</span>
+tree.<span class="fn">headMap</span>(<span class="num">30</span>);             <span class="cm">// {10=Ten, 20=Twenty} — keys &lt; 30</span>
+tree.<span class="fn">tailMap</span>(<span class="num">20</span>);             <span class="cm">// {20=Twenty, 30=Thirty, 40=Forty}</span>
+tree.<span class="fn">subMap</span>(<span class="num">10</span>, <span class="num">30</span>);           <span class="cm">// {10=Ten, 20=Twenty}</span>
+tree.<span class="fn">descendingMap</span>();          <span class="cm">// reverse order view</span>
+tree.<span class="fn">pollFirstEntry</span>();         <span class="cm">// removes and returns {10=Ten}</span></pre>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 5 — QUEUE & DEQUE
+  ══════════════════════════════════ -->
+      <section id="queue" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-pink">🔁</div>
+          <div class="section-meta">
+            <div class="section-label">Section 5</div>
+            <div class="section-title">Queue &amp; Deque</div>
+            <div class="section-sub">PriorityQueue, ArrayDeque — FIFO, LIFO, Min/Max heap</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>🔷 Queue Methods — offer vs add, poll vs remove</h3>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Throws exception</th>
+                <th>Returns special value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Insert</td>
+                <td><code>add(e)</code> — throws if full</td>
+                <td><code>offer(e)</code> — returns false if full</td>
+              </tr>
+              <tr>
+                <td>Remove head</td>
+                <td><code>remove()</code> — throws if empty</td>
+                <td><code>poll()</code> — returns null if empty</td>
+              </tr>
+              <tr>
+                <td>Examine head</td>
+                <td><code>element()</code> — throws if empty</td>
+                <td><code>peek()</code> — returns null if empty</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="info-box tip">
+            <div class="ib-icon">✅</div>
+            <div><strong>Best practice:</strong> Use <code>offer()</code>, <code>poll()</code>, <code>peek()</code> —
+              they don't throw exceptions, which is safer for most use cases.</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>🏔️ PriorityQueue — Min &amp; Max Heap</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">PriorityQueue Min and
+                Max Heap</span></div>
+            <pre>
+<span class="cm">// Min Heap (default — natural order)</span>
+<span class="cl">PriorityQueue</span>&lt;<span class="cl">Integer</span>&gt; minHeap = <span class="kw">new</span> <span class="cl">PriorityQueue</span>&lt;&gt;();
+minHeap.<span class="fn">offer</span>(<span class="num">5</span>); minHeap.<span class="fn">offer</span>(<span class="num">1</span>); minHeap.<span class="fn">offer</span>(<span class="num">3</span>);
+<span class="cl">System</span>.out.println(minHeap.<span class="fn">poll</span>()); <span class="cm">// 1 — smallest always first</span>
+
+<span class="cm">// Max Heap (reverse order)</span>
+<span class="cl">PriorityQueue</span>&lt;<span class="cl">Integer</span>&gt; maxHeap = <span class="kw">new</span> <span class="cl">PriorityQueue</span>&lt;&gt;(<span class="cl">Comparator</span>.<span class="fn">reverseOrder</span>());
+maxHeap.<span class="fn">offer</span>(<span class="num">5</span>); maxHeap.<span class="fn">offer</span>(<span class="num">1</span>); maxHeap.<span class="fn">offer</span>(<span class="num">3</span>);
+<span class="cl">System</span>.out.println(maxHeap.<span class="fn">poll</span>()); <span class="cm">// 5 — largest always first</span>
+
+<span class="cm">// PriorityQueue with custom object</span>
+<span class="cl">PriorityQueue</span>&lt;<span class="cl">String</span>&gt; byLength = <span class="kw">new</span> <span class="cl">PriorityQueue</span>&lt;&gt;(
+    <span class="cl">Comparator</span>.<span class="fn">comparingInt</span>(<span class="cl">String</span>::length)
+);
+byLength.<span class="fn">offer</span>(<span class="str">"Banana"</span>); byLength.<span class="fn">offer</span>(<span class="str">"Fig"</span>); byLength.<span class="fn">offer</span>(<span class="str">"Apple"</span>);
+<span class="cl">System</span>.out.println(byLength.<span class="fn">poll</span>()); <span class="cm">// "Fig" — shortest first</span>
+
+<span class="cm">// NOTE: PriorityQueue does NOT guarantee full sorted iteration!</span>
+<span class="cm">// Only peek()/poll() return the minimum element.</span></pre>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>🔃 ArrayDeque — Preferred over Stack &amp; LinkedList</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ArrayDeque as Stack and
+                Queue</span></div>
+            <pre>
+<span class="cl">Deque</span>&lt;<span class="cl">String</span>&gt; deque = <span class="kw">new</span> <span class="cl">ArrayDeque</span>&lt;&gt;();
+
+<span class="cm">// As Stack (LIFO)</span>
+deque.<span class="fn">push</span>(<span class="str">"First"</span>);   <span class="cm">// addFirst</span>
+deque.<span class="fn">push</span>(<span class="str">"Second"</span>);
+deque.<span class="fn">push</span>(<span class="str">"Third"</span>);
+<span class="cl">System</span>.out.println(deque.<span class="fn">pop</span>()); <span class="cm">// Third (LIFO)</span>
+
+<span class="cm">// As Queue (FIFO)</span>
+<span class="cl">Deque</span>&lt;<span class="cl">Integer</span>&gt; queue = <span class="kw">new</span> <span class="cl">ArrayDeque</span>&lt;&gt;();
+queue.<span class="fn">offer</span>(<span class="num">1</span>); queue.<span class="fn">offer</span>(<span class="num">2</span>); queue.<span class="fn">offer</span>(<span class="num">3</span>);
+<span class="cl">System</span>.out.println(queue.<span class="fn">poll</span>()); <span class="cm">// 1 (FIFO)</span>
+
+<span class="cm">// Peek without removing</span>
+queue.<span class="fn">peekFirst</span>();  <span class="cm">// front element</span>
+queue.<span class="fn">peekLast</span>();   <span class="cm">// rear element</span></pre>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 6 — COMPARABLE vs COMPARATOR
+  ══════════════════════════════════ -->
+      <section id="comparable" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-yellow">⚖️</div>
+          <div class="section-meta">
+            <div class="section-label">Section 6</div>
+            <div class="section-title">Comparable vs Comparator</div>
+            <div class="section-sub">Natural ordering vs custom ordering — with chaining</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>📊 Comparable vs Comparator — Key Differences</h3>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Comparable</th>
+                <th>Comparator</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Package</td>
+                <td><code>java.lang</code></td>
+                <td><code>java.util</code></td>
+              </tr>
+              <tr>
+                <td>Method</td>
+                <td><code>compareTo(T other)</code></td>
+                <td><code>compare(T o1, T o2)</code></td>
+              </tr>
+              <tr>
+                <td>Implemented in</td>
+                <td>The class itself</td>
+                <td>Separate class or lambda</td>
+              </tr>
+              <tr>
+                <td>Defines</td>
+                <td>Natural ordering (single)</td>
+                <td>Custom ordering (multiple)</td>
+              </tr>
+              <tr>
+                <td>Modifies</td>
+                <td>The original class</td>
+                <td>External — class unchanged</td>
+              </tr>
+              <tr>
+                <td>Multiple sort criteria</td>
+                <td>❌ One fixed order</td>
+                <td>✅ Multiple comparators</td>
+              </tr>
+              <tr>
+                <td>Used with</td>
+                <td>TreeSet, TreeMap, Collections.sort</td>
+                <td>TreeSet/TreeMap constructor, sort()</td>
+              </tr>
+              <tr>
+                <td>Functional Interface</td>
+                <td>❌ Not a FI</td>
+                <td>✅ Yes (Java 8+)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="content-card">
+          <h3>💻 Comparable — Natural Ordering</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Comparable — implement
+                in class itself</span></div>
+            <pre>
+<span class="kw">class</span> <span class="cl">Employee</span> <span class="kw">implements</span> <span class="cl">Comparable</span>&lt;<span class="cl">Employee</span>&gt; {
+    <span class="kw">private int</span> id;
+    <span class="kw">private</span> <span class="cl">String</span> name;
+    <span class="kw">private double</span> salary;
+
+    <span class="cm">// Constructor, getters...</span>
+    <span class="cl">Employee</span>(<span class="kw">int</span> id, <span class="cl">String</span> name, <span class="kw">double</span> salary) {
+        <span class="kw">this</span>.id = id; <span class="kw">this</span>.name = name; <span class="kw">this</span>.salary = salary;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public int</span> <span class="fn">compareTo</span>(<span class="cl">Employee</span> other) {
+        <span class="cm">// Natural order = by id</span>
+        <span class="cm">// Return: negative if this < other, 0 if equal, positive if this > other</span>
+        <span class="kw">return</span> <span class="cl">Integer</span>.<span class="fn">compare</span>(<span class="kw">this</span>.id, other.id);
+        <span class="cm">// DON'T use: return this.id - other.id  ← can overflow!</span>
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">toString</span>() { <span class="kw">return</span> name + <span class="str">"("</span> + id + <span class="str">")"</span>; }
+}
+
+<span class="cl">List</span>&lt;<span class="cl">Employee</span>&gt; emps = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;();
+emps.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">Employee</span>(<span class="num">3</span>, <span class="str">"Charlie"</span>, <span class="num">70000</span>));
+emps.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">Employee</span>(<span class="num">1</span>, <span class="str">"Alice"</span>, <span class="num">90000</span>));
+emps.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">Employee</span>(<span class="num">2</span>, <span class="str">"Bob"</span>, <span class="num">80000</span>));
+
+<span class="cl">Collections</span>.<span class="fn">sort</span>(emps);
+<span class="cl">System</span>.out.println(emps); <span class="cm">// [Alice(1), Bob(2), Charlie(3)] — by id</span></pre>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>💻 Comparator — Custom &amp; Multiple Ordering</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Comparator — Lambda +
+                Chaining</span></div>
+            <pre>
+<span class="cl">List</span>&lt;<span class="cl">Employee</span>&gt; emps = <span class="cm">/* ... same list ... */</span>;
+
+<span class="cm">// Way 1: Anonymous class</span>
+<span class="cl">Comparator</span>&lt;<span class="cl">Employee</span>&gt; bySalary = <span class="kw">new</span> <span class="cl">Comparator</span>&lt;<span class="cl">Employee</span>&gt;() {
+    <span class="kw">public int</span> <span class="fn">compare</span>(<span class="cl">Employee</span> a, <span class="cl">Employee</span> b) {
+        <span class="kw">return</span> <span class="cl">Double</span>.<span class="fn">compare</span>(a.<span class="fn">getSalary</span>(), b.<span class="fn">getSalary</span>());
+    }
+};
+
+<span class="cm">// Way 2: Lambda (preferred)</span>
+<span class="cl">Comparator</span>&lt;<span class="cl">Employee</span>&gt; bySalaryLambda =
+    (a, b) -> <span class="cl">Double</span>.<span class="fn">compare</span>(a.<span class="fn">getSalary</span>(), b.<span class="fn">getSalary</span>());
+
+<span class="cm">// Way 3: Method reference (cleanest)</span>
+<span class="cl">Comparator</span>&lt;<span class="cl">Employee</span>&gt; bySalaryRef =
+    <span class="cl">Comparator</span>.<span class="fn">comparingDouble</span>(<span class="cl">Employee</span>::getSalary);
+
+<span class="cm">// Sort by salary descending</span>
+emps.<span class="fn">sort</span>(<span class="cl">Comparator</span>.<span class="fn">comparingDouble</span>(<span class="cl">Employee</span>::getSalary).<span class="fn">reversed</span>());
+
+<span class="cm">// CHAINING — sort by salary desc, then by name asc</span>
+emps.<span class="fn">sort</span>(
+    <span class="cl">Comparator</span>.<span class="fn">comparingDouble</span>(<span class="cl">Employee</span>::getSalary)
+              .<span class="fn">reversed</span>()
+              .<span class="fn">thenComparing</span>(<span class="cl">Employee</span>::getName)
+);
+
+<span class="cm">// Null-safe comparator</span>
+<span class="cl">Comparator</span>&lt;<span class="cl">Employee</span>&gt; nullSafe =
+    <span class="cl">Comparator</span>.<span class="fn">nullsFirst</span>(<span class="cl">Comparator</span>.<span class="fn">comparing</span>(<span class="cl">Employee</span>::getName));
+
+<span class="cm">// Sort string array by length, then alphabetically</span>
+<span class="cl">String</span>[] words = {<span class="str">"banana"</span>, <span class="str">"fig"</span>, <span class="str">"apple"</span>, <span class="str">"kiwi"</span>};
+<span class="cl">Arrays</span>.<span class="fn">sort</span>(words,
+    <span class="cl">Comparator</span>.<span class="fn">comparingInt</span>(<span class="cl">String</span>::length)
+              .<span class="fn">thenComparing</span>(<span class="cl">Comparator</span>.<span class="fn">naturalOrder</span>())
+);
+<span class="cm">// Output: [fig, kiwi, apple, banana]</span></pre>
+          </div>
+        </div>
+
+        <div class="iq-title">🎯 Interview Questions — Comparable vs Comparator</div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q1</span>What does compareTo() return and what do the values mean?
+          </div>
+          <div class="iq-a"><strong>Negative:</strong> this &lt; other. <strong>Zero:</strong> equal.
+            <strong>Positive:</strong> this &gt; other. Tip: Never use subtraction (this.id - other.id) — it can
+            overflow for large numbers. Use <code>Integer.compare(a, b)</code> instead.
+          </div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q2</span>Can you add an object without Comparable to a TreeSet?</div>
+          <div class="iq-a">No, adding to TreeSet requires comparison. If the object doesn't implement Comparable AND no
+            Comparator is passed to TreeSet constructor, it throws <code>ClassCastException</code> at runtime on the
+            second add() call.</div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q3</span>Which sorting algorithm does Collections.sort() use?</div>
+          <div class="iq-a">Java uses <strong>TimSort</strong> (hybrid of merge sort + insertion sort). Time complexity:
+            O(n log n) worst/average, O(n) best case. It is stable (maintains relative order of equal elements).
+            Arrays.sort for primitives uses Dual-Pivot Quicksort.</div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 7 — CME
+  ══════════════════════════════════ -->
+      <section id="cme" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-red">🚨</div>
+          <div class="section-meta">
+            <div class="section-label">Section 7</div>
+            <div class="section-title">ConcurrentModificationException</div>
+            <div class="section-sub">Why it happens, how to fix it — 4 ways</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>❓ What is ConcurrentModificationException?</h3>
+          <p>
+            Thrown when a collection is <strong>structurally modified</strong> (add/remove) while
+            being iterated using a fail-fast iterator. The iterator has a
+            <code>modCount</code> field — if it changes during iteration, CME is thrown immediately.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <h3>🔥 Reproducing the Problem</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">CME — The
+                Problem</span></div>
+            <pre>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; list = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">Arrays</span>.<span class="fn">asList</span>(<span class="str">"A"</span>,<span class="str">"B"</span>,<span class="str">"C"</span>,<span class="str">"D"</span>));
+
+<span class="cm">// ❌ WAY 1 — WRONG: using for-each while removing</span>
+<span class="kw">for</span> (<span class="cl">String</span> s : list) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="str">"B"</span>)) {
+        list.<span class="fn">remove</span>(s); <span class="cm">// ← ConcurrentModificationException!</span>
+    }
+}
+
+<span class="cm">// ❌ WAY 2 — WRONG: modifying while using Iterator manually</span>
+<span class="cl">Iterator</span>&lt;<span class="cl">String</span>&gt; it = list.<span class="fn">iterator</span>();
+<span class="kw">while</span> (it.<span class="fn">hasNext</span>()) {
+    <span class="cl">String</span> s = it.<span class="fn">next</span>();
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="str">"B"</span>)) {
+        list.<span class="fn">remove</span>(s); <span class="cm">// ← CME — must use it.remove() instead</span>
+    }
+}</pre>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>✅ 4 Ways to Fix ConcurrentModificationException</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Fix CME — 4 Correct
+                Approaches</span></div>
+            <pre>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; list = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">Arrays</span>.<span class="fn">asList</span>(<span class="str">"A"</span>,<span class="str">"B"</span>,<span class="str">"C"</span>,<span class="str">"D"</span>));
+
+<span class="cm">// ✅ FIX 1: Use Iterator.remove()</span>
+<span class="cl">Iterator</span>&lt;<span class="cl">String</span>&gt; it = list.<span class="fn">iterator</span>();
+<span class="kw">while</span> (it.<span class="fn">hasNext</span>()) {
+    <span class="kw">if</span> (it.<span class="fn">next</span>().<span class="fn">equals</span>(<span class="str">"B"</span>)) {
+        it.<span class="fn">remove</span>(); <span class="cm">// ✅ Safe — updates modCount in iterator</span>
+    }
+}
+
+<span class="cm">// ✅ FIX 2: Use removeIf() (Java 8+ — cleanest)</span>
+list.<span class="fn">removeIf</span>(s -> s.<span class="fn">equals</span>(<span class="str">"B"</span>));
+
+<span class="cm">// ✅ FIX 3: Use CopyOnWriteArrayList (thread-safe, for multi-threading)</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; cowList = <span class="kw">new</span> <span class="cl">CopyOnWriteArrayList</span>&lt;&gt;(list);
+<span class="kw">for</span> (<span class="cl">String</span> s : cowList) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="str">"B"</span>)) cowList.<span class="fn">remove</span>(s); <span class="cm">// ✅ creates new copy on write</span>
+}
+
+<span class="cm">// ✅ FIX 4: Collect to remove list, then removeAll</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; toRemove = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="cl">String</span> s : list) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="str">"B"</span>)) toRemove.<span class="fn">add</span>(s);
+}
+list.<span class="fn">removeAll</span>(toRemove);</pre>
+          </div>
+
+          <div class="info-box note">
+            <div class="ib-icon">💡</div>
+            <div>
+              <strong>CME in Map:</strong> Same issue applies when modifying a map while iterating
+              via <code>entrySet()</code>. Fix: use <code>iterator.remove()</code> or collect keys
+              to remove list and use <code>map.keySet().removeAll(keysToRemove)</code>.
+            </div>
+          </div>
+        </div>
+
+        <div class="iq-title">🎯 Interview Questions — CME</div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q1</span>What is fail-fast vs fail-safe iterator?</div>
+          <div class="iq-a">
+            <strong>Fail-fast</strong>: Throws CME immediately if collection is structurally modified during iteration
+            (ArrayList, HashMap iterators). Uses modCount check.<br>
+            <strong>Fail-safe</strong>: Works on a copy of collection — no CME (CopyOnWriteArrayList,
+            ConcurrentHashMap). But might not reflect latest changes during iteration.
+          </div>
+        </div>
+        <div class="iq-card">
+          <div class="iq-q"><span class="iq-q-num">Q2</span>Does CME occur in multi-threaded or single-threaded code?
+          </div>
+          <div class="iq-a">Both! CME is most commonly seen in single-threaded code when you modify a list inside a
+            for-each loop. It's not just a concurrency issue — it's triggered whenever modCount doesn't match
+            expectedModCount, which can happen in the same thread.</div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 8 — CUSTOM LINKEDHASHMAP
+  ══════════════════════════════════ -->
+      <section id="custom-lhm" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-cyan">🛠️</div>
+          <div class="section-meta">
+            <div class="section-label">Section 8</div>
+            <div class="section-title">Custom LinkedHashMap &amp; Extra Methods</div>
+            <div class="section-sub">Override removeEldestEntry — LRU, TTL-based eviction</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>🏗️ Custom LinkedHashMap — Bounded + Extra Features</h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Custom Bounded
+                LinkedHashMap with stats</span></div>
+            <pre>
+<span class="kw">import</span> java.util.*;
+
+<span class="kw">public class</span> <span class="cl">BoundedLinkedHashMap</span>&lt;K, V&gt; <span class="kw">extends</span> <span class="cl">LinkedHashMap</span>&lt;K, V&gt; {
+
+    <span class="kw">private final int</span> maxSize;
+    <span class="kw">private int</span> evictionCount = <span class="num">0</span>;
+    <span class="kw">private int</span> hitCount = <span class="num">0</span>;
+    <span class="kw">private int</span> missCount = <span class="num">0</span>;
+
+    <span class="kw">public</span> <span class="cl">BoundedLinkedHashMap</span>(<span class="kw">int</span> maxSize, <span class="kw">boolean</span> accessOrder) {
+        <span class="kw">super</span>(maxSize, <span class="num">0.75f</span>, accessOrder);
+        <span class="kw">this</span>.maxSize = maxSize;
+    }
+
+    <span class="cm">// Called after every put/putAll — remove eldest if over capacity</span>
+    <span class="an">@Override</span>
+    <span class="kw">protected boolean</span> <span class="fn">removeEldestEntry</span>(<span class="cl">Map</span>.<span class="cl">Entry</span>&lt;K, V&gt; eldest) {
+        <span class="kw">boolean</span> shouldRemove = size() > maxSize;
+        <span class="kw">if</span> (shouldRemove) {
+            evictionCount++;
+            <span class="cl">System</span>.out.println(<span class="str">"Evicting: "</span> + eldest.getKey());
+        }
+        <span class="kw">return</span> shouldRemove;
+    }
+
+    <span class="cm">// Override get to track hits/misses</span>
+    <span class="an">@Override</span>
+    <span class="kw">public</span> V <span class="fn">get</span>(<span class="cl">Object</span> key) {
+        V val = <span class="kw">super</span>.<span class="fn">get</span>(key);
+        <span class="kw">if</span> (val != <span class="kw">null</span>) hitCount++;
+        <span class="kw">else</span> missCount++;
+        <span class="kw">return</span> val;
+    }
+
+    <span class="cm">// Extra methods</span>
+    <span class="kw">public int</span>    <span class="fn">getEvictionCount</span>() { <span class="kw">return</span> evictionCount; }
+    <span class="kw">public double</span> <span class="fn">getHitRatio</span>()     {
+        <span class="kw">int</span> total = hitCount + missCount;
+        <span class="kw">return</span> total == <span class="num">0</span> ? <span class="num">0</span> : (double) hitCount / total;
+    }
+
+    <span class="cm">// Peek without updating access order</span>
+    <span class="kw">public</span> V <span class="fn">peek</span>(K key) {
+        <span class="kw">return</span> <span class="kw">super</span>.<span class="fn">getOrDefault</span>(key, <span class="kw">null</span>);
+    }
+
+    <span class="kw">public</span> <span class="cl">Map</span>.Entry&lt;K,V&gt; <span class="fn">getEldestEntry</span>() {
+        <span class="kw">if</span> (isEmpty()) <span class="kw">return null</span>;
+        <span class="kw">return</span> entrySet().<span class="fn">iterator</span>().<span class="fn">next</span>(); <span class="cm">// first = eldest (insertion order)</span>
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="cl">BoundedLinkedHashMap</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; cache =
+    <span class="kw">new</span> <span class="cl">BoundedLinkedHashMap</span>&lt;&gt;(<span class="num">3</span>, <span class="kw">true</span>); <span class="cm">// LRU mode</span>
+
+cache.<span class="fn">put</span>(<span class="str">"a"</span>, <span class="num">1</span>); cache.<span class="fn">put</span>(<span class="str">"b"</span>, <span class="num">2</span>); cache.<span class="fn">put</span>(<span class="str">"c"</span>, <span class="num">3</span>);
+cache.<span class="fn">get</span>(<span class="str">"a"</span>); <span class="cm">// access "a" → moves to end</span>
+cache.<span class="fn">put</span>(<span class="str">"d"</span>, <span class="num">4</span>); <span class="cm">// "b" evicted (LRU)</span>
+<span class="cl">System</span>.out.println(cache.keySet());       <span class="cm">// [c, a, d]</span>
+<span class="cl">System</span>.out.println(cache.<span class="fn">getEvictionCount</span>()); <span class="cm">// 1</span></pre>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 9 — COMPLEXITY TABLE
+  ══════════════════════════════════ -->
+      <section id="complexity" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-yellow">⏱️</div>
+          <div class="section-meta">
+            <div class="section-label">Section 9</div>
+            <div class="section-title">Time Complexity — Master Table</div>
+            <div class="section-sub">Every collection, every operation — at a glance</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>📊 Time Complexity Reference</h3>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Collection</th>
+                <th>add</th>
+                <th>get/search</th>
+                <th>remove</th>
+                <th>contains</th>
+                <th>Iteration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ArrayList</td>
+                <td>O(1)* / O(n)</td>
+                <td>O(1)</td>
+                <td>O(n)</td>
+                <td>O(n)</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>LinkedList</td>
+                <td>O(1) head/tail</td>
+                <td>O(n)</td>
+                <td>O(1) head/tail, O(n) mid</td>
+                <td>O(n)</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>HashMap</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg / O(n) worst</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>LinkedHashMap</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>TreeMap</td>
+                <td>O(log n)</td>
+                <td>O(log n)</td>
+                <td>O(log n)</td>
+                <td>O(log n)</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>HashSet</td>
+                <td>O(1) avg</td>
+                <td>—</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>TreeSet</td>
+                <td>O(log n)</td>
+                <td>—</td>
+                <td>O(log n)</td>
+                <td>O(log n)</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>PriorityQueue</td>
+                <td>O(log n)</td>
+                <td>O(1) peek</td>
+                <td>O(log n) poll</td>
+                <td>O(n)</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>ArrayDeque</td>
+                <td>O(1) amortized</td>
+                <td>O(1) head/tail</td>
+                <td>O(1) head/tail</td>
+                <td>O(n)</td>
+                <td>O(n)</td>
+              </tr>
+              <tr>
+                <td>ConcurrentHashMap</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(1) avg</td>
+                <td>O(n)</td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="font-size:12px;color:var(--muted)">* O(1) amortized — O(n) during resize. Worst case for HashMap is
+            O(n) due to hash collisions, O(log n) with Java 8 treeification.</p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 10 — CODING QUESTIONS
+  ══════════════════════════════════ -->
+      <section id="coding" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-pink">💻</div>
+          <div class="section-meta">
+            <div class="section-label">Section 10</div>
+            <div class="section-title">Coding Questions</div>
+            <div class="section-sub">Real coding problems asked in interviews</div>
+          </div>
+        </div>
+
+        <!-- Q1: Sort Map by Values -->
+        <div class="quiz-card">
+          <div class="quiz-q"><span class="quiz-badge">C1</span>Sort a Map by its Values (ascending &amp; descending)
+          </div>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Sort Map by
+                Value</span></div>
+            <pre>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; scores = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+scores.<span class="fn">put</span>(<span class="str">"Alice"</span>, <span class="num">85</span>);
+scores.<span class="fn">put</span>(<span class="str">"Bob"</span>, <span class="num">92</span>);
+scores.<span class="fn">put</span>(<span class="str">"Charlie"</span>, <span class="num">78</span>);
+scores.<span class="fn">put</span>(<span class="str">"Dave"</span>, <span class="num">92</span>); <span class="cm">// tie with Bob</span>
+
+<span class="cm">// Sort by value ascending (ties broken by key)</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; sortedAsc = scores.<span class="fn">entrySet</span>()
+    .stream()
+    .sorted(<span class="cl">Map</span>.<span class="cl">Entry</span>.&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt;<span class="fn">comparingByValue</span>()
+        .<span class="fn">thenComparing</span>(<span class="cl">Map</span>.<span class="cl">Entry</span>.<span class="fn">comparingByKey</span>()))
+    .collect(<span class="cl">LinkedHashMap</span>::<span class="kw">new</span>,
+             (m, e) -> m.<span class="fn">put</span>(e.<span class="fn">getKey</span>(), e.<span class="fn">getValue</span>()),
+             <span class="cl">Map</span>::putAll);
+
+<span class="cm">// Sort by value descending</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; sortedDesc = scores.<span class="fn">entrySet</span>()
+    .stream()
+    .sorted(<span class="cl">Map</span>.<span class="cl">Entry</span>.&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt;<span class="fn">comparingByValue</span>(<span class="cl">Comparator</span>.<span class="fn">reverseOrder</span>()))
+    .collect(java.util.stream.<span class="cl">Collectors</span>.<span class="fn">toMap</span>(
+        <span class="cl">Map</span>.<span class="cl">Entry</span>::getKey, <span class="cl">Map</span>.<span class="cl">Entry</span>::getValue,
+        (e1, e2) -> e1, <span class="cl">LinkedHashMap</span>::<span class="kw">new</span>
+    ));
+
+sortedDesc.<span class="fn">forEach</span>((k,v) -> <span class="cl">System</span>.out.println(k + <span class="str">" = "</span> + v));</pre>
+          </div>
+          <div class="output-box">
+            <div class="output-label">Output (sortedDesc)</div>
+            <div class="output-line">Bob = 92</div>
+            <div class="output-line">Dave = 92</div>
+            <div class="output-line">Alice = 85</div>
+            <div class="output-line">Charlie = 78</div>
+          </div>
+        </div>
+
+        <!-- Q2: Word Frequency -->
+        <div class="quiz-card">
+          <div class="quiz-q"><span class="quiz-badge">C2</span>Count word frequency in a sentence using Map</div>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Word Frequency
+                Count</span></div>
+            <pre>
+<span class="cl">String</span> sentence = <span class="str">"the cat sat on the mat the cat"</span>;
+
+<span class="cm">// Method 1: Using getOrDefault</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; freq = <span class="kw">new</span> <span class="cl">LinkedHashMap</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="cl">String</span> word : sentence.<span class="fn">split</span>(<span class="str">" "</span>)) {
+    freq.<span class="fn">put</span>(word, freq.<span class="fn">getOrDefault</span>(word, <span class="num">0</span>) + <span class="num">1</span>);
+}
+
+<span class="cm">// Method 2: Using merge (cleaner)</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; freq2 = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="cl">String</span> word : sentence.<span class="fn">split</span>(<span class="str">" "</span>)) {
+    freq2.<span class="fn">merge</span>(word, <span class="num">1</span>, <span class="cl">Integer</span>::sum);
+}
+
+<span class="cm">// Method 3: Stream + Collectors.groupingBy + counting</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Long</span>&gt; freq3 = <span class="cl">Arrays</span>.<span class="fn">stream</span>(sentence.<span class="fn">split</span>(<span class="str">" "</span>))
+    .collect(java.util.stream.<span class="cl">Collectors</span>.<span class="fn">groupingBy</span>(
+        w -> w, java.util.stream.<span class="cl">Collectors</span>.<span class="fn">counting</span>()
+    ));
+
+<span class="cm">// Find most frequent word</span>
+<span class="cl">String</span> mostFrequent = freq.<span class="fn">entrySet</span>().stream()
+    .max(<span class="cl">Map</span>.<span class="cl">Entry</span>.<span class="fn">comparingByValue</span>())
+    .map(<span class="cl">Map</span>.<span class="cl">Entry</span>::getKey)
+    .orElse(<span class="str">"none"</span>);
+<span class="cl">System</span>.out.println(<span class="str">"Most frequent: "</span> + mostFrequent); <span class="cm">// the (3 times)</span></pre>
+          </div>
+        </div>
+
+        <!-- Q3: Remove Duplicates -->
+        <div class="quiz-card">
+          <div class="quiz-q"><span class="quiz-badge">C3</span>Remove duplicates from a List preserving order</div>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Remove Duplicates —
+                Multiple Approaches</span></div>
+            <pre>
+<span class="cl">List</span>&lt;<span class="cl">Integer</span>&gt; nums = <span class="cl">Arrays</span>.<span class="fn">asList</span>(<span class="num">3</span>, <span class="num">1</span>, <span class="num">4</span>, <span class="num">1</span>, <span class="num">5</span>, <span class="num">9</span>, <span class="num">2</span>, <span class="num">6</span>, <span class="num">5</span>, <span class="num">3</span>);
+
+<span class="cm">// Method 1: LinkedHashSet (preserves insertion order)</span>
+<span class="cl">List</span>&lt;<span class="cl">Integer</span>&gt; noDups1 = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="kw">new</span> <span class="cl">LinkedHashSet</span>&lt;&gt;(nums));
+<span class="cm">// [3, 1, 4, 5, 9, 2, 6]</span>
+
+<span class="cm">// Method 2: Stream distinct()</span>
+<span class="cl">List</span>&lt;<span class="cl">Integer</span>&gt; noDups2 = nums.stream()
+    .distinct()
+    .collect(java.util.stream.<span class="cl">Collectors</span>.<span class="fn">toList</span>());
+
+<span class="cm">// Method 3: HashSet track (manual)</span>
+<span class="cl">Set</span>&lt;<span class="cl">Integer</span>&gt; seen = <span class="kw">new</span> <span class="cl">HashSet</span>&lt;&gt;();
+<span class="cl">List</span>&lt;<span class="cl">Integer</span>&gt; noDups3 = nums.stream()
+    .filter(seen::<span class="fn">add</span>)  <span class="cm">// add returns true if element was new</span>
+    .collect(java.util.stream.<span class="cl">Collectors</span>.<span class="fn">toList</span>());</pre>
+          </div>
+        </div>
+
+        <!-- Q4: Group employees by department -->
+        <div class="quiz-card">
+          <div class="quiz-q"><span class="quiz-badge">C4</span>Group Employees by Department using Collections</div>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Group by Department —
+                Map approach</span></div>
+            <pre>
+<span class="kw">record</span> <span class="cl">Employee</span>(<span class="cl">String</span> name, <span class="cl">String</span> dept, <span class="kw">double</span> salary) {}
+
+<span class="cl">List</span>&lt;<span class="cl">Employee</span>&gt; employees = <span class="cl">List</span>.<span class="fn">of</span>(
+    <span class="kw">new</span> <span class="cl">Employee</span>(<span class="str">"Alice"</span>,   <span class="str">"IT"</span>,   <span class="num">90000</span>),
+    <span class="kw">new</span> <span class="cl">Employee</span>(<span class="str">"Bob"</span>,     <span class="str">"HR"</span>,   <span class="num">70000</span>),
+    <span class="kw">new</span> <span class="cl">Employee</span>(<span class="str">"Charlie"</span>, <span class="str">"IT"</span>,   <span class="num">85000</span>),
+    <span class="kw">new</span> <span class="cl">Employee</span>(<span class="str">"Dave"</span>,    <span class="str">"HR"</span>,   <span class="num">75000</span>),
+    <span class="kw">new</span> <span class="cl">Employee</span>(<span class="str">"Eve"</span>,     <span class="str">"Finance"</span>, <span class="num">95000</span>)
+);
+
+<span class="cm">// Group by department — manual approach</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">List</span>&lt;<span class="cl">Employee</span>&gt;&gt; byDept = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="cl">Employee</span> e : employees) {
+    byDept.<span class="fn">computeIfAbsent</span>(e.dept(), k -> <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;()).<span class="fn">add</span>(e);
+}
+
+<span class="cm">// Max salary per department</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Optional</span>&lt;<span class="cl">Employee</span>&gt;&gt; maxSalaryByDept = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+byDept.<span class="fn">forEach</span>((dept, list) ->
+    maxSalaryByDept.<span class="fn">put</span>(dept, list.stream()
+        .max(<span class="cl">Comparator</span>.<span class="fn">comparingDouble</span>(<span class="cl">Employee</span>::salary)))
+);
+
+maxSalaryByDept.<span class="fn">forEach</span>((dept, emp) ->
+    <span class="cl">System</span>.out.println(dept + <span class="str">": "</span> + emp.map(<span class="cl">Employee</span>::name).orElse(<span class="str">"N/A"</span>))
+);</pre>
+          </div>
+          <div class="output-box">
+            <div class="output-label">Output</div>
+            <div class="output-line">IT: Alice</div>
+            <div class="output-line">HR: Dave</div>
+            <div class="output-line">Finance: Eve</div>
+          </div>
+        </div>
+
+        <!-- Q5: Custom LinkedList -->
+        <div class="quiz-card">
+          <div class="quiz-q"><span class="quiz-badge">C5</span>Implement a Custom LinkedList from scratch</div>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Custom Singly
+                LinkedList</span></div>
+            <pre>
+<span class="kw">public class</span> <span class="cl">MyLinkedList</span>&lt;T&gt; {
+
+    <span class="cm">// Node inner class</span>
+    <span class="kw">private static class</span> <span class="cl">Node</span>&lt;T&gt; {
+        T data;
+        <span class="cl">Node</span>&lt;T&gt; next;
+        <span class="cl">Node</span>(T data) { <span class="kw">this</span>.data = data; <span class="kw">this</span>.next = <span class="kw">null</span>; }
+    }
+
+    <span class="kw">private</span> <span class="cl">Node</span>&lt;T&gt; head;
+    <span class="kw">private int</span> size;
+
+    <span class="cm">// Add at end — O(n)</span>
+    <span class="kw">public void</span> <span class="fn">add</span>(T data) {
+        <span class="cl">Node</span>&lt;T&gt; newNode = <span class="kw">new</span> <span class="cl">Node</span>&lt;&gt;(data);
+        <span class="kw">if</span> (head == <span class="kw">null</span>) { head = newNode; }
+        <span class="kw">else</span> {
+            <span class="cl">Node</span>&lt;T&gt; curr = head;
+            <span class="kw">while</span> (curr.next != <span class="kw">null</span>) curr = curr.next;
+            curr.next = newNode;
+        }
+        size++;
+    }
+
+    <span class="cm">// Add at head — O(1)</span>
+    <span class="kw">public void</span> <span class="fn">addFirst</span>(T data) {
+        <span class="cl">Node</span>&lt;T&gt; newNode = <span class="kw">new</span> <span class="cl">Node</span>&lt;&gt;(data);
+        newNode.next = head; head = newNode; size++;
+    }
+
+    <span class="cm">// Get by index — O(n)</span>
+    <span class="kw">public</span> T <span class="fn">get</span>(<span class="kw">int</span> index) {
+        <span class="kw">if</span> (index &lt; <span class="num">0</span> || index >= size)
+            <span class="kw">throw new</span> <span class="cl">IndexOutOfBoundsException</span>(<span class="str">"Index: "</span> + index);
+        <span class="cl">Node</span>&lt;T&gt; curr = head;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; index; i++) curr = curr.next;
+        <span class="kw">return</span> curr.data;
+    }
+
+    <span class="cm">// Remove by value — O(n)</span>
+    <span class="kw">public boolean</span> <span class="fn">remove</span>(T data) {
+        <span class="kw">if</span> (head == <span class="kw">null</span>) <span class="kw">return false</span>;
+        <span class="kw">if</span> (head.data.<span class="fn">equals</span>(data)) { head = head.next; size--; <span class="kw">return true</span>; }
+        <span class="cl">Node</span>&lt;T&gt; curr = head;
+        <span class="kw">while</span> (curr.next != <span class="kw">null</span>) {
+            <span class="kw">if</span> (curr.next.data.<span class="fn">equals</span>(data)) {
+                curr.next = curr.next.next; size--; <span class="kw">return true</span>;
+            }
+            curr = curr.next;
+        }
+        <span class="kw">return false</span>;
+    }
+
+    <span class="cm">// Reverse in place — O(n)</span>
+    <span class="kw">public void</span> <span class="fn">reverse</span>() {
+        <span class="cl">Node</span>&lt;T&gt; prev = <span class="kw">null</span>, curr = head, next;
+        <span class="kw">while</span> (curr != <span class="kw">null</span>) {
+            next = curr.next;
+            curr.next = prev;
+            prev = curr;
+            curr = next;
+        }
+        head = prev;
+    }
+
+    <span class="cm">// Detect cycle — Floyd's algorithm O(n) O(1) space</span>
+    <span class="kw">public boolean</span> <span class="fn">hasCycle</span>() {
+        <span class="cl">Node</span>&lt;T&gt; slow = head, fast = head;
+        <span class="kw">while</span> (fast != <span class="kw">null</span> && fast.next != <span class="kw">null</span>) {
+            slow = slow.next;
+            fast = fast.next.next;
+            <span class="kw">if</span> (slow == fast) <span class="kw">return true</span>;
+        }
+        <span class="kw">return false</span>;
+    }
+
+    <span class="kw">public int</span> <span class="fn">size</span>() { <span class="kw">return</span> size; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">toString</span>() {
+        <span class="cl">StringBuilder</span> sb = <span class="kw">new</span> <span class="cl">StringBuilder</span>(<span class="str">"["</span>);
+        <span class="cl">Node</span>&lt;T&gt; curr = head;
+        <span class="kw">while</span> (curr != <span class="kw">null</span>) {
+            sb.<span class="fn">append</span>(curr.data);
+            <span class="kw">if</span> (curr.next != <span class="kw">null</span>) sb.<span class="fn">append</span>(<span class="str">" → "</span>);
+            curr = curr.next;
+        }
+        <span class="kw">return</span> sb.<span class="fn">append</span>(<span class="str">"]"</span>).<span class="fn">toString</span>();
+    }
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ══════════════════════════════════
+       SECTION 11 — INTERVIEW Q&A
+  ══════════════════════════════════ -->
+      <section id="interview" class="section">
+        <div class="section-header">
+          <div class="section-icon ic-yellow">🎯</div>
+          <div class="section-meta">
+            <div class="section-label">Section 11</div>
+            <div class="section-title">Master Interview Q&amp;A</div>
+            <div class="section-sub">All collections questions asked in real interviews</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h3>📦 General Collections Q&amp;A</h3>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between Collection and Collections?
+            </div>
+            <div class="iq-a"><strong>Collection</strong>: An interface (root of the collection hierarchy — List, Set,
+              Queue extend it). <strong>Collections</strong>: A utility class in java.util with static helper methods
+              like <code>sort()</code>, <code>shuffle()</code>, <code>min()</code>, <code>max()</code>,
+              <code>unmodifiableList()</code>, <code>synchronizedList()</code>.
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q2</span>What is the difference between List.of() and
+              Arrays.asList()?</div>
+            <div class="iq-a">
+              <strong>Arrays.asList()</strong>: Fixed-size list (can't add/remove, will throw
+              UnsupportedOperationException), but CAN modify elements (set). Backed by original array.<br>
+              <strong>List.of() (Java 9+)</strong>: Truly immutable — cannot add, remove, OR set. Doesn't allow null
+              elements. More memory-efficient.
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q3</span>How do you make a Collection thread-safe?</div>
+            <div class="iq-a">
+              1. <code>Collections.synchronizedList(new ArrayList&lt;&gt;())</code> — wraps with synchronized
+              methods<br>
+              2. <code>CopyOnWriteArrayList</code> — thread-safe via copy-on-write<br>
+              3. <code>Vector</code> — legacy synchronized list<br>
+              4. <code>ConcurrentHashMap</code> — preferred thread-safe map<br>
+              5. External sync: <code>synchronized(list) { ... }</code>
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q4</span>What happens if you store null in a TreeSet or TreeMap?
+            </div>
+            <div class="iq-a">
+              <strong>TreeSet/TreeMap</strong>: Throws <code>NullPointerException</code> because null cannot be compared
+              using <code>compareTo()</code> (natural ordering). Exception: if a custom Comparator handles null
+              explicitly, it may work. HashSet/HashMap allow one null key.
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q5</span>What is the initial capacity and load factor of HashMap?
+              Why 0.75?</div>
+            <div class="iq-a">
+              Default capacity = 16, load factor = 0.75 (rehash when 75% full = 12 entries).<br>
+              <strong>Why 0.75?</strong> It's a compromise: low load factor = less collision but more memory waste +
+              frequent rehashing. High load factor = more memory efficient but more collisions, slower. 0.75 provides
+              good balance statistically based on Poisson distribution of hash collisions.
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q6</span>How does HashSet ensure uniqueness?</div>
+            <div class="iq-a">HashSet internally uses HashMap. When you <code>add(e)</code>, it calls
+              <code>map.put(e, PRESENT)</code>. HashMap uses <code>hashCode()</code> to find bucket, then
+              <code>equals()</code> to check for duplicates in that bucket. If existing key found → put returns old
+              value (not null) → add returns false.
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q7</span>What is CopyOnWriteArrayList? When to use it?</div>
+            <div class="iq-a">Thread-safe variant of ArrayList. Every <strong>write operation</strong> (add, remove,
+              set) creates a <strong>new copy</strong> of the underlying array. Read operations (get, iterate) work on
+              the old array — no synchronization needed for reads. Use when: read-heavy workload, iterations much more
+              frequent than writes. Don't use when: frequent writes (too many copies = slow + memory intensive).</div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q8</span>Difference between Iterator and ListIterator?</div>
+            <div class="iq-a">
+              <strong>Iterator</strong>: Forward only. Methods: <code>hasNext()</code>, <code>next()</code>,
+              <code>remove()</code>. Works with all Collections.<br>
+              <strong>ListIterator</strong>: Forward AND backward. Methods: + <code>hasPrevious()</code>,
+              <code>previous()</code>, <code>add()</code>, <code>set()</code>, <code>nextIndex()</code>,
+              <code>previousIndex()</code>. Only for List implementations.
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q9</span>What is the difference between peek, poll, and remove in
+              Queue?</div>
+            <div class="iq-a">
+              <strong>peek()</strong>: Returns head element without removing. Returns null if empty.<br>
+              <strong>poll()</strong>: Returns and removes head element. Returns null if empty.<br>
+              <strong>remove()</strong>: Returns and removes head element. Throws NoSuchElementException if empty.<br>
+              Rule: Prefer peek/poll over element/remove — they don't throw exceptions.
+            </div>
+          </div>
+
+          <div class="iq-card">
+            <div class="iq-q"><span class="iq-q-num">Q10</span>How is ConcurrentHashMap different from synchronized
+              HashMap?</div>
+            <div class="iq-a">
+              <strong>synchronizedMap</strong>: Entire map locked for every operation — one thread at a time. Low
+              concurrency.<br>
+              <strong>ConcurrentHashMap (Java 7)</strong>: Divided into 16 segments — locks only the relevant segment.
+              Multiple threads can write to different segments simultaneously.<br>
+              <strong>ConcurrentHashMap (Java 8)</strong>: Uses CAS (Compare-And-Swap) operations + synchronized on
+              individual bucket node. Even higher concurrency. Also no null keys/values allowed.
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Prediction Snippet -->
+        <div class="content-card">
+          <h3>🧠 Tricky Output Questions</h3>
+
+          <div class="quiz-card">
+            <div class="quiz-q"><span class="quiz-badge">S1</span>What is the output?</div>
+            <div class="code-wrap">
+              <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Set with custom
+                  object</span></div>
+              <pre>
+<span class="kw">class</span> <span class="cl">Point</span> {
+    <span class="kw">int</span> x, y;
+    <span class="cl">Point</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) { <span class="kw">this</span>.x=x; <span class="kw">this</span>.y=y; }
+    <span class="cm">// NO hashCode/equals override</span>
+}
+
+<span class="cl">Set</span>&lt;<span class="cl">Point</span>&gt; set = <span class="kw">new</span> <span class="cl">HashSet</span>&lt;&gt;();
+set.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">Point</span>(<span class="num">1</span>,<span class="num">2</span>));
+set.<span class="fn">add</span>(<span class="kw">new</span> <span class="cl">Point</span>(<span class="num">1</span>,<span class="num">2</span>));
+<span class="cl">System</span>.out.println(set.size()); <span class="cm">// ?</span></pre>
+            </div>
+            <div class="quiz-reveal">
+              <div class="quiz-reveal-label">✅ Answer</div>
+              <div class="quiz-ans">
+                <strong>Output: 2</strong><br>
+                Without overriding hashCode/equals, two <code>new Point(1,2)</code> objects have different
+                identity-based hashCodes → stored in different buckets → HashSet treats them as different objects.
+                Must override both hashCode and equals to get size = 1.
+              </div>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <div class="quiz-q"><span class="quiz-badge">S2</span>What is the output?</div>
+            <div class="code-wrap">
+              <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ArrayList subList
+                  trap</span></div>
+              <pre>
+<span class="cl">List</span>&lt;<span class="cl">Integer</span>&gt; list = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">Arrays</span>.<span class="fn">asList</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>));
+<span class="cl">List</span>&lt;<span class="cl">Integer</span>&gt; sub = list.<span class="fn">subList</span>(<span class="num">1</span>, <span class="num">4</span>); <span class="cm">// [2,3,4] — VIEW</span>
+sub.<span class="fn">clear</span>();
+<span class="cl">System</span>.out.println(list); <span class="cm">// ?</span></pre>
+            </div>
+            <div class="quiz-reveal">
+              <div class="quiz-reveal-label">✅ Answer</div>
+              <div class="quiz-ans">
+                <strong>Output: [1, 5]</strong><br>
+                <code>subList()</code> returns a VIEW backed by the original list. Modifying the subList
+                modifies the original list! <code>sub.clear()</code> removes elements at index 1-3 from the
+                original list, leaving [1, 5].
+              </div>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <div class="quiz-q"><span class="quiz-badge">S3</span>What is the output?</div>
+            <div class="code-wrap">
+              <div class="code-header"><span class="code-lang">Java</span><span class="code-label">TreeMap with Integer
+                  keys</span></div>
+              <pre>
+<span class="cl">Map</span>&lt;<span class="cl">Integer</span>, <span class="cl">String</span>&gt; map = <span class="kw">new</span> <span class="cl">TreeMap</span>&lt;&gt;();
+map.<span class="fn">put</span>(<span class="num">3</span>, <span class="str">"Three"</span>);
+map.<span class="fn">put</span>(<span class="num">1</span>, <span class="str">"One"</span>);
+map.<span class="fn">put</span>(<span class="num">2</span>, <span class="str">"Two"</span>);
+map.<span class="fn">put</span>(<span class="num">1</span>, <span class="str">"ONE"</span>); <span class="cm">// duplicate key</span>
+<span class="cl">System</span>.out.println(map); <span class="cm">// ?</span>
+<span class="cl">System</span>.out.println(map.size()); <span class="cm">// ?</span></pre>
+            </div>
+            <div class="quiz-reveal">
+              <div class="quiz-reveal-label">✅ Answer</div>
+              <div class="quiz-ans">
+                <strong>Output: {1=ONE, 2=Two, 3=Three} → 3</strong><br>
+                TreeMap maintains sorted key order. Duplicate key 1 → value replaced with "ONE".
+                Size = 3 (not 4) because key 1 appears once (replaced, not added again).
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- end container -->
+
+    <!-- ════ FOOTER ════ -->
+    <footer class="page-footer">
+      <p>
+        📘 <strong>Part 02 of 20</strong> — Java Interview Notes Series |
+        Next: <strong>Part 03 — String, StringBuilder &amp; StringBuffer</strong>
+      </p>
+      <p style="margin-top:8px; font-size:12px;">
+        Topics Covered: Collection Hierarchy • ArrayList • LinkedList • HashMap Internals •
+        HashSet/TreeSet/LinkedHashSet • All Map Types • Queue/Deque •
+        Comparable vs Comparator • CME + 4 Fixes • Custom LinkedHashMap •
+        Time Complexity Table • 5 Coding Questions • 13 Interview Q&amp;As • 3 Tricky Snippets
+      </p>
+    </footer>
+
+  </main><!-- /#main -->
+
+
+  <script>
+    // Sidebar toggle
+    function toggleSidebar() {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        document.body.classList.toggle('sidebar-open');
+      } else {
+        document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+      }
+    }
+
+    // Restore persisted state on desktop
+    (function () {
+      if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+        document.body.classList.add('sidebar-collapsed');
+      }
+    })();
+
+    // Scroll progress bar
+    window.addEventListener('scroll', function () {
+      const scrollTop = document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+      const fill = document.getElementById('progress');
+      if (fill) fill.style.width = pct + '%';
+    });
+
+    // Active nav link highlight (scroll-spy)
+    const sections = document.querySelectorAll('[id]');
+    const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+    window.addEventListener('scroll', function () {
+      let current = '';
+      sections.forEach(function (section) {
+        if (window.scrollY >= section.offsetTop - 140) current = section.id;
+      });
+      navLinks.forEach(function (link) {
+        link.style.color = '';
+        link.style.borderLeftColor = '';
+        if (link.getAttribute('href') === '#' + current) {
+          link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+          link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

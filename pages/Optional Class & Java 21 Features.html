@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Part 9 — Optional & Java 21 Features</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --card:      #1e2235;
+      --card2:     #252a3d;
+      --border:    #2e3350;
+      --accent1:   #00d4aa;
+      --accent2:   #6c63ff;
+      --accent3:   #ffd93d;
+      --accent4:   #ff6b6b;
+      --accent5:   #4ecdc4;
+      --accent6:   #f093fb;
+      --text:      #e8eaf6;
+      --muted:     #8b92b8;
+      --code-bg:   #12162b;
+      --green:     #00d4aa;
+      --yellow:    #ffd93d;
+      --red:       #ff6b6b;
+      --purple:    #a78bfa;
+      --blue:      #60a5fa;
+      --orange:    #fb923c;
+    }
+
+    
+    /* ══════════════════ HEADER ══════════════════ */
+    .main-header {
+      background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .main-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(0,212,170,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(108,99,255,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .part-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,212,170,0.1);
+      border: 1px solid rgba(0,212,170,0.3);
+      color: var(--accent1);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .main-header h1 {
+      font-size: clamp(26px, 5vw, 46px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffffff 20%, var(--accent1) 60%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    .header-desc {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 650px;
+      margin: 0 auto 24px;
+    }
+
+    .header-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .h-tag {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* ══════════════════ NAV / TOC ══════════════════ */
+    .toc-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .toc-bar::-webkit-scrollbar { display: none; }
+
+    
+    
+    .toc-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+
+    /* ══════════════════ LAYOUT ══════════════════ */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    /* ══════════════════ SECTION HEADERS ══════════════════ */
+    .section {
+      margin-bottom: 64px;
+      scroll-margin-top: 20px;
+    }
+
+    
+    
+    .si-green  { background: rgba(0,212,170,0.12); }
+    .si-purple { background: rgba(108,99,255,0.12); }
+    .si-yellow { background: rgba(255,217,61,0.12); }
+    .si-red    { background: rgba(255,107,107,0.12); }
+    .si-blue   { background: rgba(96,165,250,0.12); }
+    .si-orange { background: rgba(251,146,60,0.12); }
+    .si-pink   { background: rgba(240,147,251,0.12); }
+
+    .section-title-wrap h2 {
+      font-size: clamp(18px, 3vw, 24px);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .section-title-wrap p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ══════════════════ TOPIC NUMBER ══════════════════ */
+    .topic-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .tn-green  { background: rgba(0,212,170,0.15);  color: var(--green); }
+    .tn-purple { background: rgba(108,99,255,0.15); color: var(--purple); }
+    .tn-yellow { background: rgba(255,217,61,0.15); color: var(--yellow); }
+    .tn-blue   { background: rgba(96,165,250,0.15); color: var(--blue); }
+    .tn-red    { background: rgba(255,107,107,0.15); color: var(--red); }
+    .tn-orange { background: rgba(251,146,60,0.15); color: var(--orange); }
+
+    /* ══════════════════ CARDS ══════════════════ */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ══════════════════ CODE BLOCKS ══════════════════ */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 14px 0;
+      font-size: 13px;
+      line-height: 1.7;
+      position: relative;
+    }
+
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+
+    pre code { color: #abb2bf; }
+
+              /* keyword */
+    .cl  { color: #e5c07b; }                               /* comment */
+    .nm  { color: #d19a66; }                              
+    .code-label + pre {
+      border-radius: 0 0 10px 10px;
+      margin-top: 0;
+    }
+
+    .lang-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ══════════════════ GRIDS ══════════════════ */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 700px) {
+      .two-col, .three-col { grid-template-columns: 1fr; }
+    }
+
+    
+        .ib-green  { background: rgba(0,212,170,0.08);  border: 1px solid rgba(0,212,170,0.2);  color: #a7f3d0; }
+    .ib-yellow { background: rgba(255,217,61,0.08); border: 1px solid rgba(255,217,61,0.2); color: #fef08a; }
+    .ib-red    { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2); color: #fca5a5; }
+    .ib-purple { background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.2); color: #c4b5fd; }
+    .ib-blue   { background: rgba(96,165,250,0.08); border: 1px solid rgba(96,165,250,0.2); color: #bae6fd; }
+    .ib-orange { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.2); color: #fed7aa; }
+
+    /* ══════════════════ TABLE ══════════════════ */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 16px 0;
+    }
+
+    th {
+      background: var(--card2);
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(46,51,80,0.5);
+      color: var(--text);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    td code, th code {
+      background: var(--code-bg);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: var(--accent1);
+    }
+
+    /* ══════════════════ BADGES ══════════════════ */
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 2px;
+    }
+
+    .b-green  { background: rgba(0,212,170,0.1);  color: var(--green);  border: 1px solid rgba(0,212,170,0.3); }
+    .b-yellow { background: rgba(255,217,61,0.1); color: var(--yellow); border: 1px solid rgba(255,217,61,0.3); }
+    .b-red    { background: rgba(255,107,107,0.1); color: var(--red);   border: 1px solid rgba(255,107,107,0.3); }
+    .b-purple { background: rgba(108,99,255,0.1); color: var(--purple); border: 1px solid rgba(108,99,255,0.3); }
+    .b-blue   { background: rgba(96,165,250,0.1); color: var(--blue);   border: 1px solid rgba(96,165,250,0.3); }
+    .b-orange { background: rgba(251,146,60,0.1); color: var(--orange); border: 1px solid rgba(251,146,60,0.3); }
+
+    /* ══════════════════ INTERVIEW TIPS ══════════════════ */
+    .interview-tip {
+      background: linear-gradient(135deg, rgba(108,99,255,0.08), rgba(0,212,170,0.05));
+      border: 1px solid rgba(108,99,255,0.25);
+      border-left: 4px solid var(--accent2);
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .interview-tip strong {
+      color: var(--accent2);
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    
+    
+    /* ══════════════════ METHOD REFERENCE TABLE ══════════════════ */
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .method-item {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .method-name {
+      font-family: 'Cascadia Code', monospace;
+      font-size: 13px;
+      color: var(--accent1);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .method-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      .method-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ══════════════════ STEP DIAGRAM ══════════════════ */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 16px 0;
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 16px;
+      position: relative;
+    }
+
+    .step-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step-circle {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .step-line {
+      width: 2px;
+      flex: 1;
+      background: var(--border);
+      margin: 4px 0;
+      min-height: 16px;
+    }
+
+    .step-content {
+      padding: 0 0 24px 0;
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 4px;
+      margin-top: 6px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ══════════════════ COMPARISON ══════════════════ */
+    .compare-box {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+
+    .compare-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--card);
+    }
+
+    .compare-col-title {
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .compare-col-title:first-child {
+      border-right: 1px solid var(--border);
+      color: var(--red);
+    }
+
+    .compare-col-title:last-child {
+      color: var(--green);
+    }
+
+    .compare-
+    .compare-cell {
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    .compare-cell:nth-child(odd) {
+      border-right: 1px solid var(--border);
+    }
+
+    /* ══════════════════ HIGHLIGHT ══════════════════ */
+    .hl-green  { color: var(--green); font-weight: 600; }
+    .hl-yellow { color: var(--yellow); font-weight: 600; }
+    .hl-red    { color: var(--red); font-weight: 600; }
+    .hl-purple { color: var(--purple); font-weight: 600; }
+    .hl-blue   { color: var(--blue); font-weight: 600; }
+    .hl-orange { color: var(--orange); font-weight: 600; }
+
+    /* ══════════════════ LIST STYLES ══════════════════ */
+    .styled-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .styled-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .styled-list li .li-icon {
+      font-size: 14px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ══════════════════ FOOTER ══════════════════ */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* ══════════════════ SCROLLBAR ══════════════════ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* NEW Feature Label */
+    .new-label {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>☕ Optional & Java 21</h2>
+      <p>Part 09 — Modern Java</p>
+    </div>
+    <nav>
+      <div class="section-label">Modern Java</div>
+      <a href="#s1">Optional Class</a>
+      <a href="#s2">Serialization</a>
+      <a href="#s3">Records</a>
+      <a href="#s4">Sealed Classes</a>
+      <a href="#s5">Java 21 Overview</a>
+      <a href="#s6">Sequenced Collections</a>
+      <a href="#s7">Virtual Threads</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ════════════════════════════ HEADER ════════════════════════════ -->
+<header class="main-header">
+  <div class="part-pill">📘 Part 09 of 20</div>
+  <h1>Optional Class & Java 21 Features</h1>
+  <p class="header-desc">
+    Deep dive into Optional, Serialization, Records, Sealed Classes,
+    Virtual Threads, and Sequenced Collections — from basics to interview depth.
+  </p>
+  <div class="header-tags">
+    <span class="h-tag">☕ Java 8 → 21</span>
+    <span class="h-tag">❓ Optional</span>
+    <span class="h-tag">📦 Serialization</span>
+    <span class="h-tag">🏷️ Records</span>
+    <span class="h-tag">🔒 Sealed Classes</span>
+    <span class="h-tag">🧵 Virtual Threads</span>
+    <span class="h-tag">📋 Sequenced Collections</span>
+  </div>
+</header>
+
+<!-- ════════════════ TOC ════════════════ -->
+<nav class="toc-bar">
+  <a class="toc-item" href="#s1"><span class="toc-dot" style="background:#00d4aa"></span>Optional Class</a>
+  <a class="toc-item" href="#s2"><span class="toc-dot" style="background:#ffd93d"></span>Serialization</a>
+  <a class="toc-item" href="#s3"><span class="toc-dot" style="background:#6c63ff"></span>Records</a>
+  <a class="toc-item" href="#s4"><span class="toc-dot" style="background:#f093fb"></span>Sealed Classes</a>
+  <a class="toc-item" href="#s5"><span class="toc-dot" style="background:#60a5fa"></span>Java 21 Overview</a>
+  <a class="toc-item" href="#s6"><span class="toc-dot" style="background:#fb923c"></span>Sequenced Collections</a>
+  <a class="toc-item" href="#s7"><span class="toc-dot" style="background:#4ecdc4"></span>Virtual Threads</a>
+</nav>
+
+<!-- ════════════════ MAIN CONTENT ════════════════ -->
+<div class="container">
+
+  <!-- ╔══════════════════════════════════════════╗ -->
+  <!-- ║  SECTION 1: OPTIONAL CLASS               ║ -->
+  <!-- ╚══════════════════════════════════════════╝ -->
+  <section class="section" id="s1">
+    <div class="section-header">
+      <div class="section-icon si-green">❓</div>
+      <div class="section-title-wrap">
+        <h2>1. Optional Class</h2>
+        <p>Java 8 — Null safety without NullPointerException</p>
+      </div>
+    </div>
+
+    <!-- 1.1 Why Optional -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-green">1</span>
+        What is Optional? — Why was it introduced?
+      </div>
+      <p style="color:var(--muted); margin-bottom:14px;">
+        Before Java 8, developers frequently encountered <span class="hl-red">NullPointerException (NPE)</span> — 
+        famously called "the billion-dollar mistake" by Tony Hoare. Optional is a <span class="hl-green">container object</span>
+        that may or may not contain a non-null value.
+      </p>
+
+      <div class="compare-box">
+        <div class="compare-header">
+          <div class="compare-col-title">❌ Before Optional (NPE Prone)</div>
+          <div class="compare-col-title">✅ With Optional (Safe)</div>
+        </div>
+        <div class="compare-body">
+          <div class="compare-cell">Forces developers to remember null checks</div>
+          <div class="compare-cell">Makes null possibility explicit in return type</div>
+          <div class="compare-cell">Runtime NPE without warning</div>
+          <div class="compare-cell">Compile-time awareness of absent values</div>
+          <div class="compare-cell">Nested if-null checks everywhere</div>
+          <div class="compare-cell">Elegant chaining with map, flatMap, filter</div>
+        </div>
+      </div>
+
+      <div class="info-box ib-yellow">
+        <div class="ib-icon">⚠️</div>
+        <div><strong>Important:</strong> Optional is NOT meant to replace every null check. 
+        It's designed for <strong>method return types</strong> to signal "this might not return a value". 
+        Don't use Optional for fields, constructor params, or method parameters.</div>
+      </div>
+    </div>
+
+    <!-- 1.2 Creating Optional -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-green">2</span>
+        Creating Optional — 3 Factory Methods
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Use When</th><th>Throws if null?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Optional.of(value)</code></td>
+            <td>Value is guaranteed non-null</td>
+            <td><span class="hl-red">Yes — NullPointerException</span></td>
+          </tr>
+          <tr>
+            <td><code>Optional.ofNullable(value)</code></td>
+            <td>Value may or may not be null</td>
+            <td><span class="hl-green">No — returns empty Optional</span></td>
+          </tr>
+          <tr>
+            <td><code>Optional.empty()</code></td>
+            <td>Explicitly represent "no value"</td>
+            <td>N/A — creates empty Optional</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="code-label"><span class="lang-dot" style="background:#00d4aa"></span>Java — Creating Optional</div>
+      <pre><code><span class="cm">// Optional.of() — use when value is NEVER null</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> opt1 <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">of</span>(<span class="str">"Hello"</span>);           <span class="cm">// ✅ OK</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> opt2 <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">of</span>(<span class="kw">null</span>);            <span class="cm">// ❌ NullPointerException!</span>
+
+<span class="cm">// Optional.ofNullable() — use when value CAN be null</span>
+<span class="cl">String</span> name <span class="op">=</span> getUserNameFromDB();                     <span class="cm">// might return null</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> opt3 <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">ofNullable</span>(name);     <span class="cm">// ✅ Safe always</span>
+
+<span class="cm">// Optional.empty() — represent absence of value</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> opt4 <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">empty</span>();                <span class="cm">// empty container</span>
+
+<span class="cm">// Check if value present</span>
+<span class="kw">boolean</span> hasValue <span class="op">=</span> opt1.<span class="fn">isPresent</span>();                    <span class="cm">// true</span>
+<span class="kw">boolean</span> isEmpty  <span class="op">=</span> opt4.<span class="fn">isEmpty</span>();                      <span class="cm">// true (Java 11+)</span></code></pre>
+    </div>
+
+    <!-- 1.3 All Methods -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-green">3</span>
+        All Optional Methods — Complete Reference
+      </div>
+
+      <div class="method-grid">
+        <div class="method-item">
+          <div class="method-name">isPresent()</div>
+          <div class="method-desc">Returns true if value is present. Use sparingly — prefer functional style.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">isEmpty() <span class="new-label">Java 11</span></div>
+          <div class="method-desc">Returns true if no value present. Opposite of isPresent().</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">get()</div>
+          <div class="method-desc">Returns value if present, else throws NoSuchElementException. Avoid if possible!</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">orElse(default)</div>
+          <div class="method-desc">Returns value if present, else returns the given default. Default is ALWAYS evaluated.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">orElseGet(Supplier)</div>
+          <div class="method-desc">Returns value if present, else invokes Supplier. Lazy — Supplier only runs if empty.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">orElseThrow()</div>
+          <div class="method-desc">Returns value or throws NoSuchElementException. Can pass custom exception Supplier.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">map(Function)</div>
+          <div class="method-desc">Transforms value if present. Returns Optional of result or empty Optional.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">flatMap(Function)</div>
+          <div class="method-desc">Like map but for functions that return Optional (avoids Optional&lt;Optional&gt;).</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">filter(Predicate)</div>
+          <div class="method-desc">If value present and matches predicate, returns Optional with value, else empty.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">ifPresent(Consumer)</div>
+          <div class="method-desc">Executes Consumer if value is present. Does nothing if empty.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">ifPresentOrElse() <span class="new-label">Java 9</span></div>
+          <div class="method-desc">Execute Consumer if present, else run empty-action Runnable.</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">or(Supplier) <span class="new-label">Java 9</span></div>
+          <div class="method-desc">If empty, use Supplier to provide another Optional (chain fallbacks).</div>
+        </div>
+        <div class="method-item">
+          <div class="method-name">stream() <span class="new-label">Java 9</span></div>
+          <div class="method-desc">Returns Stream of one element if present, else empty Stream.</div>
+        </div>
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#00d4aa"></span>Java — All Methods in Action</div>
+      <pre><code><span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> opt <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">ofNullable</span>(<span class="fn">getName</span>());
+
+<span class="cm">// ─── orElse vs orElseGet ───────────────────────────────────────</span>
+<span class="cl">String</span> r1 <span class="op">=</span> opt.<span class="fn">orElse</span>(<span class="str">"Guest"</span>);               <span class="cm">// "Guest" always created</span>
+<span class="cl">String</span> r2 <span class="op">=</span> opt.<span class="fn">orElseGet</span>(() <span class="op">-></span> <span class="fn">generateDefault</span>()); <span class="cm">// lazy: called only if empty</span>
+
+<span class="cm">// ─── orElseThrow ───────────────────────────────────────────────</span>
+<span class="cl">String</span> r3 <span class="op">=</span> opt.<span class="fn">orElseThrow</span>(() <span class="op">-></span> <span class="kw">new</span> <span class="cl">UserNotFoundException</span>(<span class="str">"User not found"</span>));
+
+<span class="cm">// ─── map + orElse chain ────────────────────────────────────────</span>
+<span class="cl">String</span> upper <span class="op">=</span> opt
+    .<span class="fn">map</span>(<span class="cl">String</span>::toUpperCase)
+    .<span class="fn">orElse</span>(<span class="str">"UNKNOWN"</span>);
+
+<span class="cm">// ─── filter ────────────────────────────────────────────────────</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> adult <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">ofNullable</span>(age)
+    .<span class="fn">filter</span>(a <span class="op">-></span> a <span class="op">>=</span> <span class="nm">18</span>)
+    .<span class="fn">map</span>(a <span class="op">-></span> <span class="str">"Age: "</span> <span class="op">+</span> a);
+
+<span class="cm">// ─── ifPresentOrElse (Java 9+) ─────────────────────────────────</span>
+opt.<span class="fn">ifPresentOrElse</span>(
+    v <span class="op">-></span> <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"Found: "</span> <span class="op">+</span> v),
+    ()  <span class="op">-></span> <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"Not found"</span>)
+);
+
+<span class="cm">// ─── or (Java 9+) — chain fallback Optionals ──────────────────</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> result <span class="op">=</span> opt
+    .<span class="fn">or</span>(() <span class="op">-></span> <span class="fn">getFromCache</span>())
+    .<span class="fn">or</span>(() <span class="op">-></span> <span class="fn">getFromDefault</span>());
+
+<span class="cm">// ─── stream (Java 9+) — integrate with Stream API ─────────────</span>
+<span class="cl">List</span><span class="op">&lt;</span><span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;&gt;</span> opts <span class="op">=</span> <span class="cl">List</span>.<span class="fn">of</span>(opt1, opt2, opt3);
+<span class="cl">List</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> values <span class="op">=</span> opts.<span class="fn">stream</span>()
+    .<span class="fn">flatMap</span>(<span class="cl">Optional</span>::stream)   <span class="cm">// only present values</span>
+    .<span class="fn">collect</span>(<span class="cl">Collectors</span>.<span class="fn">toList</span>());</code></pre>
+    </div>
+
+    <!-- 1.4 orElse vs orElseGet TRAP -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-green">4</span>
+        🔥 orElse vs orElseGet — Most Common Interview Trap!
+      </div>
+
+      <div class="info-box ib-red">
+        <div class="ib-icon">🚨</div>
+        <div><strong>Key Difference:</strong> <code>orElse()</code> always evaluates the default — even if Optional has a value!
+        <code>orElseGet()</code> only evaluates the Supplier if Optional is empty (lazy evaluation).</div>
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#ff6b6b"></span>Java — The Trap Explained</div>
+      <pre><code><span class="kw">public class</span> <span class="cl">OrElseTrap</span> {
+
+    <span class="kw">static</span> <span class="cl">String</span> <span class="fn">expensiveDefault</span>() {
+        <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"⚡ Expensive call executed!"</span>);
+        <span class="kw">return</span> <span class="str">"DEFAULT"</span>;
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> opt <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">of</span>(<span class="str">"REAL_VALUE"</span>); <span class="cm">// has value!</span>
+
+        <span class="cm">// orElse — ALWAYS evaluates expensiveDefault()</span>
+        <span class="cl">String</span> r1 <span class="op">=</span> opt.<span class="fn">orElse</span>(<span class="fn">expensiveDefault</span>());
+        <span class="cm">// Prints: ⚡ Expensive call executed!  ← even though opt has value!</span>
+        <span class="cm">// r1 = "REAL_VALUE" but the method still ran — waste!</span>
+
+        <span class="cm">// orElseGet — LAZY: only calls if empty</span>
+        <span class="cl">String</span> r2 <span class="op">=</span> opt.<span class="fn">orElseGet</span>(<span class="cl">OrElseTrap</span>::expensiveDefault);
+        <span class="cm">// Prints: nothing — method NOT called because opt has value</span>
+        <span class="cm">// r2 = "REAL_VALUE" — efficient!</span>
+    }
+}</code></pre>
+
+      <div class="output-box">
+        <div class="output-label">Output of orElse block:</div>
+        ⚡ Expensive call executed!<br>
+        r1 = REAL_VALUE<br>
+        <br>
+        <div class="output-label">Output of orElseGet block:</div>
+        (nothing printed)<br>
+        r2 = REAL_VALUE
+      </div>
+
+      <div class="interview-tip">
+        <strong>🎯 Interview Tip</strong>
+        "Use <code>orElseGet()</code> when the default value is expensive to compute (DB call, API call, object creation).
+        Use <code>orElse()</code> only for cheap, already-computed constants like <code>orElse("N/A")</code>."
+      </div>
+    </div>
+
+    <!-- 1.5 Application-Based Usage -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-green">5</span>
+        Application-Based Optional Usage (Asked Directly!)
+      </div>
+
+      <p style="color:var(--muted); margin-bottom:16px;">
+        The interviewer asks: <em>"Where would you use Optional in a real application?"</em>
+      </p>
+
+      <div class="code-label"><span class="lang-dot" style="background:#00d4aa"></span>Java — Real Spring Boot Application Examples</div>
+      <pre><code><span class="cm">// ── SCENARIO 1: Service Layer — finding entity by ID ──────────────</span>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cl">UserService</span> {
+
+    <span class="kw">public</span> <span class="cl">UserDTO</span> <span class="fn">getUserById</span>(<span class="cl">Long</span> id) {
+        <span class="kw">return</span> userRepository.<span class="fn">findById</span>(id)         <span class="cm">// returns Optional&lt;User&gt;</span>
+            .<span class="fn">map</span>(userMapper::toDTO)                   <span class="cm">// transform if present</span>
+            .<span class="fn">orElseThrow</span>(() <span class="op">-></span> <span class="kw">new</span> <span class="cl">UserNotFoundException</span>(<span class="str">"User "</span> <span class="op">+</span> id <span class="op">+</span> <span class="str">" not found"</span>));
+    }
+}
+
+<span class="cm">// ── SCENARIO 2: Null-safe nested object access ────────────────────</span>
+<span class="kw">public</span> <span class="cl">String</span> <span class="fn">getShippingCity</span>(<span class="cl">Order</span> order) {
+    <span class="kw">return</span> <span class="cl">Optional</span>.<span class="fn">ofNullable</span>(order)
+        .<span class="fn">map</span>(<span class="cl">Order</span>::getCustomer)
+        .<span class="fn">map</span>(<span class="cl">Customer</span>::getAddress)
+        .<span class="fn">map</span>(<span class="cl">Address</span>::getCity)
+        .<span class="fn">orElse</span>(<span class="str">"City not available"</span>);
+}
+
+<span class="cm">// ── SCENARIO 3: Repository custom query ───────────────────────────</span>
+<span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="cl">ProductRepository</span> <span class="kw">extends</span> <span class="cl">JpaRepository</span><span class="op">&lt;</span><span class="cl">Product</span>, <span class="cl">Long</span><span class="op">&gt;</span> {
+    <span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">Product</span><span class="op">&gt;</span> <span class="fn">findByName</span>(<span class="cl">String</span> name);   <span class="cm">// may not exist</span>
+}
+
+<span class="cm">// ── SCENARIO 4: Config / property value ──────────────────────────</span>
+<span class="kw">public</span> <span class="cl">String</span> <span class="fn">getApiKey</span>() {
+    <span class="kw">return</span> <span class="cl">Optional</span>.<span class="fn">ofNullable</span>(System.<span class="fn">getenv</span>(<span class="str">"API_KEY"</span>))
+        .<span class="fn">filter</span>(k <span class="op">-></span> <span class="op">!</span>k.<span class="fn">isBlank</span>())
+        .<span class="fn">orElseThrow</span>(() <span class="op">-></span> <span class="kw">new</span> <span class="cl">IllegalStateException</span>(<span class="str">"API_KEY not configured"</span>));
+}
+
+<span class="cm">// ── SCENARIO 5: Update if field present (PATCH request) ──────────</span>
+<span class="kw">public void</span> <span class="fn">patchUser</span>(<span class="cl">Long</span> id, <span class="cl">UserPatchDTO</span> patch) {
+    <span class="cl">User</span> user <span class="op">=</span> userRepository.<span class="fn">findById</span>(id).<span class="fn">orElseThrow</span>();
+    <span class="cl">Optional</span>.<span class="fn">ofNullable</span>(patch.<span class="fn">getEmail</span>()).<span class="fn">ifPresent</span>(user::setEmail);
+    <span class="cl">Optional</span>.<span class="fn">ofNullable</span>(patch.<span class="fn">getPhone</span>()).<span class="fn">ifPresent</span>(user::setPhone);
+    userRepository.<span class="fn">save</span>(user);
+}</code></pre>
+
+      <div class="info-box ib-green">
+        <div class="ib-icon">✅</div>
+        <div>
+          <strong>When to USE Optional:</strong><br>
+          ✔ Return type of repository/service methods<br>
+          ✔ Nullable method results<br>
+          ✔ Optional config/environment values<br><br>
+          <strong>When NOT to use Optional:</strong><br>
+          ✖ Method parameters — use overloading instead<br>
+          ✖ Entity/DTO fields — increases memory overhead<br>
+          ✖ Collections — return empty collection instead of Optional&lt;List&gt;
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.6 flatMap for nested Optional -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-green">6</span>
+        flatMap — Avoid Optional Nesting
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#00d4aa"></span>Java — map vs flatMap with Optional</div>
+      <pre><code><span class="kw">public class</span> <span class="cl">Order</span> {
+    <span class="kw">private</span> <span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">Customer</span><span class="op">&gt;</span> customer; <span class="cm">// field itself is Optional</span>
+    <span class="kw">public</span> <span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">Customer</span><span class="op">&gt;</span> <span class="fn">getCustomer</span>() { <span class="kw">return</span> customer; }
+}
+
+<span class="kw">public class</span> <span class="cl">Customer</span> {
+    <span class="kw">private</span> <span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> email;
+    <span class="kw">public</span> <span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> <span class="fn">getEmail</span>() { <span class="kw">return</span> email; }
+}
+
+<span class="cm">// ❌ BAD — map creates Optional&lt;Optional&lt;Customer&gt;&gt;</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">Customer</span><span class="op">&gt;&gt;</span> bad <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">of</span>(order).<span class="fn">map</span>(<span class="cl">Order</span>::getCustomer);
+
+<span class="cm">// ✅ GOOD — flatMap flattens Optional&lt;Optional&lt;T&gt;&gt; → Optional&lt;T&gt;</span>
+<span class="cl">Optional</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> email <span class="op">=</span> <span class="cl">Optional</span>.<span class="fn">of</span>(order)
+    .<span class="fn">flatMap</span>(<span class="cl">Order</span>::getCustomer)        <span class="cm">// Optional&lt;Customer&gt;</span>
+    .<span class="fn">flatMap</span>(<span class="cl">Customer</span>::getEmail)         <span class="cm">// Optional&lt;String&gt;</span>
+    .<span class="fn">filter</span>(e <span class="op">-></span> e.<span class="fn">contains</span>(<span class="str">"@"</span>));      <span class="cm">// Optional&lt;String&gt;</span></code></pre>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════════════════╗ -->
+  <!-- ║  SECTION 2: SERIALIZATION                ║ -->
+  <!-- ╚══════════════════════════════════════════╝ -->
+  <section class="section" id="s2">
+    <div class="section-header">
+      <div class="section-icon si-yellow">📦</div>
+      <div class="section-title-wrap">
+        <h2>2. Serialization & Deserialization</h2>
+        <p>Object → Bytes → Object, exceptions, best practices</p>
+      </div>
+    </div>
+
+    <!-- 2.1 What & Why -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-yellow">1</span>
+        What is Serialization? — Basic to Deep
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="info-box ib-blue">
+            <div class="ib-icon">📤</div>
+            <div>
+              <strong>Serialization</strong><br>
+              Converting a Java object into a <strong>byte stream</strong> so it can be:
+              <ul style="margin-top:8px; padding-left:16px; color:var(--muted);">
+                <li>Saved to a file</li>
+                <li>Sent over a network</li>
+                <li>Stored in database/cache</li>
+                <li>Shared between JVMs</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="info-box ib-green">
+            <div class="ib-icon">📥</div>
+            <div>
+              <strong>Deserialization</strong><br>
+              Converting the <strong>byte stream back</strong> to a Java object. The reverse process.
+              <ul style="margin-top:8px; padding-left:16px; color:var(--muted);">
+                <li>Read from file</li>
+                <li>Received from network</li>
+                <li>Reconstructed from stored bytes</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#ffd93d"></span>Java — Basic Serialization</div>
+      <pre><code><span class="kw">import</span> java.io.*;
+
+<span class="cm">// Step 1: Class MUST implement Serializable</span>
+<span class="kw">public class</span> <span class="cl">Employee</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+
+    <span class="cm">// ALWAYS define serialVersionUID — explained below</span>
+    <span class="kw">private static final long</span> serialVersionUID <span class="op">=</span> <span class="nm">1L</span>;
+
+    <span class="kw">private</span> <span class="cl">String</span> name;
+    <span class="kw">private int</span> age;
+    <span class="kw">private transient</span> <span class="cl">String</span> password;  <span class="cm">// transient = NOT serialized</span>
+
+    <span class="kw">public</span> <span class="cl">Employee</span>(<span class="cl">String</span> name, <span class="kw">int</span> age, <span class="cl">String</span> password) {
+        <span class="kw">this</span>.name = name;
+        <span class="kw">this</span>.age = age;
+        <span class="kw">this</span>.password = password;
+    }
+    <span class="cm">// getters, toString...</span>
+}
+
+<span class="cm">// Step 2: SERIALIZE — write object to file</span>
+<span class="kw">try</span> (<span class="cl">ObjectOutputStream</span> oos <span class="op">=</span> <span class="kw">new</span> <span class="cl">ObjectOutputStream</span>(
+        <span class="kw">new</span> <span class="cl">FileOutputStream</span>(<span class="str">"employee.ser"</span>))) {
+    oos.<span class="fn">writeObject</span>(<span class="kw">new</span> <span class="cl">Employee</span>(<span class="str">"Alice"</span>, <span class="nm">30</span>, <span class="str">"secret123"</span>));
+    <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"✅ Serialized!"</span>);
+} <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+    e.<span class="fn">printStackTrace</span>();
+}
+
+<span class="cm">// Step 3: DESERIALIZE — read object from file</span>
+<span class="kw">try</span> (<span class="cl">ObjectInputStream</span> ois <span class="op">=</span> <span class="kw">new</span> <span class="cl">ObjectInputStream</span>(
+        <span class="kw">new</span> <span class="cl">FileInputStream</span>(<span class="str">"employee.ser"</span>))) {
+    <span class="cl">Employee</span> emp <span class="op">=</span> (<span class="cl">Employee</span>) ois.<span class="fn">readObject</span>();
+    <span class="cl">System</span>.out.<span class="fn">println</span>(emp.getName());      <span class="cm">// "Alice"</span>
+    <span class="cl">System</span>.out.<span class="fn">println</span>(emp.getAge());       <span class="cm">// 30</span>
+    <span class="cl">System</span>.out.<span class="fn">println</span>(emp.getPassword());  <span class="cm">// null — transient not saved!</span>
+} <span class="kw">catch</span> (<span class="cl">IOException</span> | <span class="cl">ClassNotFoundException</span> e) {
+    e.<span class="fn">printStackTrace</span>();
+}</code></pre>
+    </div>
+
+    <!-- 2.2 serialVersionUID -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-yellow">2</span>
+        serialVersionUID — Why It Matters
+      </div>
+
+      <p style="color:var(--muted); margin-bottom:14px;">
+        <code>serialVersionUID</code> is a unique identifier for each Serializable class.
+        It's used during deserialization to verify that the <span class="hl-yellow">sender and receiver are compatible</span>.
+      </p>
+
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-left">
+            <div class="step-circle" style="background:rgba(0,212,170,0.15); color:var(--green);">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Class serialized with serialVersionUID = 1L</div>
+            <div class="step-desc">Object written to file successfully</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-left">
+            <div class="step-circle" style="background:rgba(255,217,61,0.15); color:var(--yellow);">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Developer adds a new field to class</div>
+            <div class="step-desc">If no serialVersionUID declared, JVM auto-computes a new one</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-left">
+            <div class="step-circle" style="background:rgba(255,107,107,0.15); color:var(--red);">3</div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Deserialization tries to read old file</div>
+            <div class="step-desc">UIDs don't match → <span class="hl-red">InvalidClassException thrown!</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#ff6b6b"></span>Java — serialVersionUID Exception</div>
+      <pre><code><span class="cm">// ❌ WITHOUT serialVersionUID — DANGEROUS</span>
+<span class="kw">public class</span> <span class="cl">User</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+    <span class="cm">// JVM auto-generates UID from class structure</span>
+    <span class="cm">// Adding a field changes the auto-generated UID</span>
+    <span class="cm">// → InvalidClassException during deserialization!</span>
+    <span class="kw">private</span> <span class="cl">String</span> name;
+    <span class="cm">// later added: private String email; ← breaks old serialized files!</span>
+}
+
+<span class="cm">// ✅ WITH serialVersionUID — SAFE</span>
+<span class="kw">public class</span> <span class="cl">User</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+    <span class="kw">private static final long</span> serialVersionUID <span class="op">=</span> <span class="nm">1L</span>;
+    <span class="kw">private</span> <span class="cl">String</span> name;
+    <span class="kw">private</span> <span class="cl">String</span> email; <span class="cm">// Added later — UID same → compatible!</span>
+    <span class="cm">// Old serialized files still load. New field gets default value (null)</span>
+}</code></pre>
+
+      <div class="info-box ib-yellow">
+        <div class="ib-icon">💡</div>
+        <div><strong>Exceptions in Serialization:</strong>
+          <ul style="margin-top:8px; padding-left:16px; color:var(--muted);">
+            <li><code>NotSerializableException</code> — class doesn't implement Serializable</li>
+            <li><code>InvalidClassException</code> — serialVersionUID mismatch</li>
+            <li><code>ClassNotFoundException</code> — during deserialization, class not found in classpath</li>
+            <li><code>StreamCorruptedException</code> — corrupted byte stream</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.3 transient keyword -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-yellow">3</span>
+        transient Keyword + Custom Serialization
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#ffd93d"></span>Java — transient + writeObject/readObject</div>
+      <pre><code><span class="kw">public class</span> <span class="cl">SecureEmployee</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+    <span class="kw">private static final long</span> serialVersionUID <span class="op">=</span> <span class="nm">1L</span>;
+
+    <span class="kw">private</span> <span class="cl">String</span> name;
+    <span class="kw">private transient</span> <span class="cl">String</span> password;     <span class="cm">// NOT serialized</span>
+    <span class="kw">private transient</span> <span class="cl">Connection</span> dbConn;    <span class="cm">// NOT serialized (not serializable!)</span>
+
+    <span class="cm">// Custom serialization logic</span>
+    <span class="kw">private void</span> <span class="fn">writeObject</span>(<span class="cl">ObjectOutputStream</span> oos) <span class="kw">throws</span> <span class="cl">IOException</span> {
+        oos.<span class="fn">defaultWriteObject</span>(); <span class="cm">// write non-transient fields</span>
+        <span class="cm">// Optionally encrypt and write password</span>
+        oos.<span class="fn">writeObject</span>(<span class="fn">encrypt</span>(password));
+    }
+
+    <span class="kw">private void</span> <span class="fn">readObject</span>(<span class="cl">ObjectInputStream</span> ois)
+            <span class="kw">throws</span> <span class="cl">IOException</span>, <span class="cl">ClassNotFoundException</span> {
+        ois.<span class="fn">defaultReadObject</span>(); <span class="cm">// read non-transient fields</span>
+        <span class="cm">// Decrypt password when reading back</span>
+        <span class="kw">this</span>.password <span class="op">=</span> <span class="fn">decrypt</span>((<span class="cl">String</span>) ois.<span class="fn">readObject</span>());
+    }
+}
+
+<span class="cm">// transient summary:</span>
+<span class="cm">// ✅ Use for sensitive data (password, tokens)</span>
+<span class="cm">// ✅ Use for non-serializable objects (threads, connections, streams)</span>
+<span class="cm">// ✅ Use for derived/calculated fields (no need to store)</span>
+<span class="cm">// ⚠️  Transient fields get default values on deserialization (null, 0, false)</span></code></pre>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════════════════╗ -->
+  <!-- ║  SECTION 3: RECORDS                      ║ -->
+  <!-- ╚══════════════════════════════════════════╝ -->
+  <section class="section" id="s3">
+    <div class="section-header">
+      <div class="section-icon si-purple">🏷️</div>
+      <div class="section-title-wrap">
+        <h2>3. Records <span class="new-label">Java 16 — Stable</span></h2>
+        <p>Concise, immutable data carriers — Java's answer to Lombok @Value</p>
+      </div>
+    </div>
+
+    <!-- 3.1 What is a Record -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-purple">1</span>
+        What is a Record? — The Problem It Solves
+      </div>
+
+      <p style="color:var(--muted); margin-bottom:14px;">
+        Before Records, creating a simple data class required enormous boilerplate:
+        private fields, constructor, getters, equals, hashCode, toString.
+        Records eliminate ALL of this.
+      </p>
+
+      <div class="compare-box">
+        <div class="compare-header">
+          <div class="compare-col-title">❌ Traditional Class (~40 lines)</div>
+          <div class="compare-col-title">✅ Record (1 line!)</div>
+        </div>
+        <div class="compare-body">
+          <div class="compare-cell">
+            <pre style="margin:0; padding:0; background:none; border:none; font-size:12px;"><code><span class="kw">public class</span> <span class="cl">Point</span> {
+  <span class="kw">private final int</span> x;
+  <span class="kw">private final int</span> y;
+  <span class="kw">public</span> <span class="cl">Point</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+    <span class="kw">this</span>.x <span class="op">=</span> x;
+    <span class="kw">this</span>.y <span class="op">=</span> y;
+  }
+  <span class="kw">public int</span> <span class="fn">x</span>() { <span class="kw">return</span> x; }
+  <span class="kw">public int</span> <span class="fn">y</span>() { <span class="kw">return</span> y; }
+  <span class="an">@Override</span> <span class="kw">public boolean</span> <span class="fn">equals</span>(<span class="cl">Object</span> o){...}
+  <span class="an">@Override</span> <span class="kw">public int</span> <span class="fn">hashCode</span>(){...}
+  <span class="an">@Override</span> <span class="kw">public</span> <span class="cl">String</span> <span class="fn">toString</span>(){...}
+}</code></pre>
+          </div>
+          <div class="compare-cell">
+            <pre style="margin:0; padding:0; background:none; border:none; font-size:12px;"><code><span class="kw">public record</span> <span class="cl">Point</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {}
+
+<span class="cm">// Auto-generated by compiler:</span>
+<span class="cm">// ✅ Private final fields</span>
+<span class="cm">// ✅ Canonical constructor</span>
+<span class="cm">// ✅ Accessor methods x(), y()</span>
+<span class="cm">// ✅ equals() — value-based</span>
+<span class="cm">// ✅ hashCode() — value-based</span>
+<span class="cm">// ✅ toString() — Point[x=1, y=2]</span>
+
+
+
+
+</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3.2 Records in Depth -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-purple">2</span>
+        Records — Complete Feature Set
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#6c63ff"></span>Java — Records All Features</div>
+      <pre><code><span class="cm">// ── Basic Record Declaration ───────────────────────────────────</span>
+<span class="kw">public record</span> <span class="cl">Person</span>(<span class="cl">String</span> name, <span class="kw">int</span> age) {
+
+    <span class="cm">// ① Compact Canonical Constructor (validation)</span>
+    <span class="cm">// No need to declare parameters — automatically assigned</span>
+    <span class="kw">public</span> <span class="fn">Person</span> {
+        <span class="kw">if</span> (age <span class="op">&lt;</span> <span class="nm">0</span>) <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="str">"Age cannot be negative"</span>);
+        <span class="kw">if</span> (name <span class="op">==</span> <span class="kw">null</span>) <span class="kw">throw new</span> <span class="cl">NullPointerException</span>(<span class="str">"Name required"</span>);
+        name <span class="op">=</span> name.<span class="fn">trim</span>();  <span class="cm">// can normalize here</span>
+    }
+
+    <span class="cm">// ② Explicit Canonical Constructor (full control)</span>
+    <span class="cm">// Use only when you need different logic:</span>
+    <span class="cm">// public Person(String name, int age) { ... }</span>
+
+    <span class="cm">// ③ Static fields allowed</span>
+    <span class="kw">static final</span> <span class="cl">String</span> SPECIES <span class="op">=</span> <span class="str">"Human"</span>;
+
+    <span class="cm">// ④ Static methods allowed</span>
+    <span class="kw">public static</span> <span class="cl">Person</span> <span class="fn">guest</span>() {
+        <span class="kw">return new</span> <span class="cl">Person</span>(<span class="str">"Guest"</span>, <span class="nm">0</span>);
+    }
+
+    <span class="cm">// ⑤ Instance methods allowed</span>
+    <span class="kw">public boolean</span> <span class="fn">isAdult</span>() {
+        <span class="kw">return</span> age <span class="op">>=</span> <span class="nm">18</span>;
+    }
+
+    <span class="cm">// ⑥ Can override accessor</span>
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">name</span>() {
+        <span class="kw">return</span> <span class="str">"Mr/Ms. "</span> <span class="op">+</span> name;  <span class="cm">// customize accessor</span>
+    }
+
+    <span class="cm">// ⑦ Can override toString</span>
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">toString</span>() {
+        <span class="kw">return</span> <span class="str">"Person{"</span> <span class="op">+</span> name <span class="op">+</span> <span class="str">", age="</span> <span class="op">+</span> age <span class="op">+</span> <span class="str">"}"</span>;
+    }
+
+    <span class="cm">// ❌ NOT ALLOWED in records:</span>
+    <span class="cm">// - instance fields (beyond components)</span>
+    <span class="cm">// - extending another class (implicitly extends Record)</span>
+    <span class="cm">// - non-final components</span>
+}
+
+<span class="cm">// ── Usage ─────────────────────────────────────────────────────</span>
+<span class="cl">Person</span> p1 <span class="op">=</span> <span class="kw">new</span> <span class="cl">Person</span>(<span class="str">"Alice"</span>, <span class="nm">30</span>);
+<span class="cl">Person</span> p2 <span class="op">=</span> <span class="kw">new</span> <span class="cl">Person</span>(<span class="str">"Alice"</span>, <span class="nm">30</span>);
+
+<span class="cm">// Accessors — note: getName() does NOT exist, use name()</span>
+p1.<span class="fn">name</span>();           <span class="cm">// "Alice"</span>
+p1.<span class="fn">age</span>();            <span class="cm">// 30</span>
+
+<span class="cm">// Value-based equality</span>
+p1.<span class="fn">equals</span>(p2);       <span class="cm">// true — compares field VALUES, not reference</span>
+
+p1.<span class="fn">toString</span>();       <span class="cm">// "Person{Alice, age=30}" (overridden)</span>
+
+<span class="cm">// Records implement Serializable? NO by default</span>
+<span class="cm">// Add explicitly: public record Person(...) implements Serializable { }</span>
+
+<span class="cm">// ── Records with Generics ──────────────────────────────────────</span>
+<span class="kw">public record</span> <span class="cl">Pair</span><span class="op">&lt;</span><span class="cl">A</span>, <span class="cl">B</span><span class="op">&gt;</span>(<span class="cl">A</span> first, <span class="cl">B</span> second) {}
+<span class="cl">Pair</span><span class="op">&lt;</span><span class="cl">String</span>, <span class="cl">Integer</span><span class="op">&gt;</span> pair <span class="op">=</span> <span class="kw">new</span> <span class="cl">Pair</span><span class="op">&lt;&gt;</span>(<span class="str">"hello"</span>, <span class="nm">42</span>);
+
+<span class="cm">// ── Records can implement interfaces ──────────────────────────</span>
+<span class="kw">public record</span> <span class="cl">Product</span>(<span class="cl">String</span> name, <span class="kw">double</span> price) <span class="kw">implements</span> <span class="cl">Comparable</span><span class="op">&lt;</span><span class="cl">Product</span><span class="op">&gt;</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public int</span> <span class="fn">compareTo</span>(<span class="cl">Product</span> other) {
+        <span class="kw">return</span> <span class="cl">Double</span>.<span class="fn">compare</span>(<span class="kw">this</span>.price, other.price);
+    }
+}
+
+<span class="cm">// ── Local Records (Java 16+) ────────────────────────────────────</span>
+<span class="kw">public void</span> <span class="fn">processOrders</span>() {
+    <span class="kw">record</span> <span class="cl">OrderSummary</span>(<span class="cl">String</span> id, <span class="kw">double</span> total) {}  <span class="cm">// local to method!</span>
+    <span class="cl">List</span><span class="op">&lt;</span><span class="cl">OrderSummary</span><span class="op">&gt;</span> summaries <span class="op">=</span> orders.<span class="fn">stream</span>()
+        .<span class="fn">map</span>(o <span class="op">-></span> <span class="kw">new</span> <span class="cl">OrderSummary</span>(o.<span class="fn">getId</span>(), o.<span class="fn">getTotal</span>()))
+        .<span class="fn">collect</span>(<span class="cl">Collectors</span>.<span class="fn">toList</span>());
+}</code></pre>
+    </div>
+
+    <!-- 3.3 Records Rules & Restrictions -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-purple">3</span>
+        Records — Rules, Restrictions & When to Use
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="info-box ib-green">
+            <div class="ib-icon">✅</div>
+            <div>
+              <strong>Records CAN:</strong>
+              <ul class="styled-list" style="margin-top:8px;">
+                <li><span class="li-icon">•</span> Implement interfaces</li>
+                <li><span class="li-icon">•</span> Have static fields & methods</li>
+                <li><span class="li-icon">•</span> Have instance methods</li>
+                <li><span class="li-icon">•</span> Be generic</li>
+                <li><span class="li-icon">•</span> Have multiple constructors</li>
+                <li><span class="li-icon">•</span> Be declared locally in a method</li>
+                <li><span class="li-icon">•</span> Implement Serializable</li>
+                <li><span class="li-icon">•</span> Be annotated</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="info-box ib-red">
+            <div class="ib-icon">❌</div>
+            <div>
+              <strong>Records CANNOT:</strong>
+              <ul class="styled-list" style="margin-top:8px;">
+                <li><span class="li-icon">•</span> Extend other classes (implicit extends Record)</li>
+                <li><span class="li-icon">•</span> Declare additional instance fields</li>
+                <li><span class="li-icon">•</span> Be abstract</li>
+                <li><span class="li-icon">•</span> Have mutable components (fields are final)</li>
+                <li><span class="li-icon">•</span> Be used as JPA @Entity (Hibernate needs mutable)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box ib-purple">
+        <div class="ib-icon">🎯</div>
+        <div>
+          <strong>When to use Records (Real Scenarios):</strong>
+          <ul style="margin-top:8px; padding-left:16px; color:#c4b5fd;">
+            <li>DTOs (Data Transfer Objects) — <code>record UserDTO(String name, String email) {}</code></li>
+            <li>API Response/Request bodies</li>
+            <li>Value objects in domain model</li>
+            <li>Temporary intermediate data in streams</li>
+            <li>Map keys (need equals/hashCode)</li>
+            <li>Configuration holders</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="interview-tip">
+        <strong>🎯 Interview Tip</strong>
+        "Records are NOT replacements for all classes. They're for <strong>pure data carriers</strong>.
+        Don't use records for: JPA Entities (need mutable + no-arg constructor),
+        classes with complex behavior, or Spring components (@Service, @Component)."
+      </div>
+    </div>
+
+    <!-- 3.4 Record with Spring Boot -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-purple">4</span>
+        Records in Spring Boot — Real Usage
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#6c63ff"></span>Java — Records as DTOs in Spring Boot</div>
+      <pre><code><span class="cm">// ── Request DTO ────────────────────────────────────────────────</span>
+<span class="kw">public record</span> <span class="cl">CreateUserRequest</span>(
+    <span class="an">@NotBlank</span> <span class="cl">String</span> name,
+    <span class="an">@Email</span> <span class="cl">String</span> email,
+    <span class="an">@Min</span>(<span class="nm">18</span>) <span class="kw">int</span> age
+) {}
+
+<span class="cm">// ── Response DTO ───────────────────────────────────────────────</span>
+<span class="kw">public record</span> <span class="cl">UserResponse</span>(<span class="cl">Long</span> id, <span class="cl">String</span> name, <span class="cl">String</span> email) {}
+
+<span class="cm">// ── Controller using Records ───────────────────────────────────</span>
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="str">"/users"</span>)
+<span class="kw">public class</span> <span class="cl">UserController</span> {
+
+    <span class="an">@PostMapping</span>
+    <span class="kw">public</span> <span class="cl">ResponseEntity</span><span class="op">&lt;</span><span class="cl">UserResponse</span><span class="op">&gt;</span> <span class="fn">createUser</span>(
+            <span class="an">@Valid</span> <span class="an">@RequestBody</span> <span class="cl">CreateUserRequest</span> request) {
+        <span class="cm">// Jackson automatically deserializes JSON → Record</span>
+        <span class="cl">User</span> user <span class="op">=</span> userService.<span class="fn">create</span>(request.name(), request.email(), request.age());
+        <span class="kw">return</span> <span class="cl">ResponseEntity</span>.<span class="fn">ok</span>(<span class="kw">new</span> <span class="cl">UserResponse</span>(user.<span class="fn">getId</span>(), user.<span class="fn">getName</span>(), user.<span class="fn">getEmail</span>()));
+    }
+}
+
+<span class="cm">// ── Projection in JPA (Spring Data) ───────────────────────────</span>
+<span class="kw">public interface</span> <span class="cl">UserRepository</span> <span class="kw">extends</span> <span class="cl">JpaRepository</span><span class="op">&lt;</span><span class="cl">User</span>, <span class="cl">Long</span><span class="op">&gt;</span> {
+
+    <span class="cm">// Works with constructor expression in JPQL</span>
+    <span class="an">@Query</span>(<span class="str">"SELECT new com.example.UserResponse(u.id, u.name, u.email) FROM User u"</span>)
+    <span class="cl">List</span><span class="op">&lt;</span><span class="cl">UserResponse</span><span class="op">&gt;</span> <span class="fn">findAllAsResponse</span>();
+}</code></pre>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════════════════╗ -->
+  <!-- ║  SECTION 4: SEALED CLASSES               ║ -->
+  <!-- ╚══════════════════════════════════════════╝ -->
+  <section class="section" id="s4">
+    <div class="section-header">
+      <div class="section-icon si-pink">🔒</div>
+      <div class="section-title-wrap">
+        <h2>4. Sealed Classes <span class="new-label">Java 17 — Stable</span></h2>
+        <p>Restricted class hierarchies — you control who can extend</p>
+      </div>
+    </div>
+
+    <!-- 4.1 What & Why -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(240,147,251,0.15); color:#f093fb;">1</span>
+        What are Sealed Classes? — The Problem They Solve
+      </div>
+
+      <p style="color:var(--muted); margin-bottom:14px;">
+        Before sealed classes, anyone could extend your class from anywhere in the codebase.
+        Sealed classes give you <span class="hl-purple">explicit control over who can extend or implement</span> your class/interface.
+      </p>
+
+      <div class="two-col">
+        <div class="info-box ib-red">
+          <div class="ib-icon">❌</div>
+          <div><strong>Without sealed:</strong><br>
+          Anyone can extend Shape — including malicious or unintended subclasses. 
+          Can't exhaustively handle all types safely.</div>
+        </div>
+        <div class="info-box ib-green">
+          <div class="ib-icon">✅</div>
+          <div><strong>With sealed:</strong><br>
+          Only permitted subclasses can extend. Compiler knows ALL possible subtypes.
+          Works beautifully with Pattern Matching switch.</div>
+        </div>
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#f093fb"></span>Java — Sealed Classes Complete Example</div>
+      <pre><code><span class="cm">// ── SEALED CLASS — controls who can extend ────────────────────</span>
+<span class="kw">public sealed class</span> <span class="cl">Shape</span>
+    <span class="kw">permits</span> <span class="cl">Circle</span>, <span class="cl">Rectangle</span>, <span class="cl">Triangle</span> {  <span class="cm">// ONLY these 3 can extend</span>
+    <span class="kw">public abstract double</span> <span class="fn">area</span>();
+}
+
+<span class="cm">// ── Permitted subclasses have 3 options ───────────────────────</span>
+
+<span class="cm">// Option 1: final — no further extension allowed</span>
+<span class="kw">public final class</span> <span class="cl">Circle</span> <span class="kw">extends</span> <span class="cl">Shape</span> {
+    <span class="kw">private final double</span> radius;
+    <span class="kw">public</span> <span class="cl">Circle</span>(<span class="kw">double</span> radius) { <span class="kw">this</span>.radius <span class="op">=</span> radius; }
+    <span class="an">@Override</span> <span class="kw">public double</span> <span class="fn">area</span>() { <span class="kw">return</span> <span class="cl">Math</span>.PI <span class="op">*</span> radius <span class="op">*</span> radius; }
+}
+
+<span class="cm">// Option 2: sealed — further restricted extension</span>
+<span class="kw">public sealed class</span> <span class="cl">Rectangle</span> <span class="kw">extends</span> <span class="cl">Shape</span>
+    <span class="kw">permits</span> <span class="cl">Square</span> {   <span class="cm">// only Square can extend Rectangle</span>
+    <span class="kw">protected final double</span> width, height;
+    <span class="kw">public</span> <span class="cl">Rectangle</span>(<span class="kw">double</span> w, <span class="kw">double</span> h) { width <span class="op">=</span> w; height <span class="op">=</span> h; }
+    <span class="an">@Override</span> <span class="kw">public double</span> <span class="fn">area</span>() { <span class="kw">return</span> width <span class="op">*</span> height; }
+}
+
+<span class="kw">public final class</span> <span class="cl">Square</span> <span class="kw">extends</span> <span class="cl">Rectangle</span> {
+    <span class="kw">public</span> <span class="cl">Square</span>(<span class="kw">double</span> side) { <span class="kw">super</span>(side, side); }
+}
+
+<span class="cm">// Option 3: non-sealed — opens back up for extension</span>
+<span class="kw">public non-sealed class</span> <span class="cl">Triangle</span> <span class="kw">extends</span> <span class="cl">Shape</span> {
+    <span class="cm">// Anyone can extend Triangle now</span>
+    <span class="kw">private final double</span> base, height;
+    <span class="kw">public</span> <span class="cl">Triangle</span>(<span class="kw">double</span> b, <span class="kw">double</span> h) { base <span class="op">=</span> b; height <span class="op">=</span> h; }
+    <span class="an">@Override</span> <span class="kw">public double</span> <span class="fn">area</span>() { <span class="kw">return</span> <span class="nm">0.5</span> <span class="op">*</span> base <span class="op">*</span> height; }
+}
+
+<span class="cm">// ❌ This will NOT compile — GreenShape not in permits list!</span>
+<span class="cm">// public class GreenShape extends Shape {}</span></code></pre>
+    </div>
+
+    <!-- 4.2 Sealed + Pattern Matching -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(240,147,251,0.15); color:#f093fb;">2</span>
+        Sealed Classes + Pattern Matching — The Power Combo
+      </div>
+
+      <p style="color:var(--muted); margin-bottom:14px;">
+        Sealed classes pair perfectly with <strong>Pattern Matching in switch</strong> (Java 21).
+        The compiler knows ALL permitted types and can warn you about missing cases.
+      </p>
+
+      <div class="code-label"><span class="lang-dot" style="background:#f093fb"></span>Java — Pattern Matching with Sealed</div>
+      <pre><code><span class="cm">// ── Sealed Interface for Result type ──────────────────────────</span>
+<span class="kw">public sealed interface</span> <span class="cl">ApiResult</span><span class="op">&lt;</span><span class="cl">T</span><span class="op">&gt;</span>
+    <span class="kw">permits</span> <span class="cl">ApiResult.Success</span>, <span class="cl">ApiResult.Failure</span>, <span class="cl">ApiResult.Loading</span> {
+
+    <span class="kw">record</span> <span class="cl">Success</span><span class="op">&lt;</span><span class="cl">T</span><span class="op">&gt;</span>(<span class="cl">T</span> data) <span class="kw">implements</span> <span class="cl">ApiResult</span><span class="op">&lt;</span><span class="cl">T</span><span class="op">&gt;</span> {}
+    <span class="kw">record</span> <span class="cl">Failure</span><span class="op">&lt;</span><span class="cl">T</span><span class="op">&gt;</span>(<span class="cl">String</span> error, <span class="kw">int</span> code) <span class="kw">implements</span> <span class="cl">ApiResult</span><span class="op">&lt;</span><span class="cl">T</span><span class="op">&gt;</span> {}
+    <span class="kw">record</span> <span class="cl">Loading</span><span class="op">&lt;</span><span class="cl">T</span><span class="op">&gt;</span>() <span class="kw">implements</span> <span class="cl">ApiResult</span><span class="op">&lt;</span><span class="cl">T</span><span class="op">&gt;</span> {}
+}
+
+<span class="cm">// ── Usage with switch pattern matching (Java 21) ───────────────</span>
+<span class="kw">public void</span> <span class="fn">handleResult</span>(<span class="cl">ApiResult</span><span class="op">&lt;</span><span class="cl">User</span><span class="op">&gt;</span> result) {
+    <span class="kw">switch</span> (result) {
+        <span class="kw">case</span> <span class="cl">ApiResult.Success</span><span class="op">&lt;</span><span class="cl">User</span><span class="op">&gt;</span>(var user)  <span class="op">-></span>
+            <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"User: "</span> <span class="op">+</span> user.<span class="fn">name</span>());
+        <span class="kw">case</span> <span class="cl">ApiResult.Failure</span><span class="op">&lt;</span><span class="cl">User</span><span class="op">&gt;</span>(var err, var code) <span class="op">-></span>
+            <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"Error "</span> <span class="op">+</span> code <span class="op">+</span> <span class="str">": "</span> <span class="op">+</span> err);
+        <span class="kw">case</span> <span class="cl">ApiResult.Loading</span><span class="op">&lt;</span><span class="cl">User</span><span class="op">&gt;</span> l <span class="op">-></span>
+            <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"Loading..."</span>);
+        <span class="cm">// No default needed! Compiler knows all cases covered.</span>
+    }
+}
+
+<span class="cm">// ── Real World: Domain Events ──────────────────────────────────</span>
+<span class="kw">public sealed interface</span> <span class="cl">PaymentEvent</span>
+    <span class="kw">permits</span> <span class="cl">PaymentInitiated</span>, <span class="cl">PaymentCompleted</span>, <span class="cl">PaymentFailed</span>, <span class="cl">PaymentRefunded</span> {}
+
+<span class="kw">public record</span> <span class="cl">PaymentInitiated</span>(<span class="cl">String</span> txnId, <span class="kw">double</span> amount)
+    <span class="kw">implements</span> <span class="cl">PaymentEvent</span> {}
+
+<span class="kw">public record</span> <span class="cl">PaymentCompleted</span>(<span class="cl">String</span> txnId, <span class="cl">String</span> receiptNo)
+    <span class="kw">implements</span> <span class="cl">PaymentEvent</span> {}
+
+<span class="kw">public record</span> <span class="cl">PaymentFailed</span>(<span class="cl">String</span> txnId, <span class="cl">String</span> reason)
+    <span class="kw">implements</span> <span class="cl">PaymentEvent</span> {}
+
+<span class="kw">public record</span> <span class="cl">PaymentRefunded</span>(<span class="cl">String</span> txnId, <span class="kw">double</span> amount)
+    <span class="kw">implements</span> <span class="cl">PaymentEvent</span> {}
+
+<span class="cm">// Handler: compiler ensures all events handled!</span>
+<span class="kw">public</span> <span class="cl">String</span> <span class="fn">describeEvent</span>(<span class="cl">PaymentEvent</span> event) {
+    <span class="kw">return switch</span> (event) {
+        <span class="kw">case</span> <span class="cl">PaymentInitiated</span> e  <span class="op">-></span> <span class="str">"Initiated: "</span>  <span class="op">+</span> e.<span class="fn">txnId</span>();
+        <span class="kw">case</span> <span class="cl">PaymentCompleted</span> e  <span class="op">-></span> <span class="str">"Completed: "</span>  <span class="op">+</span> e.<span class="fn">receiptNo</span>();
+        <span class="kw">case</span> <span class="cl">PaymentFailed</span> e     <span class="op">-></span> <span class="str">"Failed: "</span>     <span class="op">+</span> e.<span class="fn">reason</span>();
+        <span class="kw">case</span> <span class="cl">PaymentRefunded</span> e   <span class="op">-></span> <span class="str">"Refunded: "</span>   <span class="op">+</span> e.<span class="fn">amount</span>();
+    };
+}</code></pre>
+
+      <div class="interview-tip">
+        <strong>🎯 Interview Tip</strong>
+        "Sealed classes are designed to work with Pattern Matching in switch expressions (Java 21). 
+        They're great for <strong>sum types / discriminated unions</strong> — modeling a fixed set of possible states.
+        Use case: API result types (Success/Failure), domain events, state machines."
+      </div>
+    </div>
+
+    <!-- 4.3 Sealed Interface -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(240,147,251,0.15); color:#f093fb;">3</span>
+        Sealed Interfaces — Rules Summary
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Feature</th><th>sealed class</th><th>sealed interface</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Keyword</td>
+            <td><code>sealed class</code></td>
+            <td><code>sealed interface</code></td>
+          </tr>
+          <tr>
+            <td>Permitted types</td>
+            <td>subclasses (extends)</td>
+            <td>subclasses or implementors</td>
+          </tr>
+          <tr>
+            <td>Permitted must be</td>
+            <td>final / sealed / non-sealed</td>
+            <td>final class / sealed class / non-sealed class / record</td>
+          </tr>
+          <tr>
+            <td>Must be in same package?</td>
+            <td><span class="hl-green">Yes (or same module)</span></td>
+            <td><span class="hl-green">Yes (or same module)</span></td>
+          </tr>
+          <tr>
+            <td>Works with Records?</td>
+            <td>Yes (record is final)</td>
+            <td><span class="hl-green">Yes — perfect combo!</span></td>
+          </tr>
+          <tr>
+            <td>Pattern matching benefit</td>
+            <td>Exhaustive switch</td>
+            <td><span class="hl-green">Exhaustive switch</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════════════════╗ -->
+  <!-- ║  SECTION 5: JAVA 21 OVERVIEW             ║ -->
+  <!-- ╚══════════════════════════════════════════╝ -->
+  <section class="section" id="s5">
+    <div class="section-header">
+      <div class="section-icon si-blue">☕</div>
+      <div class="section-title-wrap">
+        <h2>5. Java 21 — Feature Overview</h2>
+        <p>LTS release — most important features to know for interviews</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-blue">1</span>
+        Java 21 — Key Features Summary
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Feature</th><th>Type</th><th>Description</th><th>Interview Priority</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Virtual Threads</strong></td>
+            <td><span class="badge b-green">Stable</span></td>
+            <td>Lightweight threads for massive concurrency (Project Loom)</td>
+            <td><span class="hl-red">🔥 Very High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Sequenced Collections</strong></td>
+            <td><span class="badge b-green">Stable</span></td>
+            <td>New interfaces for ordered collections with first/last access</td>
+            <td><span class="hl-yellow">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Pattern Matching for switch</strong></td>
+            <td><span class="badge b-green">Stable</span></td>
+            <td>Type patterns, guarded patterns in switch</td>
+            <td><span class="hl-yellow">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Record Patterns</strong></td>
+            <td><span class="badge b-green">Stable</span></td>
+            <td>Destructure records in pattern matching</td>
+            <td><span class="hl-green">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>String Templates</strong></td>
+            <td><span class="badge b-yellow">Preview</span></td>
+            <td>Template strings like <code>STR."Hello \{name}"</code></td>
+            <td><span class="hl-green">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>Unnamed Classes</strong></td>
+            <td><span class="badge b-yellow">Preview</span></td>
+            <td>Programs without class declaration (for beginners)</td>
+            <td><span class="hl-purple">Low</span></td>
+          </tr>
+          <tr>
+            <td><strong>Unnamed Patterns</strong></td>
+            <td><span class="badge b-yellow">Preview</span></td>
+            <td>Use <code>_</code> to ignore pattern variables</td>
+            <td><span class="hl-green">Medium</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="code-label"><span class="lang-dot" style="background:#60a5fa"></span>Java 21 — Pattern Matching Switch (Stable)</div>
+      <pre><code><span class="cm">// ── Switch Pattern Matching ────────────────────────────────────</span>
+<span class="kw">public</span> <span class="cl">String</span> <span class="fn">format</span>(<span class="cl">Object</span> obj) {
+    <span class="kw">return switch</span> (obj) {
+        <span class="kw">case</span> <span class="cl">Integer</span> i   <span class="op">-></span> <span class="str">"int: "</span>    <span class="op">+</span> i;
+        <span class="kw">case</span> <span class="cl">Double</span> d    <span class="op">-></span> <span class="str">"double: "</span> <span class="op">+</span> d;
+        <span class="kw">case</span> <span class="cl">String</span> s    <span class="op">-></span> <span class="str">"String: "</span> <span class="op">+</span> s.<span class="fn">toUpperCase</span>();
+        <span class="kw">case null</span>        <span class="op">-></span> <span class="str">"null"</span>;      <span class="cm">// null case (new!)</span>
+        <span class="kw">default</span>          <span class="op">-></span> <span class="str">"other: "</span>   <span class="op">+</span> obj;
+    };
+}
+
+<span class="cm">// ── Guarded Patterns ──────────────────────────────────────────</span>
+<span class="kw">public</span> <span class="cl">String</span> <span class="fn">classify</span>(<span class="cl">Object</span> o) {
+    <span class="kw">return switch</span> (o) {
+        <span class="kw">case</span> <span class="cl">Integer</span> i <span class="kw">when</span> i <span class="op">&gt;</span> <span class="nm">0</span>  <span class="op">-></span> <span class="str">"Positive int"</span>;
+        <span class="kw">case</span> <span class="cl">Integer</span> i <span class="kw">when</span> i <span class="op">&lt;</span> <span class="nm">0</span>  <span class="op">-></span> <span class="str">"Negative int"</span>;
+        <span class="kw">case</span> <span class="cl">Integer</span> i             <span class="op">-></span> <span class="str">"Zero"</span>;
+        <span class="kw">case</span> <span class="cl">String</span> s <span class="kw">when</span> s.<span class="fn">isEmpty</span>() <span class="op">-></span> <span class="str">"Empty string"</span>;
+        <span class="kw">case</span> <span class="cl">String</span> s               <span class="op">-></span> <span class="str">"String: "</span> <span class="op">+</span> s;
+        <span class="kw">default</span>                     <span class="op">-></span> <span class="str">"Other"</span>;
+    };
+}
+
+<span class="cm">// ── Record Patterns (Deconstruction) ──────────────────────────</span>
+<span class="kw">record</span> <span class="cl">Point</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {}
+<span class="kw">record</span> <span class="cl">Circle</span>(<span class="cl">Point</span> center, <span class="kw">double</span> radius) {}
+
+<span class="kw">public void</span> <span class="fn">printShape</span>(<span class="cl">Object</span> shape) {
+    <span class="kw">if</span> (shape <span class="kw">instanceof</span> <span class="cl">Circle</span>(<span class="cl">Point</span>(var x, var y), var r)) {
+        <span class="cl">System</span>.out.<span class="fn">printf</span>(<span class="str">"Circle at (%d,%d) r=%.1f%n"</span>, x, y, r);
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ╔══════════════════════════════════════════╗ -->
+  <!-- ║  SECTION 6: SEQUENCED COLLECTIONS        ║ -->
+  <!-- ╚══════════════════════════════════════════╝ -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <div class="section-icon si-orange">📋</div>
+      <div class="section-title-wrap">
+        <h2>6. Sequenced Collections <span class="new-label">Java 21</span></h2>
+        <p>New interfaces for ordered collections — first and last access</p>
+      </div>
+    </div>
+
+    <!-- 6.1 What & Why -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-orange">1</span>
+        What Problem Does It Solve?
+      </div>
+
+      <p style="color:var(--muted); margin-bottom:14px;">
+        Before Java 21, accessing the <span class="hl-red">first or last element</span> of collections was inconsistent and awkward:
+      </p>
+
+      <div class="code-label"><span class="lang-dot" style="background:#fb923c"></span>Java — The Problem (Before Java 21)</div>
+      <pre><code><span class="cm">// ── Getting FIRST element (inconsistent across collections!) ──</span>
+list.<span class="fn">get</span>(<span class="nm">0</span>);                          <span class="cm">// ArrayList — index 0</span>
+linkedList.<span class="fn">getFirst</span>();               <span class="cm">// LinkedList — special method</span>
+deque.<span class="fn">peekFirst</span>();                   <span class="cm">// Deque — another name</span>
+sortedSet.<span class="fn">first</span>();                   <span class="cm">// SortedSet — yet another!</span>
+<span class="cm">// 😵 No unified API!</span>
+
+<span class="cm">// ── Getting LAST element ──────────────────────────────────────</span>
+list.<span class="fn">get</span>(list.<span class="fn">size</span>() <span class="op">-</span> <span class="nm">1</span>);           <span class="cm">// ArrayList — awkward</span>
+linkedList.<span class="fn">getLast</span>();               <span class="cm">// LinkedList</span>
+sortedSet.<span class="fn">last</span>();                    <span class="cm">// SortedSet</span>
+<span class="cm">// 😵 Still inconsistent!</span>
+
+<span class="cm">// ── Getting REVERSED view ─────────────────────────────────────</span>
+<span class="cl">Collections</span>.<span class="fn">reverse</span>(list);          <span class="cm">// mutates original — WRONG!</span>
+<span class="cm">// No clean way to get reversed view!</span></code></pre>
+    </div>
+
+    <!-- 6.2 New Interfaces -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-orange">2</span>
+        New Interfaces — SequencedCollection, SequencedSet, SequencedMap
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#fb923c"></span>Java 21 — Sequenced Collection Interfaces</div>
+      <pre><code><span class="cm">// ── 3 New Interfaces added to Collection hierarchy ────────────</span>
+
+<span class="cm">// 1. SequencedCollection — for List, Deque</span>
+<span class="kw">interface</span> <span class="cl">SequencedCollection</span><span class="op">&lt;</span><span class="cl">E</span><span class="op">&gt;</span> <span class="kw">extends</span> <span class="cl">Collection</span><span class="op">&lt;</span><span class="cl">E</span><span class="op">&gt;</span> {
+    <span class="cl">SequencedCollection</span><span class="op">&lt;</span><span class="cl">E</span><span class="op">&gt;</span> <span class="fn">reversed</span>();  <span class="cm">// NEW — returns reversed VIEW</span>
+    <span class="cm">// Also inherits first/last via addFirst/addLast/getFirst/getLast/removeFirst/removeLast</span>
+}
+
+<span class="cm">// 2. SequencedSet — for LinkedHashSet, SortedSet</span>
+<span class="kw">interface</span> <span class="cl">SequencedSet</span><span class="op">&lt;</span><span class="cl">E</span><span class="op">&gt;</span> <span class="kw">extends</span> <span class="cl">SequencedCollection</span><span class="op">&lt;</span><span class="cl">E</span><span class="op">&gt;</span>, <span class="cl">Set</span><span class="op">&lt;</span><span class="cl">E</span><span class="op">&gt;</span> {
+    <span class="cl">SequencedSet</span><span class="op">&lt;</span><span class="cl">E</span><span class="op">&gt;</span> <span class="fn">reversed</span>();
+}
+
+<span class="cm">// 3. SequencedMap — for LinkedHashMap, SortedMap</span>
+<span class="kw">interface</span> <span class="cl">SequencedMap</span><span class="op">&lt;</span><span class="cl">K</span>,<span class="cl">V</span><span class="op">&gt;</span> <span class="kw">extends</span> <span class="cl">Map</span><span class="op">&lt;</span><span class="cl">K</span>,<span class="cl">V</span><span class="op">&gt;</span> {
+    <span class="cl">Map</span>.<span class="cl">Entry</span><span class="op">&lt;</span><span class="cl">K</span>,<span class="cl">V</span><span class="op">&gt;</span> <span class="fn">firstEntry</span>();    <span class="cm">// NEW</span>
+    <span class="cl">Map</span>.<span class="cl">Entry</span><span class="op">&lt;</span><span class="cl">K</span>,<span class="cl">V</span><span class="op">&gt;</span> <span class="fn">lastEntry</span>();     <span class="cm">// NEW</span>
+    <span class="kw">void</span> <span class="fn">putFirst</span>(<span class="cl">K</span> k, <span class="cl">V</span> v);        <span class="cm">// NEW</span>
+    <span class="kw">void</span> <span class="fn">putLast</span>(<span class="cl">K</span> k, <span class="cl">V</span> v);         <span class="cm">// NEW</span>
+    <span class="cl">SequencedMap</span><span class="op">&lt;</span><span class="cl">K</span>,<span class="cl">V</span><span class="op">&gt;</span> <span class="fn">reversed</span>();   <span class="cm">// NEW — reversed view</span>
+    <span class="cm">// Also: sequencedKeySet(), sequencedValues(), sequencedEntrySet()</span>
+}
+
+<span class="cm">// ── Using Sequenced Collections (Java 21) ─────────────────────</span>
+<span class="cl">List</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> list <span class="op">=</span> <span class="kw">new</span> <span class="cl">ArrayList</span><span class="op">&lt;&gt;</span>(<span class="cl">List</span>.<span class="fn">of</span>(<span class="str">"a"</span>, <span class="str">"b"</span>, <span class="str">"c"</span>));
+
+<span class="cm">// ✅ Unified API now!</span>
+list.<span class="fn">getFirst</span>();                   <span class="cm">// "a"  — NEW uniform method</span>
+list.<span class="fn">getLast</span>();                    <span class="cm">// "c"  — NEW uniform method</span>
+list.<span class="fn">addFirst</span>(<span class="str">"z"</span>);               <span class="cm">// ["z","a","b","c"]</span>
+list.<span class="fn">addLast</span>(<span class="str">"x"</span>);                <span class="cm">// ["z","a","b","c","x"]</span>
+list.<span class="fn">removeFirst</span>();               <span class="cm">// removes "z"</span>
+list.<span class="fn">removeLast</span>();                <span class="cm">// removes "x"</span>
+<span class="cl">List</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> rev <span class="op">=</span> list.<span class="fn">reversed</span>(); <span class="cm">// ["c","b","a"] — VIEW, not copy!</span>
+
+<span class="cm">// LinkedHashSet now has first/last access!</span>
+<span class="cl">SequencedSet</span><span class="op">&lt;</span><span class="cl">String</span><span class="op">&gt;</span> lhs <span class="op">=</span> <span class="kw">new</span> <span class="cl">LinkedHashSet</span><span class="op">&lt;&gt;</span>(<span class="cl">Set</span>.<span class="fn">of</span>(<span class="str">"x"</span>, <span class="str">"y"</span>, <span class="str">"z"</span>));
+lhs.<span class="fn">getFirst</span>();                   <span class="cm">// first inserted element</span>
+lhs.<span class="fn">getLast</span>();                    <span class="cm">// last inserted element</span>
+
+<span class="cm">// LinkedHashMap sequenced operations</span>
+<span class="cl">LinkedHashMap</span><span class="op">&lt;</span><span class="cl">String</span>, <span class="cl">Integer</span><span class="op">&gt;</span> lhm <span class="op">=</span> <span class="kw">new</span> <span class="cl">LinkedHashMap</span><span class="op">&lt;&gt;</span>();
+lhm.<span class="fn">put</span>(<span class="str">"one"</span>, <span class="nm">1</span>); lhm.<span class="fn">put</span>(<span class="str">"two"</span>, <span class="nm">2</span>); lhm.<span class="fn">put</span>(<span class="str">"three"</span>, <span class="nm">3</span>);
+lhm.<span class="fn">firstEntry</span>().<span class="fn">getKey</span>();        <span class="cm">// "one"</span>
+lhm.<span class="fn">lastEntry</span>().<span class="fn">getValue</span>();       <span class="cm">// 3</span></code></pre>
+    </div>
+
+    <!-- 6.3 Collection Hierarchy after Java 21 -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num tn-orange">3</span>
+        Updated Collection Hierarchy (Java 21)
+      </div>
+
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:10px; padding:20px; font-family:monospace; font-size:13px; line-height:1.8; color:var(--muted);">
+        <span style="color:#e5c07b;">Iterable</span><br>
+        &nbsp;&nbsp;└── <span style="color:#e5c07b;">Collection</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:#fb923c; font-weight:700;">SequencedCollection</span> <span style="color:#5c6370;">← NEW Java 21</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── List <span style="color:#5c6370;">(ArrayList, LinkedList)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── Deque <span style="color:#5c6370;">(ArrayDeque, LinkedList)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:#fb923c; font-weight:700;">SequencedSet</span> <span style="color:#5c6370;">← NEW Java 21</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── LinkedHashSet<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── SortedSet (TreeSet)<br>
+        <br>
+        <span style="color:#e5c07b;">Map</span><br>
+        &nbsp;&nbsp;└── <span style="color:#fb923c; font-weight:700;">SequencedMap</span> <span style="color:#5c6370;">← NEW Java 21</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── LinkedHashMap<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── SortedMap (TreeMap)
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════════════════╗ -->
+  <!-- ║  SECTION 7: VIRTUAL THREADS              ║ -->
+  <!-- ╚══════════════════════════════════════════╝ -->
+  <section class="section" id="s7">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(78,205,196,0.12);">🧵</div>
+      <div class="section-title-wrap">
+        <h2>7. Virtual Threads <span class="new-label">Java 21 — Stable</span></h2>
+        <p>Project Loom — Revolutionary concurrency for high-throughput apps</p>
+      </div>
+    </div>
+
+    <!-- 7.1 The Problem -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(78,205,196,0.15); color:#4ecdc4;">1</span>
+        The Problem with Platform Threads (Before Virtual Threads)
+      </div>
+
+      <div class="two-col">
+        <div class="info-box ib-red">
+          <div class="ib-icon">❌</div>
+          <div>
+            <strong>Platform Threads (Old)</strong>
+            <ul style="margin-top:8px; padding-left:16px; color:#fca5a5;">
+              <li>1 Java thread = 1 OS thread</li>
+              <li>Each thread ~1-2MB stack memory</li>
+              <li>OS can manage ~thousands of threads</li>
+              <li>Blocking I/O wastes OS thread resources</li>
+              <li>Thread creation is expensive (slow)</li>
+              <li>Cannot handle millions of concurrent requests</li>
+            </ul>
+          </div>
+        </div>
+        <div class="info-box ib-green">
+          <div class="ib-icon">✅</div>
+          <div>
+            <strong>Virtual Threads (New)</strong>
+            <ul style="margin-top:8px; padding-left:16px; color:#a7f3d0;">
+              <li>Managed by JVM, not OS</li>
+              <li>Very small memory footprint (~few KB)</li>
+              <li>JVM can handle millions of virtual threads</li>
+              <li>Blocking unmounts from carrier thread</li>
+              <li>Creation is nearly free (very fast)</li>
+              <li>True high-throughput I/O concurrency</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box ib-blue">
+        <div class="ib-icon">💡</div>
+        <div><strong>Key Mental Model:</strong> Virtual threads are scheduled onto a small pool of <em>carrier threads</em> (platform threads).
+        When a virtual thread blocks on I/O, it <strong>unmounts</strong> from its carrier thread, freeing that carrier to run other virtual threads.
+        When I/O completes, it <strong>remounts</strong> on any available carrier thread.</div>
+      </div>
+    </div>
+
+    <!-- 7.2 Creating Virtual Threads -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(78,205,196,0.15); color:#4ecdc4;">2</span>
+        Creating & Using Virtual Threads — All Ways
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#4ecdc4"></span>Java 21 — Virtual Threads All Creation Methods</div>
+      <pre><code><span class="cm">// ── Method 1: Thread.ofVirtual().start() ──────────────────────</span>
+<span class="cl">Thread</span> vt <span class="op">=</span> <span class="cl">Thread</span>.<span class="fn">ofVirtual</span>()
+    .<span class="fn">name</span>(<span class="str">"my-virtual-thread"</span>)
+    .<span class="fn">start</span>(() <span class="op">-></span> <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"Running in virtual thread!"</span>));
+
+<span class="cm">// ── Method 2: Thread.startVirtualThread() — simplest ──────────</span>
+<span class="cl">Thread</span> vt2 <span class="op">=</span> <span class="cl">Thread</span>.<span class="fn">startVirtualThread</span>(() <span class="op">-></span> {
+    <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="str">"Virtual: "</span> <span class="op">+</span> <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">isVirtual</span>());
+});
+
+<span class="cm">// ── Method 3: Executors.newVirtualThreadPerTaskExecutor() ──────</span>
+<span class="cm">// Best for server applications — one virtual thread per task</span>
+<span class="kw">try</span> (<span class="cl">ExecutorService</span> executor <span class="op">=</span> <span class="cl">Executors</span>.<span class="fn">newVirtualThreadPerTaskExecutor</span>()) {
+    <span class="cm">// Submitting 1 million tasks — completely fine!</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="nm">0</span>; i <span class="op">&lt;</span> <span class="nm">1_000_000</span>; i++) {
+        <span class="kw">final int</span> taskId <span class="op">=</span> i;
+        executor.<span class="fn">submit</span>(() <span class="op">-></span> <span class="fn">processRequest</span>(taskId));
+    }
+} <span class="cm">// auto-closes and waits</span>
+
+<span class="cm">// ── Method 4: Thread.Builder ───────────────────────────────────</span>
+<span class="cl">Thread</span>.<span class="cl">Builder</span> builder <span class="op">=</span> <span class="cl">Thread</span>.<span class="fn">ofVirtual</span>().<span class="fn">name</span>(<span class="str">"worker-"</span>, <span class="nm">0</span>);
+<span class="cl">Thread</span> t1 <span class="op">=</span> builder.<span class="fn">start</span>(() <span class="op">-></span> <span class="fn">task1</span>());   <span class="cm">// worker-0</span>
+<span class="cl">Thread</span> t2 <span class="op">=</span> builder.<span class="fn">start</span>(() <span class="op">-></span> <span class="fn">task2</span>());   <span class="cm">// worker-1</span>
+
+<span class="cm">// ── Check if virtual ──────────────────────────────────────────</span>
+<span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">isVirtual</span>();        <span class="cm">// true inside virtual thread</span>
+
+<span class="cm">// ── Spring Boot 3.2+ — Enable Virtual Threads ─────────────────</span>
+<span class="cm">// application.properties:</span>
+<span class="cm">// spring.threads.virtual.enabled=true</span>
+<span class="cm">// This makes Tomcat use virtual threads for each request!</span></code></pre>
+    </div>
+
+    <!-- 7.3 Virtual Threads vs Platform Threads -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(78,205,196,0.15); color:#4ecdc4;">3</span>
+        Virtual Threads vs Platform Threads — Complete Comparison
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Aspect</th><th>Platform Thread</th><th>Virtual Thread</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Managed by</td>
+            <td>OS</td>
+            <td>JVM</td>
+          </tr>
+          <tr>
+            <td>Stack size</td>
+            <td>~1-2 MB fixed</td>
+            <td><span class="hl-green">Few KB (grows dynamically)</span></td>
+          </tr>
+          <tr>
+            <td>Creation cost</td>
+            <td>Expensive (~1ms)</td>
+            <td><span class="hl-green">Nearly free (~microseconds)</span></td>
+          </tr>
+          <tr>
+            <td>Max count</td>
+            <td>Thousands</td>
+            <td><span class="hl-green">Millions</span></td>
+          </tr>
+          <tr>
+            <td>Blocking I/O</td>
+            <td>Wastes OS thread</td>
+            <td><span class="hl-green">Unmounts, carrier thread freed</span></td>
+          </tr>
+          <tr>
+            <td>Thread pools</td>
+            <td>Necessary (reuse)</td>
+            <td><span class="hl-green">Not needed — create per task</span></td>
+          </tr>
+          <tr>
+            <td>Thread-local</td>
+            <td>Works normally</td>
+            <td><span class="hl-yellow">Use with caution (large # of threads)</span></td>
+          </tr>
+          <tr>
+            <td>synchronized</td>
+            <td>Normal</td>
+            <td><span class="hl-red">Can cause pinning — avoid! Use ReentrantLock</span></td>
+          </tr>
+          <tr>
+            <td>Best for</td>
+            <td>CPU-intensive tasks</td>
+            <td><span class="hl-green">I/O-bound tasks (HTTP, DB, files)</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="info-box ib-yellow">
+        <div class="ib-icon">⚠️</div>
+        <div>
+          <strong>Virtual Thread Pitfalls:</strong>
+          <ul style="margin-top:8px; padding-left:16px; color:#fef08a;">
+            <li><strong>Pinning:</strong> Using <code>synchronized</code> blocks inside virtual threads "pins" them to carrier thread — defeats the purpose. Use <code>ReentrantLock</code> instead.</li>
+            <li><strong>ThreadLocal abuse:</strong> Millions of virtual threads with heavy ThreadLocals = memory explosion. Use <code>ScopedValue</code> (Java 21 preview) instead.</li>
+            <li><strong>CPU-intensive tasks:</strong> Virtual threads don't help for CPU-bound work — platform threads are better.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7.4 Real World Use Case -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(78,205,196,0.15); color:#4ecdc4;">4</span>
+        Virtual Threads — Real World Use Case (Interview Answer)
+      </div>
+
+      <div class="code-label"><span class="lang-dot" style="background:#4ecdc4"></span>Java — Virtual Thread Real-World Example</div>
+      <pre><code><span class="cm">// ── Scenario: Handle 10,000 concurrent HTTP API calls ─────────</span>
+<span class="cm">// Before Virtual Threads — thread pool limited to ~200 threads</span>
+<span class="kw">public class</span> <span class="cl">OldApproach</span> {
+    <span class="kw">private final</span> <span class="cl">ExecutorService</span> pool <span class="op">=</span> <span class="cl">Executors</span>.<span class="fn">newFixedThreadPool</span>(<span class="nm">200</span>);
+
+    <span class="kw">public void</span> <span class="fn">fetchUserData</span>(<span class="cl">List</span><span class="op">&lt;</span><span class="cl">Long</span><span class="op">&gt;</span> userIds) {
+        <span class="cm">// 200 concurrent requests MAX — rest queue up!</span>
+        userIds.<span class="fn">forEach</span>(id <span class="op">-></span> pool.<span class="fn">submit</span>(() <span class="op">-></span> <span class="fn">callExternalApi</span>(id)));
+    }
+}
+
+<span class="cm">// After Virtual Threads — handles all 10,000 concurrently!</span>
+<span class="kw">public class</span> <span class="cl">NewApproach</span> {
+    <span class="kw">public void</span> <span class="fn">fetchUserData</span>(<span class="cl">List</span><span class="op">&lt;</span><span class="cl">Long</span><span class="op">&gt;</span> userIds) {
+        <span class="kw">try</span> (<span class="cl">ExecutorService</span> ex <span class="op">=</span> <span class="cl">Executors</span>.<span class="fn">newVirtualThreadPerTaskExecutor</span>()) {
+            <span class="cm">// 10,000 virtual threads — no problem!</span>
+            userIds.<span class="fn">forEach</span>(id <span class="op">-></span> ex.<span class="fn">submit</span>(() <span class="op">-></span> <span class="fn">callExternalApi</span>(id)));
+        }
+        <span class="cm">// When blocked waiting for HTTP response,</span>
+        <span class="cm">// carrier thread freed to run OTHER virtual threads!</span>
+    }
+}
+
+<span class="cm">// ── Spring Boot 3.2+ — One line to enable ────────────────────</span>
+<span class="cm">// application.properties</span>
+<span class="cm">// spring.threads.virtual.enabled=true</span>
+<span class="cm">// → Tomcat, async, @Async all use virtual threads automatically!</span>
+
+<span class="cm">// ── Structured Concurrency (Java 21 Preview) ──────────────────</span>
+<span class="cm">// Run multiple tasks, wait for all, cancel on failure</span>
+<span class="kw">try</span> (<span class="kw">var</span> scope <span class="op">=</span> <span class="kw">new</span> <span class="cl">StructuredTaskScope</span>.<span class="cl">ShutdownOnFailure</span>()) {
+    <span class="cl">Future</span><span class="op">&lt;</span><span class="cl">User</span><span class="op">&gt;</span>     user  <span class="op">=</span> scope.<span class="fn">fork</span>(() <span class="op">-></span> <span class="fn">fetchUser</span>(userId));
+    <span class="cl">Future</span><span class="op">&lt;</span><span class="cl">Order</span><span class="op">&gt;</span>    order <span class="op">=</span> scope.<span class="fn">fork</span>(() <span class="op">-></span> <span class="fn">fetchOrder</span>(orderId));
+    <span class="cl">Future</span><span class="op">&lt;</span><span class="cl">Product</span><span class="op">&gt;</span>  prod  <span class="op">=</span> scope.<span class="fn">fork</span>(() <span class="op">-></span> <span class="fn">fetchProduct</span>(productId));
+
+    scope.<span class="fn">join</span>();         <span class="cm">// wait for all</span>
+    scope.<span class="fn">throwIfFailed</span>(); <span class="cm">// propagate exception if any failed
+
+    // All 3 ran concurrently as virtual threads!</span>
+    <span class="kw">return</span> <span class="kw">new</span> <span class="cl">Dashboard</span>(user.<span class="fn">get</span>(), order.<span class="fn">get</span>(), prod.<span class="fn">get</span>());
+}</code></pre>
+
+      <div class="interview-tip">
+        <strong>🎯 Interview Answer for "What are Virtual Threads?"</strong>
+        "Virtual threads are JVM-managed lightweight threads introduced in Java 21 as part of Project Loom.
+        Unlike platform threads (which map 1:1 to OS threads), virtual threads are multiplexed onto a small
+        pool of carrier threads. When a virtual thread performs blocking I/O, it unmounts from the carrier thread,
+        freeing it to run other virtual threads. This enables writing simple, readable synchronous-style code
+        that scales to millions of concurrent requests — perfect for I/O-bound applications like REST APIs."
+      </div>
+    </div>
+
+    <!-- 7.5 Comparison Summary -->
+    <div class="card">
+      <div class="card-title">
+        <span class="topic-num" style="background:rgba(78,205,196,0.15); color:#4ecdc4;">5</span>
+        Complete Quick Reference — All Part 9 Topics
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Topic</th><th>Java Version</th><th>Key Point</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Optional</strong></td>
+            <td>Java 8</td>
+            <td>Container for nullable values; use <code>orElseGet</code> over <code>orElse</code> for lazy evaluation</td>
+          </tr>
+          <tr>
+            <td><strong>Serialization</strong></td>
+            <td>Java 1.1</td>
+            <td>Always define <code>serialVersionUID</code>; <code>transient</code> skips fields</td>
+          </tr>
+          <tr>
+            <td><strong>Records</strong></td>
+            <td>Java 16</td>
+            <td>Immutable data carriers; auto-generates constructor, accessors, equals, hashCode, toString</td>
+          </tr>
+          <tr>
+            <td><strong>Sealed Classes</strong></td>
+            <td>Java 17</td>
+            <td>Restricted hierarchy with <code>permits</code>; perfect for exhaustive switch</td>
+          </tr>
+          <tr>
+            <td><strong>Pattern Matching switch</strong></td>
+            <td>Java 21</td>
+            <td>Type patterns + guarded patterns; works with sealed classes</td>
+          </tr>
+          <tr>
+            <td><strong>Sequenced Collections</strong></td>
+            <td>Java 21</td>
+            <td>Unified first/last/reversed API across List, Set, Map</td>
+          </tr>
+          <tr>
+            <td><strong>Virtual Threads</strong></td>
+            <td>Java 21</td>
+            <td>JVM-managed lightweight threads; 1 per task; unmounts on blocking I/O</td>
+          </tr>
+          <tr>
+            <td><strong>Record Patterns</strong></td>
+            <td>Java 21</td>
+            <td>Destructure records in instanceof and switch patterns</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- ════════════════════════════ FOOTER ════════════════════════════ -->
+<footer>
+  <div style="display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap;">
+    <span>📘 Part 09 / 20</span>
+    <span style="color:var(--border);">|</span>
+    <span>Optional Class & Java 21 Features</span>
+    <span style="color:var(--border);">|</span>
+    <span>Java Interview Notes Series 2025</span>
+    <span style="color:var(--border);">|</span>
+    <span>Next → Part 10: Design Patterns</span>
+  </div>
+</footer>
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>

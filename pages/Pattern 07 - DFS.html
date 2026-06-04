@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pattern 07 — DFS: Go Deep, Then Come Back</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css" />
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0f1f2e 40%, #0a1a2a 100%);
+    }
+    .dfs-path {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      background: #010409;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      border: 1px solid #21262d;
+      margin: 12px 0;
+    }
+    .dfs-node {
+      padding: 6px 12px;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 13px;
+      min-width: 36px;
+      text-align: center;
+    }
+    .dfs-node.visited   { background: #1a3a2a; color: #3fb950; border: 2px solid #3fb950; }
+    .dfs-node.current   { background: #1a2a3a; color: #58a6ff; border: 2px solid #58a6ff; }
+    .dfs-node.unvisited { background: #1c2128; color: #8b949e; border: 2px solid #30363d; }
+    .dfs-node.backtrack { background: #2a1a1a; color: #f85149; border: 2px dashed #f85149; }
+    .dfs-arrow { color: #8b949e; font-size: 18px; }
+    .dfs-arrow.back { color: #f85149; }
+    .return-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin: 14px 0;
+    }
+    .return-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .return-card .ret-type {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .ret-bool   { color: #3fb950; }
+    .ret-int    { color: #58a6ff; }
+    .ret-minmax { color: #d29922; }
+    .ret-void   { color: #8b949e; }
+    .maze-visual {
+      display: grid;
+      grid-template-columns: repeat(7, 40px);
+      gap: 3px;
+      margin: 16px auto;
+      width: fit-content;
+    }
+    .maze-cell {
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      font-size: 11px; font-weight: 700;
+    }
+    .mc-wall    { background: #21262d; color: #30363d; }
+    .mc-path    { background: #1a3a2a; color: #3fb950; border: 1px solid #3fb950; }
+    .mc-current { background: #1a2a3a; color: #58a6ff; border: 2px solid #58a6ff; }
+    .mc-back    { background: #2a1a2a; color: #bc8cff; border: 1px dashed #bc8cff; }
+    .mc-start   { background: #d29922; color: #0d1117; font-size:10px;}
+    .mc-end     { background: #3fb950; color: #0d1117; font-size:10px;}
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .app-card {
+      background: #161b22;
+      border-radius: 10px;
+      padding: 18px;
+      border-top: 3px solid;
+    }
+    .app-card.tree   { border-color: #58a6ff; }
+    .app-card.grid   { border-color: #3fb950; }
+    .app-card.graph  { border-color: #bc8cff; }
+    .app-card.state  { border-color: #d29922; }
+    .app-card h4 { margin-top: 0; }
+    .app-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .badge-blue   { background: #1a2a3a; color: #58a6ff; }
+    .badge-green  { background: #1a2a1a; color: #3fb950; }
+    .badge-purple { background: #1a1a2a; color: #bc8cff; }
+    .badge-orange { background: #2a1a00; color: #d29922; }
+    .island-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 44px);
+      gap: 4px;
+      margin: 16px auto;
+      width: fit-content;
+    }
+    .ig-cell {
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      font-size: 12px; font-weight: 700;
+    }
+    .ig-land    { background: #1a3a2a; color: #3fb950; border: 1px solid #3fb950; }
+    .ig-water   { background: #0a1a2a; color: #1a3a4a; }
+    .ig-visited { background: #2a2a1a; color: #d29922; border: 1px solid #d29922; }
+    .ig-current { background: #1a2a3a; color: #58a6ff; border: 2px solid #58a6ff; }
+    .step-visual {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+    .sv-block {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      flex: 1;
+      min-width: 140px;
+    }
+    .sv-block .sv-label {
+      font-size: 10px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- Hamburger -->
+<button id="hamburger" aria-label="Toggle sidebar">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+    <rect y="3"  width="20" height="2" rx="1"/>
+    <rect y="9"  width="20" height="2" rx="1"/>
+    <rect y="15" width="20" height="2" rx="1"/>
+  </svg>
+</button>
+
+<div id="sidebar-overlay"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+      </svg>
+      Pattern 07
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 4px;">
+    <a href="../index.html" style="display:flex;align-items:center;gap:8px;color:#8b949e;font-size:12px;text-decoration:none;padding:8px 10px;border-radius:6px;border:1px solid #21262d;transition:all .2s;" onmouseover="this.style.color='#58a6ff';this.style.borderColor='#58a6ff'" onmouseout="this.style.color='#8b949e';this.style.borderColor='#21262d'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Home — All Patterns
+    </a>
+  </div>
+
+  <div style="padding: 8px 16px; font-size:10px; color:#6e7681; text-transform:uppercase; letter-spacing:1px; margin-top:8px;">Navigation</div>
+
+  <a href="#mental-model"      class="toc-link">🧠 Mental Model</a>
+  <a href="#recursive-dfs"     class="toc-link">🔁 Recursive Templates</a>
+  <a href="#iterative-dfs"     class="toc-link">📦 Iterative Template</a>
+  <a href="#app-tree"          class="toc-link">🌳 A) Tree DFS</a>
+  <a href="#app-grid"          class="toc-link">🗺️ B) Grid DFS</a>
+  <a href="#app-graph"         class="toc-link">🔗 C) Graph DFS</a>
+  <a href="#app-state"         class="toc-link">🧩 D) State-Space DFS</a>
+  <a href="#visited-array"     class="toc-link">👁️ The Visited Array</a>
+  <a href="#stack-overflow"    class="toc-link">⚠️ Stack Overflow</a>
+  <a href="#return-patterns"   class="toc-link">↩️ Return Value Patterns</a>
+  <a href="#walkthrough"       class="toc-link">🔍 Walkthrough: LC #200</a>
+  <a href="#dfs-vs-backtrack"  class="toc-link">⚖️ DFS vs Backtracking</a>
+  <a href="#practice"          class="toc-link">🎯 Practice Problems</a>
+
+  <div style="padding: 16px; margin-top: auto; border-top: 1px solid #21262d;">
+    <div style="font-size:11px; color:#6e7681; text-align:center;">Pattern Series — PDF #07</div>
+    <div style="font-size:10px; color:#6e7681; text-align:center; margin-top:4px;">DFS Patterns</div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <span class="tag tag-blue">Pattern 07</span>
+      <span class="tag tag-cyan">DFS</span>
+      <span class="tag tag-green">Trees</span>
+      <span class="tag tag-purple">Graphs</span>
+      <span class="tag tag-orange">Grids</span>
+    </div>
+    <h1 style="font-size:2.4rem; margin-bottom:12px; background: linear-gradient(135deg, #58a6ff, #39d5d3); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+      Pattern 07: DFS — Go Deep, Then Come Back
+    </h1>
+    <p style="color:#8b949e; font-size:16px; max-width:640px; line-height:1.7;">
+      The most versatile traversal algorithm you'll ever use. Commit to a path, explore it completely, then backtrack. Rinse. Repeat.
+    </p>
+    <div class="hero-badges" style="margin-top:20px;">
+      <div class="stat-badge"><span class="stat-num">4</span><span class="stat-label">App Categories</span></div>
+      <div class="stat-badge"><span class="stat-num">3</span><span class="stat-label">Code Templates</span></div>
+      <div class="stat-badge"><span class="stat-num">15</span><span class="stat-label">Practice Problems</span></div>
+      <div class="stat-badge"><span class="stat-num">🔴🟡🟢</span><span class="stat-label">All Difficulties</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ PART 1 -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-blue);">01</div>
+    <div>
+      <h2>The Core Idea</h2>
+      <p>Mental model, recursion stack, and the three templates you must internalize.</p>
+    </div>
+  </div>
+
+  <!-- MENTAL MODEL -->
+  <div class="section" id="mental-model">
+    <div class="section-header">
+      <h3>🧠 Mental Model: Exploring a Maze</h3>
+    </div>
+
+    <div class="card">
+      <p>Imagine you're inside a maze. You pick a direction and <strong>keep walking</strong>. Hit a dead end? Turn around. Try the next direction from where you were. Keep going until every path from every junction is explored.</p>
+      <p>That's DFS. One recursive call = one step forward. Returning from a call = stepping back. The <strong>call stack IS your trail of breadcrumbs</strong>.</p>
+    </div>
+
+    <div class="maze-visual">
+      <div class="maze-cell mc-start">START</div>
+      <div class="maze-cell mc-path">→</div>
+      <div class="maze-cell mc-path">→</div>
+      <div class="maze-cell mc-current">👤</div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-path">↑</div>
+      <div class="maze-cell mc-path">→</div>
+      <div class="maze-cell mc-path">→</div>
+      <div class="maze-cell mc-back">✗</div>
+
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-path">↑</div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-path">↑</div>
+      <div class="maze-cell mc-wall"></div>
+      <div class="maze-cell mc-end">END</div>
+      <div class="maze-cell mc-path">←</div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body"><strong>The Key Mental Model</strong><p>DFS doesn't find the shortest path. It finds <em>a</em> path — or confirms existence — by fully exhausting one direction before trying another. BFS is level-by-level. DFS is depth-first: go as far as possible, then backtrack.</p></div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>What DFS is great at</h4>
+        <ul>
+          <li>Does a path exist? (boolean)</li>
+          <li>Explore all possible states</li>
+          <li>Tree properties (height, diameter)</li>
+          <li>Connected component counting</li>
+          <li>Topological ordering</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>What DFS is NOT for</h4>
+        <ul>
+          <li>Shortest path in unweighted graph → use BFS</li>
+          <li>Minimum steps / levels → BFS</li>
+          <li>Anything "nearest" or "closest" → BFS</li>
+          <li>Level-by-level processing → BFS</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECURSIVE DFS -->
+  <div class="section" id="recursive-dfs">
+    <div class="section-header">
+      <h3>🔁 Recursive DFS Templates</h3>
+    </div>
+
+    <h4>Template A — Tree DFS (no visited needed)</h4>
+    <div class="card">
+      <p>Trees have no cycles. You never visit a node twice. No visited set required. The structure itself prevents revisiting.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Recursive Tree DFS — Universal Template</span>
+        </div>
+        <pre><code><span class="cmt">// TreeNode definition</span>
+<span class="kw">class</span> <span class="type">TreeNode</span> {
+    <span class="kw">int</span> val;
+    <span class="type">TreeNode</span> left, right;
+}
+
+<span class="cmt">// ─── 1. VOID: just traverse (e.g., print all nodes) ───────────</span>
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="type">TreeNode</span> node) {
+    <span class="kw">if</span> (node == <span class="kw">null</span>) <span class="kw">return</span>;   <span class="cmt">// base case</span>
+    <span class="cmt">// 🔵 PRE-ORDER: process BEFORE recursing</span>
+    <span class="fn">process</span>(node.val);
+    <span class="fn">dfs</span>(node.left);
+    <span class="fn">dfs</span>(node.right);
+    <span class="cmt">// 🟢 POST-ORDER: process AFTER children return</span>
+    <span class="cmt">// process(node.val);  ← move here for post-order</span>
+}
+
+<span class="cmt">// ─── 2. RETURN VALUE: aggregate up the tree ───────────────────</span>
+<span class="kw">int</span> <span class="fn">dfs</span>(<span class="type">TreeNode</span> node) {
+    <span class="kw">if</span> (node == <span class="kw">null</span>) <span class="kw">return</span> <span class="num">0</span>;  <span class="cmt">// base case — identity value</span>
+
+    <span class="kw">int</span> leftResult  = <span class="fn">dfs</span>(node.left);   <span class="cmt">// get child answer</span>
+    <span class="kw">int</span> rightResult = <span class="fn">dfs</span>(node.right);  <span class="cmt">// get child answer</span>
+
+    <span class="cmt">// Combine children results + current node</span>
+    <span class="kw">return</span> <span class="fn">combine</span>(leftResult, rightResult, node.val);
+}
+
+<span class="cmt">// ─── 3. PASS STATE DOWN: carry info from parent ───────────────</span>
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="type">TreeNode</span> node, <span class="kw">int</span> currentSum) {
+    <span class="kw">if</span> (node == <span class="kw">null</span>) <span class="kw">return</span>;
+
+    currentSum += node.val;   <span class="cmt">// augment state with current node</span>
+
+    <span class="kw">if</span> (node.left == <span class="kw">null</span> && node.right == <span class="kw">null</span>) {
+        <span class="cmt">// 🍃 leaf node — evaluate accumulated state</span>
+        <span class="fn">evaluateLeaf</span>(currentSum);
+        <span class="kw">return</span>;
+    }
+
+    <span class="fn">dfs</span>(node.left,  currentSum);
+    <span class="fn">dfs</span>(node.right, currentSum);
+}</code></pre>
+      </div>
+    </div>
+
+    <h4>Template B — Graph DFS (visited set required)</h4>
+    <div class="card">
+      <p>Graphs have cycles. Without marking visited nodes, you loop forever. A <code>boolean[] visited</code> or a <code>Set&lt;Integer&gt;</code> prevents re-entering nodes.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Recursive Graph DFS — with visited tracking</span>
+        </div>
+        <pre><code><span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> node, <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj, <span class="kw">boolean</span>[] visited) {
+    visited[node] = <span class="kw">true</span>;          <span class="cmt">// mark BEFORE recursing</span>
+    <span class="fn">process</span>(node);
+
+    <span class="kw">for</span> (<span class="kw">int</span> neighbor : adj.<span class="fn">get</span>(node)) {
+        <span class="kw">if</span> (!visited[neighbor]) {     <span class="cmt">// skip already-visited</span>
+            <span class="fn">dfs</span>(neighbor, adj, visited);
+        }
+    }
+    <span class="cmt">// node fully explored — no cleanup needed for simple DFS</span>
+    <span class="cmt">// (backtracking would undo state here)</span>
+}
+
+<span class="cmt">// ── Caller for connected components ───────────────────────────</span>
+<span class="kw">int</span> <span class="fn">countComponents</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] edges) {
+    <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) adj.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+    <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+        adj.<span class="fn">get</span>(e[<span class="num">0</span>]).<span class="fn">add</span>(e[<span class="num">1</span>]);
+        adj.<span class="fn">get</span>(e[<span class="num">1</span>]).<span class="fn">add</span>(e[<span class="num">0</span>]);
+    }
+    <span class="kw">boolean</span>[] visited = <span class="kw">new boolean</span>[n];
+    <span class="kw">int</span> count = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="kw">if</span> (!visited[i]) {
+            <span class="fn">dfs</span>(i, adj, visited);
+            count++;            <span class="cmt">// new component found</span>
+        }
+    }
+    <span class="kw">return</span> count;
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ITERATIVE DFS -->
+  <div class="section" id="iterative-dfs">
+    <div class="section-header">
+      <h3>📦 Iterative DFS Template (Explicit Stack)</h3>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body"><strong>When to go iterative</strong><p>Java's default stack depth is ~500-1000 frames. A tree with 100,000 nodes as a linked list will cause <code>StackOverflowError</code>. Switch to iterative DFS when: input size > 10,000 nodes, the structure could be a line (worst case), or the problem explicitly says deep inputs.</p></div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Iterative DFS — explicit stack replaces call stack</span>
+      </div>
+      <pre><code><span class="cmt">// ─── Graph DFS (iterative) ─────────────────────────────────────</span>
+<span class="kw">void</span> <span class="fn">dfsIterative</span>(<span class="kw">int</span> start, <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj) {
+    <span class="kw">boolean</span>[] visited = <span class="kw">new boolean</span>[adj.<span class="fn">size</span>()];
+    <span class="type">Deque</span>&lt;<span class="type">Integer</span>&gt; stack = <span class="kw">new</span> <span class="type">ArrayDeque</span>&lt;&gt;();
+
+    stack.<span class="fn">push</span>(start);
+
+    <span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span> node = stack.<span class="fn">pop</span>();
+
+        <span class="kw">if</span> (visited[node]) <span class="kw">continue</span>;   <span class="cmt">// skip if already visited</span>
+        visited[node] = <span class="kw">true</span>;
+        <span class="fn">process</span>(node);
+
+        <span class="kw">for</span> (<span class="kw">int</span> neighbor : adj.<span class="fn">get</span>(node)) {
+            <span class="kw">if</span> (!visited[neighbor]) {
+                stack.<span class="fn">push</span>(neighbor);  <span class="cmt">// push, not recurse</span>
+            }
+        }
+    }
+}
+
+<span class="cmt">// ─── Tree DFS iterative (pre-order) ──────────────────────────</span>
+<span class="kw">void</span> <span class="fn">treePreOrder</span>(<span class="type">TreeNode</span> root) {
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span>;
+    <span class="type">Deque</span>&lt;<span class="type">TreeNode</span>&gt; stack = <span class="kw">new</span> <span class="type">ArrayDeque</span>&lt;&gt;();
+    stack.<span class="fn">push</span>(root);
+
+    <span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>()) {
+        <span class="type">TreeNode</span> node = stack.<span class="fn">pop</span>();
+        <span class="fn">process</span>(node.val);             <span class="cmt">// pre-order: process first</span>
+        <span class="kw">if</span> (node.right != <span class="kw">null</span>) stack.<span class="fn">push</span>(node.right); <span class="cmt">// right first</span>
+        <span class="kw">if</span> (node.left  != <span class="kw">null</span>) stack.<span class="fn">push</span>(node.left);  <span class="cmt">// left on top</span>
+    }   <span class="cmt">// ↑ left pops first = correct pre-order</span>
+}</code></pre>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body"><strong>Right before Left</strong><p>When pushing children onto the stack, push <strong>right first, then left</strong>. Since stacks are LIFO, left gets processed first — matching recursive pre-order traversal.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ PART 2 -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-green);">02</div>
+    <div>
+      <h2>Four Application Categories</h2>
+      <p>DFS applied to Trees, Grids, Graphs, and State-Space problems.</p>
+    </div>
+  </div>
+
+  <!-- APP: TREE -->
+  <div class="section" id="app-tree">
+    <div class="section-header">
+      <h3>🌳 Category A — Tree DFS</h3>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">🎯</div>
+      <div class="body"><strong>Recognition Signal</strong><p>The problem involves a binary tree. You're computing something about paths, nodes, or structure. Think: "I need info from my children before I can answer for myself." That's post-order DFS.</p></div>
+    </div>
+
+    <h4>Pattern: Path Sum Problems</h4>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #112 Path Sum — pass state DOWN the tree</span>
+      </div>
+      <pre><code><span class="kw">public boolean</span> <span class="fn">hasPathSum</span>(<span class="type">TreeNode</span> root, <span class="kw">int</span> targetSum) {
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return false</span>;
+
+    <span class="cmt">// At leaf: check remaining sum</span>
+    <span class="kw">if</span> (root.left == <span class="kw">null</span> && root.right == <span class="kw">null</span>) {
+        <span class="kw">return</span> root.val == targetSum;
+    }
+
+    <span class="cmt">// Recurse: subtract current node from target</span>
+    <span class="kw">return</span> <span class="fn">hasPathSum</span>(root.left,  targetSum - root.val)
+        || <span class="fn">hasPathSum</span>(root.right, targetSum - root.val);
+}</code></pre>
+    </div>
+
+    <h4>Pattern: Tree Diameter (result passes UP)</h4>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #543 Diameter of Binary Tree — global max updated at each node</span>
+      </div>
+      <pre><code><span class="kw">int</span> maxDiameter = <span class="num">0</span>;  <span class="cmt">// class-level result tracker</span>
+
+<span class="kw">public int</span> <span class="fn">diameterOfBinaryTree</span>(<span class="type">TreeNode</span> root) {
+    <span class="fn">depth</span>(root);
+    <span class="kw">return</span> maxDiameter;
+}
+
+<span class="kw">private int</span> <span class="fn">depth</span>(<span class="type">TreeNode</span> node) {
+    <span class="kw">if</span> (node == <span class="kw">null</span>) <span class="kw">return</span> <span class="num">0</span>;
+
+    <span class="kw">int</span> leftDepth  = <span class="fn">depth</span>(node.left);
+    <span class="kw">int</span> rightDepth = <span class="fn">depth</span>(node.right);
+
+    <span class="cmt">// Diameter through THIS node = leftDepth + rightDepth</span>
+    maxDiameter = <span class="type">Math</span>.<span class="fn">max</span>(maxDiameter, leftDepth + rightDepth);
+
+    <span class="cmt">// Return HEIGHT (what parent needs)</span>
+    <span class="kw">return</span> <span class="num">1</span> + <span class="type">Math</span>.<span class="fn">max</span>(leftDepth, rightDepth);
+}</code></pre>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎤</div>
+      <div class="body"><strong>Interview Trap — Diameter</strong><p>The diameter might NOT pass through the root. A global variable updated at every node handles this. This pattern — "function returns one thing, but computes another along the way" — appears in many tree problems.</p></div>
+    </div>
+  </div>
+
+  <!-- APP: GRID -->
+  <div class="section" id="app-grid">
+    <div class="section-header">
+      <h3>🗺️ Category B — Grid DFS</h3>
+    </div>
+
+    <div class="card">
+      <p>A 2D grid is just a graph where each cell connects to 4 neighbors (up, down, left, right). DFS on a grid uses the grid itself as the visited tracker — you modify the cell to mark it visited, then optionally restore it.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Grid DFS — Universal Template (mark + explore + optional restore)</span>
+      </div>
+      <pre><code><span class="kw">private static final int</span>[][] <span class="const">DIRS</span> = {{<span class="num">0</span>,<span class="num">1</span>},{<span class="num">0</span>,<span class="num">-1</span>},{<span class="num">1</span>,<span class="num">0</span>},{<span class="num">-1</span>,<span class="num">0</span>}};
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">char</span>[][] grid, <span class="kw">int</span> r, <span class="kw">int</span> c) {
+    <span class="cmt">// Boundary check + cell validity check</span>
+    <span class="kw">if</span> (r &lt; <span class="num">0</span> || r &gt;= grid.length ||
+        c &lt; <span class="num">0</span> || c &gt;= grid[<span class="num">0</span>].length ||
+        grid[r][c] != <span class="str">'1'</span>) <span class="kw">return</span>;
+
+    grid[r][c] = <span class="str">'0'</span>;  <span class="cmt">// mark visited (in-place)</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span>[] dir : <span class="const">DIRS</span>) {
+        <span class="fn">dfs</span>(grid, r + dir[<span class="num">0</span>], c + dir[<span class="num">1</span>]);
+    }
+    <span class="cmt">// grid[r][c] = '1'; ← ONLY if you need to restore (backtracking)</span>
+}</code></pre>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body"><strong>In-place vs Separate Visited</strong><p>For island/flood-fill problems, modifying the grid is fine — you own the data. If the problem says "don't modify input" or you need multiple DFS calls from the same grid, use a <code>boolean[][] visited</code>.</p></div>
+    </div>
+  </div>
+
+  <!-- APP: GRAPH -->
+  <div class="section" id="app-graph">
+    <div class="section-header">
+      <h3>🔗 Category C — Graph DFS</h3>
+    </div>
+
+    <h4>Cycle Detection in Directed Graph</h4>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #207 Course Schedule — detect cycle with 3-color marking</span>
+      </div>
+      <pre><code><span class="cmt">// Colors: 0=unvisited, 1=in current path, 2=fully processed</span>
+<span class="kw">int</span>[] color;
+
+<span class="kw">boolean</span> <span class="fn">hasCycle</span>(<span class="kw">int</span> node, <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj) {
+    color[node] = <span class="num">1</span>;   <span class="cmt">// 🔵 currently exploring this node</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> next : adj.<span class="fn">get</span>(node)) {
+        <span class="kw">if</span> (color[next] == <span class="num">1</span>) <span class="kw">return true</span>;    <span class="cmt">// back edge → cycle!</span>
+        <span class="kw">if</span> (color[next] == <span class="num">0</span> && <span class="fn">hasCycle</span>(next, adj)) <span class="kw">return true</span>;
+    }
+
+    color[node] = <span class="num">2</span>;   <span class="cmt">// 🟢 done — all paths from here are safe</span>
+    <span class="kw">return false</span>;
+}</code></pre>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>✅ Undirected Graph Cycle</h4>
+        <ul>
+          <li>Simple <code>visited[]</code> is enough</li>
+          <li>Track parent to avoid going back on the same edge</li>
+          <li>If you reach a visited node (not parent) → cycle</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h4>⚡ Directed Graph Cycle</h4>
+        <ul>
+          <li>Need 3 states: unvisited / in-stack / done</li>
+          <li>Only a "back edge" (to in-stack node) means cycle</li>
+          <li>Cross edges and forward edges are NOT cycles</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP: STATE SPACE -->
+  <div class="section" id="app-state">
+    <div class="section-header">
+      <h3>🧩 Category D — State-Space DFS</h3>
+    </div>
+
+    <div class="card">
+      <p>Some problems aren't on an explicit graph — the "graph" is virtual. Each state is a node; valid transitions are edges. DFS explores this state space. Add memoization to avoid recomputing states.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #329 Longest Increasing Path in Matrix — DFS + memo</span>
+      </div>
+      <pre><code><span class="kw">int</span>[][] memo;
+<span class="kw">int</span>[][] matrix;
+<span class="kw">int</span>[] dr = {<span class="num">0</span>, <span class="num">0</span>, <span class="num">1</span>, <span class="num">-1</span>};
+<span class="kw">int</span>[] dc = {<span class="num">1</span>, <span class="num">-1</span>, <span class="num">0</span>, <span class="num">0</span>};
+
+<span class="kw">public int</span> <span class="fn">longestIncreasingPath</span>(<span class="kw">int</span>[][] matrix) {
+    <span class="kw">int</span> m = matrix.length, n = matrix[<span class="num">0</span>].length;
+    <span class="kw">this</span>.matrix = matrix;
+    memo = <span class="kw">new int</span>[m][n];   <span class="cmt">// 0 = not yet computed</span>
+    <span class="kw">int</span> ans = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> r = <span class="num">0</span>; r &lt; m; r++)
+        <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; n; c++)
+            ans = <span class="type">Math</span>.<span class="fn">max</span>(ans, <span class="fn">dfs</span>(r, c));
+    <span class="kw">return</span> ans;
+}
+
+<span class="kw">int</span> <span class="fn">dfs</span>(<span class="kw">int</span> r, <span class="kw">int</span> c) {
+    <span class="kw">if</span> (memo[r][c] != <span class="num">0</span>) <span class="kw">return</span> memo[r][c];  <span class="cmt">// cache hit</span>
+    <span class="kw">int</span> best = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> d = <span class="num">0</span>; d &lt; <span class="num">4</span>; d++) {
+        <span class="kw">int</span> nr = r + dr[d], nc = c + dc[d];
+        <span class="kw">if</span> (nr &gt;= <span class="num">0</span> && nr &lt; matrix.length &&
+            nc &gt;= <span class="num">0</span> && nc &lt; matrix[<span class="num">0</span>].length &&
+            matrix[nr][nc] &gt; matrix[r][c]) {       <span class="cmt">// strictly increasing</span>
+            best = <span class="type">Math</span>.<span class="fn">max</span>(best, <span class="num">1</span> + <span class="fn">dfs</span>(nr, nc));
+        }
+    }
+    <span class="kw">return</span> memo[r][c] = best;  <span class="cmt">// cache and return</span>
+}</code></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body"><strong>Why no visited array here?</strong><p>The "strictly increasing" constraint guarantees you never revisit a cell — you can only move to larger values. When a state-space DFS has a natural ordering that prevents cycles, no visited tracking is needed. Memo replaces visited here.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ PART 3 -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-purple);">03</div>
+    <div>
+      <h2>Critical Mechanics</h2>
+      <p>Visited arrays, stack overflow, and what to return from recursive calls.</p>
+    </div>
+  </div>
+
+  <!-- VISITED ARRAY -->
+  <div class="section" id="visited-array">
+    <div class="section-header">
+      <h3>👁️ The Visited Array — When Needed and When Not</h3>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Structure</th><th>Cycles possible?</th><th>Visited needed?</th><th>Alternative</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Binary Tree</td>
+            <td>❌ No</td>
+            <td><span class="pill pill-green">Never</span></td>
+            <td>Tree structure prevents revisit</td>
+          </tr>
+          <tr>
+            <td>Grid (flood fill)</td>
+            <td>✅ Yes (4 neighbors)</td>
+            <td><span class="pill pill-orange">Often in-place</span></td>
+            <td>Modify grid cell value to mark visited</td>
+          </tr>
+          <tr>
+            <td>Undirected Graph</td>
+            <td>✅ Yes</td>
+            <td><span class="pill pill-red">Always</span></td>
+            <td><code>boolean[] visited</code></td>
+          </tr>
+          <tr>
+            <td>Directed Graph (simple)</td>
+            <td>✅ Yes</td>
+            <td><span class="pill pill-red">Always</span></td>
+            <td><code>boolean[] visited</code></td>
+          </tr>
+          <tr>
+            <td>Directed Graph (cycle detection)</td>
+            <td>✅ Yes</td>
+            <td><span class="pill pill-red">3-color array</span></td>
+            <td><code>int[] color</code> (0/1/2)</td>
+          </tr>
+          <tr>
+            <td>State-space w/ natural order</td>
+            <td>❌ By constraint</td>
+            <td><span class="pill pill-blue">Memo instead</span></td>
+            <td>Memoization prevents redundant work</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p><strong>Rule of thumb:</strong> Ask "can I reach the same node twice by following valid moves?" If yes → need visited. Trees: structurally no. Graphs: structurally yes. Grids: yes unless constrained.</p>
+    </div>
+  </div>
+
+  <!-- STACK OVERFLOW -->
+  <div class="section" id="stack-overflow">
+    <div class="section-header">
+      <h3>⚠️ Recursion Depth & Stack Overflow</h3>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>Java Default Stack Size</h4>
+        <ul>
+          <li>~500–1000 recursive calls (JVM default)</li>
+          <li>Configurable via <code>-Xss4m</code> flag</li>
+          <li>Each call frame: local vars + return addr</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4>Worst Case Inputs</h4>
+        <ul>
+          <li>Linked-list-shaped tree (depth = N)</li>
+          <li>Linear chain graph (all nodes in a path)</li>
+          <li>N×1 grid (tall thin grid)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="banner banner-red">
+      <h4>⚠️ Stack Overflow Decision Rule</h4>
+      <p>If N > 10,000 and the input could be degenerate (skewed tree / chain graph), <strong>switch to iterative DFS</strong>. In interviews, mention this awareness — it signals seniority. Say: "I'd use iterative DFS here to avoid stack overflow on large inputs."</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Check constraints</div>
+          <div class="step-desc">N ≤ 1000? Recursive is fine. N ≤ 100,000? Consider iterative.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Check tree shape</div>
+          <div class="step-desc">"Balanced binary tree" → max depth is O(log N), safe recursively. "Binary tree" (no balanced guarantee) → could be O(N) depth.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Switch to explicit stack</div>
+          <div class="step-desc">Replace recursion with <code>Deque&lt;TreeNode&gt;</code>. Same logic, no JVM stack risk.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RETURN VALUE PATTERNS -->
+  <div class="section" id="return-patterns">
+    <div class="section-header">
+      <h3>↩️ Return Value Patterns</h3>
+    </div>
+
+    <div class="card">
+      <p>The <strong>return type of your DFS function tells you the problem type</strong>. Recognize the return type pattern first — then the solution structure becomes obvious.</p>
+    </div>
+
+    <div class="return-grid">
+      <div class="return-card">
+        <div class="ret-type ret-bool">Returns: boolean</div>
+        <strong>Problem type:</strong> Existence check
+        <ul style="margin-top:8px; font-size:13px;">
+          <li>Does path exist?</li>
+          <li>Is tree balanced?</li>
+          <li>Can we reach target?</li>
+        </ul>
+        <div style="margin-top:10px; font-size:12px; color:#6e7681;">Base case: <code>return target reached</code></div>
+      </div>
+      <div class="return-card">
+        <div class="ret-type ret-int">Returns: int (count/depth)</div>
+        <strong>Problem type:</strong> Measurement / aggregation
+        <ul style="margin-top:8px; font-size:13px;">
+          <li>Tree height / depth</li>
+          <li>Number of nodes in subtree</li>
+          <li>Count of valid paths</li>
+        </ul>
+        <div style="margin-top:10px; font-size:12px; color:#6e7681;">Base case: <code>return 0</code> (null node)</div>
+      </div>
+      <div class="return-card">
+        <div class="ret-type ret-minmax">Returns: int (min/max)</div>
+        <strong>Problem type:</strong> Optimization over subtree
+        <ul style="margin-top:8px; font-size:13px;">
+          <li>Max path sum</li>
+          <li>Minimum depth</li>
+          <li>Diameter / longest path</li>
+        </ul>
+        <div style="margin-top:10px; font-size:12px; color:#6e7681;">Pattern: global max + return height</div>
+      </div>
+      <div class="return-card">
+        <div class="ret-type ret-void">Returns: void</div>
+        <strong>Problem type:</strong> Side-effect traversal
+        <ul style="margin-top:8px; font-size:13px;">
+          <li>Collect all paths into list</li>
+          <li>Mark cells visited</li>
+          <li>Fill / flood connected region</li>
+        </ul>
+        <div style="margin-top:10px; font-size:12px; color:#6e7681;">Result stored in class-level variable</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ PART 4 -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-green);">04</div>
+    <div>
+      <h2>Walkthrough + Conceptual Boundary</h2>
+      <p>Deep dive on LC #200, then clearing up DFS vs Backtracking.</p>
+    </div>
+  </div>
+
+  <!-- WALKTHROUGH -->
+  <div class="section" id="walkthrough">
+    <div class="section-header">
+      <h3>🔍 Walkthrough: <a href="https://leetcode.com/problems/number-of-islands/" target="_blank" style="color:#58a6ff;">LC #200 — Number of Islands</a> 🟡</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Problem</h4>
+      <p>Given a 2D grid of <code>'1'</code> (land) and <code>'0'</code> (water), count the number of islands. An island is surrounded by water and formed by connecting adjacent lands horizontally or vertically.</p>
+    </div>
+
+    <h4>Input Grid</h4>
+    <div class="island-grid">
+      <div class="ig-cell ig-land">1</div>
+      <div class="ig-cell ig-land">1</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+
+      <div class="ig-cell ig-land">1</div>
+      <div class="ig-cell ig-land">1</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-land">1</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-water">0</div>
+      <div class="ig-cell ig-land">1</div>
+      <div class="ig-cell ig-land">1</div>
+    </div>
+    <p style="text-align:center; color:#8b949e; font-size:12px; margin-top:4px;">Answer: 3 islands</p>
+
+    <h4>Step-by-Step Reasoning</h4>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Scan the grid cell by cell</div>
+          <div class="step-desc">Outer loop: every (r, c). When you find a <code>'1'</code>, you've found a NEW island. Increment counter.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">DFS to sink the entire island</div>
+          <div class="step-desc">From (r, c), DFS in 4 directions. Change every connected <code>'1'</code> to <code>'0'</code>. This marks the whole island visited in-place.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Continue scanning</div>
+          <div class="step-desc">When scan finds a <code>'1'</code> again, it's a new, unvisited island (all previous islands are now <code>'0'</code>). Increment and DFS again.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #200 — Complete Solution</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="type">Solution</span> {
+    <span class="kw">private static final int</span>[][] <span class="const">DIRS</span> = {{<span class="num">0</span>,<span class="num">1</span>},{<span class="num">0</span>,<span class="num">-1</span>},{<span class="num">1</span>,<span class="num">0</span>},{<span class="num">-1</span>,<span class="num">0</span>}};
+
+    <span class="kw">public int</span> <span class="fn">numIslands</span>(<span class="kw">char</span>[][] grid) {
+        <span class="kw">int</span> count = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> r = <span class="num">0</span>; r &lt; grid.length; r++) {
+            <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; grid[<span class="num">0</span>].length; c++) {
+                <span class="kw">if</span> (grid[r][c] == <span class="str">'1'</span>) {
+                    count++;              <span class="cmt">// found new island</span>
+                    <span class="fn">dfs</span>(grid, r, c);  <span class="cmt">// sink all connected land</span>
+                }
+            }
+        }
+        <span class="kw">return</span> count;
+    }
+
+    <span class="kw">private void</span> <span class="fn">dfs</span>(<span class="kw">char</span>[][] grid, <span class="kw">int</span> r, <span class="kw">int</span> c) {
+        <span class="kw">if</span> (r &lt; <span class="num">0</span> || r &gt;= grid.length ||
+            c &lt; <span class="num">0</span> || c &gt;= grid[<span class="num">0</span>].length ||
+            grid[r][c] != <span class="str">'1'</span>) <span class="kw">return</span>;
+
+        grid[r][c] = <span class="str">'0'</span>;   <span class="cmt">// sink — prevents revisit</span>
+
+        <span class="kw">for</span> (<span class="kw">int</span>[] dir : <span class="const">DIRS</span>) {
+            <span class="fn">dfs</span>(grid, r + dir[<span class="num">0</span>], c + dir[<span class="num">1</span>]);
+        }
+    }
+}
+
+<span class="cmt">// Time:  O(m × n)  — every cell visited at most once
+// Space: O(m × n)  — recursion stack in worst case (all land)</span></code></pre>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎤</div>
+      <div class="body"><strong>Interview Follow-up: "What if you can't modify the input?"</strong><p>Use a separate <code>boolean[][] visited</code>. Same logic, same complexity. The in-place approach is an optimization, not a requirement.</p></div>
+    </div>
+  </div>
+
+  <!-- DFS VS BACKTRACKING -->
+  <div class="section" id="dfs-vs-backtrack">
+    <div class="section-header">
+      <h3>⚖️ DFS vs Backtracking — The Conceptual Boundary</h3>
+    </div>
+
+    <div class="card">
+      <p>This trips up a lot of people. They're related — but not the same thing.</p>
+      <p><strong>DFS is a traversal strategy.</strong> It defines the ORDER in which you visit nodes: deep before wide. It doesn't necessarily undo anything.</p>
+      <p><strong>Backtracking is DFS plus state restoration.</strong> You go deep, you undo your choices when you come back. The state after returning is exactly what it was before you went in.</p>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>🔵 DFS — Explores, doesn't undo</h4>
+        <ul>
+          <li>Mark visited, never unmark</li>
+          <li>In LC #200: sink island cells permanently</li>
+          <li>In graph traversal: mark node visited, stay marked</li>
+          <li>Goal: reach somewhere, count something</li>
+        </ul>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code>grid[r][c] = <span class="str">'0'</span>;       <span class="cmt">// mark</span>
+<span class="fn">dfs</span>(grid, r, c);
+<span class="cmt">// NO restore — permanent</span></code></pre>
+        </div>
+      </div>
+      <div class="compare-card">
+        <h4>🟣 Backtracking — Explores AND undoes</h4>
+        <ul>
+          <li>Make a choice, recurse, UNDO the choice</li>
+          <li>Permutations, combinations, subsets</li>
+          <li>Goal: enumerate ALL valid states</li>
+          <li>State after recursion = state before</li>
+        </ul>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code>grid[r][c] = <span class="str">'0'</span>;       <span class="cmt">// make choice</span>
+<span class="fn">dfs</span>(grid, r, c);
+grid[r][c] = <span class="str">'1'</span>;       <span class="cmt">// UNDO choice</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner banner-purple">
+      <h4>The One-Line Rule</h4>
+      <p>If you need to enumerate all possibilities and the choices you make in one path must not affect sibling paths — that's <strong>backtracking</strong>. If you just need to traverse or check existence — that's <strong>DFS</strong>.</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Problem</th><th>DFS or Backtracking?</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Number of Islands</td><td><span class="pill pill-blue">DFS</span></td><td>Permanent marking is fine</td></tr>
+          <tr><td>All Permutations</td><td><span class="pill pill-purple">Backtracking</span></td><td>Each branch needs clean state</td></tr>
+          <tr><td>Word Search in Grid</td><td><span class="pill pill-purple">Backtracking</span></td><td>Must unmark cells for other paths</td></tr>
+          <tr><td>Connected Components</td><td><span class="pill pill-blue">DFS</span></td><td>Visit once, mark forever</td></tr>
+          <tr><td>Combination Sum</td><td><span class="pill pill-purple">Backtracking</span></td><td>Undo choices to explore other combos</td></tr>
+          <tr><td>Cycle Detection</td><td><span class="pill pill-blue">DFS</span></td><td>Color marking, no undo needed</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ PART 5 -->
+  <div class="part-header">
+    <div class="part-number" style="background: var(--gradient-orange);">05</div>
+    <div>
+      <h2>Practice Problems</h2>
+      <p>15 problems across all DFS categories. Build pattern recognition with deliberate practice.</p>
+    </div>
+  </div>
+
+  <!-- PRACTICE -->
+  <div class="section" id="practice">
+    <div class="section-header">
+      <h3>🎯 Practice Problems — 15 Curated Problems</h3>
+    </div>
+
+    <h4>🌳 Category A — Tree DFS</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Pattern</th><th>What to focus on</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/" target="_blank" style="color:#58a6ff;">LC #104 Maximum Depth of Binary Tree</a></td>
+            <td>🟢 Easy</td>
+            <td>Return value up</td>
+            <td>Simplest DFS — return 1 + max(left, right)</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><a href="https://leetcode.com/problems/path-sum-ii/" target="_blank" style="color:#58a6ff;">LC #113 Path Sum II</a></td>
+            <td>🟡 Medium</td>
+            <td>Collect all paths</td>
+            <td>Pass current path list down, backtrack on return</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><a href="https://leetcode.com/problems/diameter-of-binary-tree/" target="_blank" style="color:#58a6ff;">LC #543 Diameter of Binary Tree</a></td>
+            <td>🟢 Easy</td>
+            <td>Global max + return height</td>
+            <td>The "return one thing, update another" pattern</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><a href="https://leetcode.com/problems/binary-tree-maximum-path-sum/" target="_blank" style="color:#58a6ff;">LC #124 Binary Tree Maximum Path Sum</a></td>
+            <td>🔴 Hard</td>
+            <td>Max path (any node to any node)</td>
+            <td>Path can't fork — take max of one child only for return</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/" target="_blank" style="color:#58a6ff;">LC #236 Lowest Common Ancestor</a></td>
+            <td>🟡 Medium</td>
+            <td>Bottom-up detection</td>
+            <td>If both sides return non-null → current node is LCA</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>🗺️ Category B — Grid DFS</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Pattern</th><th>What to focus on</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>6</td>
+            <td><a href="https://leetcode.com/problems/number-of-islands/" target="_blank" style="color:#58a6ff;">LC #200 Number of Islands</a></td>
+            <td>🟡 Medium</td>
+            <td>Flood fill DFS</td>
+            <td>Master problem — know this cold</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><a href="https://leetcode.com/problems/max-area-of-island/" target="_blank" style="color:#58a6ff;">LC #695 Max Area of Island</a></td>
+            <td>🟡 Medium</td>
+            <td>DFS returns count</td>
+            <td>#200 variant — return size instead of just marking</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><a href="https://leetcode.com/problems/surrounded-regions/" target="_blank" style="color:#58a6ff;">LC #130 Surrounded Regions</a></td>
+            <td>🟡 Medium</td>
+            <td>DFS from border inward</td>
+            <td>Invert thinking — mark SAFE from edges, flip rest</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><a href="https://leetcode.com/problems/pacific-atlantic-water-flow/" target="_blank" style="color:#58a6ff;">LC #417 Pacific Atlantic Water Flow</a></td>
+            <td>🟡 Medium</td>
+            <td>Reverse DFS from edges</td>
+            <td>DFS inward from both oceans, find intersection</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>🔗 Category C — Graph DFS</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Pattern</th><th>What to focus on</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>10</td>
+            <td><a href="https://leetcode.com/problems/course-schedule/" target="_blank" style="color:#58a6ff;">LC #207 Course Schedule</a></td>
+            <td>🟡 Medium</td>
+            <td>Directed cycle detection</td>
+            <td>3-color DFS (0/1/2). Core graph interview problem.</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><a href="https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/" target="_blank" style="color:#58a6ff;">LC #323 Number of Connected Components</a></td>
+            <td>🟡 Medium</td>
+            <td>Component counting</td>
+            <td>DFS from each unvisited node. Also solvable with Union-Find.</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><a href="https://leetcode.com/problems/clone-graph/" target="_blank" style="color:#58a6ff;">LC #133 Clone Graph</a></td>
+            <td>🟡 Medium</td>
+            <td>DFS with node mapping</td>
+            <td>HashMap from old node → new node prevents re-cloning</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>🧩 Category D — State-Space & Advanced DFS</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Key Pattern</th><th>What to focus on</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>13</td>
+            <td><a href="https://leetcode.com/problems/word-search/" target="_blank" style="color:#58a6ff;">LC #79 Word Search</a></td>
+            <td>🟡 Medium</td>
+            <td>Grid DFS + backtracking</td>
+            <td>Must restore grid cell after each DFS — classic backtrack</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><a href="https://leetcode.com/problems/longest-increasing-path-in-a-matrix/" target="_blank" style="color:#58a6ff;">LC #329 Longest Increasing Path in Matrix</a></td>
+            <td>🔴 Hard</td>
+            <td>DFS + memoization</td>
+            <td>No visited array needed — increasing constraint prevents cycles</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><a href="https://leetcode.com/problems/reconstruct-itinerary/" target="_blank" style="color:#58a6ff;">LC #332 Reconstruct Itinerary</a></td>
+            <td>🔴 Hard</td>
+            <td>Eulerian path via DFS</td>
+            <td>DFS with sorted neighbors + post-order path building (Hierholzer)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎤</div>
+      <div class="body">
+        <strong>Interview Preparation Order</strong>
+        <p>Start with #104 → #200 → #207 → #543 → #124. These 5 problems cover all the major DFS patterns. If you can solve them without hints and explain the reasoning, you're ready for DFS questions at any FAANG company.</p>
+      </div>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>🧠 Recognition Cheat Sheet</h4>
+      <p><strong>"Count/check something in a tree"</strong> → Tree DFS, return value propagation upward.<br>
+      <strong>"Count regions / connected areas in grid"</strong> → Grid DFS, flood fill.<br>
+      <strong>"Detect cycle / topological order"</strong> → Graph DFS, 3-color marking.<br>
+      <strong>"All possible paths / combinations"</strong> → Backtracking DFS, undo state.<br>
+      <strong>"Optimal path with overlapping subproblems"</strong> → DFS + memoization.</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- Back to Top -->
+<button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scroll = window.scrollY;
+    const height = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (scroll / height * 100) + '%';
+    document.getElementById('topBtn').style.opacity = scroll > 300 ? '1' : '0';
+  });
+
+  // Hamburger / sidebar
+  const hamburger = document.getElementById('hamburger');
+  const sidebar   = document.getElementById('sidebar');
+  const overlay   = document.getElementById('sidebar-overlay');
+  const main      = document.getElementById('main');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+    hamburger.classList.add('active');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+    hamburger.classList.remove('active');
+  }
+
+  hamburger.addEventListener('click', () =>
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar()
+  );
+  overlay.addEventListener('click', closeSidebar);
+
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Smooth scroll for nav links
+  tocLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.innerWidth < 768) closeSidebar();
+      }
+    });
+  });
+</script>
+</body>
+</html>

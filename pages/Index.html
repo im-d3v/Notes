@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Java Interview Notes — Master Plan</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --card:      #21253a;
+      --border:    #2e3350;
+      --accent1:   #6c63ff;
+      --accent2:   #00d4aa;
+      --accent3:   #ff6b6b;
+      --accent4:   #ffd93d;
+      --accent5:   #4ecdc4;
+      --text:      #e8eaf6;
+      --muted:     #8b92b8;
+      --badge-bg:  #2e3350;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1d27 0%, #12162b 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 40px 24px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      font-size: clamp(24px, 5vw, 42px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent1) 70%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      padding: 20px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── Main Layout ── */
+    main {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* ── Section Header ── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Grid ── */
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+
+    /* ── Topic Card ── */
+    .topic-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topic-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, linear-gradient(90deg, var(--accent1), var(--accent2)));
+    }
+
+    .topic-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent1);
+      box-shadow: 0 12px 32px rgba(108,99,255,0.15);
+    }
+
+    /* Color themes per group */
+    .theme-java    { --card-accent: linear-gradient(90deg, #6c63ff, #a78bfa); }
+    .theme-java8   { --card-accent: linear-gradient(90deg, #00d4aa, #0ea5e9); }
+    .theme-spring  { --card-accent: linear-gradient(90deg, #6db33f, #6ee7b7); }
+    .theme-micro   { --card-accent: linear-gradient(90deg, #f59e0b, #fcd34d); }
+    .theme-test    { --card-accent: linear-gradient(90deg, #ef4444, #fb7185); }
+    .theme-tools   { --card-accent: linear-gradient(90deg, #8b5cf6, #c4b5fd); }
+    .theme-ds      { --card-accent: linear-gradient(90deg, #06b6d4, #67e8f9); }
+    .theme-pattern { --card-accent: linear-gradient(90deg, #ec4899, #f9a8d4); }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .card-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .icon-java    { background: rgba(108,99,255,0.15); }
+    .icon-java8   { background: rgba(0,212,170,0.15); }
+    .icon-spring  { background: rgba(109,179,63,0.15); }
+    .icon-micro   { background: rgba(245,158,11,0.15); }
+    .icon-test    { background: rgba(239,68,68,0.15); }
+    .icon-tools   { background: rgba(139,92,246,0.15); }
+    .icon-ds      { background: rgba(6,182,212,0.15); }
+    .icon-pattern { background: rgba(236,72,153,0.15); }
+
+    .card-meta { flex: 1; }
+
+    .card-part {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Subtopics List ── */
+    .subtopics {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .subtopics li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .subtopics li:hover {
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .subtopics li .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent1);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .dot-green  { background: var(--accent2) !important; }
+    .dot-yellow { background: var(--accent4) !important; }
+    .dot-red    { background: var(--accent3) !important; }
+    .dot-pink   { background: #ec4899 !important; }
+    .dot-cyan   { background: var(--accent5) !important; }
+
+    /* ── Difficulty Badges ── */
+    .badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-easy   { background: rgba(0,212,170,0.1);  color: var(--accent2); border: 1px solid rgba(0,212,170,0.3); }
+    .badge-medium { background: rgba(255,217,61,0.1); color: var(--accent4); border: 1px solid rgba(255,217,61,0.3); }
+    .badge-hard   { background: rgba(255,107,107,0.1); color: var(--accent3); border: 1px solid rgba(255,107,107,0.3); }
+    .badge-freq   { background: rgba(108,99,255,0.1); color: var(--accent1); border: 1px solid rgba(108,99,255,0.3); }
+
+    /* ── Delivery Schedule ── */
+    .schedule-section {
+      margin-top: 48px;
+    }
+
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .schedule-table th {
+      background: var(--surface);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 11px;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .schedule-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(46,51,80,0.5);
+      color: var(--text);
+      vertical-align: top;
+    }
+
+    .schedule-table tr:last-child td { border-bottom: none; }
+
+    .schedule-table tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .part-num {
+      display: inline-block;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent1), #a78bfa);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      text-align: center;
+      line-height: 32px;
+    }
+
+    .status-pending {
+      display: inline-block;
+      background: rgba(255,217,61,0.1);
+      color: var(--accent4);
+      border: 1px solid rgba(255,217,61,0.3);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .status-current {
+      display: inline-block;
+      background: rgba(0,212,170,0.1);
+      color: var(--accent2);
+      border: 1px solid rgba(0,212,170,0.3);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .tag-list {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--badge-bg);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 16px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ── Note Box ── */
+    .note-box {
+      background: rgba(108,99,255,0.08);
+      border: 1px solid rgba(108,99,255,0.25);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 32px 0;
+      font-size: 14px;
+      color: #c4b5fd;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .note-box .note-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .topics-grid { grid-template-columns: 1fr; }
+      .stats-bar { gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <div class="header-badge">Java Interview Prep 2025</div>
+  <h1>📚 Master Notes — Complete Plan</h1>
+  <p>Topic-wise structured notes from Basic → Advanced, covering every concept asked in real interviews.</p>
+</header>
+
+<!-- ═══════════════ STATS ═══════════════ -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">20</div>
+    <div class="stat-label">Total Topics</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">20</div>
+    <div class="stat-label">HTML Notes Parts</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">200+</div>
+    <div class="stat-label">Sub-topics</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">500+</div>
+    <div class="stat-label">Interview Qs Covered</div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main>
+
+  <div class="note-box">
+    <div class="note-icon">💡</div>
+    <div>
+      <strong>How to use this plan:</strong> Each part below will be delivered as a
+      <em>separate detailed HTML note</em>. All styles, code snippets, examples, and
+      interview tips are self-contained per file. Save each file and open locally — no internet needed.
+    </div>
+  </div>
+
+  <!-- ──────── GROUP 1: CORE JAVA ──────── -->
+  <div class="section-title">🔵 Group 1 — Core Java Fundamentals</div>
+  <div class="topics-grid">
+
+    <!-- Part 1 -->
+    <div class="topic-card theme-java">
+      <div class="card-header">
+        <div class="card-icon icon-java">☕</div>
+        <div class="card-meta">
+          <div class="card-part">Part 01</div>
+          <div class="card-title">OOPs — 4 Pillars</div>
+          <div class="card-subtitle">Most asked topic in every interview</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot"></span>Abstraction — abstract class vs interface, when to use</li>
+        <li><span class="dot"></span>Encapsulation — access modifiers, getters/setters, why</li>
+        <li><span class="dot"></span>Inheritance — super(), constructor chaining, IS-A HAS-A</li>
+        <li><span class="dot"></span>Polymorphism — overriding vs overloading (deep + tricky)</li>
+        <li><span class="dot"></span>Static keyword — in every context (variable, method, block, class)</li>
+        <li><span class="dot"></span>OOP vs Functional Programming difference</li>
+        <li><span class="dot"></span>Is Java fully object-oriented?</li>
+        <li><span class="dot"></span>Code snippets + output prediction questions</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-medium">Medium</span>
+        <span class="badge badge-hard">Hard Snippets</span>
+      </div>
+    </div>
+
+    <!-- Part 2 -->
+    <div class="topic-card theme-java">
+      <div class="card-header">
+        <div class="card-icon icon-java">🔗</div>
+        <div class="card-meta">
+          <div class="card-part">Part 02</div>
+          <div class="card-title">Collections Framework</div>
+          <div class="card-subtitle">List, Set, Map, Queue — depth + internals</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-green"></span>ArrayList vs LinkedList (internals, resizing, capacity)</li>
+        <li><span class="dot dot-green"></span>HashMap internal working (hashing, bucket, load factor)</li>
+        <li><span class="dot dot-green"></span>HashSet, LinkedHashSet, TreeSet differences</li>
+        <li><span class="dot dot-green"></span>Custom LinkedHashMap + extra methods</li>
+        <li><span class="dot dot-green"></span>ConcurrentModificationException + fix</li>
+        <li><span class="dot dot-green"></span>List vs Set in depth</li>
+        <li><span class="dot dot-green"></span>Comparable vs Comparator</li>
+        <li><span class="dot dot-green"></span>Time complexity comparison</li>
+        <li><span class="dot dot-green"></span>Practical coding questions on collections</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-hard">Hard</span>
+      </div>
+    </div>
+
+    <!-- Part 3 -->
+    <div class="topic-card theme-java">
+      <div class="card-header">
+        <div class="card-icon icon-java">🔤</div>
+        <div class="card-meta">
+          <div class="card-part">Part 03</div>
+          <div class="card-title">String, StringBuilder, StringBuffer</div>
+          <div class="card-subtitle">Immutability, methods, performance</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-yellow"></span>String immutability — why, thread safety, String pool</li>
+        <li><span class="dot dot-yellow"></span>String vs StringBuilder vs StringBuffer</li>
+        <li><span class="dot dot-yellow"></span>All important String methods with examples</li>
+        <li><span class="dot dot-yellow"></span>String comparison — == vs equals vs compareTo</li>
+        <li><span class="dot dot-yellow"></span>Second last repeating character (coding)</li>
+        <li><span class="dot dot-yellow"></span>Last duplicate character (coding)</li>
+        <li><span class="dot dot-yellow"></span>Collectors.joining() usage</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Frequent</span>
+        <span class="badge badge-easy">Easy–Medium</span>
+      </div>
+    </div>
+
+    <!-- Part 4 -->
+    <div class="topic-card theme-java">
+      <div class="card-header">
+        <div class="card-icon icon-java">⚠️</div>
+        <div class="card-meta">
+          <div class="card-part">Part 04</div>
+          <div class="card-title">Exception Handling</div>
+          <div class="card-subtitle">Checked, Unchecked, Custom, Serialization</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-red"></span>Exception hierarchy — Throwable, Error, Exception</li>
+        <li><span class="dot dot-red"></span>Checked vs Unchecked exceptions</li>
+        <li><span class="dot dot-red"></span>try-with-resources deep dive</li>
+        <li><span class="dot dot-red"></span>Custom exception — extend Exception vs RuntimeException</li>
+        <li><span class="dot dot-red"></span>finally block edge cases</li>
+        <li><span class="dot dot-red"></span>Exception in serialization</li>
+        <li><span class="dot dot-red"></span>Exception in generic list</li>
+        <li><span class="dot dot-red"></span>ClassNotFoundException vs NoClassDefFoundError</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Frequent</span>
+        <span class="badge badge-medium">Medium</span>
+      </div>
+    </div>
+
+    <!-- Part 5 -->
+    <div class="topic-card theme-java">
+      <div class="card-header">
+        <div class="card-icon icon-java">🖥️</div>
+        <div class="card-meta">
+          <div class="card-part">Part 05</div>
+          <div class="card-title">JVM, JRE, JDK & ClassLoader</div>
+          <div class="card-subtitle">Platform independence, GC, internals</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot"></span>JDK vs JRE vs JVM — detailed roles</li>
+        <li><span class="dot"></span>How Java is platform independent</li>
+        <li><span class="dot"></span>ClassLoader types — Bootstrap, Extension, Application</li>
+        <li><span class="dot"></span>Custom ClassLoader — real-world use case</li>
+        <li><span class="dot"></span>Parent delegation model</li>
+        <li><span class="dot"></span>Execution engine & interpreter vs JIT</li>
+        <li><span class="dot"></span>Garbage Collection — G1, ZGC, types, defaults</li>
+        <li><span class="dot"></span>Heap, Stack, Method Area memory</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Deep Dive</span>
+        <span class="badge badge-hard">Hard</span>
+      </div>
+    </div>
+
+    <!-- Part 6 -->
+    <div class="topic-card theme-java">
+      <div class="card-header">
+        <div class="card-icon icon-java">🔒</div>
+        <div class="card-meta">
+          <div class="card-part">Part 06</div>
+          <div class="card-title">Multithreading & Concurrency</div>
+          <div class="card-subtitle">Thread safety, locks, executor, async</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-red"></span>Thread lifecycle states — NEW, RUNNABLE, WAITING...</li>
+        <li><span class="dot dot-red"></span>Thread vs Process difference</li>
+        <li><span class="dot dot-red"></span>synchronized, volatile, ReentrantLock</li>
+        <li><span class="dot dot-red"></span>Deadlock, Livelock, Starvation</li>
+        <li><span class="dot dot-red"></span>ExecutorService, ThreadPoolExecutor, ForkJoinPool</li>
+        <li><span class="dot dot-red"></span>CompletableFuture depth</li>
+        <li><span class="dot dot-red"></span>ThreadLocal — use + memory leak risk</li>
+        <li><span class="dot dot-red"></span>sleep vs wait, notify vs notifyAll</li>
+        <li><span class="dot dot-red"></span>ConcurrentHashMap, CopyOnWriteArrayList</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Advanced</span>
+        <span class="badge badge-hard">Hard</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────── GROUP 2: JAVA 8+ ──────── -->
+  <div class="section-title">🟢 Group 2 — Java 8+ Modern Features</div>
+  <div class="topics-grid">
+
+    <!-- Part 7 -->
+    <div class="topic-card theme-java8">
+      <div class="card-header">
+        <div class="card-icon icon-java8">λ</div>
+        <div class="card-meta">
+          <div class="card-part">Part 07</div>
+          <div class="card-title">Lambda & Functional Interfaces</div>
+          <div class="card-subtitle">Lambda vs Anonymous class, tricky questions</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-green"></span>Lambda syntax — in depth with all forms</li>
+        <li><span class="dot dot-green"></span>Lambda vs Anonymous class — what, why, when</li>
+        <li><span class="dot dot-green"></span>Functional Interface — definition, rules, @FunctionalInterface</li>
+        <li><span class="dot dot-green"></span>Built-in: Predicate, Function, Consumer, Supplier, BiFunction...</li>
+        <li><span class="dot dot-green"></span>Tricky functional interface questions</li>
+        <li><span class="dot dot-green"></span>Method Reference — 4 types with examples</li>
+        <li><span class="dot dot-green"></span>Constructor Reference</li>
+        <li><span class="dot dot-green"></span>Supplier function example (asked directly)</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-medium">Medium–Hard</span>
+      </div>
+    </div>
+
+    <!-- Part 8 -->
+    <div class="topic-card theme-java8">
+      <div class="card-header">
+        <div class="card-icon icon-java8">🌊</div>
+        <div class="card-meta">
+          <div class="card-part">Part 08</div>
+          <div class="card-title">Stream API — Complete Guide</div>
+          <div class="card-subtitle">60+ stream questions, lazy eval, parallel streams</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-cyan"></span>Why Streams? — demerits also</li>
+        <li><span class="dot dot-cyan"></span>Intermediate vs Terminal operations</li>
+        <li><span class="dot dot-cyan"></span>map, filter, collect, flatMap, reduce in depth</li>
+        <li><span class="dot dot-cyan"></span>groupingBy, joining, partitioning collectors</li>
+        <li><span class="dot dot-cyan"></span>Parallel vs Sequential stream</li>
+        <li><span class="dot dot-cyan"></span>Lazy evaluation explanation</li>
+        <li><span class="dot dot-cyan"></span>Distinct ignoring case + sort by length (asked)</li>
+        <li><span class="dot dot-cyan"></span>flatMap on nested lists (asked directly)</li>
+        <li><span class="dot dot-cyan"></span>Word frequency map coding</li>
+        <li><span class="dot dot-cyan"></span>Employee stream operations (group, max salary)</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-hard">Hard</span>
+      </div>
+    </div>
+
+    <!-- Part 9 -->
+    <div class="topic-card theme-java8">
+      <div class="card-header">
+        <div class="card-icon icon-java8">❓</div>
+        <div class="card-meta">
+          <div class="card-part">Part 09</div>
+          <div class="card-title">Optional Class & Java 21 Features</div>
+          <div class="card-subtitle">Null safety, Records, Sealed Classes, Virtual Threads</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-green"></span>Optional — why, all methods with use cases</li>
+        <li><span class="dot dot-green"></span>Application-based Optional usage (asked)</li>
+        <li><span class="dot dot-green"></span>Serialization & Deserialization deep</li>
+        <li><span class="dot dot-green"></span>Records — depth + when to use</li>
+        <li><span class="dot dot-green"></span>Sealed Classes — depth + hierarchy</li>
+        <li><span class="dot dot-green"></span>Java 21 features overview</li>
+        <li><span class="dot dot-green"></span>Sequenced Collections (Java 21)</li>
+        <li><span class="dot dot-green"></span>Virtual Threads — Project Loom</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Trending</span>
+        <span class="badge badge-medium">Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────── GROUP 3: DESIGN PATTERNS & PRINCIPLES ──────── -->
+  <div class="section-title">🟣 Group 3 — Design Patterns & SOLID Principles</div>
+  <div class="topics-grid">
+
+    <!-- Part 10 -->
+    <div class="topic-card theme-pattern">
+      <div class="card-header">
+        <div class="card-icon icon-pattern">🏗️</div>
+        <div class="card-meta">
+          <div class="card-part">Part 10</div>
+          <div class="card-title">Design Patterns</div>
+          <div class="card-subtitle">Singleton, Factory, Strategy, Builder, Decorator</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-pink"></span>Singleton — Eager, Lazy, Double-checked, Enum, Break ways</li>
+        <li><span class="dot dot-pink"></span>Factory Pattern — with type safety using enum</li>
+        <li><span class="dot dot-pink"></span>Strategy Pattern — real world + STEP project use</li>
+        <li><span class="dot dot-pink"></span>Builder Pattern — thread-safe implementation</li>
+        <li><span class="dot dot-pink"></span>Decorator Pattern — real example (not pizza/coffee)</li>
+        <li><span class="dot dot-pink"></span>Parking Lot Design — using inner class</li>
+        <li><span class="dot dot-pink"></span>Composition vs Aggregation vs Association hands-on</li>
+        <li><span class="dot dot-pink"></span>Immutable class creation</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-hard">Hard</span>
+      </div>
+    </div>
+
+    <!-- Part 11 -->
+    <div class="topic-card theme-pattern">
+      <div class="card-header">
+        <div class="card-icon icon-pattern">📐</div>
+        <div class="card-meta">
+          <div class="card-part">Part 11</div>
+          <div class="card-title">SOLID Principles</div>
+          <div class="card-subtitle">All 5 with real code + violations</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-pink"></span>S — Single Responsibility Principle</li>
+        <li><span class="dot dot-pink"></span>O — Open/Closed Principle</li>
+        <li><span class="dot dot-pink"></span>L — Liskov Substitution (Bird/Penguin example)</li>
+        <li><span class="dot dot-pink"></span>I — Interface Segregation Principle</li>
+        <li><span class="dot dot-pink"></span>D — Dependency Inversion Principle</li>
+        <li><span class="dot dot-pink"></span>DI vs IoC vs DIP (design pattern vs principle vs architecture)</li>
+        <li><span class="dot dot-pink"></span>Clean Code principles (naming, guard clauses, magic numbers)</li>
+        <li><span class="dot dot-pink"></span>DRY principle for constants</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Frequent</span>
+        <span class="badge badge-medium">Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────── GROUP 4: SPRING ECOSYSTEM ──────── -->
+  <div class="section-title">🟡 Group 4 — Spring Ecosystem</div>
+  <div class="topics-grid">
+
+    <!-- Part 12 -->
+    <div class="topic-card theme-spring">
+      <div class="card-header">
+        <div class="card-icon icon-spring">🌱</div>
+        <div class="card-meta">
+          <div class="card-part">Part 12</div>
+          <div class="card-title">Spring Core & Spring Boot</div>
+          <div class="card-subtitle">IoC, DI, Bean lifecycle, Auto-configuration</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-green"></span>Why Spring? — history and purpose</li>
+        <li><span class="dot dot-green"></span>IoC Container — BeanFactory vs ApplicationContext</li>
+        <li><span class="dot dot-green"></span>Bean — creation, storage, lifecycle internals</li>
+        <li><span class="dot dot-green"></span>DI — Constructor vs Setter vs Field injection</li>
+        <li><span class="dot dot-green"></span>@Autowired, @Qualifier, @Primary</li>
+        <li><span class="dot dot-green"></span>Bean Scopes — Singleton, Prototype (real-time use case)</li>
+        <li><span class="dot dot-green"></span>@EnableAutoConfiguration internal working</li>
+        <li><span class="dot dot-green"></span>@SpringBootApplication — what it does inside</li>
+        <li><span class="dot dot-green"></span>Spring Boot features — 5 key features</li>
+        <li><span class="dot dot-green"></span>Bean Profiles — switch via Maven and Java commands</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-medium">Medium–Hard</span>
+      </div>
+    </div>
+
+    <!-- Part 13 -->
+    <div class="topic-card theme-spring">
+      <div class="card-header">
+        <div class="card-icon icon-spring">🗄️</div>
+        <div class="card-meta">
+          <div class="card-part">Part 13</div>
+          <div class="card-title">Spring Data JPA</div>
+          <div class="card-subtitle">JPA internals, mappings, queries, composite keys</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-green"></span>JPA vs Spring Data JPA difference</li>
+        <li><span class="dot dot-green"></span>Rules for defining JPA entity</li>
+        <li><span class="dot dot-green"></span>Primary key types — @Id, @GeneratedValue strategies</li>
+        <li><span class="dot dot-green"></span>Composite key — @IdClass vs @EmbeddedId</li>
+        <li><span class="dot dot-green"></span>Mappings — @OneToOne, @OneToMany, @ManyToMany</li>
+        <li><span class="dot dot-green"></span>Order and Product mapping (asked directly)</li>
+        <li><span class="dot dot-green"></span>@Query — JPQL and native SQL</li>
+        <li><span class="dot dot-green"></span>N+1 problem + @EntityGraph fix</li>
+        <li><span class="dot dot-green"></span>Soft delete with @Where</li>
+        <li><span class="dot dot-green"></span>All important JPA annotations</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Frequent</span>
+        <span class="badge badge-hard">Hard</span>
+      </div>
+    </div>
+
+    <!-- Part 14 -->
+    <div class="topic-card theme-spring">
+      <div class="card-header">
+        <div class="card-icon icon-spring">🌐</div>
+        <div class="card-meta">
+          <div class="card-part">Part 14</div>
+          <div class="card-title">REST API Design</div>
+          <div class="card-subtitle">RMM, HTTP status codes, validation, HATEOAS</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-yellow"></span>RMM (Richardson Maturity Model) — all levels</li>
+        <li><span class="dot dot-yellow"></span>REST vs SOAP differences</li>
+        <li><span class="dot dot-yellow"></span>HTTP Status Codes — all groups + 429 and special codes</li>
+        <li><span class="dot dot-yellow"></span>Payment API design — REST best practices</li>
+        <li><span class="dot dot-yellow"></span>@RestController, @RequestMapping, exception handling</li>
+        <li><span class="dot dot-yellow"></span>Validation — @Valid, BindingResult, @ExceptionHandler</li>
+        <li><span class="dot dot-yellow"></span>@ControllerAdvice for global exception handling</li>
+        <li><span class="dot dot-yellow"></span>API versioning strategies</li>
+        <li><span class="dot dot-yellow"></span>When 404 — other scenarios (DB not connected etc.)</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-medium">Medium</span>
+      </div>
+    </div>
+
+    <!-- Part 15 -->
+    <div class="topic-card theme-spring">
+      <div class="card-header">
+        <div class="card-icon icon-spring">🧪</div>
+        <div class="card-meta">
+          <div class="card-part">Part 15</div>
+          <div class="card-title">Testing — JUnit & Mockito</div>
+          <div class="card-subtitle">Why testing, all annotations, ArgumentCaptor</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-red"></span>Why unit testing? — benefits</li>
+        <li><span class="dot dot-red"></span>JUnit 5 — @Test, @BeforeAll, @ParameterizedTest, etc.</li>
+        <li><span class="dot dot-red"></span>Why Mockito? — mock vs stub vs spy</li>
+        <li><span class="dot dot-red"></span>All Mockito annotations — @Mock, @InjectMocks, @Spy, @Captor</li>
+        <li><span class="dot dot-red"></span>How to create a Mockito test class</li>
+        <li><span class="dot dot-red"></span>when/then, verify, ArgumentCaptor</li>
+        <li><span class="dot dot-red"></span>Handle exceptions in Mockito</li>
+        <li><span class="dot dot-red"></span>assertEquals vs assertSame</li>
+        <li><span class="dot dot-red"></span>@WebMvcTest + MockMvc</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Frequent</span>
+        <span class="badge badge-medium">Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────── GROUP 5: MICROSERVICES ──────── -->
+  <div class="section-title">🟠 Group 5 — Microservices Architecture</div>
+  <div class="topics-grid">
+
+    <!-- Part 16 -->
+    <div class="topic-card theme-micro">
+      <div class="card-header">
+        <div class="card-icon icon-micro">🔧</div>
+        <div class="card-meta">
+          <div class="card-part">Part 16</div>
+          <div class="card-title">Microservices Core Concepts</div>
+          <div class="card-subtitle">Monolith vs Micro, Service Registry, API Gateway</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-yellow"></span>Monolithic vs Microservices — use cases, technically</li>
+        <li><span class="dot dot-yellow"></span>When NOT to use microservices</li>
+        <li><span class="dot dot-yellow"></span>Service Registry — Eureka internals, self-preservation</li>
+        <li><span class="dot dot-yellow"></span>API Gateway — Spring Cloud Gateway, routing, filters</li>
+        <li><span class="dot dot-yellow"></span>Feign Client — 5 uses, code snippets, timeout, retry</li>
+        <li><span class="dot dot-yellow"></span>WebClient — vs RestTemplate, vs Feign</li>
+        <li><span class="dot dot-yellow"></span>Circuit Breaker — Resilience4j, fallback</li>
+        <li><span class="dot dot-yellow"></span>Ribbon — client-side load balancing</li>
+        <li><span class="dot dot-yellow"></span>Rate Limiting, CORS config in Gateway</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Very Frequent</span>
+        <span class="badge badge-hard">Hard</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────── GROUP 6: TOOLS ──────── -->
+  <div class="section-title">🟤 Group 6 — Tools & DevOps</div>
+  <div class="topics-grid">
+
+    <!-- Part 17 -->
+    <div class="topic-card theme-tools">
+      <div class="card-header">
+        <div class="card-icon icon-tools">🔨</div>
+        <div class="card-meta">
+          <div class="card-part">Part 17</div>
+          <div class="card-title">Maven Build Tool</div>
+          <div class="card-subtitle">Lifecycle, dependencies, plugins, profiles</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot"></span>Maven project structure — key files</li>
+        <li><span class="dot"></span>3 Lifecycles — clean, default, site</li>
+        <li><span class="dot"></span>Important phases — compile, test, package, install, deploy</li>
+        <li><span class="dot"></span>Dependency scopes — compile, provided, runtime, test</li>
+        <li><span class="dot"></span>Transitive dependencies + conflict resolution</li>
+        <li><span class="dot"></span>Excluding transitive dependency</li>
+        <li><span class="dot"></span>Maven profiles — switch environments</li>
+        <li><span class="dot"></span>plugins vs pluginManagement</li>
+        <li><span class="dot"></span>SNAPSHOT vs Release versions</li>
+        <li><span class="dot"></span>Useful commands — dependency:tree, purge, skip tests</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Frequent</span>
+        <span class="badge badge-easy">Easy–Medium</span>
+      </div>
+    </div>
+
+    <!-- Part 18 -->
+    <div class="topic-card theme-tools">
+      <div class="card-header">
+        <div class="card-icon icon-tools">🌿</div>
+        <div class="card-meta">
+          <div class="card-part">Part 18</div>
+          <div class="card-title">Git Version Control</div>
+          <div class="card-subtitle">All commands, branching, conflict, CI/CD</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot"></span>Why Git? — core purpose</li>
+        <li><span class="dot"></span>All important commands — init, add, commit, push, pull, fetch</li>
+        <li><span class="dot"></span>Working directory, staging area, local repo</li>
+        <li><span class="dot"></span>Branching — create, switch, merge, rebase</li>
+        <li><span class="dot"></span>Merge conflict — how to check before PR</li>
+        <li><span class="dot"></span>Cherry-pick, stash, reflog</li>
+        <li><span class="dot"></span>Git Flow branching model</li>
+        <li><span class="dot"></span>Remove committed secrets from history</li>
+        <li><span class="dot"></span>fetch vs pull difference</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Frequent</span>
+        <span class="badge badge-easy">Easy–Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────── GROUP 7: DSA ──────── -->
+  <div class="section-title">🔵 Group 7 — DSA (Interview Focused)</div>
+  <div class="topics-grid">
+
+    <!-- Part 19 -->
+    <div class="topic-card theme-ds">
+      <div class="card-header">
+        <div class="card-icon icon-ds">🧮</div>
+        <div class="card-meta">
+          <div class="card-part">Part 19</div>
+          <div class="card-title">DSA — Interview Coding Questions</div>
+          <div class="card-subtitle">Strings, Arrays, LinkedList, HashMap coding</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-cyan"></span>Custom LinkedList + custom HashMap implementations</li>
+        <li><span class="dot dot-cyan"></span>Second last repeating character</li>
+        <li><span class="dot dot-cyan"></span>Last duplicate character in string</li>
+        <li><span class="dot dot-cyan"></span>Distinct elements ignoring case + sort by length</li>
+        <li><span class="dot dot-cyan"></span>Sort Map by values</li>
+        <li><span class="dot dot-cyan"></span>Find second largest in unsorted array</li>
+        <li><span class="dot dot-cyan"></span>String array concat — Collectors.joining</li>
+        <li><span class="dot dot-cyan"></span>Permutations of a number (with repetition handling)</li>
+        <li><span class="dot dot-cyan"></span>Employee stream questions (group, max salary, etc.)</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Coding Round</span>
+        <span class="badge badge-medium">Medium</span>
+      </div>
+    </div>
+
+    <!-- Part 20 -->
+    <div class="topic-card theme-ds">
+      <div class="card-header">
+        <div class="card-icon icon-ds">🔐</div>
+        <div class="card-meta">
+          <div class="card-part">Part 20</div>
+          <div class="card-title">Spring Security + Misc Topics</div>
+          <div class="card-subtitle">JWT, Security basics, Caching, Scheduling</div>
+        </div>
+      </div>
+      <ul class="subtopics">
+        <li><span class="dot dot-cyan"></span>What is JWT? — structure, flow</li>
+        <li><span class="dot dot-cyan"></span>Spring Security JWT workflow</li>
+        <li><span class="dot dot-cyan"></span>Feign Client workflow — 5 uses</li>
+        <li><span class="dot dot-cyan"></span>Spring Caching — @Cacheable, @CacheEvict</li>
+        <li><span class="dot dot-cyan"></span>@Scheduled — cron expressions</li>
+        <li><span class="dot dot-cyan"></span>Loggers — SLF4J, Log4j, Logback</li>
+        <li><span class="dot dot-cyan"></span>static vs dynamic binding</li>
+        <li><span class="dot dot-cyan"></span>Copy Constructor</li>
+        <li><span class="dot dot-cyan"></span>hashCode and equals contract</li>
+        <li><span class="dot dot-cyan"></span>Marker interfaces — why needed</li>
+      </ul>
+      <div class="badges">
+        <span class="badge badge-freq">🔥 Bonus Topics</span>
+        <span class="badge badge-medium">Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────── DELIVERY SCHEDULE ──────── -->
+  <div class="schedule-section">
+    <div class="section-title">📅 Delivery Schedule</div>
+
+    <div style="overflow-x:auto;">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th>Part</th>
+            <th>Topic</th>
+            <th>Key Subtopics</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="part-num">1</span></td>
+            <td><strong>OOPs — 4 Pillars</strong></td>
+            <td><div class="tag-list"><span class="tag">Abstraction</span><span class="tag">Encapsulation</span><span class="tag">Inheritance</span><span class="tag">Polymorphism</span><span class="tag">Static</span></div></td>
+            <td><span class="status-current">▶ Next</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">2</span></td>
+            <td><strong>Collections Framework</strong></td>
+            <td><div class="tag-list"><span class="tag">ArrayList</span><span class="tag">HashMap</span><span class="tag">HashSet</span><span class="tag">TreeMap</span><span class="tag">Custom LHM</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">3</span></td>
+            <td><strong>String & StringBuilder</strong></td>
+            <td><div class="tag-list"><span class="tag">Immutability</span><span class="tag">All Methods</span><span class="tag">Performance</span><span class="tag">Coding Qs</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">4</span></td>
+            <td><strong>Exception Handling</strong></td>
+            <td><div class="tag-list"><span class="tag">Custom Exception</span><span class="tag">try-with-resources</span><span class="tag">Serialization</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">5</span></td>
+            <td><strong>JVM, ClassLoader, GC</strong></td>
+            <td><div class="tag-list"><span class="tag">JDK/JRE/JVM</span><span class="tag">ClassLoader Types</span><span class="tag">GC Types</span><span class="tag">Memory</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">6</span></td>
+            <td><strong>Multithreading</strong></td>
+            <td><div class="tag-list"><span class="tag">Thread Lifecycle</span><span class="tag">Locks</span><span class="tag">Deadlock</span><span class="tag">CompletableFuture</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">7</span></td>
+            <td><strong>Lambda & Functional Interfaces</strong></td>
+            <td><div class="tag-list"><span class="tag">Lambda Syntax</span><span class="tag">Predicate</span><span class="tag">Supplier</span><span class="tag">Method Ref</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">8</span></td>
+            <td><strong>Stream API</strong></td>
+            <td><div class="tag-list"><span class="tag">map/filter/collect</span><span class="tag">flatMap</span><span class="tag">groupingBy</span><span class="tag">Parallel</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">9</span></td>
+            <td><strong>Optional + Java 21</strong></td>
+            <td><div class="tag-list"><span class="tag">Optional Methods</span><span class="tag">Records</span><span class="tag">Sealed Classes</span><span class="tag">Virtual Threads</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">10</span></td>
+            <td><strong>Design Patterns</strong></td>
+            <td><div class="tag-list"><span class="tag">Singleton</span><span class="tag">Factory</span><span class="tag">Strategy</span><span class="tag">Builder</span><span class="tag">Decorator</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">11</span></td>
+            <td><strong>SOLID Principles</strong></td>
+            <td><div class="tag-list"><span class="tag">SRP</span><span class="tag">OCP</span><span class="tag">LSP</span><span class="tag">ISP</span><span class="tag">DIP</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">12</span></td>
+            <td><strong>Spring Core & Boot</strong></td>
+            <td><div class="tag-list"><span class="tag">Bean Lifecycle</span><span class="tag">DI</span><span class="tag">AutoConfig</span><span class="tag">Scopes</span><span class="tag">Profiles</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">13</span></td>
+            <td><strong>Spring Data JPA</strong></td>
+            <td><div class="tag-list"><span class="tag">Mappings</span><span class="tag">Composite Key</span><span class="tag">JPQL</span><span class="tag">N+1</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">14</span></td>
+            <td><strong>REST API Design</strong></td>
+            <td><div class="tag-list"><span class="tag">RMM</span><span class="tag">Status Codes</span><span class="tag">Validation</span><span class="tag">HATEOAS</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">15</span></td>
+            <td><strong>JUnit & Mockito</strong></td>
+            <td><div class="tag-list"><span class="tag">All Annotations</span><span class="tag">ArgumentCaptor</span><span class="tag">WebMvcTest</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">16</span></td>
+            <td><strong>Microservices</strong></td>
+            <td><div class="tag-list"><span class="tag">Eureka</span><span class="tag">API Gateway</span><span class="tag">Feign</span><span class="tag">Circuit Breaker</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">17</span></td>
+            <td><strong>Maven</strong></td>
+            <td><div class="tag-list"><span class="tag">Lifecycle</span><span class="tag">Scopes</span><span class="tag">Plugins</span><span class="tag">Profiles</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">18</span></td>
+            <td><strong>Git</strong></td>
+            <td><div class="tag-list"><span class="tag">All Commands</span><span class="tag">Branching</span><span class="tag">Merge Conflict</span><span class="tag">Git Flow</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">19</span></td>
+            <td><strong>DSA Coding Questions</strong></td>
+            <td><div class="tag-list"><span class="tag">String Coding</span><span class="tag">Custom DS</span><span class="tag">Stream Coding</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td><span class="part-num">20</span></td>
+            <td><strong>Spring Security + Misc</strong></td>
+            <td><div class="tag-list"><span class="tag">JWT</span><span class="tag">Security Flow</span><span class="tag">Caching</span><span class="tag">Loggers</span></div></td>
+            <td><span class="status-pending">Pending</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════ LEGEND ═══════════════ -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#6c63ff"></div> Core Java</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00d4aa"></div> Java 8+ Features</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#6db33f"></div> Spring Ecosystem</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Microservices</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ec4899"></div> Design Patterns</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Tools</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div> DSA</div>
+</div>
+
+</body>
+</html>

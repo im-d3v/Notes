@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pattern 08 — Backtracking | FAANG Study Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #1a0d2e 40%, #2d1b4e 100%); }
+    .decision-tree {
+      font-family: 'Courier New', monospace;
+      background: #010409;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      line-height: 1.8;
+      font-size: 0.9rem;
+    }
+    .tree-node { color: #58a6ff; }
+    .tree-leaf-valid { color: #3fb950; }
+    .tree-leaf-invalid { color: #f85149; }
+    .tree-edge { color: #6e7681; }
+    .tree-prune { color: #d29922; }
+    .annotate-line {
+      display: flex;
+      gap: 1rem;
+      margin: 0.3rem 0;
+      align-items: flex-start;
+    }
+    .annotate-code {
+      font-family: 'Courier New', monospace;
+      background: #010409;
+      border-left: 3px solid #bc8cff;
+      padding: 0.8rem 1rem;
+      flex: 1;
+      font-size: 0.88rem;
+      color: #e6edf3;
+    }
+    .annotate-note {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.82rem;
+      color: #8b949e;
+      min-width: 220px;
+      max-width: 260px;
+    }
+    .annotate-note strong { color: #bc8cff; }
+    .complexity-box {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .cx-card {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.2rem;
+      text-align: center;
+    }
+    .cx-card .cx-type { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .cx-card .cx-val { font-size: 1.4rem; font-weight: 700; font-family: 'Courier New', monospace; }
+    .cx-card .cx-example { font-size: 0.78rem; color: #8b949e; margin-top: 0.4rem; }
+    .cx-card.cx-subset .cx-val { color: #3fb950; }
+    .cx-card.cx-combo .cx-val { color: #58a6ff; }
+    .cx-card.cx-perm .cx-val { color: #f85149; }
+    .type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .tb-subset { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+    .tb-perm   { background: rgba(248,81,73,0.15);  color: #f85149; border: 1px solid rgba(248,81,73,0.3); }
+    .tb-combo  { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+    .tb-hybrid { background: rgba(188,140,255,0.15);color: #bc8cff; border: 1px solid rgba(188,140,255,0.3); }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<button id="hamburger" aria-label="Toggle sidebar">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="3" y1="6"  x2="21" y2="6"/>
+    <line x1="3" y1="12" x2="21" y2="12"/>
+    <line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
+
+<div id="sidebar-overlay"></div>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🌿</div>
+    <div>
+      <div class="sidebar-title">Pattern 08</div>
+      <div class="sidebar-subtitle">Backtracking</div>
+    </div>
+  </div>
+
+  <div style="padding: 0 1rem 0.5rem;">
+    <a href="../index.html" class="toc-link" style="color: var(--accent-cyan); font-size:0.8rem;">
+      ← Home
+    </a>
+  </div>
+
+  <div style="padding: 0 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:0.5rem;">Contents</div>
+
+  <a href="#mental-model"      class="toc-link">🧠 Mental Model</a>
+  <a href="#universal-template" class="toc-link">🔧 Universal Template</a>
+  <a href="#three-types"       class="toc-link">🔀 3 Problem Types</a>
+  <a href="#type-a-subsets"    class="toc-link" style="padding-left:2rem;">A · Subsets</a>
+  <a href="#type-b-perms"      class="toc-link" style="padding-left:2rem;">B · Permutations</a>
+  <a href="#type-c-combos"     class="toc-link" style="padding-left:2rem;">C · Combinations</a>
+  <a href="#key-difference"    class="toc-link">⚔️ start vs used[]</a>
+  <a href="#pruning"           class="toc-link">✂️ Pruning Techniques</a>
+  <a href="#copy-trap"         class="toc-link">🪤 The Copy Trap</a>
+  <a href="#complexity"        class="toc-link">📊 Time Complexity</a>
+  <a href="#walkthrough"       class="toc-link">🔍 Full Walkthroughs</a>
+  <a href="#recognition"       class="toc-link">🎯 Recognition Signals</a>
+  <a href="#decision"          class="toc-link">⚖️ Decision Moment</a>
+  <a href="#practice"          class="toc-link">📝 15 Practice Problems</a>
+
+  <div style="margin-top:auto; padding: 1.5rem 1rem 1rem; border-top: 1px solid var(--border-subtle);">
+    <div style="font-size:0.72rem; color:var(--text-muted);">FAANG Patterns Series</div>
+    <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:0.3rem;">PDF #08 of 20</div>
+  </div>
+</nav>
+
+<main id="main">
+
+  <!-- ═══════════════════════ HERO ═══════════════════════ -->
+  <div class="hero">
+    <div class="hero-eyebrow">FAANG Algorithm Patterns · PDF #08</div>
+    <h1>🌿 Backtracking</h1>
+    <p class="hero-subtitle">Explore All, Keep the Valid — The Art of Elegant Exhaustive Search</p>
+    <div class="hero-badges">
+      <span class="tag tag-purple">Decision Tree</span>
+      <span class="tag tag-green">Subsets</span>
+      <span class="tag tag-red">Permutations</span>
+      <span class="tag tag-blue">Combinations</span>
+      <span class="tag tag-orange">Pruning</span>
+      <span class="tag tag-cyan">Recursion</span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:1.5rem; max-width:600px;">
+      <div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:#bc8cff;">3</div><div style="font-size:0.72rem;color:#8b949e;">Problem Types</div></div>
+      <div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:#3fb950;">1</div><div style="font-size:0.72rem;color:#8b949e;">Universal Template</div></div>
+      <div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:#58a6ff;">15</div><div style="font-size:0.72rem;color:#8b949e;">Practice Problems</div></div>
+      <div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:#f85149;">High</div><div style="font-size:0.72rem;color:#8b949e;">FAANG Frequency</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ PART 1 ═══════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">01</div>
+    <div>
+      <h2>The Foundation</h2>
+      <p>Mental model, universal template, and the critical "undo" step explained.</p>
+    </div>
+  </div>
+
+  <!-- MENTAL MODEL -->
+  <div class="section" id="mental-model">
+    <div class="section-header">
+      <h3>🧠 The Mental Model — A GPS That Tries Every Road</h3>
+    </div>
+
+    <div class="card">
+      <p>Imagine you are navigating a city with GPS. At every intersection, you try one road. If it leads to a dead end or breaks your rules, you <strong>turn back</strong> to the last intersection and try the next road.</p>
+      <p>That U-turn — that's backtracking.</p>
+      <p>You're not random. You're systematic. You explore every possible path in a decision tree but <strong>prune branches</strong> that can never lead to a valid answer. You never miss a solution. You never explore a dead branch twice.</p>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🧠</div>
+      <div class="body">
+        <strong>Mental Model</strong>
+        <p>Backtracking = DFS on a decision tree + pruning bad branches early. Every node is a partial solution. Every leaf is either valid (collect it) or invalid (ignore it).</p>
+      </div>
+    </div>
+
+    <h4>The Decision Tree for [1, 2, 3] → All Subsets</h4>
+    <div class="decision-tree">
+<span class="tree-node">                        [ ]                         ← start (empty state)</span>
+<span class="tree-edge">                      /       \</span>
+<span class="tree-node">                  [1]           [ ]                   ← include 1 OR skip 1</span>
+<span class="tree-edge">                /   \         /   \</span>
+<span class="tree-node">            [1,2]  [1]      [2]   [ ]               ← branch on 2</span>
+<span class="tree-edge">            /  \   /  \    /  \   /  \</span>
+<span class="tree-leaf-valid">        [1,2,3][1,2][1,3][1][2,3][2] [3] [ ]        ← all 8 valid leaves (2³)</span>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Why it works</strong>
+        <p>The tree has a finite depth (= input size). At each node you make one choice, recurse, then <em>undo</em> that choice so the next branch starts with a clean state. That undo step is the entire magic of backtracking.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNIVERSAL TEMPLATE -->
+  <div class="section" id="universal-template">
+    <div class="section-header">
+      <h3>🔧 The Universal Backtracking Template</h3>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>This template solves 95% of backtracking problems.</strong>
+        <p>Master this one structure. Everything else is a specialization of it.</p>
+      </div>
+    </div>
+
+    <h4>Annotated Template — Every Line Explained</h4>
+
+    <div class="card" style="padding:0;">
+      <div class="annotate-line" style="padding:0.8rem; background:#0d1117; border-bottom:1px solid #21262d;">
+        <div class="annotate-code"><span class="kw">void</span> <span class="fn">backtrack</span>(<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; current, <span class="kw">int</span> start, <span class="type">int[]</span> nums) {</div>
+        <div class="annotate-note"><strong>State:</strong> current = partial solution built so far. start = where we can pick from next.</div>
+      </div>
+      <div class="annotate-line" style="padding:0.8rem; background:#010409; border-bottom:1px solid #21262d;">
+        <div class="annotate-code">    <span class="cmt">// BASE CASE: valid complete state</span><br>    <span class="kw">if</span> (isComplete(current)) {<br>        result.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(current));<br>        <span class="kw">return</span>;<br>    }</div>
+        <div class="annotate-note"><strong>Collect:</strong> When partial solution is "good enough", save a <em>copy</em> (not reference!) and stop this branch.</div>
+      </div>
+      <div class="annotate-line" style="padding:0.8rem; background:#0d1117; border-bottom:1px solid #21262d;">
+        <div class="annotate-code">    <span class="cmt">// EXPLORE: try each available choice</span><br>    <span class="kw">for</span> (<span class="kw">int</span> i = start; i &lt; nums.length; i++) {</div>
+        <div class="annotate-note"><strong>Choices:</strong> Iterate over remaining valid options. <code>start</code> prevents reusing earlier elements.</div>
+      </div>
+      <div class="annotate-line" style="padding:0.8rem; background:#010409; border-bottom:1px solid #21262d;">
+        <div class="annotate-code">        <span class="cmt">// PRUNE: skip bad branches early</span><br>        <span class="kw">if</span> (canPrune(nums[i])) <span class="kw">continue</span>;</div>
+        <div class="annotate-note"><strong>Prune:</strong> If this choice can NEVER lead to a valid solution, skip it immediately. This is the performance win.</div>
+      </div>
+      <div class="annotate-line" style="padding:0.8rem; background:#0d1117; border-bottom:1px solid #21262d;">
+        <div class="annotate-code">        <span class="cmt">// CHOOSE: add to current state</span><br>        current.add(nums[i]);</div>
+        <div class="annotate-note"><strong>Make choice:</strong> Commit to this element. Modify state.</div>
+      </div>
+      <div class="annotate-line" style="padding:0.8rem; background:#010409; border-bottom:1px solid #21262d;">
+        <div class="annotate-code">        <span class="cmt">// RECURSE: go deeper with updated state</span><br>        backtrack(current, i + <span class="num">1</span>, nums);</div>
+        <div class="annotate-note"><strong>Recurse:</strong> Explore the sub-tree from this choice. <code>i+1</code> moves forward (no duplicates).</div>
+      </div>
+      <div class="annotate-line" style="padding:0.8rem; background:#0d1117;">
+        <div class="annotate-code">        <span class="cmt">// UNCHOOSE: undo the choice ← THE KEY STEP</span><br>        current.remove(current.size() - <span class="num">1</span>);<br>    }<br>}</div>
+        <div class="annotate-note"><strong>★ Undo:</strong> Remove the element. Restore state to exactly what it was before this iteration. The NEXT iteration starts clean.</div>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">❗</div>
+      <div class="body">
+        <strong>Why undo is non-negotiable</strong>
+        <p>Backtracking shares a single <code>current</code> list across all recursive calls. If you don't undo, when you return from one branch and try the next choice, <code>current</code> still contains the previous choice's elements. You'd be building on dirty state. Undo makes the shared state act like independent branches.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ PART 2 ═══════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">02</div>
+    <div>
+      <h2>The 3 Problem Types</h2>
+      <p>Subsets, Permutations, and Combinations — with separate templates and clear distinctions.</p>
+    </div>
+  </div>
+
+  <!-- TYPE A — SUBSETS -->
+  <div class="section" id="type-a-subsets">
+    <div class="section-header">
+      <h3>🟢 Type A — Subsets / Power Set</h3>
+    </div>
+
+    <div class="card">
+      <h4>What it is</h4>
+      <p><strong>No ordering, no repetition. Every element either IN or OUT.</strong> For <code>n</code> elements, there are exactly <code>2ⁿ</code> subsets. Order doesn't matter: <code>{1,2}</code> = <code>{2,1}</code>.</p>
+      <p>You collect at <em>every</em> node of the tree, not just leaves. That's what makes it different from combinations.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Type A — Subsets Template</span></div>
+      <pre><code><span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; result = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+<span class="kw">void</span> <span class="fn">subsets</span>(<span class="kw">int</span>[] nums) {
+    <span class="fn">backtrack</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(), <span class="num">0</span>, nums);
+}
+
+<span class="kw">void</span> <span class="fn">backtrack</span>(<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; current, <span class="kw">int</span> start, <span class="kw">int</span>[] nums) {
+    <span class="cmt">// ★ Collect at EVERY node (empty subset is valid too)</span>
+    result.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(current));
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = start; i &lt; nums.length; i++) {
+        current.add(nums[i]);           <span class="cmt">// choose</span>
+        <span class="fn">backtrack</span>(current, i + <span class="num">1</span>, nums); <span class="cmt">// explore (i+1: no reuse)</span>
+        current.remove(current.size() - <span class="num">1</span>); <span class="cmt">// unchoose</span>
+    }
+}</code></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>Key Signals → Type A (Subsets)</strong>
+        <p>"all subsets", "power set", "all possible selections", "include or exclude each element", no size constraint mentioned</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPE B — PERMUTATIONS -->
+  <div class="section" id="type-b-perms">
+    <div class="section-header">
+      <h3>🔴 Type B — Permutations</h3>
+    </div>
+
+    <div class="card">
+      <h4>What it is</h4>
+      <p><strong>Ordering matters. Every element used exactly once.</strong> For <code>n</code> elements, there are <code>n!</code> permutations. <code>[1,2,3]</code> ≠ <code>[3,1,2]</code>.</p>
+      <p>You can't use a <code>start</code> index here — you need all elements at every depth. Instead, track what's already been <em>used</em> with a boolean array.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Type B — Permutations Template</span></div>
+      <pre><code><span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; result = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+<span class="kw">void</span> <span class="fn">permutations</span>(<span class="kw">int</span>[] nums) {
+    <span class="fn">backtrack</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(), <span class="kw">new</span> <span class="kw">boolean</span>[nums.length], nums);
+}
+
+<span class="kw">void</span> <span class="fn">backtrack</span>(<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; current, <span class="kw">boolean</span>[] used, <span class="kw">int</span>[] nums) {
+    <span class="cmt">// ★ Collect only at LEAVES (when all elements are placed)</span>
+    <span class="kw">if</span> (current.size() == nums.length) {
+        result.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(current));
+        <span class="kw">return</span>;
+    }
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; nums.length; i++) {
+        <span class="kw">if</span> (used[i]) <span class="kw">continue</span>; <span class="cmt">// ★ Skip already used — NO start index!</span>
+
+        used[i] = <span class="kw">true</span>;                          <span class="cmt">// choose</span>
+        current.add(nums[i]);
+        <span class="fn">backtrack</span>(current, used, nums);          <span class="cmt">// explore (always from 0)</span>
+        used[i] = <span class="kw">false</span>;                         <span class="cmt">// unchoose</span>
+        current.remove(current.size() - <span class="num">1</span>);
+    }
+}</code></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>Key Signals → Type B (Permutations)</strong>
+        <p>"all arrangements", "all orderings", "permutations", "every possible order", "rearrange", sequence of all n elements</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPE C — COMBINATIONS -->
+  <div class="section" id="type-c-combos">
+    <div class="section-header">
+      <h3>🔵 Type C — Combinations</h3>
+    </div>
+
+    <div class="card">
+      <h4>What it is</h4>
+      <p><strong>Pick exactly k elements from n, no ordering, no repetition.</strong> Like subsets but with a fixed size constraint. Collect only at the leaf when <code>current.size() == k</code>.</p>
+      <p>Uses a <code>start</code> index (like subsets) but adds the size-check base case.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Type C — Combinations Template (pick k from n)</span></div>
+      <pre><code><span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; result = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+<span class="kw">void</span> <span class="fn">combinations</span>(<span class="kw">int</span> n, <span class="kw">int</span> k) {
+    <span class="fn">backtrack</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(), <span class="num">1</span>, n, k);
+}
+
+<span class="kw">void</span> <span class="fn">backtrack</span>(<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; current, <span class="kw">int</span> start, <span class="kw">int</span> n, <span class="kw">int</span> k) {
+    <span class="cmt">// ★ Collect ONLY at target depth k</span>
+    <span class="kw">if</span> (current.size() == k) {
+        result.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(current));
+        <span class="kw">return</span>;
+    }
+
+    <span class="cmt">// ★ Pruning: not enough elements left to fill k slots</span>
+    <span class="kw">int</span> remaining = k - current.size();
+    <span class="kw">for</span> (<span class="kw">int</span> i = start; i &lt;= n - remaining + <span class="num">1</span>; i++) {
+        current.add(i);
+        <span class="fn">backtrack</span>(current, i + <span class="num">1</span>, n, k);
+        current.remove(current.size() - <span class="num">1</span>);
+    }
+}</code></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>Key Signals → Type C (Combinations)</strong>
+        <p>"choose k from n", "combinations of size k", "groups of size k", "pairs", "triplets", explicit size requirement stated</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY DIFFERENCE -->
+  <div class="section" id="key-difference">
+    <div class="section-header">
+      <h3>⚔️ The Critical Difference: <code>start</code> vs <code>used[]</code></h3>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>This is the #1 thing interviewers test about backtracking</strong>
+        <p>Understand exactly WHY each type uses a different mechanism to avoid duplicates.</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Mechanism</th>
+            <th>Used In</th>
+            <th>Why it works</th>
+            <th>What it prevents</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>start</code> index</td>
+            <td><span class="type-badge tb-subset">Subsets</span> <span class="type-badge tb-combo">Combos</span></td>
+            <td>Only pick elements <em>after</em> the last picked. Enforces sorted selection order.</td>
+            <td><span class="diff-bad">Counting {1,2} and {2,1} as different</span></td>
+          </tr>
+          <tr>
+            <td><code>used[]</code> boolean array</td>
+            <td><span class="type-badge tb-perm">Perms</span></td>
+            <td>Any element can appear at any position; just can't use the same slot twice.</td>
+            <td><span class="diff-bad">Using element[i] twice in one permutation</span></td>
+          </tr>
+          <tr>
+            <td>No mechanism</td>
+            <td>Never</td>
+            <td>—</td>
+            <td>Generates duplicates and invalid states</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>✅ Subsets / Combos — <code>start</code></h4>
+        <ul>
+          <li>Loop: <code>for i = start → n</code></li>
+          <li>Recurse with <code>i + 1</code></li>
+          <li>Ensures {1,2} not re-generated as {2,1}</li>
+          <li>No visited tracking needed</li>
+          <li>Elements have a natural "forward only" order</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h4>✅ Permutations — <code>used[]</code></h4>
+        <ul>
+          <li>Loop: <code>for i = 0 → n</code> (always full range)</li>
+          <li>Skip if <code>used[i] == true</code></li>
+          <li>Ensures {1,2} and {2,1} both generated</li>
+          <li>Mark on enter, unmark on exit</li>
+          <li>Every position can hold any unused element</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ PART 3 ═══════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">03</div>
+    <div>
+      <h2>Mastery Details</h2>
+      <p>Pruning, the copy trap, complexity, and full walkthroughs.</p>
+    </div>
+  </div>
+
+  <!-- PRUNING -->
+  <div class="section" id="pruning">
+    <div class="section-header">
+      <h3>✂️ Pruning Techniques — Cut Branches Early</h3>
+    </div>
+
+    <div class="card">
+      <p>Pruning is what separates an O(2ⁿ) brute force from a fast backtracking solution. Prune aggressively. The earlier you prune, the more sub-trees you skip.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>1. Constraint Pruning</h4>
+        <p>If adding current element already exceeds the target (e.g., sum > target), stop. Works when input is sorted — larger elements will only make it worse.</p>
+        <div class="code-block" style="margin-top:0.8rem;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="kw">if</span> (remaining &lt; <span class="num">0</span>) <span class="kw">return</span>; <span class="cmt">// prune!</span>
+<span class="cmt">// Sort input first for this to work</span></code></pre>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4>2. Duplicate Skipping</h4>
+        <p>When input has duplicates and you want unique results — sort first, then skip same-value siblings at the same depth level.</p>
+        <div class="code-block" style="margin-top:0.8rem;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="kw">if</span> (i > start && nums[i] == nums[i-<span class="num">1</span>])
+    <span class="kw">continue</span>; <span class="cmt">// skip duplicate siblings</span></code></pre>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4>3. Size Pruning</h4>
+        <p>In combinations, if not enough elements remain to reach size k, prune. Classic optimization for LC #77.</p>
+        <div class="code-block" style="margin-top:0.8rem;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="cmt">// loop bound is the pruning</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = start;
+     i <= n - (k - cur.size()) + <span class="num">1</span>; i++)</code></pre>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4>4. Validity Check</h4>
+        <p>For problems like N-Queens or Sudoku — check if the current choice is valid before recursing. Don't recurse into impossible states.</p>
+        <div class="code-block" style="margin-top:0.8rem;">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="kw">if</span> (!<span class="fn">isValid</span>(board, row, col))
+    <span class="kw">continue</span>; <span class="cmt">// prune invalid placement</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Sort Before Pruning</strong>
+        <p>Constraint pruning and duplicate skipping both require the input to be sorted first. Call <code>Arrays.sort(nums)</code> before you invoke <code>backtrack()</code>. Forgetting this is a common bug.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- COPY TRAP -->
+  <div class="section" id="copy-trap">
+    <div class="section-header">
+      <h3>🪤 The Copy Trap — The Most Common Bug</h3>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">☠️</div>
+      <div class="body">
+        <strong>The #1 Backtracking Bug in Interviews</strong>
+        <p>You add <code>current</code> to <code>result</code> directly. Your result list fills up with identical empty lists at the end. Entire output is wrong.</p>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>❌ WRONG — Reference Bug</h4>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code>result.add(current);
+<span class="cmt">// current is a reference!</span>
+<span class="cmt">// When current changes later,</span>
+<span class="cmt">// every stored "snapshot"</span>
+<span class="cmt">// changes too. All sublists</span>
+<span class="cmt">// end up pointing to the</span>
+<span class="cmt">// SAME final state of current.</span></code></pre>
+        </div>
+      </div>
+      <div class="compare-card">
+        <h4>✅ CORRECT — Snapshot Copy</h4>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code>result.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(current));
+<span class="cmt">// Creates a NEW list with</span>
+<span class="cmt">// the current contents.</span>
+<span class="cmt">// Future changes to current</span>
+<span class="cmt">// do NOT affect this snapshot.</span>
+<span class="cmt">// This is the correct way.</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p><strong>Rule:</strong> Whenever you add a mutable object (List, char[], int[]) to your result, always create a copy first. In Java: <code>new ArrayList&lt;&gt;(current)</code>. This one line separates correct from broken code.</p>
+    </div>
+  </div>
+
+  <!-- COMPLEXITY -->
+  <div class="section" id="complexity">
+    <div class="section-header">
+      <h3>📊 Time Complexity Intuition</h3>
+    </div>
+
+    <div class="complexity-box">
+      <div class="cx-card cx-subset">
+        <div class="cx-type">Subsets / Power Set</div>
+        <div class="cx-val">O(n · 2ⁿ)</div>
+        <div class="cx-example">n=20 → ~20M ops<br>Each element: in or out</div>
+      </div>
+      <div class="cx-card cx-combo">
+        <div class="cx-type">Combinations C(n,k)</div>
+        <div class="cx-val">O(k · C(n,k))</div>
+        <div class="cx-example">C(10,3) = 120 combos<br>k = copy cost per leaf</div>
+      </div>
+      <div class="cx-card cx-perm">
+        <div class="cx-type">Permutations</div>
+        <div class="cx-val">O(n · n!)</div>
+        <div class="cx-example">n=8 → ~322K ops<br>Fastest-growing of the 3</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Intuition — Why These Numbers</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Type</th><th>Tree Nodes</th><th>Why</th><th>Copy Cost</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td><span class="type-badge tb-subset">Subsets</span></td><td>2ⁿ leaves</td><td>Each element: include OR exclude</td><td>O(n) per copy</td><td>O(n·2ⁿ)</td></tr>
+            <tr><td><span class="type-badge tb-combo">Combos</span></td><td>C(n,k) leaves</td><td>C(n,k) = n!/(k!(n-k)!)</td><td>O(k) per copy</td><td>O(k·C(n,k))</td></tr>
+            <tr><td><span class="type-badge tb-perm">Perms</span></td><td>n! leaves</td><td>n choices × n-1 × … × 1</td><td>O(n) per copy</td><td>O(n·n!)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Space Complexity</strong>
+        <p>Always O(n) for the recursion stack depth (one frame per level). Plus O(result size) for output. Space is rarely the bottleneck — focus on pruning to reduce time.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WALKTHROUGHS -->
+  <div class="section" id="walkthrough">
+    <div class="section-header">
+      <h3>🔍 Full Walkthroughs — Template in Action</h3>
+    </div>
+
+    <!-- LC 39 -->
+    <h4><a href="https://leetcode.com/problems/combination-sum/" target="_blank" style="color:var(--accent-cyan);text-decoration:none;">LC #39 — Combination Sum</a> 🟡 <span class="type-badge tb-combo">Combo</span></h4>
+
+    <div class="card">
+      <p><strong>Problem:</strong> Given an array of distinct integers <code>candidates</code> and a target, return all unique combinations that sum to target. The same number may be used unlimited times.</p>
+      <p><strong>Key twist vs standard combo:</strong> You can reuse elements → pass <code>i</code> instead of <code>i+1</code> when recursing.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">LC #39 — Combination Sum</span></div>
+      <pre><code><span class="kw">class</span> <span class="type">Solution</span> {
+    <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; result = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; <span class="fn">combinationSum</span>(<span class="kw">int</span>[] candidates, <span class="kw">int</span> target) {
+        <span class="type">Arrays</span>.<span class="fn">sort</span>(candidates); <span class="cmt">// sort for pruning</span>
+        <span class="fn">backtrack</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(), <span class="num">0</span>, candidates, target);
+        <span class="kw">return</span> result;
+    }
+
+    <span class="kw">void</span> <span class="fn">backtrack</span>(<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; current, <span class="kw">int</span> start,
+                   <span class="kw">int</span>[] candidates, <span class="kw">int</span> remaining) {
+
+        <span class="kw">if</span> (remaining == <span class="num">0</span>) {                          <span class="cmt">// ★ exact match</span>
+            result.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(current));
+            <span class="kw">return</span>;
+        }
+
+        <span class="kw">for</span> (<span class="kw">int</span> i = start; i &lt; candidates.length; i++) {
+            <span class="kw">if</span> (candidates[i] > remaining) <span class="kw">break</span>;  <span class="cmt">// ★ prune (sorted!)</span>
+
+            current.add(candidates[i]);
+            <span class="fn">backtrack</span>(current, i, candidates,         <span class="cmt">// ★ i not i+1</span>
+                       remaining - candidates[i]);     <span class="cmt">// allows reuse</span>
+            current.remove(current.size() - <span class="num">1</span>);
+        }
+    }
+}</code></pre>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Sort input</div><div class="step-desc">Enables the <code>break</code> pruning — once a candidate exceeds remaining, all subsequent (larger) ones will too.</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Pass <code>i</code>, not <code>i+1</code></div><div class="step-desc">This is the reuse mechanism. Passing <code>i</code> means the same element can be picked again at the next level.</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Collect when remaining == 0</div><div class="step-desc">Not at every node (like subsets). Only when sum is exactly met.</div></div></div>
+    </div>
+
+    <!-- LC 46 -->
+    <h4 style="margin-top:2rem;"><a href="https://leetcode.com/problems/permutations/" target="_blank" style="color:var(--accent-cyan);text-decoration:none;">LC #46 — Permutations</a> 🟡 <span class="type-badge tb-perm">Permutation</span></h4>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">LC #46 — Permutations</span></div>
+      <pre><code><span class="kw">class</span> <span class="type">Solution</span> {
+    <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; result = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; <span class="fn">permute</span>(<span class="kw">int</span>[] nums) {
+        <span class="fn">backtrack</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(), <span class="kw">new</span> <span class="kw">boolean</span>[nums.length], nums);
+        <span class="kw">return</span> result;
+    }
+
+    <span class="kw">void</span> <span class="fn">backtrack</span>(<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; current, <span class="kw">boolean</span>[] used, <span class="kw">int</span>[] nums) {
+        <span class="kw">if</span> (current.size() == nums.length) {        <span class="cmt">// ★ leaf = full perm</span>
+            result.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(current));
+            <span class="kw">return</span>;
+        }
+
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; nums.length; i++) {     <span class="cmt">// ★ always 0..n, no start!</span>
+            <span class="kw">if</span> (used[i]) <span class="kw">continue</span>;                  <span class="cmt">// ★ skip used elements</span>
+
+            used[i] = <span class="kw">true</span>;
+            current.add(nums[i]);
+            <span class="fn">backtrack</span>(current, used, nums);
+            used[i] = <span class="kw">false</span>;                        <span class="cmt">// ★ undo used flag too</span>
+            current.remove(current.size() - <span class="num">1</span>);
+        }
+    }
+}</code></pre>
+    </div>
+
+    <div class="banner banner-purple">
+      <h4>Spot the Difference — 39 vs 46</h4>
+      <p>LC #39: <code>for i = start → n</code> + recurse with <code>i</code> (no used array). LC #46: <code>for i = 0 → n</code> + <code>used[]</code> check (no start). Two problems, two mechanisms, one template shape.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ PART 4 ═══════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">04</div>
+    <div>
+      <h2>Recognition & Practice</h2>
+      <p>Instantly identify backtracking problems and 15 graded practice problems.</p>
+    </div>
+  </div>
+
+  <!-- RECOGNITION SIGNALS -->
+  <div class="section" id="recognition">
+    <div class="section-header">
+      <h3>🎯 Recognition Signals</h3>
+    </div>
+
+    <div class="card">
+      <h4>Keyword Triggers — Read These, Think Backtracking</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Phrase in Problem</th><th>Type</th><th>Confidence</th></tr></thead>
+          <tbody>
+            <tr><td>"all subsets", "power set"</td><td><span class="type-badge tb-subset">Subsets</span></td><td><span class="pill pill-green">Very High</span></td></tr>
+            <tr><td>"all permutations", "all arrangements"</td><td><span class="type-badge tb-perm">Perms</span></td><td><span class="pill pill-green">Very High</span></td></tr>
+            <tr><td>"combinations of size k"</td><td><span class="type-badge tb-combo">Combos</span></td><td><span class="pill pill-green">Very High</span></td></tr>
+            <tr><td>"return all possible"</td><td><span class="type-badge tb-hybrid">Any</span></td><td><span class="pill pill-blue">High</span></td></tr>
+            <tr><td>"generate all valid"</td><td><span class="type-badge tb-hybrid">Any</span></td><td><span class="pill pill-blue">High</span></td></tr>
+            <tr><td>"find all paths"</td><td><span class="type-badge tb-hybrid">Any</span></td><td><span class="pill pill-blue">High</span></td></tr>
+            <tr><td>"n ≤ 20" (small input)</td><td><span class="type-badge tb-hybrid">Any</span></td><td><span class="pill pill-orange">Signal</span></td></tr>
+            <tr><td>"without duplicates" + input has dupes</td><td><span class="type-badge tb-hybrid">Pruning</span></td><td><span class="pill pill-orange">Sort + skip</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>The n ≤ 20 Signal</strong>
+        <p>Whenever you see a tiny input constraint like <code>n ≤ 15</code> or <code>n ≤ 20</code>, the problem almost certainly requires exponential time — which means backtracking, bitmask DP, or brute force enumeration. That small n is a gift — it's telling you O(2ⁿ) is acceptable.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECISION MOMENT -->
+  <div class="section" id="decision">
+    <div class="section-header">
+      <h3>⚖️ Decision Moment — Backtracking vs Alternatives</h3>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>If the problem asks for…</th><th>Use</th><th>Not</th></tr></thead>
+        <tbody>
+          <tr><td>Count of valid combinations</td><td><span class="pill pill-blue">DP (top-down)</span></td><td><span class="pill pill-orange">Backtracking (too slow)</span></td></tr>
+          <tr><td>All valid combinations (enumerate)</td><td><span class="pill pill-green">Backtracking</span></td><td><span class="pill pill-orange">DP (can't enumerate)</span></td></tr>
+          <tr><td>Exists ANY valid solution (boolean)</td><td><span class="pill pill-blue">BFS / DP</span></td><td><span class="pill pill-orange">Backtracking (overkill)</span></td></tr>
+          <tr><td>ALL valid paths in a grid</td><td><span class="pill pill-green">Backtracking (DFS)</span></td><td><span class="pill pill-orange">BFS (doesn't enumerate paths)</span></td></tr>
+          <tr><td>Shortest valid path</td><td><span class="pill pill-blue">BFS</span></td><td><span class="pill pill-orange">Backtracking (explores all)</span></td></tr>
+          <tr><td>Constraint satisfaction (Sudoku, N-Queens)</td><td><span class="pill pill-green">Backtracking</span></td><td><span class="pill pill-orange">DP (no structure to exploit)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🏆</div>
+      <div class="body">
+        <strong>Interview Decision Rule</strong>
+        <p>If the problem says "return all" → backtracking. If it says "return count" or "return true/false" → think DP or BFS first. Backtracking is the only tool that can enumerate all solutions; DP and BFS are better at optimization and reachability questions.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRACTICE PROBLEMS -->
+  <div class="section" id="practice">
+    <div class="section-header">
+      <h3>📝 15 Practice Problems</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">📌</div>
+      <div class="body">
+        <strong>How to use this list</strong>
+        <p>Before coding each problem, identify: (1) Which type — subset/perm/combo? (2) What is the base case? (3) What pruning can I apply? Only then open the editor.</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Problem</th>
+            <th>Type</th>
+            <th>Difficulty</th>
+            <th>Key Insight</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><a href="https://leetcode.com/problems/subsets/" target="_blank" style="color:var(--accent-blue);">LC #78 — Subsets</a></td>
+            <td><span class="type-badge tb-subset">Subset</span></td>
+            <td>🟡 Medium</td>
+            <td>Collect at every node, not just leaves</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><a href="https://leetcode.com/problems/subsets-ii/" target="_blank" style="color:var(--accent-blue);">LC #90 — Subsets II</a></td>
+            <td><span class="type-badge tb-subset">Subset</span></td>
+            <td>🟡 Medium</td>
+            <td>Sort + skip duplicate siblings: <code>if i>start && nums[i]==nums[i-1] skip</code></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><a href="https://leetcode.com/problems/permutations/" target="_blank" style="color:var(--accent-blue);">LC #46 — Permutations</a></td>
+            <td><span class="type-badge tb-perm">Perm</span></td>
+            <td>🟡 Medium</td>
+            <td>used[] not start; collect at size==n</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><a href="https://leetcode.com/problems/permutations-ii/" target="_blank" style="color:var(--accent-blue);">LC #47 — Permutations II</a></td>
+            <td><span class="type-badge tb-perm">Perm</span></td>
+            <td>🟡 Medium</td>
+            <td>Sort + used[] + skip: <code>!used[i-1] && nums[i]==nums[i-1]</code></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><a href="https://leetcode.com/problems/combination-sum/" target="_blank" style="color:var(--accent-blue);">LC #39 — Combination Sum</a></td>
+            <td><span class="type-badge tb-combo">Combo</span></td>
+            <td>🟡 Medium</td>
+            <td>Pass <code>i</code> (not i+1) to allow reuse; prune when remaining&lt;0</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><a href="https://leetcode.com/problems/combination-sum-ii/" target="_blank" style="color:var(--accent-blue);">LC #40 — Combination Sum II</a></td>
+            <td><span class="type-badge tb-combo">Combo</span></td>
+            <td>🟡 Medium</td>
+            <td>No reuse (i+1) + skip duplicates at same level</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><a href="https://leetcode.com/problems/combinations/" target="_blank" style="color:var(--accent-blue);">LC #77 — Combinations</a></td>
+            <td><span class="type-badge tb-combo">Combo</span></td>
+            <td>🟡 Medium</td>
+            <td>Size pruning: loop bound = <code>n-(k-cur.size())+1</code></td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><a href="https://leetcode.com/problems/letter-combinations-of-a-phone-number/" target="_blank" style="color:var(--accent-blue);">LC #17 — Letter Combinations</a></td>
+            <td><span class="type-badge tb-combo">Combo</span></td>
+            <td>🟡 Medium</td>
+            <td>Fixed depth = digits.length; choices = phone map letters</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><a href="https://leetcode.com/problems/generate-parentheses/" target="_blank" style="color:var(--accent-blue);">LC #22 — Generate Parentheses</a></td>
+            <td><span class="type-badge tb-hybrid">Hybrid</span></td>
+            <td>🟡 Medium</td>
+            <td>Track open/close counts; prune if close>open or open>n</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><a href="https://leetcode.com/problems/palindrome-partitioning/" target="_blank" style="color:var(--accent-blue);">LC #131 — Palindrome Partitioning</a></td>
+            <td><span class="type-badge tb-subset">Subset</span></td>
+            <td>🟡 Medium</td>
+            <td>Collect when index reaches end; prune non-palindrome partitions</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><a href="https://leetcode.com/problems/n-queens/" target="_blank" style="color:var(--accent-blue);">LC #51 — N-Queens</a></td>
+            <td><span class="type-badge tb-perm">Perm</span></td>
+            <td>🔴 Hard</td>
+            <td>One queen per row; prune cols/diagonals with sets</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><a href="https://leetcode.com/problems/sudoku-solver/" target="_blank" style="color:var(--accent-blue);">LC #37 — Sudoku Solver</a></td>
+            <td><span class="type-badge tb-hybrid">Hybrid</span></td>
+            <td>🔴 Hard</td>
+            <td>Constraint satisfaction; prune each cell with validity check</td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td><a href="https://leetcode.com/problems/word-search/" target="_blank" style="color:var(--accent-blue);">LC #79 — Word Search</a></td>
+            <td><span class="type-badge tb-hybrid">Hybrid</span></td>
+            <td>🟡 Medium</td>
+            <td>DFS on grid; mark visited, unmark on backtrack</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><a href="https://leetcode.com/problems/restore-ip-addresses/" target="_blank" style="color:var(--accent-blue);">LC #93 — Restore IP Addresses</a></td>
+            <td><span class="type-badge tb-combo">Combo</span></td>
+            <td>🟡 Medium</td>
+            <td>Fixed 4 parts; prune invalid segments (>255, leading zeros)</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><a href="https://leetcode.com/problems/expression-add-operators/" target="_blank" style="color:var(--accent-blue);">LC #282 — Expression Add Operators</a></td>
+            <td><span class="type-badge tb-hybrid">Hybrid</span></td>
+            <td>🔴 Hard</td>
+            <td>Backtrack with running eval; track last operand for * precedence</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-grid" style="margin-top:1.5rem;">
+      <div class="card-mini">
+        <h4>📈 Recommended Order</h4>
+        <ol>
+          <li>#78 Subsets (pure template)</li>
+          <li>#46 Permutations (pure template)</li>
+          <li>#77 Combinations (pure template)</li>
+          <li>#39 Combo Sum (reuse twist)</li>
+          <li>#90 Subsets II (dedup)</li>
+          <li>#47 Perms II (dedup)</li>
+          <li>#22 Generate Parens (constraint)</li>
+          <li>#131 Palindrome Partition</li>
+          <li>#51 N-Queens (hard)</li>
+        </ol>
+      </div>
+      <div class="card-mini">
+        <h4>🏁 Mastery Checklist</h4>
+        <ul class="checklist">
+          <li>Write subset template from memory</li>
+          <li>Write permutation template from memory</li>
+          <li>Explain why <code>used[]</code> vs <code>start</code></li>
+          <li>Add duplicate-skipping without looking</li>
+          <li>Explain the copy trap clearly</li>
+          <li>State complexity for all 3 types</li>
+          <li>Solve N-Queens in 20 minutes</li>
+          <li>Recognize backtracking vs DP instantly</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="banner banner-purple" style="margin-top:1.5rem;">
+      <h4>⚡ Final Mantra</h4>
+      <p><strong>Choose → Recurse → Unchoose.</strong> Every backtracking problem, every time. The <em>art</em> is deciding what "choose" means, what the base case is, and where to prune. The <em>template</em> never changes.</p>
+    </div>
+  </div>
+
+</main>
+
+<button id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  const hamburger = document.getElementById('hamburger');
+  const sidebar   = document.getElementById('sidebar');
+  const overlay   = document.getElementById('sidebar-overlay');
+  const main      = document.getElementById('main');
+
+  function openSidebar()  { sidebar.classList.add('open');   overlay.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+
+  hamburger.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  overlay.addEventListener('click', closeSidebar);
+
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('progress');
+    const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    el.style.width = pct + '%';
+
+    const topBtn = document.getElementById('topBtn');
+    if (topBtn) topBtn.style.opacity = window.scrollY > 300 ? '1' : '0';
+  });
+
+  // Smooth scroll for sidebar links
+  document.querySelectorAll('.toc-link[href^="#"]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.innerWidth < 768) closeSidebar();
+      }
+    });
+  });
+
+  // Active link highlighting
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

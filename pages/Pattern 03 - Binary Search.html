@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pattern 03: Binary Search — Eliminate Half, Always</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css" />
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0d1f2d 40%, #0a1a2a 100%);
+    }
+    .hero h1 em {
+      color: var(--accent-cyan);
+      font-style: normal;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+  <!-- Hamburger -->
+  <button id="hamburger" aria-label="Toggle sidebar">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- Overlay -->
+  <div id="sidebar-overlay"></div>
+
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <span>📋</span>
+      <span>Pattern 03</span>
+    </div>
+    <ul>
+      <li><a href="../index.html" class="toc-link">🏠 Home</a></li>
+      <li class="toc-section">Overview</li>
+      <li><a href="#hook" class="toc-link">🔑 The Real Insight</a></li>
+      <li><a href="#is-bsearchable" class="toc-link">🧠 Is This Binary Searchable?</a></li>
+      <li class="toc-section">4 Varieties</li>
+      <li><a href="#classic" class="toc-link">A — Classic Search</a></li>
+      <li><a href="#left-boundary" class="toc-link">B — Left Boundary</a></li>
+      <li><a href="#right-boundary" class="toc-link">C — Right Boundary</a></li>
+      <li><a href="#answer-space" class="toc-link">D — Search on Answer</a></li>
+      <li class="toc-section">Correctness</li>
+      <li><a href="#off-by-one" class="toc-link">⚠️ Off-By-One Errors</a></li>
+      <li><a href="#infinite-loop" class="toc-link">♾️ Infinite Loop Traps</a></li>
+      <li class="toc-section">Walkthrough</li>
+      <li><a href="#koko" class="toc-link">🍌 LC #875 Koko Bananas</a></li>
+      <li class="toc-section">Reference</li>
+      <li><a href="#complexity" class="toc-link">📊 Complexity</a></li>
+      <li><a href="#practice" class="toc-link">🏋️ Practice Problems</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="main">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-label">DSA Patterns — Note 03</div>
+        <h1>Pattern 03: Binary Search<br><em>Eliminate Half, Always</em></h1>
+        <p class="hero-sub">
+          Binary search is not a sorting trick — it is a <strong>decision framework</strong>.
+          Any problem where you can ask a yes/no question about a value and the answers
+          form a monotonic sequence is secretly a binary search problem.
+        </p>
+        <div class="hero-badges">
+          <span class="tag tag-cyan">O(log n)</span>
+          <span class="tag tag-blue">Sorted Arrays</span>
+          <span class="tag tag-purple">Answer Space</span>
+          <span class="tag tag-orange">Off-By-One</span>
+          <span class="tag tag-green">Monotonic Predicate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PART 1 — THE REAL INSIGHT
+    ══════════════════════════════════════ -->
+    <div class="part-header">
+      <div class="part-number" style="background:var(--gradient-blue);">01</div>
+      <div>
+        <h2>The Real Insight</h2>
+        <p>Why binary search applies far beyond sorted arrays.</p>
+      </div>
+    </div>
+
+    <!-- Section: Hook -->
+    <div class="section" id="hook">
+      <div class="section-header">
+        <h3>🔑 Binary Search Is NOT Just About Sorted Arrays</h3>
+      </div>
+
+      <div class="callout purple">
+        <div class="icon">🎯</div>
+        <div class="body">
+          <strong>The Opening Insight</strong>
+          <p>
+            Most people memorise binary search as "search for a value in a sorted array."
+            That mental model will fail them on 80 % of interview problems that use binary search.
+            The actual rule is simpler and more powerful:
+          </p>
+          <p style="font-size:1.1rem; color:var(--accent-cyan); margin-top:0.5rem;">
+            <strong>If you can write a predicate <code>f(x)</code> that is <em>monotonic</em>
+            (all FALSE then all TRUE, or vice-versa), you can binary search on it.</strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>What "Monotonic" Means</h4>
+        <p>A predicate <code>f(x)</code> is monotonic over a search space if, once it flips
+        from <code>false</code> → <code>true</code>, it never flips back.</p>
+        <div class="diagram">
+  Search space:  1   2   3   4   5   6   7   8   9   10
+  f(x) = x≥5:   <span class="d-red">F</span>   <span class="d-red">F</span>   <span class="d-red">F</span>   <span class="d-red">F</span>   <span class="d-green">T</span>   <span class="d-green">T</span>   <span class="d-green">T</span>   <span class="d-green">T</span>   <span class="d-green">T</span>   <span class="d-green">T</span>
+
+  Goal: find the <span class="d-cyan">boundary</span> — the first x where f(x) = TRUE
+                              ↑
+                              5  ← binary search finds this in O(log n)
+        </div>
+        <p>The array doesn't need to contain integers. The search space can be:</p>
+        <div class="card-grid">
+          <div class="card-mini">
+            <h4>🔢 Index Space</h4>
+            <p>Classic: sorted array, indices 0…n-1. Find where value lives.</p>
+          </div>
+          <div class="card-mini">
+            <h4>📏 Answer Space</h4>
+            <p>Search over all possible <em>answers</em> to "what is the minimum X that works?"</p>
+          </div>
+          <div class="card-mini">
+            <h4>🌊 Value Space</h4>
+            <p>Search over a numeric range [lo, hi] even with no explicit array.</p>
+          </div>
+          <div class="card-mini">
+            <h4>⏰ Time / Capacity</h4>
+            <p>Can I finish in T minutes? Binary search on T until boundary found.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="banner banner-blue">
+        <h4>The Mental Reframe</h4>
+        <p>
+          Stop asking "is this array sorted?"<br>
+          Start asking: <strong>"Can I define a monotonic yes/no predicate over this search space?"</strong><br>
+          If yes → binary search applies. Always O(log n).
+        </p>
+      </div>
+    </div>
+
+    <!-- Section: Is this binary searchable -->
+    <div class="section" id="is-bsearchable">
+      <div class="section-header">
+        <h3>🧠 The "Is This Binary Searchable?" Checklist</h3>
+      </div>
+
+      <div class="card">
+        <h4>4-Question Mental Checklist</h4>
+        <p>Run through these before writing a single line of code:</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Can I define a clear search space with a lower and upper bound?</div>
+              <div class="step-desc">e.g., "the answer lies somewhere between 1 and max(array)" or "index lies between 0 and n-1". If the bounds are infinite or undefined → binary search won't help directly.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Can I write a predicate f(mid) that answers a YES/NO question?</div>
+              <div class="step-desc">e.g., "Is it possible to finish work if the rate is <code>mid</code>?" or "Does value <code>mid</code> appear at or before index <code>k</code>?"</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Is the predicate monotonic? (Once it flips, it never flips back)</div>
+              <div class="step-desc">This is the critical property. Sketch out a few values mentally: "for small x → FALSE, for large x → TRUE" or vice versa. Non-monotonic = cannot binary search.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">Can I evaluate f(mid) cheaply? (Ideally O(n) or better)</div>
+              <div class="step-desc">If checking one mid value costs O(n), total complexity is O(n log n) — usually acceptable. If it costs O(n²), the log n savings may not help enough.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout success">
+        <div class="icon">✅</div>
+        <div class="body">
+          <strong>Quick Verbal Test</strong>
+          <p>Can you say out loud: <em>"If X works, then anything larger/smaller also works"</em>?
+          If yes → you have monotonicity → binary search applies.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Signal Words in Problem Statements</h4>
+        <p>These phrases are almost always binary search problems in disguise:</p>
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;">
+          <span class="tag tag-cyan">"minimum possible maximum"</span>
+          <span class="tag tag-cyan">"maximum possible minimum"</span>
+          <span class="tag tag-blue">"least X such that…"</span>
+          <span class="tag tag-blue">"smallest k that satisfies…"</span>
+          <span class="tag tag-green">"at most k operations"</span>
+          <span class="tag tag-green">"can we finish within T?"</span>
+          <span class="tag tag-purple">"split array into m parts"</span>
+          <span class="tag tag-orange">"first bad version"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PART 2 — THE 4 VARIETIES
+    ══════════════════════════════════════ -->
+    <div class="part-header">
+      <div class="part-number" style="background:var(--gradient-green);">02</div>
+      <div>
+        <h2>The 4 Varieties</h2>
+        <p>Exact templates for every binary search flavour you will encounter.</p>
+      </div>
+    </div>
+
+    <!-- Variety A: Classic -->
+    <div class="section" id="classic">
+      <div class="section-header">
+        <h3>🅰️ Variety A — Classic: Find Exact Element</h3>
+      </div>
+
+      <div class="card">
+        <h4>When to Use</h4>
+        <p>The array is sorted. You want to know <em>if</em> a value exists and <em>where</em> it is.
+        Returns <code>-1</code> if not found. No duplicates matter here.</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Variety A — Classic Binary Search Template</span>
+        </div>
+        <pre><code><span class="kw">int</span> <span class="fn">binarySearchClassic</span>(<span class="kw">int</span>[] nums, <span class="kw">int</span> target) {
+    <span class="kw">int</span> lo = <span class="num">0</span>, hi = nums.length - <span class="num">1</span>;
+
+    <span class="kw">while</span> (lo <= hi) {                         <span class="cmt">// ← Note: lo <= hi (can be equal)</span>
+        <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>;           <span class="cmt">// ← Prevents integer overflow</span>
+
+        <span class="kw">if</span> (nums[mid] == target) <span class="kw">return</span> mid;     <span class="cmt">// Found!</span>
+        <span class="kw">else if</span> (nums[mid] < target) lo = mid + <span class="num">1</span>; <span class="cmt">// Target is RIGHT</span>
+        <span class="kw">else</span> hi = mid - <span class="num">1</span>;                       <span class="cmt">// Target is LEFT</span>
+    }
+
+    <span class="kw">return</span> -<span class="num">1</span>; <span class="cmt">// Not found</span>
+}</code></pre>
+      </div>
+
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>✅ Invariant</h4>
+          <p>Target always lies in <code>[lo, hi]</code> if it exists. Loop exits when <code>lo > hi</code> — meaning all possibilities exhausted.</p>
+        </div>
+        <div class="card-mini">
+          <h4>⚠️ Edge Cases</h4>
+          <p>Empty array → lo=0, hi=-1, loop never entered. Single element → checked exactly once at mid=0.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variety B: Left Boundary -->
+    <div class="section" id="left-boundary">
+      <div class="section-header">
+        <h3>🅱️ Variety B — Left Boundary: First Occurrence</h3>
+      </div>
+
+      <div class="card">
+        <h4>When to Use</h4>
+        <p>Array may have <strong>duplicates</strong>. You want the <em>leftmost</em> index where
+        <code>nums[i] == target</code>, or the leftmost index where <code>nums[i] >= target</code>
+        (lower bound). Classic example: <em>"How many times does X appear?"</em> using
+        <code>leftBound(x+1) - leftBound(x)</code>.</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Variety B — Left Boundary Template</span>
+        </div>
+        <pre><code><span class="cmt">// Returns: leftmost index where nums[i] >= target (lower_bound)</span>
+<span class="cmt">// If all elements < target, returns nums.length</span>
+<span class="kw">int</span> <span class="fn">leftBound</span>(<span class="kw">int</span>[] nums, <span class="kw">int</span> target) {
+    <span class="kw">int</span> lo = <span class="num">0</span>, hi = nums.length;              <span class="cmt">// ← hi = length (open right)</span>
+
+    <span class="kw">while</span> (lo < hi) {                          <span class="cmt">// ← lo < hi (never equal)</span>
+        <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>;
+
+        <span class="kw">if</span> (nums[mid] < target) lo = mid + <span class="num">1</span>;   <span class="cmt">// mid is too small → go right</span>
+        <span class="kw">else</span> hi = mid;                           <span class="cmt">// mid is candidate → shrink from right</span>
+    }
+
+    <span class="kw">return</span> lo; <span class="cmt">// lo == hi at exit. This is the leftmost valid index.</span>
+}
+
+<span class="cmt">// Check if target actually exists:</span>
+<span class="kw">int</span> idx = <span class="fn">leftBound</span>(nums, target);
+<span class="kw">boolean</span> found = idx < nums.length && nums[idx] == target;</code></pre>
+      </div>
+
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Why <code>hi = nums.length</code> and not <code>nums.length - 1</code>?</strong>
+          <p>Because the answer <em>might be</em> <code>nums.length</code> — meaning every
+          element is smaller than target. The range is half-open: <code>[lo, hi)</code>.
+          This is the standard lower_bound from C++ STL.</p>
+        </div>
+      </div>
+
+      <div class="diagram">
+  Example: nums = [1, 2, 2, 2, 3, 4],  target = 2
+
+  lo=0, hi=6                         [<span class="d-blue">1</span>, <span class="d-green">2</span>, <span class="d-green">2</span>, <span class="d-green">2</span>, <span class="d-orange">3</span>, <span class="d-orange">4</span>]
+  mid=3 → nums[3]=2 ≥ 2 → hi=3      search narrows to [0..3)
+  mid=1 → nums[1]=2 ≥ 2 → hi=1      search narrows to [0..1)
+  mid=0 → nums[0]=1 &lt; 2 → lo=1     search narrows to [1..1)
+  lo == hi == 1 → <span class="d-cyan">return 1</span>  ✓ (first occurrence of 2)
+      </div>
+    </div>
+
+    <!-- Variety C: Right Boundary -->
+    <div class="section" id="right-boundary">
+      <div class="section-header">
+        <h3>🅲 Variety C — Right Boundary: Last Occurrence</h3>
+      </div>
+
+      <div class="card">
+        <h4>When to Use</h4>
+        <p>You want the <em>rightmost</em> index where <code>nums[i] == target</code>,
+        or the rightmost index where <code>nums[i] <= target</code> (upper bound - 1).
+        Combine with Variety B to count occurrences in O(log n).</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Variety C — Right Boundary Template</span>
+        </div>
+        <pre><code><span class="cmt">// Returns: rightmost index where nums[i] <= target</span>
+<span class="cmt">// (upper_bound - 1). Returns -1 if all elements > target.</span>
+<span class="kw">int</span> <span class="fn">rightBound</span>(<span class="kw">int</span>[] nums, <span class="kw">int</span> target) {
+    <span class="kw">int</span> lo = <span class="num">0</span>, hi = nums.length;
+
+    <span class="kw">while</span> (lo < hi) {
+        <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>;
+
+        <span class="kw">if</span> (nums[mid] <= target) lo = mid + <span class="num">1</span>;  <span class="cmt">// mid is candidate, but keep going right</span>
+        <span class="kw">else</span> hi = mid;                           <span class="cmt">// mid too big → shrink from right</span>
+    }
+
+    <span class="kw">return</span> lo - <span class="num">1</span>; <span class="cmt">// lo-1 is rightmost index where nums[i] <= target</span>
+}
+
+<span class="cmt">// Count occurrences of target:</span>
+<span class="kw">int</span> count = <span class="fn">rightBound</span>(nums, target) - <span class="fn">leftBound</span>(nums, target) + <span class="num">1</span>;</code></pre>
+      </div>
+
+      <div class="compare">
+        <div class="compare-card">
+          <h4>Left Boundary (B)</h4>
+          <ul>
+            <li>Predicate: <code>nums[mid] &lt; target</code> → move right</li>
+            <li><code>hi = mid</code> when predicate is false</li>
+            <li>Returns <code>lo</code></li>
+            <li>"First element ≥ target"</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>Right Boundary (C)</h4>
+          <ul>
+            <li>Predicate: <code>nums[mid] &lt;= target</code> → move right</li>
+            <li><code>lo = mid + 1</code> when predicate is true</li>
+            <li>Returns <code>lo - 1</code></li>
+            <li>"Last element ≤ target"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variety D: Search on Answer Space -->
+    <div class="section" id="answer-space">
+      <div class="section-header">
+        <h3>🅳 Variety D — Search on Answer Space ⭐ MOST IMPORTANT</h3>
+      </div>
+
+      <div class="callout purple">
+        <div class="icon">⭐</div>
+        <div class="body">
+          <strong>This is the variety that separates good candidates from great ones.</strong>
+          <p>There is no explicit sorted array. Instead, you binary search over the
+          <em>range of possible answers</em> and check each candidate answer with a
+          feasibility function. Problems of the form "minimize the maximum" or "maximize
+          the minimum" almost always reduce to this pattern.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>The Universal Template for Answer-Space Binary Search</h4>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Variety D — Search on Answer Space Template</span>
+        </div>
+        <pre><code><span class="cmt">// Problem archetype: "Find MINIMUM x such that canAchieve(x) == true"
+// Predicate is: F F F F [T T T T T]  ← find leftmost T</span>
+
+<span class="kw">int</span> <span class="fn">searchOnAnswerSpace</span>(<span class="cmt">/* problem inputs */</span>) {
+    <span class="kw">int</span> lo = <span class="fn">minPossibleAnswer</span>();   <span class="cmt">// Set a meaningful lower bound</span>
+    <span class="kw">int</span> hi = <span class="fn">maxPossibleAnswer</span>();   <span class="cmt">// Set a meaningful upper bound</span>
+
+    <span class="kw">while</span> (lo < hi) {               <span class="cmt">// ← lo < hi, not lo <= hi</span>
+        <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>; <span class="cmt">// ← round DOWN (bias toward lo)</span>
+
+        <span class="kw">if</span> (<span class="fn">feasible</span>(mid)) {
+            hi = mid;              <span class="cmt">// mid works → try smaller (leftmost T)</span>
+        } <span class="kw">else</span> {
+            lo = mid + <span class="num">1</span>;         <span class="cmt">// mid fails → must go bigger</span>
+        }
+    }
+
+    <span class="kw">return</span> lo; <span class="cmt">// lo == hi == minimum feasible answer</span>
+}
+
+<span class="cmt">// ─────────────────────────────────────────────────────────────</span>
+<span class="cmt">// Problem archetype: "Find MAXIMUM x such that canAchieve(x) == true"</span>
+<span class="cmt">// Predicate is: [T T T T T] F F F F  ← find rightmost T</span>
+
+<span class="kw">int</span> <span class="fn">searchOnAnswerSpaceMax</span>(<span class="cmt">/* problem inputs */</span>) {
+    <span class="kw">int</span> lo = <span class="fn">minPossibleAnswer</span>();
+    <span class="kw">int</span> hi = <span class="fn">maxPossibleAnswer</span>();
+
+    <span class="kw">while</span> (lo < hi) {
+        <span class="kw">int</span> mid = lo + (hi - lo + <span class="num">1</span>) / <span class="num">2</span>; <span class="cmt">// ← round UP (bias toward hi)</span>
+
+        <span class="kw">if</span> (<span class="fn">feasible</span>(mid)) {
+            lo = mid;              <span class="cmt">// mid works → try bigger (rightmost T)</span>
+        } <span class="kw">else</span> {
+            hi = mid - <span class="num">1</span>;         <span class="cmt">// mid fails → must go smaller</span>
+        }
+    }
+
+    <span class="kw">return</span> lo;
+}</code></pre>
+      </div>
+
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>The rounding rule — this is critical and covered in depth next section</strong>
+          <p>When <code>lo = mid</code> appears in your loop, you MUST use
+          <code>mid = lo + (hi - lo + 1) / 2</code> (round up). Otherwise you get an
+          infinite loop. See the Off-By-One section for the full explanation.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>How to Design the Feasibility Function</h4>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Identify what you are searching over</div>
+              <div class="step-desc">"What is the variable that the answer depends on?" — the eating speed, the days limit, the partition size, the allocated bandwidth.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Set tight bounds for lo and hi</div>
+              <div class="step-desc">lo = smallest value that could ever be correct. hi = largest value that could ever be needed. Tight bounds reduce iterations — O(log(hi-lo)).</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Write feasible(mid) — given candidate answer mid, can we satisfy all constraints?</div>
+              <div class="step-desc">Simulate the problem with the candidate value. This is usually a linear scan: O(n). Full algorithm: O(n log(hi-lo)).</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">Verify monotonicity of feasible()</div>
+              <div class="step-desc">Ask: "If mid works, does mid+1 also work (or mid-1 also work)?" If yes → monotonic → binary search applies.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PART 3 — CORRECTNESS
+    ══════════════════════════════════════ -->
+    <div class="part-header">
+      <div class="part-number" style="background:var(--gradient-red);">03</div>
+      <div>
+        <h2>Correctness — Where Interviews Are Won or Lost</h2>
+        <p>Off-by-one errors and infinite loops explained definitively.</p>
+      </div>
+    </div>
+
+    <!-- Off by one -->
+    <div class="section" id="off-by-one">
+      <div class="section-header">
+        <h3>⚠️ Off-By-One Errors — The Complete Guide</h3>
+      </div>
+
+      <div class="card">
+        <h4>The 3 Decisions That Determine Correctness</h4>
+        <p>Every binary search you write has exactly 3 independent choices. Getting
+        all 3 consistent with your goal is the whole game:</p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Decision</th><th>Option A</th><th>Option B</th><th>When to use which</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Loop condition</strong></td>
+                <td><code>lo &lt;= hi</code></td>
+                <td><code>lo &lt; hi</code></td>
+                <td>See table below</td>
+              </tr>
+              <tr>
+                <td><strong>Mid calculation</strong></td>
+                <td><code>lo + (hi - lo) / 2</code> — rounds down</td>
+                <td><code>lo + (hi - lo + 1) / 2</code> — rounds up</td>
+                <td>See table below</td>
+              </tr>
+              <tr>
+                <td><strong>Boundary update</strong></td>
+                <td><code>lo = mid + 1</code> or <code>hi = mid - 1</code></td>
+                <td><code>lo = mid</code> or <code>hi = mid</code></td>
+                <td>Depends on variety</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Side-by-Side: lo &lt;= hi vs lo &lt; hi</span>
+        </div>
+        <pre><code><span class="cmt">// ── Style 1: lo <= hi ──────────────────────────────────────────
+// Search space: CLOSED interval [lo, hi]
+// Loop exits when: lo > hi (empty interval)
+// Boundary update: always lo = mid+1 or hi = mid-1 (mid never kept)
+// Best for: Classic search (Variety A) where you return immediately on hit</span>
+
+<span class="kw">while</span> (lo <= hi) {
+    <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>;
+    <span class="kw">if</span> (nums[mid] == target) <span class="kw">return</span> mid;       <span class="cmt">// early exit</span>
+    <span class="kw">else if</span> (nums[mid] < target) lo = mid + <span class="num">1</span>;
+    <span class="kw">else</span> hi = mid - <span class="num">1</span>;
+}
+<span class="kw">return</span> -<span class="num">1</span>;
+
+<span class="cmt">// ── Style 2: lo < hi ───────────────────────────────────────────
+// Search space: HALF-OPEN interval [lo, hi)  OR  closed but converging
+// Loop exits when: lo == hi (single element remains — that IS the answer)
+// Boundary update: hi = mid (candidate kept) OR lo = mid+1 (candidate discarded)
+// Best for: Boundary searches (B, C) and answer-space (D)</span>
+
+<span class="kw">while</span> (lo < hi) {
+    <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>;
+    <span class="kw">if</span> (condition) hi = mid;       <span class="cmt">// mid is a valid candidate, look left</span>
+    <span class="kw">else</span> lo = mid + <span class="num">1</span>;             <span class="cmt">// mid fails, look right</span>
+}
+<span class="kw">return</span> lo; <span class="cmt">// lo == hi == the answer</span></code></pre>
+      </div>
+
+      <div class="card">
+        <h4>The Mid Rounding Rule — The Most Critical Detail</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Which boundary update?</th><th>Which mid formula?</th><th>Why?</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>hi = mid</code> appears</td>
+                <td><code>mid = lo + (hi-lo) / 2</code> (round DOWN)</td>
+                <td><span class="pill pill-green">Safe</span> When lo+1==hi, mid=lo, and hi=mid=lo → converges</td>
+              </tr>
+              <tr>
+                <td><code>lo = mid</code> appears</td>
+                <td><code>mid = lo + (hi-lo+1) / 2</code> (round UP)</td>
+                <td><span class="pill pill-green">Safe</span> When lo+1==hi, mid=hi, and lo=mid=hi → converges</td>
+              </tr>
+              <tr>
+                <td><code>lo = mid</code> but round down</td>
+                <td>mid = lo (when hi=lo+1)</td>
+                <td><span class="pill pill-red">INFINITE LOOP</span> lo stays the same forever</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Why Rounding Matters — Tracing the Infinite Loop</span>
+        </div>
+        <pre><code><span class="cmt">// BROKEN: Maximize — find rightmost T, but using wrong mid formula</span>
+<span class="kw">while</span> (lo < hi) {
+    <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>; <span class="cmt">// ← rounds DOWN (BUG when lo = mid)</span>
+    <span class="kw">if</span> (feasible(mid)) lo = mid;   <span class="cmt">// ← lo = mid</span>
+    <span class="kw">else</span> hi = mid - <span class="num">1</span>;
+}
+<span class="cmt">// Trace when lo=4, hi=5:
+//   mid = 4 + (5-4)/2 = 4  → lo = mid = 4 → lo is UNCHANGED
+//   Next iteration: lo=4, hi=5 again → INFINITE LOOP ♾️</span>
+
+<span class="cmt">// FIXED: Use round UP when lo = mid</span>
+<span class="kw">while</span> (lo < hi) {
+    <span class="kw">int</span> mid = lo + (hi - lo + <span class="num">1</span>) / <span class="num">2</span>; <span class="cmt">// ← rounds UP</span>
+    <span class="kw">if</span> (feasible(mid)) lo = mid;        <span class="cmt">// ← lo = mid</span>
+    <span class="kw">else</span> hi = mid - <span class="num">1</span>;
+}
+<span class="cmt">// Trace when lo=4, hi=5:
+//   mid = 4 + (5-4+1)/2 = 5  → if feasible(5): lo=5 → lo==hi → EXIT ✓
+//                              → else: hi=4 → lo==hi → EXIT ✓</span></code></pre>
+      </div>
+
+      <div class="banner banner-red">
+        <h4>⚠️ The One Rule to Memorise</h4>
+        <p>
+          If <code>lo = mid</code> appears in your loop → use <strong>round-up mid</strong>:
+          <code>mid = lo + (hi - lo + 1) / 2</code><br>
+          If <code>hi = mid</code> appears in your loop → use <strong>round-down mid</strong>:
+          <code>mid = lo + (hi - lo) / 2</code><br>
+          <em>Mixed updates (lo=mid+1 and hi=mid-1) → either rounding is fine.</em>
+        </p>
+      </div>
+    </div>
+
+    <!-- Infinite Loop -->
+    <div class="section" id="infinite-loop">
+      <div class="section-header">
+        <h3>♾️ Infinite Loop Traps — Complete Prevention Guide</h3>
+      </div>
+
+      <div class="card">
+        <h4>All Ways a Binary Search Can Loop Forever</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Root Cause</th><th>Symptom</th><th>Fix</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>lo = mid</code> with round-down</td>
+                <td>When <code>hi = lo+1</code>, mid=lo, lo never advances</td>
+                <td><span class="pill pill-green">Use round-up mid</span></td>
+              </tr>
+              <tr>
+                <td><code>lo &lt;= hi</code> with <code>hi = mid</code></td>
+                <td>When <code>lo = hi = mid</code>, hi never shrinks below lo</td>
+                <td><span class="pill pill-green">Use <code>hi = mid - 1</code> in this style</span></td>
+              </tr>
+              <tr>
+                <td>Boundary not shrinking</td>
+                <td><code>lo = mid + 1</code> but mid can equal hi (off-by-one in bounds)</td>
+                <td><span class="pill pill-green">Verify bounds tighten every iteration</span></td>
+              </tr>
+              <tr>
+                <td>Feasibility function always true</td>
+                <td>hi/lo updates happen but converge in wrong direction</td>
+                <td><span class="pill pill-green">Manually trace with 2-element array</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="callout success">
+        <div class="icon">🔬</div>
+        <div class="body">
+          <strong>The 2-Element Test — Run This Before Submitting</strong>
+          <p>Manually trace your loop with <code>lo = 0, hi = 1</code> (or any two adjacent values).
+          Check both branches of your condition. If the loop terminates correctly for 2 elements,
+          it will terminate for any size — the invariant is the same. This takes 30 seconds and
+          will catch infinite loops every time.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Quick Consistency Checker (mental checklist)</span>
+        </div>
+        <pre><code><span class="cmt">// Before submitting, verify ALL of these for your binary search:
+
+// ① Does the loop condition match your range semantics?
+//    lo < hi  → converge to single element, return lo
+//    lo <= hi → exhaust range, return -1 or accumulated answer
+
+// ② Does mid move lo/hi strictly? (space shrinks every iteration?)
+//    Case A: hi = mid + 1 is WRONG when condition is lo < hi
+//    Case B: lo = mid     requires round-up mid
+//    Case C: hi = mid     requires round-down mid
+
+// ③ Are initial bounds inclusive of ALL possible answers?
+//    If answer could be 0, lo must start at 0
+//    If answer could be max(array), hi must reach max(array)
+
+// ④ Does return value match what you want?
+//    lo  → leftmost index / minimum feasible answer
+//    lo-1 → rightmost index ≤ target
+//    lo if lo<n && nums[lo]==target else -1 → exact match check</span></code></pre>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PART 4 — WALKTHROUGH
+    ══════════════════════════════════════ -->
+    <div class="part-header">
+      <div class="part-number" style="background:var(--gradient-orange);">04</div>
+      <div>
+        <h2>Walkthrough — LC #875 Koko Eating Bananas</h2>
+        <p>The definitive example of Variety D: search on answer space.</p>
+      </div>
+    </div>
+
+    <!-- Koko Section -->
+    <div class="section" id="koko">
+      <div class="section-header">
+        <h3>🍌 Deep Dive: Koko Eating Bananas (LC #875)</h3>
+      </div>
+
+      <div class="card">
+        <h4>Problem Statement</h4>
+        <p>Koko has <code>piles</code> of bananas. She can eat at speed <code>k</code> bananas/hour.
+        Each hour she picks one pile and eats min(<code>k</code>, pile size) bananas from it.
+        Given <code>h</code> hours, find the <strong>minimum</strong> integer <code>k</code>
+        such that she can finish all bananas within <code>h</code> hours.</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Text</span><span class="code-title">Example</span></div>
+          <pre><code>Input:  piles = [3, 6, 7, 11],  h = 8
+Output: 4
+
+Explanation:
+  k=4: hours needed = ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8 ≤ 8 ✓
+  k=3: hours needed = ceil(3/3)+ceil(6/3)+ceil(7/3)+ceil(11/3) = 1+2+3+4 = 10 > 8 ✗</code></pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Step 1 — Apply the Binary Search Checklist</h4>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Search space: k ∈ [1, max(piles)]</div>
+              <div class="step-desc">Minimum possible speed = 1 (eats at least 1/hour). Maximum needed = max(piles) — eating the largest pile in 1 hour is always sufficient.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Predicate: canFinish(k) — can Koko eat all bananas at speed k within h hours?</div>
+              <div class="step-desc"><code>sum(ceil(pile / k) for pile in piles) ≤ h</code></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Monotonicity check: if k=4 works, does k=5 work?</div>
+              <div class="step-desc">Yes — faster speed → fewer hours → still within limit. The feasible space is: [F,F,F,T,T,T,T,...]. We want the leftmost T. ✓</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">Cost of canFinish(k): O(n) — linear scan through piles</div>
+              <div class="step-desc">Total: O(n log(max(piles))). For n=10⁴, max=10⁹ → ~300 million ops — wait, that's too much? No: log₂(10⁹) ≈ 30. So 10⁴ × 30 = 300,000. Fast. ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">LC #875 — Complete Solution with Full Annotation</span>
+        </div>
+        <pre><code><span class="kw">class</span> <span class="type">Solution</span> {
+    <span class="kw">public int</span> <span class="fn">minEatingSpeed</span>(<span class="kw">int</span>[] piles, <span class="kw">int</span> h) {
+
+        <span class="cmt">// ── Step 1: Define search space ──────────────────────────────</span>
+        <span class="kw">int</span> lo = <span class="num">1</span>;
+        <span class="kw">int</span> hi = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> pile : piles) hi = <span class="type">Math</span>.<span class="fn">max</span>(hi, pile);
+        <span class="cmt">// lo=1 (slowest), hi=max(piles) (eating largest in 1hr is always enough)</span>
+
+        <span class="cmt">// ── Step 2: Binary search — find leftmost TRUE ───────────────</span>
+        <span class="kw">while</span> (lo < hi) {                      <span class="cmt">// lo < hi: converge to single answer</span>
+            <span class="kw">int</span> mid = lo + (hi - lo) / <span class="num">2</span>;      <span class="cmt">// round down: hi=mid appears below</span>
+
+            <span class="kw">if</span> (<span class="fn">canFinish</span>(piles, mid, h)) {
+                hi = mid;                       <span class="cmt">// mid works → try smaller (go left)</span>
+            } <span class="kw">else</span> {
+                lo = mid + <span class="num">1</span>;                  <span class="cmt">// mid fails → need faster speed</span>
+            }
+        }
+
+        <span class="kw">return</span> lo; <span class="cmt">// lo == hi == minimum feasible speed</span>
+    }
+
+    <span class="cmt">// ── Feasibility function: O(n) ────────────────────────────────</span>
+    <span class="kw">private boolean</span> <span class="fn">canFinish</span>(<span class="kw">int</span>[] piles, <span class="kw">int</span> speed, <span class="kw">int</span> h) {
+        <span class="kw">long</span> hoursNeeded = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> pile : piles) {
+            hoursNeeded += (pile + speed - <span class="num">1</span>) / speed; <span class="cmt">// ceiling division trick</span>
+        }
+        <span class="kw">return</span> hoursNeeded <= h;
+    }
+}
+
+<span class="cmt">// Ceiling division: (a + b - 1) / b  ≡  Math.ceil((double)a / b)
+// Prefer integer arithmetic — avoids floating point precision issues</span></code></pre>
+      </div>
+
+      <div class="card">
+        <h4>Execution Trace — piles=[3,6,7,11], h=8</h4>
+        <div class="diagram">
+  Search space: k ∈ [<span class="d-blue">1</span> ........... <span class="d-orange">11</span>]
+
+  Iteration 1: lo=1, hi=11, mid=6
+    canFinish(6): ceil(3/6)+ceil(6/6)+ceil(7/6)+ceil(11/6) = 1+1+2+2 = 6 ≤ 8 ✓
+    → hi = 6
+
+  Iteration 2: lo=1, hi=6, mid=3
+    canFinish(3): ceil(3/3)+ceil(6/3)+ceil(7/3)+ceil(11/3) = 1+2+3+4 = 10 > 8 ✗
+    → lo = 4
+
+  Iteration 3: lo=4, hi=6, mid=5
+    canFinish(5): ceil(3/5)+ceil(6/5)+ceil(7/5)+ceil(11/5) = 1+2+2+3 = 8 ≤ 8 ✓
+    → hi = 5
+
+  Iteration 4: lo=4, hi=5, mid=4
+    canFinish(4): ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8 ≤ 8 ✓
+    → hi = 4
+
+  lo == hi == <span class="d-cyan">4</span>  ← ANSWER  (4 iterations vs 11 linear scan iterations)
+        </div>
+      </div>
+
+      <div class="callout success">
+        <div class="icon">🧩</div>
+        <div class="body">
+          <strong>The Template is Always the Same for Variety D</strong>
+          <p>Notice how the entire solution is just: (1) set bounds, (2) copy-paste the
+          <code>while (lo &lt; hi)</code> template, (3) write <code>canFinish()</code>.
+          Once you see the pattern, you never need to re-derive the binary search logic —
+          only the feasibility function changes per problem.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PART 5 — COMPLEXITY & PRACTICE
+    ══════════════════════════════════════ -->
+    <div class="part-header">
+      <div class="part-number" style="background:var(--gradient-purple);">05</div>
+      <div>
+        <h2>Complexity & Practice</h2>
+        <p>Quick reference and curated problem set.</p>
+      </div>
+    </div>
+
+    <!-- Complexity -->
+    <div class="section" id="complexity">
+      <div class="section-header">
+        <h3>📊 Time & Space Complexity Summary</h3>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Variety</th><th>Time Complexity</th><th>Space</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A — Classic</td>
+              <td><code>O(log n)</code></td>
+              <td><code>O(1)</code></td>
+              <td>n = array length</td>
+            </tr>
+            <tr>
+              <td>B — Left Boundary</td>
+              <td><code>O(log n)</code></td>
+              <td><code>O(1)</code></td>
+              <td>Same as classic, different exit</td>
+            </tr>
+            <tr>
+              <td>C — Right Boundary</td>
+              <td><code>O(log n)</code></td>
+              <td><code>O(1)</code></td>
+              <td>Same as classic, different exit</td>
+            </tr>
+            <tr>
+              <td>D — Answer Space</td>
+              <td><code>O(n · log(hi - lo))</code></td>
+              <td><code>O(1)</code></td>
+              <td>n = feasibility check cost; hi-lo = answer range</td>
+            </tr>
+            <tr>
+              <td>D — Answer Space (2D)</td>
+              <td><code>O(n log n · log(hi - lo))</code></td>
+              <td><code>O(1)</code></td>
+              <td>When feasibility check itself uses sorting/binary search</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4>Bounds Estimation for Variety D</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Problem Type</th><th>lo (minimum answer)</th><th>hi (maximum answer)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Eating/processing speed</td><td>1</td><td>max(array)</td></tr>
+              <tr><td>Days / time limit</td><td>max(array) (at min, do heaviest alone)</td><td>sum(array) (do all in 1 day)</td></tr>
+              <tr><td>Partition maximum sum</td><td>max(array)</td><td>sum(array)</td></tr>
+              <tr><td>Minimum distance</td><td>0 or 1</td><td>max(coords) − min(coords)</td></tr>
+              <tr><td>Allocated bandwidth / capacity</td><td>min(demands)</td><td>sum(demands)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice Problems -->
+    <div class="section" id="practice">
+      <div class="section-header">
+        <h3>🏋️ Practice Problems — Organised by Variety</h3>
+      </div>
+
+      <div class="card">
+        <h4>Variety A — Classic Search</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Problem</th><th>Difficulty</th><th>Key Insight</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="https://leetcode.com/problems/binary-search/" target="_blank">LC #704 — Binary Search</a></td>
+                <td><span class="pill pill-green">Easy</span></td>
+                <td>The textbook problem. Implement it perfectly.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/search-in-rotated-sorted-array/" target="_blank">LC #33 — Search in Rotated Sorted Array</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>Determine which half is sorted, then decide which half to search.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" target="_blank">LC #153 — Find Minimum in Rotated Array</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>Boundary search variant on rotated array.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Variety B & C — Boundary Searches</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Problem</th><th>Difficulty</th><th>Key Insight</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/" target="_blank">LC #34 — First and Last Position in Sorted Array</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>Combines both Variety B and C. The canonical boundary search problem.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/first-bad-version/" target="_blank">LC #278 — First Bad Version</a></td>
+                <td><span class="pill pill-green">Easy</span></td>
+                <td>Pure left-boundary search. The predicate IS the isBadVersion API.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/search-insert-position/" target="_blank">LC #35 — Search Insert Position</a></td>
+                <td><span class="pill pill-green">Easy</span></td>
+                <td>Returns leftBound(target) even when not found. Great for boundary practice.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/find-peak-element/" target="_blank">LC #162 — Find Peak Element</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>Not a sorted array — but the decision "go left or right?" is monotonic.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Variety D — Search on Answer Space ⭐ Priority</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Problem</th><th>Difficulty</th><th>Key Insight</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="https://leetcode.com/problems/koko-eating-bananas/" target="_blank">LC #875 — Koko Eating Bananas</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>The gateway problem. Walkthroughed above. Solve this first.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/minimum-number-of-days-to-make-m-bouquets/" target="_blank">LC #1482 — Minimum Days to Make Bouquets</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>Search on days. feasible(d) = check if enough adjacent bloomed flowers.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/split-array-largest-sum/" target="_blank">LC #410 — Split Array Largest Sum</a></td>
+                <td><span class="pill pill-red">Hard</span></td>
+                <td>"Minimize maximum subarray sum" — classic answer-space. Search on max sum.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/" target="_blank">LC #1011 — Capacity to Ship in D Days</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>Near-identical to Koko. Internalize the template with this one.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/find-the-smallest-divisor-given-a-threshold/" target="_blank">LC #1283 — Smallest Divisor Given Threshold</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>Search on divisor value. feasible(d) = sum of ceil(n/d) ≤ threshold.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/magnetic-force-between-two-balls/" target="_blank">LC #1552 — Magnetic Force Between Two Balls</a></td>
+                <td><span class="pill pill-orange">Medium</span></td>
+                <td>"Maximize minimum distance" — the flipped version. Requires round-up mid.</td>
+              </tr>
+              <tr>
+                <td><a href="https://leetcode.com/problems/median-of-two-sorted-arrays/" target="_blank">LC #4 — Median of Two Sorted Arrays</a></td>
+                <td><span class="pill pill-red">Hard</span></td>
+                <td>Binary search on partition point. The hardest classic binary search problem.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="icon">📅</div>
+        <div class="body">
+          <strong>Suggested Practice Order</strong>
+          <p>
+            Day 1: LC #704 → #278 → #34<br>
+            Day 2: LC #875 → #1011 → #1482<br>
+            Day 3: LC #33 → #162 → #1283<br>
+            Day 4: LC #410 → #1552 → #4<br>
+            After all 12: you will recognise binary search problems on sight.
+          </p>
+        </div>
+      </div>
+
+      <div class="key-point">
+        <span class="kp-icon">💡</span>
+        <p><strong>Pattern 03 in one sentence:</strong> Define a monotonic yes/no predicate, set tight
+        bounds, copy the correct template (A/B/C/D), write the feasibility check, verify with the
+        2-element trace, submit. Binary search is never about the algorithm — it is about
+        <em>recognising the search space</em>.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Back to top -->
+  <button id="top-btn" title="Back to top">↑</button>
+
+  <script>
+    // ── Sidebar toggle (standardized) ──
+    function toggleSidebar() {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        document.body.classList.toggle('sidebar-open');
+      } else {
+        document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+      }
+    }
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+    document.getElementById('hamburger').onclick = toggleSidebar;
+    document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+    document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+      });
+    });
+
+    // Active link highlighting
+    const sections = document.querySelectorAll('.section');
+    const tocLinks = document.querySelectorAll('.toc-link');
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          tocLinks.forEach(l => l.classList.remove('active'));
+          const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+          if (active) active.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+
+    // Progress bar
+    const fill = document.getElementById('progress');
+    window.addEventListener('scroll', () => {
+      const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+      fill.style.width = pct + '%';
+    });
+
+    // Back to top
+    const topBtn = document.getElementById('top-btn');
+    window.addEventListener('scroll', () => { topBtn.style.display = window.scrollY > 400 ? 'flex' : 'none'; });
+    topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    // Smooth scroll for sidebar links
+    document.querySelectorAll('.toc-link[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); closeSidebar(); }
+      });
+    });
+  </script>
+
+</body>
+</html>

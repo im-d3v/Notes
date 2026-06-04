@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Part 04 — Exception Handling | Java Interview Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --card:     #21253a;
+      --border:   #2e3350;
+      --red:      #ff6b6b;
+      --orange:   #ffa94d;
+      --yellow:   #ffd93d;
+      --green:    #69db7c;
+      --cyan:     #4ecdc4;
+      --blue:     #74c0fc;
+      --purple:   #b197fc;
+      --pink:     #f783ac;
+      --text:     #e8eaf6;
+      --muted:    #8b92b8;
+      --code-bg:  #13161f;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #3a3f5c; border-radius: 3px; }
+
+    /* ══════════════════════════════════════
+       HEADER
+    ══════════════════════════════════════ */
+    header {
+      background: linear-gradient(135deg, #1a1d27 0%, #12162b 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(255,107,107,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .part-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--red), var(--orange));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    header h1 {
+      font-size: clamp(26px, 5vw, 44px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--red) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 620px;
+      margin: 0 auto 20px;
+    }
+    .header-tags {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .htag {
+      background: rgba(255,107,107,0.1);
+      border: 1px solid rgba(255,107,107,0.25);
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 20px;
+    }
+
+    /* ══════════════════════════════════════
+       TOC (Sticky Sidebar)
+    ══════════════════════════════════════ */
+    .layout {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ══════════════════════════════════════
+       MAIN CONTENT
+    ══════════════════════════════════════ */
+    .content {
+      padding: 40px 36px;
+      max-width: 960px;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 60px;
+    }
+            .section-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .section-header .s-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── CONCEPT CARD ── */
+    .concept-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .concept-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--card-color, var(--red));
+    }
+    .concept-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .concept-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+            .code-header .lang-badge {
+      background: rgba(255,107,107,0.15);
+      color: var(--red);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+    .code-header .dots {
+      display: flex; gap: 5px;
+    }
+    .code-header .dots span {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    pre {
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.7;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+    code { font-family: inherit; }
+
+       /* keyword */
+    .cl  { color: #82aaff; }      /* function */
+    .st  { color: #c3e88d; }          /* annotation */
+    .ex  { color: #ff6b6b; }   /* exception */
+
+            .box-content { flex: 1; }
+    .box-content strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+        .box-orange { background: rgba(255,169,77,0.06);  border-color: rgba(255,169,77,0.25);  color: #ffcc99; }
+        .box-blue   { background: rgba(116,192,252,0.06); border-color: rgba(116,192,252,0.25); color: #a5d8ff; }
+        
+    /* ── HIERARCHY TREE ── */
+    .tree {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: 'Cascadia Code','Fira Code','Consolas', monospace;
+      font-size: 13px;
+      line-height: 2;
+      overflow-x: auto;
+    }
+    .tree .root  { color: var(--red); font-weight: 700; }
+    .tree .l1    { color: var(--orange); padding-left: 20px; }
+    .tree .l2    { color: var(--yellow); padding-left: 40px; }
+    .tree .l3    { color: var(--green);  padding-left: 60px; }
+    .tree .l3b   { color: var(--cyan);   padding-left: 60px; }
+    .tree .l4    { color: var(--blue);   padding-left: 80px; }
+    .tree .note  { color: var(--muted);  font-size: 11px; }
+
+    /* ── COMPARE TABLE ── */
+    .cmp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin: 18px 0;
+    }
+    .cmp-table th {
+      background: rgba(255,107,107,0.1);
+      color: var(--red);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .cmp-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(46,51,80,0.5);
+      color: var(--muted);
+      vertical-align: top;
+    }
+    .cmp-table tr:last-child td { border-bottom: none; }
+    .cmp-table tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
+    .cmp-table td:first-child { color: var(--text); font-weight: 600; }
+
+                .iq-q .q-icon { flex-shrink: 0; }
+        .iq-a strong { color: var(--text); }
+
+    /* ── BADGE INLINE ── */
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 6px;
+    }
+    .b-checked   { background: rgba(255,169,77,0.15); color: var(--orange); border: 1px solid rgba(255,169,77,0.3); }
+    .b-unchecked { background: rgba(255,107,107,0.15); color: var(--red);    border: 1px solid rgba(255,107,107,0.3); }
+    .b-error     { background: rgba(177,151,252,0.15); color: var(--purple); border: 1px solid rgba(177,151,252,0.3); }
+    .b-tip       { background: rgba(105,219,124,0.15); color: var(--green);  border: 1px solid rgba(105,219,124,0.3); }
+    .b-asked     { background: rgba(255,217,61,0.15);  color: var(--yellow); border: 1px solid rgba(255,217,61,0.3); }
+
+    /* ── GRID 2 COL ── */
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    /* ── STEP LIST ── */
+    .steps {
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .step-item {
+      counter-increment: step;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13.5px;
+    }
+    .step-item::before {
+      content: counter(step);
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--red), var(--orange));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-item .step-text { color: var(--muted); line-height: 1.7; }
+    .step-item .step-text strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+    /* ── KEY RULE ── */
+    .rule-box {
+      background: linear-gradient(135deg, rgba(255,107,107,0.08), rgba(255,169,77,0.08));
+      border: 1px solid rgba(255,107,107,0.3);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .rule-box .rule-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--orange);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .rule-box ul { margin: 8px 0 0 16px; }
+    .rule-box li { color: var(--muted); font-size: 13.5px; margin-bottom: 4px; }
+    .rule-box li strong { color: var(--text); }
+
+        .output-box .out-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .out-line { color: var(--green); margin: 2px 0; }
+    .out-err  { color: var(--red);   margin: 2px 0; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .content { padding: 24px 18px; }
+      .grid2 { grid-template-columns: 1fr; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>⚠️ Exception Handling</h2>
+      <p>Part 04 — Core Java</p>
+    </div>
+    <nav>
+      <div class="section-label">Sections</div>
+      <a href="#s1">Exception Hierarchy</a>
+      <a href="#s2">Checked Exceptions</a>
+      <a href="#s3">Unchecked Exceptions</a>
+      <a href="#s4">Checked vs Unchecked</a>
+      <a href="#s5">try-catch-finally</a>
+      <a href="#s6">try-with-resources</a>
+      <a href="#s7">Custom Exceptions</a>
+      <a href="#s8">Multi-catch & Re-throw</a>
+      <a href="#s9">Serialization & Exceptions</a>
+      <a href="#s10">Exception in Generic List</a>
+      <a href="#s11">ClassNotFoundException vs NoClassDefFoundError</a>
+      <a href="#s12">Edge Cases & Tricky Qs</a>
+      <a href="#s13">Interview Q&A</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ═══════ HEADER ═══════ -->
+<header>
+  <div class="part-badge">Part 04 · Java Interview Notes</div>
+  <h1>⚠️ Exception Handling</h1>
+  <p>Checked · Unchecked · Custom · try-with-resources · Serialization · Edge Cases · Interview Q&A</p>
+  <div class="header-tags">
+    <span class="htag">Throwable Hierarchy</span>
+    <span class="htag">Checked vs Unchecked</span>
+    <span class="htag">Custom Exceptions</span>
+    <span class="htag">try-with-resources</span>
+    <span class="htag">Serialization Exceptions</span>
+    <span class="htag">Edge Cases</span>
+  </div>
+</header>
+
+<div class="content">
+
+<!-- ════════════════════════════════
+     SECTION 1 — EXCEPTION HIERARCHY
+════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,107,107,0.12);">🌳</div>
+    <div>
+      <h2>1. Exception Hierarchy</h2>
+      <div class="s-sub">How Java organizes all throwable things</div>
+    </div>
+  </div>
+
+  <div class="box box-blue">
+    <span class="box-icon">💡</span>
+    <div class="box-content">
+      <strong>Golden Rule</strong>
+      In Java, anything that can be "thrown" MUST extend <code>java.lang.Throwable</code>.
+      <br>There are two direct children: <strong>Error</strong> and <strong>Exception</strong>.
+    </div>
+  </div>
+
+  <div class="tree">
+    <div class="root">📦 java.lang.Throwable</div>
+    <div class="l1">├── 🔴 Error  <span class="note">(JVM problems — DO NOT catch)</span></div>
+    <div class="l2">│   ├── OutOfMemoryError</div>
+    <div class="l2">│   ├── StackOverflowError</div>
+    <div class="l2">│   ├── VirtualMachineError</div>
+    <div class="l2">│   └── AssertionError</div>
+    <div class="l1">└── 🟡 Exception  <span class="note">(Your code problems — handle these)</span></div>
+    <div class="l2">    ├── 🟠 RuntimeException  <span class="note">(Unchecked)</span></div>
+    <div class="l3">    │   ├── NullPointerException</div>
+    <div class="l3">    │   ├── ArrayIndexOutOfBoundsException</div>
+    <div class="l3">    │   ├── ClassCastException</div>
+    <div class="l3">    │   ├── ArithmeticException</div>
+    <div class="l3">    │   ├── IllegalArgumentException</div>
+    <div class="l3">    │   ├── NumberFormatException</div>
+    <div class="l3">    │   ├── IllegalStateException</div>
+    <div class="l3">    │   └── UnsupportedOperationException</div>
+    <div class="l2">    └── 🟢 Checked Exceptions</div>
+    <div class="l3b">        ├── IOException</div>
+    <div class="l4">        │   ├── FileNotFoundException</div>
+    <div class="l4">        │   └── EOFException</div>
+    <div class="l3b">        ├── SQLException</div>
+    <div class="l3b">        ├── ClassNotFoundException</div>
+    <div class="l3b">        ├── CloneNotSupportedException</div>
+    <div class="l3b">        └── InterruptedException</div>
+  </div>
+
+  <div class="box box-yellow">
+    <span class="box-icon">⚡</span>
+    <div class="box-content">
+      <strong>Key Memory Trick</strong>
+      <strong>Error</strong> = JVM Level (unrecoverable, never catch)<br>
+      <strong>RuntimeException</strong> = Programmer's fault (unchecked, optional to handle)<br>
+      <strong>Exception (non-Runtime)</strong> = External factors (checked, must handle)
+    </div>
+  </div>
+
+  <div class="concept-card" style="--card-color: var(--purple);">
+    <h3>🔍 What is <code>Throwable</code>?</h3>
+    <p>
+      <code>Throwable</code> is the root class of all errors and exceptions in Java.
+      It has two important constructors: <code>Throwable(String message)</code> and
+      <code>Throwable(String message, Throwable cause)</code>.<br><br>
+      It is <strong>NOT</strong> a marker interface — it's a real class with methods like
+      <code>getMessage()</code>, <code>getCause()</code>, <code>printStackTrace()</code>,
+      <code>getStackTrace()</code>.
+    </p>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 2 — CHECKED EXCEPTIONS
+════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,169,77,0.12);">🟠</div>
+    <div>
+      <h2>2. Checked Exceptions</h2>
+      <div class="s-sub">Compile-time exceptions — must handle or declare</div>
+    </div>
+  </div>
+
+  <div class="concept-card" style="--card-color: var(--orange);">
+    <h3>📌 Definition</h3>
+    <p>
+      Exceptions that extend <code>Exception</code> <strong>but NOT</strong>
+      <code>RuntimeException</code> are called <strong>Checked Exceptions</strong>.
+      The compiler forces you to either <strong>handle (try-catch)</strong> or
+      <strong>declare (throws)</strong> them. If you don't, you get a <em>compile error</em>.
+    </p>
+  </div>
+
+  <div class="box box-orange">
+    <span class="box-icon">📏</span>
+    <div class="box-content">
+      <strong>Rule of Thumb</strong>
+      Checked exceptions represent situations outside your program's control
+      — file not found, database down, network timeout.
+      The caller <em>needs to know</em> this can happen.
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Checked Exception — Two Ways to Handle</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ─────────────────────────────────────────
+// WAY 1: Handle it with try-catch
+// ─────────────────────────────────────────</span>
+<span class="kw">public void</span> <span class="fn">readFile</span>(<span class="cl">String</span> path) {
+    <span class="kw">try</span> {
+        <span class="cl">FileReader</span> fr = <span class="kw">new</span> <span class="cl">FileReader</span>(path); <span class="cm">// throws FileNotFoundException</span>
+        <span class="cl">BufferedReader</span> br = <span class="kw">new</span> <span class="cl">BufferedReader</span>(fr);
+        <span class="cl">String</span> line = br.readLine();            <span class="cm">// throws IOException</span>
+        <span class="cl">System</span>.out.println(line);
+        br.close();
+    } <span class="kw">catch</span> (<span class="cl">FileNotFoundException</span> e) {
+        <span class="cl">System</span>.out.println(<span class="st">"File not found: "</span> + e.getMessage());
+    } <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+        <span class="cl">System</span>.out.println(<span class="st">"IO Error: "</span> + e.getMessage());
+    }
+}
+
+<span class="cm">// ─────────────────────────────────────────
+// WAY 2: Declare with throws (pass to caller)
+// ─────────────────────────────────────────</span>
+<span class="kw">public void</span> <span class="fn">readFile</span>(<span class="cl">String</span> path) <span class="kw">throws</span> <span class="cl">IOException</span> {
+    <span class="cl">FileReader</span> fr = <span class="kw">new</span> <span class="cl">FileReader</span>(path);
+    <span class="cm">// ↑ Not handled here, caller must handle it</span>
+}</code></pre>
+  </div>
+
+  <div class="rule-box">
+    <div class="rule-title">📋 Common Checked Exceptions</div>
+    <ul>
+      <li><strong>IOException</strong> — file / stream / network operations</li>
+      <li><strong>FileNotFoundException</strong> — file path doesn't exist</li>
+      <li><strong>SQLException</strong> — database access error</li>
+      <li><strong>ClassNotFoundException</strong> — class not found at runtime via reflection</li>
+      <li><strong>InterruptedException</strong> — thread interrupted during wait/sleep</li>
+      <li><strong>CloneNotSupportedException</strong> — clone() called without Cloneable</li>
+      <li><strong>ParseException</strong> — date/number parsing failure</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 3 — UNCHECKED EXCEPTIONS
+════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,107,107,0.12);">🔴</div>
+    <div>
+      <h2>3. Unchecked Exceptions</h2>
+      <div class="s-sub">Runtime exceptions — optional to handle</div>
+    </div>
+  </div>
+
+  <div class="concept-card" style="--card-color: var(--red);">
+    <h3>📌 Definition</h3>
+    <p>
+      Exceptions that extend <code>RuntimeException</code> are called
+      <strong>Unchecked Exceptions</strong>. The compiler does NOT force you to handle them.
+      They typically indicate <strong>programming bugs</strong> — null pointer access,
+      out-of-bounds index, wrong type cast.
+    </p>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Most Common Unchecked Exceptions</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// 1. NullPointerException (NPE)</span>
+<span class="cl">String</span> s = <span class="kw">null</span>;
+s.length();  <span class="cm">// ❌ NullPointerException</span>
+
+<span class="cm">// 2. ArrayIndexOutOfBoundsException</span>
+<span class="kw">int</span>[] arr = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>};
+arr[<span class="num">5</span>];  <span class="cm">// ❌ ArrayIndexOutOfBoundsException</span>
+
+<span class="cm">// 3. ClassCastException</span>
+<span class="cl">Object</span> obj = <span class="st">"hello"</span>;
+<span class="cl">Integer</span> i = (<span class="cl">Integer</span>) obj;  <span class="cm">// ❌ ClassCastException</span>
+
+<span class="cm">// 4. ArithmeticException</span>
+<span class="kw">int</span> result = <span class="num">10</span> / <span class="num">0</span>;  <span class="cm">// ❌ ArithmeticException: / by zero</span>
+
+<span class="cm">// 5. NumberFormatException</span>
+<span class="kw">int</span> n = <span class="cl">Integer</span>.parseInt(<span class="st">"abc"</span>);  <span class="cm">// ❌ NumberFormatException</span>
+
+<span class="cm">// 6. StackOverflowError (not RuntimeException but common)</span>
+<span class="kw">void</span> <span class="fn">infinite</span>() { <span class="fn">infinite</span>(); }  <span class="cm">// ❌ StackOverflowError</span>
+
+<span class="cm">// 7. IllegalArgumentException</span>
+<span class="kw">if</span> (age &lt; <span class="num">0</span>) <span class="kw">throw new</span> <span class="cl">IllegalArgumentException</span>(<span class="st">"Age can't be negative"</span>);
+
+<span class="cm">// 8. ConcurrentModificationException</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; list = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">Arrays</span>.asList(<span class="st">"a"</span>, <span class="st">"b"</span>));
+<span class="kw">for</span> (<span class="cl">String</span> item : list) {
+    list.remove(item);  <span class="cm">// ❌ ConcurrentModificationException</span>
+}</code></pre>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 4 — CHECKED VS UNCHECKED
+════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,217,61,0.12);">⚖️</div>
+    <div>
+      <h2>4. Checked vs Unchecked — Complete Comparison</h2>
+      <div class="s-sub">Most asked comparison in interviews</div>
+    </div>
+  </div>
+
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th>Aspect</th>
+        <th>✅ Checked Exception</th>
+        <th>❌ Unchecked Exception</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Extends</td>
+        <td>Exception (not RuntimeException)</td>
+        <td>RuntimeException</td>
+      </tr>
+      <tr>
+        <td>Compiler Check</td>
+        <td>Yes — must handle or declare</td>
+        <td>No — optional to handle</td>
+      </tr>
+      <tr>
+        <td>When Occurs</td>
+        <td>External factors (file, DB, network)</td>
+        <td>Programming bugs (null, index, cast)</td>
+      </tr>
+      <tr>
+        <td>Detected At</td>
+        <td>Compile time</td>
+        <td>Runtime</td>
+      </tr>
+      <tr>
+        <td>Whose Fault</td>
+        <td>Environment / external system</td>
+        <td>Developer's bug</td>
+      </tr>
+      <tr>
+        <td>Examples</td>
+        <td>IOException, SQLException, ClassNotFoundException</td>
+        <td>NullPointerException, ArrayIndexOutOfBoundsException</td>
+      </tr>
+      <tr>
+        <td>Spring Boot Practice</td>
+        <td>Wrap in custom RuntimeException (unchecked)</td>
+        <td>Let propagate up, handle in @ControllerAdvice</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="box box-green">
+    <span class="box-icon">🌿</span>
+    <div class="box-content">
+      <strong>Spring Boot Best Practice</strong>
+      In Spring, most developers prefer <strong>unchecked custom exceptions</strong>
+      (extending RuntimeException). This avoids polluting service layer method signatures
+      with "throws" clauses and lets <code>@ControllerAdvice</code> handle everything globally.
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 5 — TRY-CATCH-FINALLY
+════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(78,205,196,0.12);">🛡️</div>
+    <div>
+      <h2>5. try — catch — finally Block</h2>
+      <div class="s-sub">Flow, rules, and tricky edge cases</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Basic Structure + Flow</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="kw">try</span> {
+    <span class="cm">// Code that might throw exception</span>
+    <span class="kw">int</span> result = <span class="num">10</span> / <span class="num">0</span>;       <span class="cm">// Throws ArithmeticException</span>
+    <span class="cl">System</span>.out.println(result); <span class="cm">// ← SKIPPED if exception thrown</span>
+
+} <span class="kw">catch</span> (<span class="cl">ArithmeticException</span> e) {
+    <span class="cm">// Handles specific exception</span>
+    <span class="cl">System</span>.out.println(<span class="st">"Caught: "</span> + e.getMessage()); <span class="cm">// "/ by zero"</span>
+
+} <span class="kw">catch</span> (<span class="cl">Exception</span> e) {
+    <span class="cm">// Generic catch — always last (more specific → less specific)</span>
+    <span class="cl">System</span>.out.println(<span class="st">"General error"</span>);
+
+} <span class="kw">finally</span> {
+    <span class="cm">// ALWAYS runs — exception or not, return or not</span>
+    <span class="cm">// Used for cleanup: close files, DB connections, etc.</span>
+    <span class="cl">System</span>.out.println(<span class="st">"Finally always runs!"</span>);
+}</code></pre>
+  </div>
+
+  <div class="rule-box">
+    <div class="rule-title">⚠️ Critical Rules — finally Block</div>
+    <ul>
+      <li><strong>Always executes</strong> — whether exception occurs or not</li>
+      <li><strong>Even after return</strong> — finally runs BEFORE the method returns</li>
+      <li><strong>Exception in catch</strong> — finally STILL runs before propagating</li>
+      <li><strong>Only exception</strong> — <code>System.exit()</code> or JVM crash skips finally</li>
+      <li><strong>Exception in finally</strong> — replaces/suppresses the original exception!</li>
+    </ul>
+  </div>
+
+  <!-- Tricky: finally with return -->
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>⚠️ TRICKY — finally overrides return value!</span>
+      <span class="lang-badge">Java · Tricky</span>
+    </div>
+    <pre><code><span class="kw">public int</span> <span class="fn">trickMethod</span>() {
+    <span class="kw">try</span> {
+        <span class="cl">System</span>.out.println(<span class="st">"try"</span>);
+        <span class="kw">return</span> <span class="num">1</span>;  <span class="cm">// ← this is staged, but finally runs FIRST</span>
+    } <span class="kw">finally</span> {
+        <span class="cl">System</span>.out.println(<span class="st">"finally"</span>);
+        <span class="kw">return</span> <span class="num">2</span>;  <span class="cm">// ← THIS return wins! Overrides try's return 1</span>
+    }
+}
+<span class="cm">// Output:
+// try
+// finally
+// Returns: 2  ← NOT 1!</span></code></pre>
+  </div>
+
+  <div class="box box-red">
+    <span class="box-icon">🚨</span>
+    <div class="box-content">
+      <strong>Interview Trap</strong>
+      "What does this return?" — If finally has a <code>return</code> statement,
+      it <strong>ALWAYS overrides</strong> the try/catch return. This is considered
+      bad practice — never use return in finally!
+    </div>
+  </div>
+
+  <!-- Tricky: both catch and finally throw -->
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>⚠️ What if both catch AND finally throw?</span>
+      <span class="lang-badge">Java · Tricky</span>
+    </div>
+    <pre><code><span class="kw">public void</span> <span class="fn">bothThrow</span>() {
+    <span class="kw">try</span> {
+        <span class="kw">throw new</span> <span class="cl">RuntimeException</span>(<span class="st">"from try"</span>);
+    } <span class="kw">catch</span> (<span class="cl">RuntimeException</span> e) {
+        <span class="cl">System</span>.out.println(<span class="st">"Caught: "</span> + e.getMessage());
+        <span class="kw">throw new</span> <span class="cl">RuntimeException</span>(<span class="st">"from catch"</span>);  <span class="cm">// ← staging</span>
+    } <span class="kw">finally</span> {
+        <span class="kw">throw new</span> <span class="cl">RuntimeException</span>(<span class="st">"from finally"</span>); <span class="cm">// ← THIS wins!</span>
+    }
+}
+
+<span class="cm">// Result: Exception "from finally" propagates
+// Exception "from catch" is LOST (suppressed silently)
+// This is why: NEVER throw from finally!</span></code></pre>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 6 — TRY-WITH-RESOURCES
+════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(105,219,124,0.12);">🔌</div>
+    <div>
+      <h2>6. try-with-resources</h2>
+      <div class="s-sub">AutoCloseable, suppressed exceptions, Java 7+</div>
+    </div>
+  </div>
+
+  <div class="concept-card" style="--card-color: var(--green);">
+    <h3>📌 What is try-with-resources?</h3>
+    <p>
+      Introduced in <strong>Java 7</strong>. Any object that implements
+      <code>AutoCloseable</code> (or <code>Closeable</code>) can be opened in the
+      try header. Java <strong>automatically calls <code>close()</code></strong> on it
+      at the end — even if an exception occurs. No more forgetting to close in finally!
+    </p>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Old Way (error-prone) vs New Way (try-with-resources)</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ───────────────────────────────
+// ❌ OLD WAY — manual close in finally (risky)
+// ───────────────────────────────</span>
+<span class="cl">BufferedReader</span> br = <span class="kw">null</span>;
+<span class="kw">try</span> {
+    br = <span class="kw">new</span> <span class="cl">BufferedReader</span>(<span class="kw">new</span> <span class="cl">FileReader</span>(<span class="st">"file.txt"</span>));
+    <span class="cl">String</span> line = br.readLine();
+} <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+    e.printStackTrace();
+} <span class="kw">finally</span> {
+    <span class="kw">try</span> {
+        <span class="kw">if</span> (br != <span class="kw">null</span>) br.close(); <span class="cm">// ← What if THIS throws? Ugly!</span>
+    } <span class="kw">catch</span> (<span class="cl">IOException</span> e2) {
+        e2.printStackTrace();
+    }
+}
+
+<span class="cm">// ───────────────────────────────
+// ✅ NEW WAY — try-with-resources (Java 7+)
+// ───────────────────────────────</span>
+<span class="kw">try</span> (<span class="cl">BufferedReader</span> br = <span class="kw">new</span> <span class="cl">BufferedReader</span>(<span class="kw">new</span> <span class="cl">FileReader</span>(<span class="st">"file.txt"</span>))) {
+    <span class="cl">String</span> line = br.readLine();
+    <span class="cl">System</span>.out.println(line);
+    <span class="cm">// br.close() called AUTOMATICALLY — even if exception occurs!</span>
+} <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+    e.printStackTrace();
+}
+
+<span class="cm">// ───────────────────────────────
+// Multiple resources — closed in REVERSE order
+// ───────────────────────────────</span>
+<span class="kw">try</span> (
+    <span class="cl">Connection</span>        conn = <span class="cl">DriverManager</span>.getConnection(url);
+    <span class="cl">PreparedStatement</span> ps   = conn.prepareStatement(<span class="st">"SELECT * FROM users"</span>);
+    <span class="cl">ResultSet</span>         rs   = ps.executeQuery()
+) {
+    <span class="cm">// All three closed automatically: rs → ps → conn</span>
+    <span class="kw">while</span> (rs.next()) {
+        <span class="cl">System</span>.out.println(rs.getString(<span class="st">"name"</span>));
+    }
+} <span class="kw">catch</span> (<span class="cl">SQLException</span> e) {
+    e.printStackTrace();
+}</code></pre>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Creating your own AutoCloseable</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// Any class implementing AutoCloseable works with try-with-resources</span>
+<span class="kw">class</span> <span class="cl">MyConnection</span> <span class="kw">implements</span> <span class="cl">AutoCloseable</span> {
+
+    <span class="kw">public</span> <span class="fn">MyConnection</span>() {
+        <span class="cl">System</span>.out.println(<span class="st">"Connection opened"</span>);
+    }
+
+    <span class="kw">public void</span> <span class="fn">query</span>() {
+        <span class="cl">System</span>.out.println(<span class="st">"Querying..."</span>);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">close</span>() {
+        <span class="cl">System</span>.out.println(<span class="st">"Connection closed automatically!"</span>);
+    }
+}
+
+<span class="cm">// Usage:</span>
+<span class="kw">try</span> (<span class="cl">MyConnection</span> conn = <span class="kw">new</span> <span class="cl">MyConnection</span>()) {
+    conn.query();
+}
+<span class="cm">// Output:
+// Connection opened
+// Querying...
+// Connection closed automatically!</span></code></pre>
+  </div>
+
+  <div class="concept-card" style="--card-color: var(--cyan);">
+    <h3>⚠️ Suppressed Exceptions in try-with-resources</h3>
+    <p>
+      If an exception is thrown in the <strong>try body</strong> AND another exception is
+      thrown in <code>close()</code>, Java <strong>suppresses</strong> the close exception
+      and adds it to the primary exception via <code>addSuppressed()</code>.
+      You can retrieve them with <code>e.getSuppressed()</code>.
+      This is BETTER than the old finally approach where the close exception would
+      silently swallow the original!
+    </p>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Suppressed Exceptions</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="kw">class</span> <span class="cl">BuggyResource</span> <span class="kw">implements</span> <span class="cl">AutoCloseable</span> {
+    <span class="kw">public void</span> <span class="fn">doWork</span>() <span class="kw">throws</span> <span class="cl">Exception</span> {
+        <span class="kw">throw new</span> <span class="cl">Exception</span>(<span class="st">"Exception from doWork"</span>);
+    }
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">close</span>() <span class="kw">throws</span> <span class="cl">Exception</span> {
+        <span class="kw">throw new</span> <span class="cl">Exception</span>(<span class="st">"Exception from close"</span>);
+    }
+}
+
+<span class="kw">try</span> (<span class="cl">BuggyResource</span> r = <span class="kw">new</span> <span class="cl">BuggyResource</span>()) {
+    r.doWork();
+} <span class="kw">catch</span> (<span class="cl">Exception</span> e) {
+    <span class="cl">System</span>.out.println(<span class="st">"Primary: "</span> + e.getMessage());
+    <span class="kw">for</span> (<span class="cl">Throwable</span> suppressed : e.getSuppressed()) {
+        <span class="cl">System</span>.out.println(<span class="st">"Suppressed: "</span> + suppressed.getMessage());
+    }
+}
+<span class="cm">// Output:
+// Primary:   Exception from doWork   ← main exception
+// Suppressed: Exception from close  ← close exception saved here</span></code></pre>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 7 — CUSTOM EXCEPTIONS
+════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(177,151,252,0.12);">🎨</div>
+    <div>
+      <h2>7. Custom Exceptions</h2>
+      <div class="s-sub">Design, best practices, when to use checked vs unchecked</div>
+    </div>
+  </div>
+
+  <div class="concept-card" style="--card-color: var(--purple);">
+    <h3>📌 Why Custom Exceptions?</h3>
+    <p>
+      Custom exceptions make your code more <strong>readable</strong>, provide
+      <strong>meaningful error messages</strong>, allow <strong>domain-specific errors</strong>
+      (like <code>InsufficientBalanceException</code>), and let callers
+      catch exactly what they need without catching generic exceptions.
+    </p>
+  </div>
+
+  <!-- Checked custom exception -->
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Custom CHECKED Exception (extends Exception)</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ─── CHECKED: Use when caller MUST handle it ───</span>
+<span class="kw">public class</span> <span class="cl">InvalidAgeException</span> <span class="kw">extends</span> <span class="cl">Exception</span> {
+
+    <span class="cm">// Best Practice: Always provide multiple constructors</span>
+
+    <span class="kw">public</span> <span class="fn">InvalidAgeException</span>(<span class="cl">String</span> message) {
+        <span class="kw">super</span>(message);
+    }
+
+    <span class="kw">public</span> <span class="fn">InvalidAgeException</span>(<span class="cl">String</span> message, <span class="cl">Throwable</span> cause) {
+        <span class="kw">super</span>(message, cause); <span class="cm">// preserves original exception (exception chaining)</span>
+    }
+}
+
+<span class="cm">// ─── Usage ───</span>
+<span class="kw">public void</span> <span class="fn">registerUser</span>(<span class="kw">int</span> age) <span class="kw">throws</span> <span class="cl">InvalidAgeException</span> {
+    <span class="kw">if</span> (age &lt; <span class="num">18</span>) {
+        <span class="kw">throw new</span> <span class="cl">InvalidAgeException</span>(<span class="st">"Age must be 18+. Provided: "</span> + age);
+    }
+    <span class="cl">System</span>.out.println(<span class="st">"User registered!"</span>);
+}
+
+<span class="cm">// ─── Caller must handle ───</span>
+<span class="kw">try</span> {
+    <span class="fn">registerUser</span>(<span class="num">15</span>);
+} <span class="kw">catch</span> (<span class="cl">InvalidAgeException</span> e) {
+    <span class="cl">System</span>.out.println(<span class="st">"Error: "</span> + e.getMessage()); <span class="cm">// Error: Age must be 18+. Provided: 15</span>
+}</code></pre>
+  </div>
+
+  <!-- Unchecked custom exception -->
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Custom UNCHECKED Exception (extends RuntimeException) ← Spring Boot Way</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ─── UNCHECKED: Preferred in Spring Boot ───</span>
+<span class="kw">public class</span> <span class="cl">UserNotFoundException</span> <span class="kw">extends</span> <span class="cl">RuntimeException</span> {
+
+    <span class="kw">private final long</span> userId;
+
+    <span class="kw">public</span> <span class="fn">UserNotFoundException</span>(<span class="kw">long</span> userId) {
+        <span class="kw">super</span>(<span class="st">"User not found with ID: "</span> + userId);
+        <span class="kw">this</span>.userId = userId;
+    }
+
+    <span class="kw">public</span> <span class="fn">UserNotFoundException</span>(<span class="cl">String</span> message) {
+        <span class="kw">super</span>(message);
+        <span class="kw">this</span>.userId = <span class="num">-1</span>;
+    }
+
+    <span class="kw">public long</span> <span class="fn">getUserId</span>() { <span class="kw">return</span> userId; }
+}
+
+<span class="cm">// ─── Service Layer — NO throws declaration needed ───</span>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cl">UserService</span> {
+
+    <span class="an">@Autowired</span>
+    <span class="kw">private</span> <span class="cl">UserRepository</span> userRepository;
+
+    <span class="kw">public</span> <span class="cl">User</span> <span class="fn">findById</span>(<span class="kw">long</span> id) {
+        <span class="kw">return</span> userRepository.findById(id)
+            .orElseThrow(() -&gt; <span class="kw">new</span> <span class="cl">UserNotFoundException</span>(id)); <span class="cm">// Clean!</span>
+    }
+}
+
+<span class="cm">// ─── Global Handler in Spring Boot ───</span>
+<span class="an">@RestControllerAdvice</span>
+<span class="kw">public class</span> <span class="cl">GlobalExceptionHandler</span> {
+
+    <span class="an">@ExceptionHandler</span>(<span class="cl">UserNotFoundException</span>.class)
+    <span class="an">@ResponseStatus</span>(<span class="cl">HttpStatus</span>.NOT_FOUND)
+    <span class="kw">public</span> <span class="cl">ErrorResponse</span> <span class="fn">handleUserNotFound</span>(<span class="cl">UserNotFoundException</span> ex) {
+        <span class="kw">return new</span> <span class="cl">ErrorResponse</span>(<span class="num">404</span>, ex.getMessage());
+    }
+
+    <span class="an">@ExceptionHandler</span>(<span class="cl">Exception</span>.class)
+    <span class="an">@ResponseStatus</span>(<span class="cl">HttpStatus</span>.INTERNAL_SERVER_ERROR)
+    <span class="kw">public</span> <span class="cl">ErrorResponse</span> <span class="fn">handleGeneral</span>(<span class="cl">Exception</span> ex) {
+        <span class="kw">return new</span> <span class="cl">ErrorResponse</span>(<span class="num">500</span>, <span class="st">"Internal Server Error"</span>);
+    }
+}</code></pre>
+  </div>
+
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th>Aspect</th>
+        <th>extends Exception (Checked)</th>
+        <th>extends RuntimeException (Unchecked)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Caller forced to handle?</td>
+        <td>✅ Yes — compile error if not</td>
+        <td>❌ No — optional</td>
+      </tr>
+      <tr>
+        <td>Method signature polluted?</td>
+        <td>Yes — "throws MyException" needed</td>
+        <td>No — clean signatures</td>
+      </tr>
+      <tr>
+        <td>Use case</td>
+        <td>API contract: caller MUST know and handle</td>
+        <td>Programming error / domain error in Spring</td>
+      </tr>
+      <tr>
+        <td>Spring Boot preference</td>
+        <td>❌ Rarely used</td>
+        <td>✅ Preferred — use @ControllerAdvice</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 8 — MULTI-CATCH & RE-THROW
+════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(116,192,252,0.12);">🔁</div>
+    <div>
+      <h2>8. Multi-catch, Re-throw & Exception Chaining</h2>
+      <div class="s-sub">Java 7 multi-catch, chaining, and wrapping exceptions</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Multi-catch (Java 7+) + Exception Chaining</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ─── Multi-catch: Handle multiple exceptions the same way ───</span>
+<span class="kw">try</span> {
+    <span class="fn">someRiskyOperation</span>();
+} <span class="kw">catch</span> (<span class="cl">IOException</span> | <span class="cl">SQLException</span> e) {
+    <span class="cm">// Both handled the same way — no code duplication</span>
+    <span class="cl">System</span>.out.println(<span class="st">"Data access error: "</span> + e.getMessage());
+    <span class="cm">// NOTE: 'e' is effectively final here — cannot reassign</span>
+}
+
+<span class="cm">// ─── Re-throw: Catch, log, then throw again ───</span>
+<span class="kw">try</span> {
+    riskyCode();
+} <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+    logger.error(<span class="st">"Failed to read file"</span>, e);
+    <span class="kw">throw</span> e;  <span class="cm">// re-throw same exception</span>
+}
+
+<span class="cm">// ─── Exception Chaining: Wrap in custom exception ───</span>
+<span class="cm">// BEST PRACTICE: Always pass cause — preserves full stack trace!</span>
+<span class="kw">try</span> {
+    connection.executeQuery(sql);
+} <span class="kw">catch</span> (<span class="cl">SQLException</span> e) {
+    <span class="kw">throw new</span> <span class="cl">DataAccessException</span>(<span class="st">"Query failed for SQL: "</span> + sql, e);
+    <span class="cm">//                                                         ↑ cause!</span>
+}
+
+<span class="cm">// ─── BAD PRACTICE: Losing the cause ───</span>
+<span class="kw">catch</span> (<span class="cl">SQLException</span> e) {
+    <span class="kw">throw new</span> <span class="cl">DataAccessException</span>(<span class="st">"Query failed"</span>); <span class="cm">// ❌ cause LOST!</span>
+}</code></pre>
+  </div>
+
+  <div class="box box-blue">
+    <span class="box-icon">💡</span>
+    <div class="box-content">
+      <strong>Exception Chaining Rule</strong>
+      ALWAYS pass the original exception as the <code>cause</code> when wrapping.
+      Without it, you lose the original stack trace and debugging becomes very hard.
+      Use: <code>new MyException("message", originalException)</code>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 9 — SERIALIZATION EXCEPTIONS
+════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,217,61,0.12);">📦</div>
+    <div>
+      <h2>9. Serialization & Exception Handling</h2>
+      <div class="s-sub">serialVersionUID, NotSerializableException, transient</div>
+    </div>
+  </div>
+
+  <div class="concept-card" style="--card-color: var(--yellow);">
+    <h3>📌 What is Serialization?</h3>
+    <p>
+      Converting an object's state to a byte stream (<strong>Serialization</strong>)
+      and converting it back (<strong>Deserialization</strong>). Used in file I/O,
+      network transmission, caching, session persistence.
+      <br><br>
+      A class must implement <code>java.io.Serializable</code> (marker interface) to be serialized.
+    </p>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Serialization + All Exception Scenarios</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="kw">import</span> java.io.*;
+
+<span class="cm">// ─── BASIC SERIALIZABLE CLASS ───</span>
+<span class="kw">public class</span> <span class="cl">Employee</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+
+    <span class="cm">// ALWAYS define serialVersionUID to avoid InvalidClassException</span>
+    <span class="kw">private static final long</span> serialVersionUID = <span class="num">1L</span>;
+
+    <span class="kw">private</span> <span class="cl">String</span>  name;
+    <span class="kw">private</span> <span class="kw">int</span>     age;
+    <span class="kw">private transient</span> <span class="cl">String</span> password;   <span class="cm">// transient = NOT serialized</span>
+    <span class="kw">private transient</span> <span class="cl">Logger</span> logger;     <span class="cm">// Logger is not Serializable, mark transient!</span>
+
+    <span class="kw">public</span> <span class="fn">Employee</span>(<span class="cl">String</span> name, <span class="kw">int</span> age, <span class="cl">String</span> password) {
+        <span class="kw">this</span>.name     = name;
+        <span class="kw">this</span>.age      = age;
+        <span class="kw">this</span>.password = password;
+    }
+    <span class="cm">// getters...</span>
+}
+
+<span class="cm">// ─── SERIALIZE ───</span>
+<span class="kw">try</span> (<span class="cl">ObjectOutputStream</span> oos =
+        <span class="kw">new</span> <span class="cl">ObjectOutputStream</span>(<span class="kw">new</span> <span class="cl">FileOutputStream</span>(<span class="st">"employee.ser"</span>))) {
+    oos.writeObject(<span class="kw">new</span> <span class="cl">Employee</span>(<span class="st">"Rahul"</span>, <span class="num">25</span>, <span class="st">"secret123"</span>));
+    <span class="cl">System</span>.out.println(<span class="st">"Serialized!"</span>);
+} <span class="kw">catch</span> (<span class="cl">IOException</span> e) {
+    e.printStackTrace();
+}
+
+<span class="cm">// ─── DESERIALIZE ───</span>
+<span class="kw">try</span> (<span class="cl">ObjectInputStream</span> ois =
+        <span class="kw">new</span> <span class="cl">ObjectInputStream</span>(<span class="kw">new</span> <span class="cl">FileInputStream</span>(<span class="st">"employee.ser"</span>))) {
+    <span class="cl">Employee</span> emp = (<span class="cl">Employee</span>) ois.readObject();
+    <span class="cl">System</span>.out.println(emp.getName());    <span class="cm">// Rahul</span>
+    <span class="cl">System</span>.out.println(emp.getPassword()); <span class="cm">// null ← transient field!</span>
+} <span class="kw">catch</span> (<span class="cl">IOException</span> | <span class="cl">ClassNotFoundException</span> e) {
+    e.printStackTrace();
+}</code></pre>
+  </div>
+
+  <div class="rule-box">
+    <div class="rule-title">💥 Serialization Exception Scenarios — Asked in Interviews</div>
+    <ul>
+      <li>
+        <strong>NotSerializableException</strong> — class doesn't implement Serializable.<br>
+        <span style="color: var(--muted); font-size: 13px;">Fix: implement Serializable or mark non-serializable fields as <code>transient</code></span>
+      </li>
+      <li>
+        <strong>InvalidClassException</strong> — class was modified after serialization, <code>serialVersionUID</code> mismatch.<br>
+        <span style="color: var(--muted); font-size: 13px;">Fix: always define <code>private static final long serialVersionUID = 1L;</code></span>
+      </li>
+      <li>
+        <strong>ClassNotFoundException</strong> (during deserialization) — class not in classpath of reading JVM.<br>
+        <span style="color: var(--muted); font-size: 13px;">Occurs in distributed systems when versions differ</span>
+      </li>
+      <li>
+        <strong>StreamCorruptedException</strong> — byte stream is corrupted or not a valid serialized stream.
+      </li>
+      <li>
+        <strong>Transient field</strong> — field marked <code>transient</code> is set to <code>null</code> after deserialization (primitives → default value).
+      </li>
+    </ul>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>serialVersionUID — Why it Matters</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ─── Scenario: What happens if you don't define serialVersionUID ───</span>
+
+<span class="cm">// STEP 1: Serialize with version 1 of class (2 fields)</span>
+<span class="kw">class</span> <span class="cl">Person</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+    <span class="cl">String</span> name;
+    <span class="kw">int</span>    age;
+}
+<span class="cm">// → Serialize to file</span>
+
+<span class="cm">// STEP 2: Add a new field to Person class</span>
+<span class="kw">class</span> <span class="cl">Person</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+    <span class="cl">String</span> name;
+    <span class="kw">int</span>    age;
+    <span class="cl">String</span> email; <span class="cm">// ← NEW FIELD ADDED</span>
+}
+<span class="cm">// → Try to deserialize old file
+// ❌ InvalidClassException: local class incompatible:
+//    stream classdesc serialVersionUID = 5463..., local class serialVersionUID = 8821...</span>
+
+<span class="cm">// ─── FIX: Always explicitly define it ───</span>
+<span class="kw">class</span> <span class="cl">Person</span> <span class="kw">implements</span> <span class="cl">Serializable</span> {
+    <span class="kw">private static final long</span> serialVersionUID = <span class="num">1L</span>; <span class="cm">// ← Always include this!</span>
+    <span class="cl">String</span> name;
+    <span class="kw">int</span>    age;
+    <span class="cl">String</span> email; <span class="cm">// New field — old files still work, email will be null</span>
+}</code></pre>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 10 — EXCEPTION IN GENERIC LIST
+════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(247,131,172,0.12);">🔬</div>
+    <div>
+      <h2>10. Exception in Generic List</h2>
+      <div class="s-sub">Type erasure, heap pollution, ClassCastException traps</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Generic List Exception Scenarios</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ─── 1. ClassCastException via Raw Type ───</span>
+<span class="cl">List</span> rawList = <span class="kw">new</span> <span class="cl">ArrayList</span>();  <span class="cm">// Raw type — no generics</span>
+rawList.add(<span class="st">"hello"</span>);
+rawList.add(<span class="num">42</span>);
+
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; stringList = rawList;  <span class="cm">// Compiler warning, no error</span>
+<span class="cl">String</span> s = stringList.get(<span class="num">1</span>);      <span class="cm">// ❌ ClassCastException at runtime! (42 is Integer)</span>
+
+<span class="cm">// ─── 2. Heap Pollution (@SafeVarargs) ───</span>
+<span class="an">@SafeVarargs</span>
+<span class="kw">public static</span> &lt;T&gt; <span class="cl">List</span>&lt;T&gt; <span class="fn">asList</span>(T... elements) {
+    <span class="kw">return new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">Arrays</span>.asList(elements));
+}
+
+<span class="cm">// ─── 3. UnsupportedOperationException ───</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; immutable = <span class="cl">List</span>.of(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>);
+immutable.add(<span class="st">"d"</span>); <span class="cm">// ❌ UnsupportedOperationException (List.of returns immutable)</span>
+
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; fromArrays = <span class="cl">Arrays</span>.asList(<span class="st">"a"</span>, <span class="st">"b"</span>);
+fromArrays.add(<span class="st">"c"</span>);    <span class="cm">// ❌ UnsupportedOperationException</span>
+fromArrays.set(<span class="num">0</span>, <span class="st">"x"</span>);  <span class="cm">// ✅ OK — can update, but fixed size</span>
+
+<span class="cm">// ─── FIX: Wrap in new ArrayList to make mutable ───</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; mutable = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">List</span>.of(<span class="st">"a"</span>, <span class="st">"b"</span>));
+mutable.add(<span class="st">"c"</span>); <span class="cm">// ✅ Works!</span>
+
+<span class="cm">// ─── 4. ConcurrentModificationException ───</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; names = <span class="kw">new</span> <span class="cl">ArrayList</span>&lt;&gt;(<span class="cl">Arrays</span>.asList(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>));
+
+<span class="cm">// ❌ BAD: Modifying while iterating with for-each</span>
+<span class="kw">for</span> (<span class="cl">String</span> name : names) {
+    <span class="kw">if</span> (name.equals(<span class="st">"b"</span>)) names.remove(name); <span class="cm">// ❌ ConcurrentModificationException</span>
+}
+
+<span class="cm">// ✅ FIX 1: Use Iterator.remove()</span>
+<span class="cl">Iterator</span>&lt;<span class="cl">String</span>&gt; it = names.iterator();
+<span class="kw">while</span> (it.hasNext()) {
+    <span class="kw">if</span> (it.next().equals(<span class="st">"b"</span>)) it.remove(); <span class="cm">// ✅ Safe</span>
+}
+
+<span class="cm">// ✅ FIX 2: removeIf (Java 8)</span>
+names.removeIf(name -&gt; name.equals(<span class="st">"b"</span>)); <span class="cm">// ✅ Cleanest</span>
+
+<span class="cm">// ✅ FIX 3: Use CopyOnWriteArrayList (thread-safe)</span>
+<span class="cl">List</span>&lt;<span class="cl">String</span>&gt; safe = <span class="kw">new</span> <span class="cl">CopyOnWriteArrayList</span>&lt;&gt;(names);
+<span class="kw">for</span> (<span class="cl">String</span> n : safe) {
+    <span class="kw">if</span> (n.equals(<span class="st">"b"</span>)) safe.remove(n); <span class="cm">// ✅ No exception (iterates snapshot)</span>
+}</code></pre>
+  </div>
+
+  <div class="box box-purple">
+    <span class="box-icon">🧠</span>
+    <div class="box-content">
+      <strong>Type Erasure — Why Generic Exceptions Are Tricky</strong>
+      Java generics use type erasure — at runtime, <code>List&lt;String&gt;</code> and
+      <code>List&lt;Integer&gt;</code> are both just <code>List</code>. You CANNOT do
+      <code>catch (MyException&lt;String&gt; e)</code> — generics in catch blocks are not allowed.
+      You also cannot do <code>new T()</code> or <code>throw new T()</code> with generic types.
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 11 — ClassNotFoundException vs NoClassDefFoundError
+════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(116,192,252,0.12);">🔍</div>
+    <div>
+      <h2>11. ClassNotFoundException vs NoClassDefFoundError</h2>
+      <div class="s-sub">Most confused pair in Java interviews</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="concept-card" style="--card-color: var(--orange);">
+      <h3>🟠 ClassNotFoundException</h3>
+      <p>
+        <span class="badge b-checked">Checked Exception</span><br><br>
+        Thrown when JVM tries to load a class <strong>dynamically at runtime</strong>
+        using <code>Class.forName()</code>, <code>ClassLoader.loadClass()</code>,
+        or <code>ClassLoader.findSystemClass()</code> — and the class is
+        <strong>NOT found in the classpath</strong>.
+      </p>
+    </div>
+    <div class="concept-card" style="--card-color: var(--red);">
+      <h3>🔴 NoClassDefFoundError</h3>
+      <p>
+        <span class="badge b-error">Error (not Exception)</span><br><br>
+        Thrown when a class was <strong>available at compile time</strong> but
+        is <strong>missing at runtime</strong>. JVM found it during compilation
+        but can't find it when the code actually runs.
+      </p>
+    </div>
+  </div>
+
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th>Aspect</th>
+        <th>ClassNotFoundException</th>
+        <th>NoClassDefFoundError</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Type</td>
+        <td>Checked Exception</td>
+        <td>Error (unchecked)</td>
+      </tr>
+      <tr>
+        <td>Parent</td>
+        <td>Exception → ReflectiveOperationException</td>
+        <td>Error → LinkageError</td>
+      </tr>
+      <tr>
+        <td>When</td>
+        <td>Dynamic class loading (reflection)</td>
+        <td>Class present at compile time, missing at runtime</td>
+      </tr>
+      <tr>
+        <td>Caused by</td>
+        <td>Class.forName("com.example.Foo") — Foo not in classpath</td>
+        <td>JAR removed after compilation, or static initializer failed</td>
+      </tr>
+      <tr>
+        <td>Must handle?</td>
+        <td>Yes — checked exception</td>
+        <td>No — it's an Error</td>
+      </tr>
+      <tr>
+        <td>Common Scenario</td>
+        <td>JDBC driver loading, plugin systems</td>
+        <td>Missing JAR in production, class initialization failure</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Both exceptions — Code Examples</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// ─── ClassNotFoundException ───</span>
+<span class="kw">try</span> {
+    <span class="cl">Class</span>&lt;?&gt; clazz = <span class="cl">Class</span>.forName(<span class="st">"com.mysql.jdbc.Driver"</span>); <span class="cm">// must handle</span>
+} <span class="kw">catch</span> (<span class="cl">ClassNotFoundException</span> e) {
+    <span class="cl">System</span>.out.println(<span class="st">"Driver not in classpath: "</span> + e.getMessage());
+}
+
+<span class="cm">// ─── NoClassDefFoundError ─── (cannot be handled gracefully)
+// Scenario: Foo.java was compiled but Foo.class deleted from classpath
+// At runtime: Error: Could not find or load main class Foo
+// This is an Error, JVM terminates</span>
+
+<span class="cm">// ─── Also: Static Initializer Failure causes NoClassDefFoundError ───</span>
+<span class="kw">class</span> <span class="cl">ConfigLoader</span> {
+    <span class="kw">static</span> <span class="cl">Properties</span> props;
+    <span class="kw">static</span> {
+        <span class="cm">// If this block throws, ConfigLoader is marked as failed</span>
+        <span class="cm">// Every subsequent attempt to use ConfigLoader throws NoClassDefFoundError</span>
+        props = loadFromFile(); <span class="cm">// If this fails...</span>
+    }
+}
+<span class="cm">// Any code using ConfigLoader will get:
+// java.lang.NoClassDefFoundError: Could not initialize class ConfigLoader</span></code></pre>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 12 — EDGE CASES & TRICKY
+════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,169,77,0.12);">🧨</div>
+    <div>
+      <h2>12. Edge Cases & Tricky Questions</h2>
+      <div class="s-sub">Output prediction questions — asked in every interview</div>
+    </div>
+  </div>
+
+  <!-- Tricky 1 -->
+  <div class="concept-card" style="--card-color: var(--yellow);">
+    <h3>🎯 Tricky 1: Can you catch Error?</h3>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Catching Error — Technically Yes, Practically Never</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="kw">try</span> {
+    <span class="kw">int</span>[] huge = <span class="kw">new int</span>[<span class="cl">Integer</span>.MAX_VALUE]; <span class="cm">// OutOfMemoryError</span>
+} <span class="kw">catch</span> (<span class="cl">OutOfMemoryError</span> e) {
+    <span class="cm">// Technically compiles and catches it
+    // BUT: JVM is in bad state — don't do this in production
+    // Only valid use: logging before graceful shutdown</span>
+    System.err.println(<span class="st">"Out of memory! Shutting down."</span>);
+}
+<span class="cm">// Rule: You CAN catch Error, but you almost NEVER should</span></code></pre>
+  </div>
+
+  <!-- Tricky 2 -->
+  <div class="concept-card" style="--card-color: var(--orange);">
+    <h3>🎯 Tricky 2: finally with System.exit()</h3>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>System.exit() — The only way to skip finally</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+    <span class="kw">try</span> {
+        <span class="cl">System</span>.out.println(<span class="st">"try"</span>);
+        <span class="cl">System</span>.exit(<span class="num">0</span>);     <span class="cm">// ← JVM terminates HERE</span>
+    } <span class="kw">finally</span> {
+        <span class="cl">System</span>.out.println(<span class="st">"finally"</span>); <span class="cm">// ← NEVER prints!</span>
+    }
+}
+<span class="cm">// Output: try
+// "finally" does NOT print — System.exit() kills JVM</span></code></pre>
+  </div>
+
+  <!-- Tricky 3 -->
+  <div class="concept-card" style="--card-color: var(--red);">
+    <h3>🎯 Tricky 3: Exception in static initializer</h3>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>Static Block Exception → ExceptionInInitializerError</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="kw">class</span> <span class="cl">BadClass</span> {
+    <span class="kw">static int</span> value;
+    <span class="kw">static</span> {
+        value = <span class="num">10</span> / <span class="num">0</span>; <span class="cm">// ArithmeticException in static block</span>
+    }
+}
+
+<span class="kw">try</span> {
+    <span class="cl">BadClass</span> obj = <span class="kw">new</span> <span class="cl">BadClass</span>();
+} <span class="kw">catch</span> (<span class="cl">ExceptionInInitializerError</span> e) {
+    <span class="cm">// Wraps the original exception</span>
+    <span class="cl">System</span>.out.println(<span class="st">"Cause: "</span> + e.getCause()); <span class="cm">// ArithmeticException</span>
+}
+<span class="cm">// Second access → NoClassDefFoundError (class initialization already failed)</span></code></pre>
+  </div>
+
+  <!-- Tricky 4 -->
+  <div class="concept-card" style="--card-color: var(--cyan);">
+    <h3>🎯 Tricky 4: Can main() throw an exception?</h3>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>main() can declare throws</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cm">// YES! main() can throw exceptions</span>
+<span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) <span class="kw">throws</span> <span class="cl">Exception</span> {
+    <span class="kw">throw new</span> <span class="cl">Exception</span>(<span class="st">"Unhandled exception in main"</span>);
+    <span class="cm">// JVM catches it, prints stack trace, and terminates
+    // Exception in thread "main" java.lang.Exception: Unhandled exception in main</span>
+}</code></pre>
+  </div>
+
+  <!-- Tricky 5: NullPointerException on unboxing -->
+  <div class="concept-card" style="--card-color: var(--purple);">
+    <h3>🎯 Tricky 5: NPE in Unboxing</h3>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+      <span>NullPointerException during auto-unboxing</span>
+      <span class="lang-badge">Java</span>
+    </div>
+    <pre><code><span class="cl">Integer</span> boxed = <span class="kw">null</span>;
+<span class="kw">int</span>     value = boxed; <span class="cm">// ❌ NullPointerException! Auto-unboxing null Integer</span>
+
+<span class="cm">// Why? Java tries: value = boxed.intValue() — NPE because boxed is null</span>
+
+<span class="cm">// Another trap: conditional expressions</span>
+<span class="cl">Integer</span> a = <span class="kw">null</span>;
+<span class="cl">Integer</span> b = <span class="kw">true</span> ? a : <span class="num">0</span>;  <span class="cm">// ← int 0 forces unboxing of a → NPE!</span>
+
+<span class="cm">// Map get() returning null then auto-unboxing</span>
+<span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">Integer</span>&gt; map = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+<span class="kw">int</span> count = map.get(<span class="st">"missing"</span>); <span class="cm">// ❌ NPE! get() returns null, unboxing fails</span>
+
+<span class="cm">// ✅ Safe way:</span>
+<span class="kw">int</span> count = map.getOrDefault(<span class="st">"missing"</span>, <span class="num">0</span>); <span class="cm">// Returns 0, no NPE</span></code></pre>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SECTION 13 — INTERVIEW Q&A
+════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,107,107,0.12);">🎤</div>
+    <div>
+      <h2>13. Interview Q&A — Most Asked</h2>
+      <div class="s-sub">Direct answers you can say in interviews</div>
+    </div>
+  </div>
+
+  <div class="iq-list">
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> What is the difference between throw and throws?</div>
+      <div class="iq-a">
+        <strong>throw</strong> — keyword used to <em>actually throw</em> an exception object inside a method.
+        <code>throw new IllegalArgumentException("invalid")</code><br><br>
+        <strong>throws</strong> — keyword in method <em>signature</em> declaring that the method <em>might throw</em>
+        a checked exception. Caller must handle it. <code>void readFile() throws IOException</code>
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> Can we have try without catch?</div>
+      <div class="iq-a">
+        <strong>Yes!</strong> You can have <code>try-finally</code> without catch (to ensure cleanup).
+        Also <code>try-with-resources</code> without catch (Java 7+).
+        But you cannot have <code>try</code> alone without either catch or finally.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> Why should we extend RuntimeException for custom exceptions in Spring Boot?</div>
+      <div class="iq-a">
+        In Spring, if you extend <code>Exception</code> (checked), every service method must
+        declare <code>throws YourException</code>, polluting all signatures. With
+        <code>RuntimeException</code>, exceptions propagate freely up the call stack and
+        are caught centrally by <code>@ControllerAdvice</code>, keeping service layer clean and readable.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> What is exception chaining and why is it important?</div>
+      <div class="iq-a">
+        Exception chaining is wrapping an original exception inside a new one using
+        <code>new MyException("msg", originalException)</code>. It preserves the
+        <strong>full stack trace and root cause</strong>. Without it, you lose the original
+        exception details making debugging very hard. Always pass the cause when wrapping!
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> What is the difference between final, finally, and finalize?</div>
+      <div class="iq-a">
+        <strong>final</strong> — keyword: variable cannot be reassigned, method cannot be overridden, class cannot be extended.<br>
+        <strong>finally</strong> — block in try-catch: always executes for cleanup (close resources).<br>
+        <strong>finalize()</strong> — deprecated method in Object class: called by GC before collecting object.
+        Avoid using it — GC doesn't guarantee when it runs. Use <code>try-with-resources</code> or explicit close instead.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> Can you override a method and add new checked exceptions?</div>
+      <div class="iq-a">
+        <strong>No!</strong> An overriding method cannot add new checked exceptions
+        or broader checked exceptions than the parent. It can:<br>
+        ✅ Remove the declared exception<br>
+        ✅ Throw a subclass of the declared exception<br>
+        ✅ Add unchecked (RuntimeException) exceptions<br>
+        ❌ Cannot add new/broader checked exceptions — would break Liskov Substitution Principle
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> What is a suppressed exception?</div>
+      <div class="iq-a">
+        In <code>try-with-resources</code>, if the try body throws exception A and
+        the <code>close()</code> method also throws exception B, Java keeps A as the
+        primary exception and adds B as a <strong>suppressed exception</strong> via
+        <code>e.addSuppressed(B)</code>. You can retrieve them with
+        <code>e.getSuppressed()</code>. This prevents losing exceptions (unlike old finally approach).
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> What exceptions can occur during serialization?</div>
+      <div class="iq-a">
+        <strong>NotSerializableException</strong> — class doesn't implement Serializable<br>
+        <strong>InvalidClassException</strong> — serialVersionUID mismatch after class change<br>
+        <strong>ClassNotFoundException</strong> — class not in classpath during deserialization<br>
+        <strong>StreamCorruptedException</strong> — corrupted byte stream<br>
+        <strong>Transient fields</strong> — become null/default after deserialization (not an exception but common surprise)
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> What is the difference between ClassNotFoundException and NoClassDefFoundError?</div>
+      <div class="iq-a">
+        <strong>ClassNotFoundException</strong> — Checked exception. Thrown during explicit dynamic class loading
+        (<code>Class.forName()</code>) when class is not in classpath.<br><br>
+        <strong>NoClassDefFoundError</strong> — Error (not exception). Class was available at compile time
+        but missing at runtime (e.g., JAR deleted from classpath), or static initializer failed.
+        Cannot recover — JVM is in bad state.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q"><span class="q-icon">Q</span> What is ConcurrentModificationException and how to fix it?</div>
+      <div class="iq-a">
+        Thrown when you <strong>modify a collection while iterating</strong> over it using for-each
+        (which uses Iterator internally). Collection tracks a <code>modCount</code>; if it changes
+        during iteration, CME is thrown.<br><br>
+        <strong>Fix 1:</strong> Use <code>Iterator.remove()</code> instead<br>
+        <strong>Fix 2:</strong> Use <code>list.removeIf(predicate)</code> (Java 8)<br>
+        <strong>Fix 3:</strong> Collect to remove list, then remove after loop<br>
+        <strong>Fix 4:</strong> Use <code>CopyOnWriteArrayList</code> (thread-safe, iterates snapshot)
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Reference Summary -->
+  <div style="margin-top: 32px;">
+    <div class="rule-box">
+      <div class="rule-title">⚡ Quick Reference — Exception Handling Best Practices</div>
+      <ul>
+        <li><strong>Never swallow exceptions</strong> — <code>catch (Exception e) {}</code> is evil — always log or rethrow</li>
+        <li><strong>Catch specific, not general</strong> — catch IOException, not Exception</li>
+        <li><strong>Always pass cause</strong> when wrapping exceptions — preserve stack trace</li>
+        <li><strong>Use try-with-resources</strong> for any AutoCloseable — never manual finally close</li>
+        <li><strong>Never return from finally</strong> — it overrides try/catch return silently</li>
+        <li><strong>Never throw from finally</strong> — suppresses original exception</li>
+        <li><strong>Define serialVersionUID</strong> for every Serializable class</li>
+        <li><strong>Mark non-serializable fields transient</strong> — Logger, Connection, etc.</li>
+        <li><strong>Prefer RuntimeException</strong> for custom exceptions in Spring Boot</li>
+        <li><strong>Use @ControllerAdvice</strong> for centralized exception handling in REST APIs</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+</div><!-- end content -->
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>

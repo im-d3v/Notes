@@ -1,0 +1,2681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Part 18 — Git Version Control & CI/CD | Java Interview Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    
+    :root {
+      --bg:      #0f1117;
+      --surface: #1a1d27;
+      --card:    #21253a;
+      --border:  #2e3350;
+      --accent:  #f05032;   /* Git orange */
+      --a2:      #6c63ff;
+      --a3:      #ff6b6b;
+      --a4:      #ffd93d;
+      --a5:      #4ecdc4;
+      --pink:    #ec4899;
+      --orange:  #fb923c;
+      --green:   #00d4aa;
+      --blue:    #60a5fa;
+      --text:    #e8eaf6;
+      --muted:   #8b92b8;
+      --code-bg: #13151f;
+    }
+
+    
+                    
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #1a0f0a 50%, #0f1117 100%);
+      padding: 56px 24px 48px; text-align: center;
+      border-bottom: 1px solid var(--border); position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 500px;
+      background: radial-gradient(circle, rgba(240,80,50,0.10) 0%, transparent 65%);
+      pointer-events: none;
+    }
+                    
+    /* ── LAYOUT ── */
+    .container { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+
+                        
+    /* ── SECTION ── */
+    .section { margin-bottom: 60px; }
+                                        
+        .section-label { font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .section-title { font-size: 26px; font-weight: 800; color: var(--text); }
+    /* Shell color tokens */
+                            .info-box.orange { background: rgba(240,80,50,0.08);  border: 1px solid rgba(240,80,50,0.25);  color: #fdba74; }
+
+                        
+            .key-list li.green  { border-left-color: var(--green); }
+                .key-list li.blue   { border-left-color: var(--blue); }
+    
+    /* ── DIAGRAM ── */
+    .diagram {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin: 14px 0;
+      font-family: 'Fira Code', monospace; font-size: 12px;
+      color: var(--muted); overflow-x: auto; line-height: 2.0;
+    }
+    .diagram .d-title { color: var(--accent); font-weight: 700;
+      margin-bottom: 12px; font-size: 13px; }
+    .diagram     .diagram .hi   { color: var(--a4); font-weight: 700; }
+    .diagram .arr  { color: var(--a2); }
+    .diagram .brn  { color: var(--accent); font-weight: 700; }
+    .diagram .grn  { color: var(--green); }
+    .diagram .pnk  { color: var(--pink); }
+    .diagram .blu  { color: var(--blue); }
+    .diagram .red  { color: var(--a3); }
+
+            .ol  { color: var(--text); margin: 2px 0; }
+    .ol-g{ color: var(--green); margin: 2px 0; }
+    .ol-r{ color: var(--a3); margin: 2px 0; }
+    .ol-y{ color: var(--a4); margin: 2px 0; }
+    .ol-b{ color: var(--blue); margin: 2px 0; }
+    .ol-p{ color: #c792ea; margin: 2px 0; }
+    .ol-m{ color: var(--muted); margin: 2px 0; }
+
+                    
+    /* ── COMMAND GRID ── */
+    .cmd-grid { display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+      gap: 12px; margin: 14px 0; }
+    .cmd-box {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px;
+    }
+    .cmd-box-title {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+      border-bottom: 1px solid var(--border); padding-bottom: 8px;
+    }
+    .cmd-row { display: flex; gap: 8px; margin: 5px 0; align-items: flex-start; }
+    .cmd-code { font-family: 'Fira Code', monospace; font-size: 12px;
+      color: #82cfff; background: rgba(130,207,255,0.08);
+      padding: 2px 8px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; }
+    .cmd-desc { font-size: 12px; color: var(--muted); }
+
+    /* ── BRANCH VISUAL ── */
+    .branch-visual {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin: 14px 0;
+      font-family: 'Fira Code', monospace; font-size: 12px; overflow-x: auto;
+    }
+
+    /* ── WORKFLOW STEPS ── */
+    .workflow { display: flex; flex-direction: column; gap: 0; margin: 14px 0; }
+    .wf-step {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 14px; border-left: 2px solid var(--border);
+      margin-left: 12px; position: relative;
+    }
+    .wf-step::before {
+      content: ''; position: absolute; left: -7px; top: 18px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--bg);
+    }
+    .wf-step:last-child { border-left-color: transparent; }
+    .wf-num {
+      background: rgba(240,80,50,0.15); color: var(--accent);
+      border-radius: 8px; padding: 4px 10px; font-size: 12px;
+      font-weight: 800; flex-shrink: 0;
+    }
+    .wf-content { flex: 1; }
+    .wf-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .wf-desc  { font-size: 13px; color: var(--muted); }
+
+    
+    /* ── CHEAT SHEET GRID ── */
+    .cheat-grid { display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+      gap: 16px; }
+    .cheat-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px;
+    }
+    .cheat-title {
+      font-size: 12px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cheat-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 5px 0; border-bottom: 1px dashed rgba(46,51,80,0.4); gap: 12px;
+    }
+    .cheat-row:last-child { border-bottom: none; }
+    .cheat-cmd { font-family: 'Fira Code', monospace; font-size: 11.5px;
+      color: #82cfff; flex-shrink: 0; }
+    .cheat-desc { font-size: 11.5px; color: var(--muted); text-align: right; }
+
+    
+    @media (max-width: 640px) {
+            .cmd-grid  { grid-template-columns: 1fr; }
+      .cheat-grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>🌿 Git VCS & CI/CD</h2>
+      <p>Part 18 — DevOps</p>
+    </div>
+    <nav>
+      <div class="section-label">Git Core</div>
+      <a href="#internals">Git Internals</a>
+      <a href="#config">Configuration & Setup</a>
+      <a href="#core">Core Commands</a>
+      <a href="#branching">Branching</a>
+      <a href="#merge">Merge Strategies</a>
+      <a href="#rebase">Rebase</a>
+      <a href="#conflicts">Conflict Resolution</a>
+      <a href="#remote">Remote Operations</a>
+      <a href="#stash">Stash & Worktree</a>
+      <a href="#history">Log, History & Diff</a>
+      <a href="#undo">Undo — Reset/Revert</a>
+      <a href="#advanced">Advanced Commands</a>
+      <a href="#tags">Tags & Releases</a>
+      <a href="#gitignore">.gitignore & Attributes</a>
+      <div class="section-label">CI/CD & Pipelines</div>
+      <a href="#hooks">Git Hooks</a>
+      <a href="#strategies">Branching Strategies</a>
+      <a href="#cicd">CI/CD Concepts</a>
+      <a href="#actions">GitHub Actions</a>
+      <a href="#jenkins">Jenkins Pipeline</a>
+      <a href="#interview">Interview Q&A</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ════ NAV ════ -->
+<nav class="topnav">
+  <div class="topnav-left">
+    <span class="nav-series">Java Notes</span>
+    <span style="color:var(--border)">›</span>
+    <span class="nav-title">Part 18 — Git Version Control &amp; CI/CD</span>
+  </div>
+  <span class="nav-badge">Part 18 / 20</span>
+</nav>
+
+<!-- ════ HERO ════ -->
+<div class="hero">
+  <div class="hero-part-label">Part 18 of 20 — DevOps &amp; Tooling</div>
+  <h1>Git Version Control &amp; CI/CD</h1>
+  <p class="hero-desc">
+    Every Git command with flags, branching strategies, merge vs rebase,
+    conflict resolution, GitHub Actions, Jenkins pipelines, GitFlow,
+    interview Q&amp;A and the ultimate cheat sheet.
+  </p>
+  <div class="hero-pills">
+    <div class="hero-pill">📦 Git Internals</div>
+    <div class="hero-pill">🌿 Branching</div>
+    <div class="hero-pill">🔀 Merge &amp; Rebase</div>
+    <div class="hero-pill">💥 Conflicts</div>
+    <div class="hero-pill">🔄 Reset &amp; Revert</div>
+    <div class="hero-pill">🏷️ Tags</div>
+    <div class="hero-pill">🪝 Hooks</div>
+    <div class="hero-pill">🚀 GitHub Actions</div>
+    <div class="hero-pill">🏗️ Jenkins</div>
+    <div class="hero-pill">📋 GitFlow</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ════ TOC ════ -->
+  <div class="toc">
+    <div class="toc-title">📋 Contents</div>
+    <div class="toc-grid">
+      <a href="#internals"    class="toc-item"><span class="toc-num">1</span>Git Internals — How Git Works</a>
+      <a href="#config"       class="toc-item"><span class="toc-num">2</span>Configuration &amp; Setup</a>
+      <a href="#core"         class="toc-item"><span class="toc-num">3</span>Core Commands (init → push)</a>
+      <a href="#branching"    class="toc-item"><span class="toc-num">4</span>Branching — Create, Switch, Delete</a>
+      <a href="#merge"        class="toc-item"><span class="toc-num">5</span>Merge — 3 Strategies</a>
+      <a href="#rebase"       class="toc-item"><span class="toc-num">6</span>Rebase — Interactive &amp; Regular</a>
+      <a href="#conflicts"    class="toc-item"><span class="toc-num">7</span>Conflict Resolution</a>
+      <a href="#remote"       class="toc-item"><span class="toc-num">8</span>Remote Operations</a>
+      <a href="#stash"        class="toc-item"><span class="toc-num">9</span>Stash &amp; Worktree</a>
+      <a href="#history"      class="toc-item"><span class="toc-num">10</span>Log, History &amp; Diff</a>
+      <a href="#undo"         class="toc-item"><span class="toc-num">11</span>Undo — Reset, Revert, Restore</a>
+      <a href="#advanced"     class="toc-item"><span class="toc-num">12</span>Advanced — Cherry-pick, Bisect, Blame</a>
+      <a href="#tags"         class="toc-item"><span class="toc-num">13</span>Tags &amp; Releases</a>
+      <a href="#gitignore"    class="toc-item"><span class="toc-num">14</span>.gitignore &amp; .gitattributes</a>
+      <a href="#hooks"        class="toc-item"><span class="toc-num">15</span>Git Hooks</a>
+      <a href="#strategies"   class="toc-item"><span class="toc-num">16</span>Branching Strategies — GitFlow etc.</a>
+      <a href="#cicd"         class="toc-item"><span class="toc-num">17</span>CI/CD Concepts</a>
+      <a href="#actions"      class="toc-item"><span class="toc-num">18</span>GitHub Actions</a>
+      <a href="#jenkins"      class="toc-item"><span class="toc-num">19</span>Jenkins Pipeline</a>
+      <a href="#interview"    class="toc-item"><span class="toc-num">20</span>Interview Q&amp;A</a>
+      <a href="#cheatsheet"   class="toc-item"><span class="toc-num">21</span>Master Cheat Sheet</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════
+       SECTION 1 — INTERNALS
+  ══════════════════════ -->
+  <section id="internals" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-orange">📦</div>
+      <div class="section-meta">
+        <div class="section-label">Section 1</div>
+        <div class="section-title">Git Internals — How Git Works</div>
+        <div class="section-sub">Objects, areas, DAG, SHA-1 hashes</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🗂️ The Three Areas of Git</h3>
+      <div class="diagram">
+        <div class="d-title">Git Three-Area Model</div>
+<span class="brn">┌──────────────────┐    git add     ┌──────────────────┐    git commit    ┌──────────────────┐</span>
+<span class="brn">│                  │ ─────────────▶ │                  │ ──────────────▶ │                  │</span>
+<span class="brn">│  Working Tree    │                │  Staging Area    │                  │   Repository     │</span>
+<span class="brn">│  (Working Dir)   │ ◀───────────── │  (Index / Cache) │ ◀────────────── │   (.git folder)  │</span>
+<span class="brn">│                  │  git restore   │                  │  git restore     │                  │</span>
+<span class="brn">│ Your actual files│                │  Snapshot ready  │  --staged        │  Commit history  │</span>
+<span class="brn">│ - Tracked        │                │  for next commit │                  │  Permanent store │</span>
+<span class="brn">│ - Untracked      │                │                  │                  │                  │</span>
+<span class="brn">└──────────────────┘                └──────────────────┘                  └──────────────────┘</span>
+<span class="grn">                    git checkout / git switch ◀──────────────────────────────────────────────</span>
+        
+</div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔑 Git Object Types — The 4 Core Objects</h3>
+      <div class="diagram">
+        <div class="d-title">Git Object Model (every object addressed by SHA-1 hash)</div>
+<span class="hi">BLOB Object          TREE Object          COMMIT Object        TAG Object</span>
+<span class="brn">┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐</span>
+<span class="brn">│ Raw file     │     │ Directory    │     │ tree →sha    │     │ tag name     │</span>
+<span class="brn">│ content      │     │ listing:     │     │ parent→sha   │     │ object →sha  │</span>
+<span class="brn">│              │ ◀── │ blob →sha    │ ◀── │ author       │ ◀── │ tagger       │</span>
+<span class="brn">│ No filename  │     │ tree →sha   │     │ committer    │     │ message      │</span>
+<span class="brn">│ No metadata  │     │ (subdir)    │     │ message      │     │              │</span>
+<span class="brn">└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘</span>
+<span class="grn">SHA: a1b2c3d...      SHA: e4f5a6b...      SHA: 7c8d9e0...      SHA: f1a2b3c...</span>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🌳 Git Commit DAG (Directed Acyclic Graph)</h3>
+      <div class="diagram">
+        <div class="d-title">Commit Graph — branches are just pointers to commits</div>
+<span class="brn">                        ┌─────────────────────────┐</span>
+<span class="brn">                        ▼                         │</span>
+<span class="grn">  C1 ──── C2 ──── C3 ──── C4     main              │ feature branch</span>
+<span class="brn">                    │                              │</span>
+<span class="brn">                    └──── C5 ──── C6   feature ◀───┘</span>
+<span class="brn"></span>
+<span class="hi">  main   → points to C4 (a SHA-1 hash)</span>
+<span class="hi">  feature→ points to C6 (a SHA-1 hash)</span>
+<span class="brn">  HEAD   → points to current branch (or commit in detached state)</span>
+<span class="grn">  origin/main → remote-tracking branch (read-only local copy)</span>
+      </div>
+
+      <div class="info-box note">
+        <div class="ib-icon">💡</div>
+        <div><strong>Key insight:</strong> Branches in Git are just 41-byte files containing a SHA-1 hash.
+        They are extremely cheap to create, switch between, and delete.
+        This is fundamentally different from older VCS like SVN where branches were expensive full copies.</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📁 The .git Directory Structure</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">.git folder — what's inside</span></div>
+        <pre>
+<span class="arg">.git/</span>
+<span class="ok">├── HEAD</span>            <span class="cm"># points to current branch: "ref: refs/heads/main"</span>
+<span class="ok">├── config</span>          <span class="cm"># repo-level git configuration</span>
+<span class="ok">├── description</span>     <span class="cm"># repo description (used by GitWeb)</span>
+<span class="ok">├── index</span>           <span class="cm"># staging area (binary file)</span>
+<span class="ok">├── COMMIT_EDITMSG</span>  <span class="cm"># last commit message</span>
+<span class="ok">├── MERGE_HEAD</span>      <span class="cm"># exists during merge: SHA of branch being merged</span>
+<span class="ok">├── REBASE_HEAD</span>     <span class="cm"># exists during rebase</span>
+<span class="ok">├── objects/</span>        <span class="cm"># all blobs, trees, commits, tags stored by SHA</span>
+<span class="ok">│   ├── a1/</span>         <span class="cm"># first 2 chars of SHA = folder name</span>
+<span class="ok">│   │   └── b2c3... </span><span class="cm"># remaining 38 chars = file name</span>
+<span class="ok">│   ├── pack/</span>       <span class="cm"># packed objects for efficiency</span>
+<span class="ok">│   └── info/</span>
+<span class="ok">├── refs/</span>
+<span class="ok">│   ├── heads/</span>      <span class="cm"># local branches (main, feature/xyz...)</span>
+<span class="ok">│   ├── remotes/</span>    <span class="cm"># remote-tracking branches (origin/main...)</span>
+<span class="ok">│   └── tags/</span>       <span class="cm"># tags</span>
+<span class="ok">└── hooks/</span>          <span class="cm"># client/server-side hook scripts</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 2 — CONFIG
+  ══════════════════════ -->
+  <section id="config" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-green">⚙️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 2</div>
+        <div class="section-title">Configuration &amp; Setup</div>
+        <div class="section-sub">Three config levels, aliases, credential helpers</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔧 Config Levels (System → Global → Local)</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git config — Three scopes</span></div>
+        <pre>
+<span class="cm"># ── SYSTEM level (all users on machine) ──</span>
+<span class="cm"># stored at: /etc/gitconfig</span>
+<span class="cmd">git config</span> <span class="flag">--system</span> core.autocrlf <span class="arg">input</span>
+
+<span class="cm"># ── GLOBAL level (current user) ── MOST COMMON ──</span>
+<span class="cm"># stored at: ~/.gitconfig  or  ~/.config/git/config</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> user.name    <span class="arg">"John Doe"</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> user.email   <span class="arg">"john@example.com"</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> core.editor  <span class="arg">"code --wait"</span>       <span class="cm"># VS Code</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> core.editor  <span class="arg">"vim"</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> init.defaultBranch <span class="arg">main</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> pull.rebase  <span class="arg">false</span>              <span class="cm"># merge on pull</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> pull.rebase  <span class="arg">true</span>               <span class="cm"># rebase on pull</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> push.default <span class="arg">current</span>            <span class="cm"># push current branch</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> core.autocrlf <span class="arg">true</span>             <span class="cm"># Windows: LF→CRLF on checkout</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> core.autocrlf <span class="arg">input</span>            <span class="cm"># Mac/Linux: CRLF→LF on commit</span>
+
+<span class="cm"># ── LOCAL level (current repo only) ──</span>
+<span class="cm"># stored at: .git/config</span>
+<span class="cmd">git config</span> <span class="flag">--local</span>  user.email   <span class="arg">"work@company.com"</span>  <span class="cm"># override for this repo</span>
+
+<span class="cm"># ── View all settings ──</span>
+<span class="cmd">git config</span> <span class="flag">--list</span>                 <span class="cm"># all effective config</span>
+<span class="cmd">git config</span> <span class="flag">--list --show-origin</span>   <span class="cm"># show which file each setting comes from</span>
+<span class="cmd">git config</span> user.name              <span class="cm"># read a specific value</span>
+<span class="cmd">git config</span> <span class="flag">--global --edit</span>        <span class="cm"># open ~/.gitconfig in editor</span>
+
+<span class="cm"># ── Useful Aliases ──</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> alias.st  <span class="arg">status</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> alias.co  <span class="arg">checkout</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> alias.br  <span class="arg">branch</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> alias.lg  <span class="arg">"log --oneline --graph --all --decorate"</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> alias.undo <span class="arg">"reset HEAD~1 --mixed"</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> alias.oops <span class="arg">"commit --amend --no-edit"</span>
+
+<span class="cm"># Now you can use: git lg  git st  git co main  git oops</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 3 — CORE COMMANDS
+  ══════════════════════ -->
+  <section id="core" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-orange">🚀</div>
+      <div class="section-meta">
+        <div class="section-label">Section 3</div>
+        <div class="section-title">Core Commands — init to push</div>
+        <div class="section-sub">Every flag, every variation you need to know</div>
+      </div>
+    </div>
+
+    <!-- INIT & CLONE -->
+    <div class="content-card">
+      <h3>📁 init &amp; clone</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">init / clone</span></div>
+        <pre>
+<span class="cm"># ── git init ──</span>
+<span class="cmd">git init</span>                          <span class="cm"># initialize current directory as git repo</span>
+<span class="cmd">git init</span> <span class="arg">my-project</span>               <span class="cm"># create new dir & initialize</span>
+<span class="cmd">git init</span> <span class="flag">--bare</span> <span class="arg">repo.git</span>          <span class="cm"># bare repo (server-side, no working tree)</span>
+<span class="cmd">git init</span> <span class="flag">-b</span> <span class="arg">main</span>                  <span class="cm"># set initial branch name</span>
+
+<span class="cm"># ── git clone ──</span>
+<span class="cmd">git clone</span> <span class="arg">https://github.com/user/repo.git</span>
+<span class="cmd">git clone</span> <span class="arg">git@github.com:user/repo.git</span>      <span class="cm"># SSH clone</span>
+<span class="cmd">git clone</span> <span class="arg">https://...</span> <span class="arg">my-folder</span>             <span class="cm"># clone into specific folder</span>
+<span class="cmd">git clone</span> <span class="flag">--depth 1</span> <span class="arg">https://...</span>             <span class="cm"># shallow clone (only latest snapshot)</span>
+<span class="cmd">git clone</span> <span class="flag">--depth 1 --branch</span> <span class="arg">v2.0 https://...</span> <span class="cm"># shallow clone specific tag</span>
+<span class="cmd">git clone</span> <span class="flag">--single-branch --branch</span> <span class="arg">develop https://...</span>  <span class="cm"># only one branch</span>
+<span class="cmd">git clone</span> <span class="flag">--recurse-submodules</span> <span class="arg">https://...</span> <span class="cm"># include submodules</span>
+<span class="cmd">git clone</span> <span class="flag">--mirror</span> <span class="arg">https://...</span>              <span class="cm"># full mirror (bare + refspecs)</span></pre>
+      </div>
+    </div>
+
+    <!-- ADD & STATUS -->
+    <div class="content-card">
+      <h3>📌 status &amp; add — Working Tree to Staging</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git status / git add</span></div>
+        <pre>
+<span class="cm"># ── git status ──</span>
+<span class="cmd">git status</span>                        <span class="cm"># full status</span>
+<span class="cmd">git status</span> <span class="flag">-s</span>                     <span class="cm"># short format  (XY filename)</span>
+<span class="cmd">git status</span> <span class="flag">-sb</span>                    <span class="cm"># short + show branch name</span>
+<span class="cm"># Short format: M=modified  A=added  D=deleted  R=renamed  ?=untracked  !=ignored</span>
+<span class="cm"># First column = staging area,  Second column = working tree</span>
+
+<span class="cm"># ── git add ──</span>
+<span class="cmd">git add</span> <span class="arg">file.txt</span>                  <span class="cm"># stage specific file</span>
+<span class="cmd">git add</span> <span class="arg">src/</span>                      <span class="cm"># stage entire directory</span>
+<span class="cmd">git add</span> <span class="arg">.</span>                         <span class="cm"># stage all changes in current dir (recursively)</span>
+<span class="cmd">git add</span> <span class="flag">-A</span>                        <span class="cm"># stage ALL changes: new + modified + deleted</span>
+<span class="cmd">git add</span> <span class="flag">-u</span>                        <span class="cm"># stage tracked files only (modified + deleted, NOT new)</span>
+<span class="cmd">git add</span> <span class="flag">-p</span>                        <span class="cm"># interactive: stage PARTS of a file (patch mode)</span>
+<span class="cmd">git add</span> <span class="flag">-p</span> <span class="arg">file.txt</span>              <span class="cm"># patch mode for specific file</span>
+<span class="cm"># In patch mode: y=yes  n=no  s=split  e=edit  q=quit  ?=help</span>
+<span class="cmd">git add</span> <span class="flag">-N</span> <span class="arg">newfile.txt</span>           <span class="cm"># add "intent to add" (shows in diff)</span>
+<span class="cmd">git add</span> <span class="flag">--dry-run</span> <span class="arg">.</span>              <span class="cm"># preview what WOULD be staged</span>
+
+<span class="cm"># ── Unstage ──</span>
+<span class="cmd">git restore</span> <span class="flag">--staged</span> <span class="arg">file.txt</span>    <span class="cm"># unstage file (keep working tree changes)</span>
+<span class="cmd">git restore</span> <span class="flag">--staged</span> <span class="arg">.</span>           <span class="cm"># unstage everything</span>
+<span class="cmd">git reset HEAD</span> <span class="arg">file.txt</span>          <span class="cm"># older syntax (same effect)</span></pre>
+      </div>
+    </div>
+
+    <!-- COMMIT -->
+    <div class="content-card">
+      <h3>📝 commit</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git commit — all variations</span></div>
+        <pre>
+<span class="cmd">git commit</span> <span class="flag">-m</span> <span class="arg">"feat: add user authentication"</span>  <span class="cm"># commit with message</span>
+<span class="cmd">git commit</span> <span class="flag">-m</span> <span class="arg">"Title"</span> <span class="flag">-m</span> <span class="arg">"Detailed description..."</span>  <span class="cm"># title + body</span>
+<span class="cmd">git commit</span>                                    <span class="cm"># open editor for message</span>
+<span class="cmd">git commit</span> <span class="flag">-a</span> <span class="flag">-m</span> <span class="arg">"fix: correct typo"</span>         <span class="cm"># stage tracked files + commit</span>
+<span class="cmd">git commit</span> <span class="flag">--amend</span> <span class="flag">-m</span> <span class="arg">"corrected message"</span>     <span class="cm"># change last commit message</span>
+<span class="cmd">git commit</span> <span class="flag">--amend --no-edit</span>                  <span class="cm"># add staged changes to last commit, keep message</span>
+<span class="cmd">git commit</span> <span class="flag">--allow-empty</span> <span class="flag">-m</span> <span class="arg">"trigger CI"</span>    <span class="cm"># commit with no changes</span>
+<span class="cmd">git commit</span> <span class="flag">--no-verify</span> <span class="flag">-m</span> <span class="arg">"skip hooks"</span>      <span class="cm"># bypass pre-commit hooks (⚠️ use carefully)</span>
+<span class="cmd">git commit</span> <span class="flag">--fixup</span> <span class="sha">abc123</span>                   <span class="cm"># create fixup commit for later auto-squash</span>
+<span class="cmd">git commit</span> <span class="flag">--squash</span> <span class="sha">abc123</span>                  <span class="cm"># create squash commit</span>
+
+<span class="cm"># ── Conventional Commits format (widely used in teams) ──</span>
+<span class="cm"># type(scope): description</span>
+<span class="cm"># Types: feat | fix | docs | style | refactor | test | chore | perf | ci | build</span>
+<span class="ok">git commit -m "feat(auth): add JWT token validation"</span>
+<span class="ok">git commit -m "fix(api): handle null response from payment service"</span>
+<span class="ok">git commit -m "refactor(db): extract connection pool logic"</span>
+<span class="ok">git commit -m "docs: update API documentation for v2"</span>
+<span class="ok">git commit -m "BREAKING CHANGE: remove deprecated /v1 endpoints"</span></pre>
+      </div>
+    </div>
+
+    <!-- PUSH PULL FETCH -->
+    <div class="content-card">
+      <h3>🌐 fetch, pull, push</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">Remote sync commands</span></div>
+        <pre>
+<span class="cm"># ── git fetch ── (download but DON'T merge)</span>
+<span class="cmd">git fetch</span>                          <span class="cm"># fetch all from default remote (origin)</span>
+<span class="cmd">git fetch</span> <span class="arg">origin</span>                   <span class="cm"># fetch from origin</span>
+<span class="cmd">git fetch</span> <span class="flag">--all</span>                    <span class="cm"># fetch from ALL remotes</span>
+<span class="cmd">git fetch</span> <span class="flag">--prune</span>                  <span class="cm"># fetch + delete stale remote-tracking branches</span>
+<span class="cmd">git fetch</span> <span class="arg">origin</span> <span class="br">main</span>:<span class="br">main</span>         <span class="cm"># fetch origin/main into local main</span>
+<span class="cmd">git fetch</span> <span class="flag">--dry-run</span>                <span class="cm"># preview what would be fetched</span>
+
+<span class="cm"># ── git pull ── (fetch + merge/rebase)</span>
+<span class="cmd">git pull</span>                           <span class="cm"># pull from tracked upstream</span>
+<span class="cmd">git pull</span> <span class="arg">origin</span> <span class="br">main</span>               <span class="cm"># pull origin/main into current branch</span>
+<span class="cmd">git pull</span> <span class="flag">--rebase</span>                  <span class="cm"># pull + rebase (cleaner history)</span>
+<span class="cmd">git pull</span> <span class="flag">--rebase=interactive</span>      <span class="cm"># pull + interactive rebase</span>
+<span class="cmd">git pull</span> <span class="flag">--no-rebase</span>               <span class="cm"># force merge even if config says rebase</span>
+<span class="cmd">git pull</span> <span class="flag">--ff-only</span>                 <span class="cm"># only if fast-forward (fail if diverged)</span>
+<span class="cmd">git pull</span> <span class="flag">--no-ff</span>                   <span class="cm"># always create merge commit</span>
+
+<span class="cm"># ── git push ──</span>
+<span class="cmd">git push</span>                           <span class="cm"># push to tracked upstream</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="br">main</span>               <span class="cm"># push local main to origin/main</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="br">feature/xyz</span>        <span class="cm"># push feature branch</span>
+<span class="cmd">git push</span> <span class="flag">-u</span> <span class="arg">origin</span> <span class="br">feature/xyz</span>     <span class="cm"># push + set upstream tracking (-u = --set-upstream)</span>
+<span class="cmd">git push</span> <span class="flag">--all</span>                     <span class="cm"># push all local branches</span>
+<span class="cmd">git push</span> <span class="flag">--tags</span>                    <span class="cm"># push all tags</span>
+<span class="cmd">git push</span> <span class="flag">--follow-tags</span>             <span class="cm"># push + annotated tags reachable from pushed commits</span>
+<span class="cmd">git push</span> <span class="flag">--force-with-lease</span>        <span class="cm"># ✅ SAFE force push (fails if remote changed since last fetch)</span>
+<span class="cmd">git push</span> <span class="flag">--force</span>                   <span class="cm"># ❌ DANGEROUS: overwrites remote (use --force-with-lease instead)</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="flag">--delete</span> <span class="br">feature/xyz</span>  <span class="cm"># delete remote branch</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> :<span class="br">feature/xyz</span>       <span class="cm"># delete remote branch (older syntax)</span>
+
+<span class="cm"># ── Tracking upstream ──</span>
+<span class="cmd">git branch</span> <span class="flag">-u</span> <span class="arg">origin/main</span>         <span class="cm"># set upstream for current branch</span>
+<span class="cmd">git branch</span> <span class="flag">--unset-upstream</span>        <span class="cm"># remove upstream tracking</span></pre>
+      </div>
+
+      <div class="info-box warn">
+        <div class="ib-icon">⚠️</div>
+        <div>
+          <strong>Always use <code>--force-with-lease</code> instead of <code>--force</code>!</strong>
+          <code>--force</code> blindly overwrites the remote branch, potentially discarding commits pushed
+          by teammates since your last fetch. <code>--force-with-lease</code> checks that your
+          remote-tracking branch is up-to-date before forcing — if someone else pushed, it FAILS safely.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 4 — BRANCHING
+  ══════════════════════ -->
+  <section id="branching" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-green">🌿</div>
+      <div class="section-meta">
+        <div class="section-label">Section 4</div>
+        <div class="section-title">Branching — Create, Switch, Delete</div>
+        <div class="section-sub">git branch, git switch, git checkout — all branch operations</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🌿 All Branch Commands</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git branch — full reference</span></div>
+        <pre>
+<span class="cm"># ── View branches ──</span>
+<span class="cmd">git branch</span>                        <span class="cm"># list local branches (* = current)</span>
+<span class="cmd">git branch</span> <span class="flag">-r</span>                     <span class="cm"># list remote-tracking branches</span>
+<span class="cmd">git branch</span> <span class="flag">-a</span>                     <span class="cm"># list all (local + remote)</span>
+<span class="cmd">git branch</span> <span class="flag">-v</span>                     <span class="cm"># verbose: last commit on each branch</span>
+<span class="cmd">git branch</span> <span class="flag">-vv</span>                    <span class="cm"># more verbose: upstream tracking info</span>
+<span class="cmd">git branch</span> <span class="flag">--merged</span>               <span class="cm"># branches merged into current (safe to delete)</span>
+<span class="cmd">git branch</span> <span class="flag">--no-merged</span>            <span class="cm"># branches NOT yet merged</span>
+<span class="cmd">git branch</span> <span class="flag">--merged</span> <span class="br">main</span>          <span class="cm"># branches merged into main</span>
+<span class="cmd">git branch</span> <span class="flag">--sort=-committerdate</span>  <span class="cm"># sort by most recently committed</span>
+<span class="cmd">git branch</span> <span class="flag">--contains</span> <span class="sha">abc123</span>     <span class="cm"># which branches contain this commit</span>
+
+<span class="cm"># ── Create branch ──</span>
+<span class="cmd">git branch</span> <span class="br">feature/login</span>           <span class="cm"># create branch at current HEAD (don't switch)</span>
+<span class="cmd">git branch</span> <span class="br">hotfix/bug-42</span> <span class="br">main</span>     <span class="cm"># create branch from main</span>
+<span class="cmd">git branch</span> <span class="br">feature/x</span> <span class="sha">abc123</span>       <span class="cm"># create branch from specific commit</span>
+<span class="cmd">git branch</span> <span class="br">v2-branch</span> <span class="arg">v2.0</span>         <span class="cm"># create branch from tag</span>
+
+<span class="cm"># ── Switch branch (modern: git switch) ──</span>
+<span class="cmd">git switch</span> <span class="br">main</span>                    <span class="cm"># switch to main</span>
+<span class="cmd">git switch</span> <span class="flag">-c</span> <span class="br">feature/login</span>        <span class="cm"># create + switch (most common!)</span>
+<span class="cmd">git switch</span> <span class="flag">-c</span> <span class="br">hotfix</span> <span class="br">main</span>          <span class="cm"># create hotfix from main + switch</span>
+<span class="cmd">git switch</span> <span class="flag">--detach</span> <span class="sha">abc123</span>        <span class="cm"># switch to specific commit (detached HEAD)</span>
+<span class="cmd">git switch</span> <span class="flag">-</span>                       <span class="cm"># switch to previous branch (like cd -)</span>
+
+<span class="cm"># ── Switch branch (classic: git checkout) ──</span>
+<span class="cmd">git checkout</span> <span class="br">main</span>                  <span class="cm"># switch to main</span>
+<span class="cmd">git checkout</span> <span class="flag">-b</span> <span class="br">feature/login</span>      <span class="cm"># create + switch</span>
+<span class="cmd">git checkout</span> <span class="flag">-b</span> <span class="br">feature</span> <span class="arg">origin/feature</span>  <span class="cm"># create local tracking remote branch</span>
+<span class="cmd">git checkout</span> <span class="sha">abc123</span>               <span class="cm"># detached HEAD at commit</span>
+<span class="cmd">git checkout</span> <span class="arg">HEAD~3</span>               <span class="cm"># go back 3 commits (detached HEAD)</span>
+
+<span class="cm"># ── Rename branch ──</span>
+<span class="cmd">git branch</span> <span class="flag">-m</span> <span class="br">old-name</span> <span class="br">new-name</span>   <span class="cm"># rename (m = move)</span>
+<span class="cmd">git branch</span> <span class="flag">-m</span> <span class="br">new-name</span>            <span class="cm"># rename current branch</span>
+
+<span class="cm"># ── Delete branch ──</span>
+<span class="cmd">git branch</span> <span class="flag">-d</span> <span class="br">feature/login</span>        <span class="cm"># delete (safe: fails if not merged)</span>
+<span class="cmd">git branch</span> <span class="flag">-D</span> <span class="br">feature/login</span>        <span class="cm"># force delete (even if not merged)</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="flag">--delete</span> <span class="br">feature/login</span>  <span class="cm"># delete REMOTE branch</span>
+<span class="cm"># Delete all local branches that are merged into main:</span>
+<span class="cmd">git branch</span> <span class="flag">--merged</span> <span class="br">main</span> <span class="flag">| grep -v "main\|master\|\*"</span> <span class="flag">| xargs git branch -d</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>⚠️ Detached HEAD State</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">Detached HEAD — what it is and how to recover</span></div>
+        <pre>
+<span class="cm"># Detached HEAD = HEAD points to a commit, NOT a branch</span>
+<span class="cm"># Happens when: git checkout abc123  or  git checkout v1.0 tag</span>
+
+<span class="cmd">git checkout</span> <span class="sha">abc123</span>    <span class="cm"># now in detached HEAD</span>
+
+<span class="cm"># You can look around, make experimental commits...</span>
+<span class="cm"># BUT if you switch branches, those commits become orphaned (eventually GC'd)!</span>
+
+<span class="cm"># ✅ Save your work: create a branch from detached HEAD</span>
+<span class="cmd">git switch</span> <span class="flag">-c</span> <span class="br">my-experiment</span>   <span class="cm"># create branch here → commits are safe</span>
+
+<span class="cm"># Or simply discard and go back</span>
+<span class="cmd">git switch</span> <span class="br">main</span>               <span class="cm"># go back (orphaned commits will be GC'd)</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 5 — MERGE
+  ══════════════════════ -->
+  <section id="merge" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-purple">🔀</div>
+      <div class="section-meta">
+        <div class="section-label">Section 5</div>
+        <div class="section-title">Merge — 3 Strategies</div>
+        <div class="section-sub">Fast-forward, 3-way merge, squash merge — when to use each</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>⚡ Strategy 1 — Fast-Forward Merge</h3>
+      <p>When the target branch has no new commits since the feature branch diverged,
+         Git simply moves the pointer forward. <strong>No merge commit created.</strong></p>
+      <div class="diagram">
+<span class="brn">BEFORE:  main: A──B──C</span>
+<span class="brn">                    └── D──E  feature</span>
+<span class="grn">AFTER (fast-forward):  main: A──B──C──D──E</span>
+<span class="brn">                                         ↑ main &amp; feature (same commit)</span>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">Fast-forward merge</span></div>
+        <pre>
+<span class="cmd">git switch</span> <span class="br">main</span>
+<span class="cmd">git merge</span> <span class="br">feature/login</span>        <span class="cm"># fast-forward if possible</span>
+<span class="cmd">git merge</span> <span class="flag">--ff-only</span> <span class="br">feature</span>   <span class="cm"># FAIL if not fast-forwardable</span>
+<span class="cmd">git merge</span> <span class="flag">--no-ff</span> <span class="br">feature</span>     <span class="cm"># FORCE merge commit even if fast-forward possible</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔄 Strategy 2 — Three-Way Merge (Merge Commit)</h3>
+      <p>When both branches have diverged. Git finds the common ancestor and creates a
+         <strong>new merge commit with two parents</strong>.</p>
+      <div class="diagram">
+<span class="brn">BEFORE:  main:    A──B──C──F</span>
+<span class="brn">                  └── D──E  feature</span>
+<span class="grn">AFTER:   main:    A──B──C──F──M   (M = merge commit with 2 parents)</span>
+<span class="brn">                           ╱</span>
+<span class="brn">                      D──E</span>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">Three-way merge</span></div>
+        <pre>
+<span class="cmd">git switch</span> <span class="br">main</span>
+<span class="cmd">git merge</span> <span class="br">feature/login</span>                     <span class="cm"># auto 3-way if diverged</span>
+<span class="cmd">git merge</span> <span class="flag">--no-ff</span> <span class="br">feature/login</span>             <span class="cm"># always create merge commit</span>
+<span class="cmd">git merge</span> <span class="flag">--no-ff</span> <span class="flag">-m</span> <span class="arg">"Merge feature/login"</span> <span class="br">feature/login</span>
+<span class="cmd">git merge</span> <span class="flag">--abort</span>                            <span class="cm"># abort mid-conflict merge</span>
+<span class="cmd">git merge</span> <span class="flag">--continue</span>                         <span class="cm"># continue after resolving conflicts</span>
+<span class="cmd">git merge</span> <span class="flag">--strategy=recursive</span> <span class="flag">-X ours</span>      <span class="cm"># prefer our side on conflicts</span>
+<span class="cmd">git merge</span> <span class="flag">-X theirs</span> <span class="br">feature</span>                  <span class="cm"># prefer their side on conflicts</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🗜️ Strategy 3 — Squash Merge</h3>
+      <p>Combines all commits from the feature branch into a <strong>single new commit</strong>
+         on the target branch. Clean history but loses individual commit context.</p>
+      <div class="diagram">
+<span class="brn">feature branch has: D──E──F──G (4 commits)</span>
+<span class="grn">AFTER squash:  main: A──B──C──DEFG  (one squashed commit — not a merge commit)</span>
+<span class="brn">                                ↑ feature history is GONE (only in new single commit)</span>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">Squash merge</span></div>
+        <pre>
+<span class="cmd">git switch</span> <span class="br">main</span>
+<span class="cmd">git merge</span> <span class="flag">--squash</span> <span class="br">feature/login</span>   <span class="cm"># squash all feature commits into staged changes</span>
+<span class="cmd">git commit</span> <span class="flag">-m</span> <span class="arg">"feat: add login feature"</span>  <span class="cm"># create the squashed commit</span>
+<span class="cm"># Note: feature branch still exists — delete it manually</span>
+<span class="cmd">git branch</span> <span class="flag">-D</span> <span class="br">feature/login</span>         <span class="cm"># force delete (not "merged" in git's view)</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📊 Merge Strategy Comparison</h3>
+      <table class="comp-table">
+        <thead><tr><th>Strategy</th><th>Merge Commit?</th><th>History</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td>--ff (fast-forward)</td><td>❌ None</td><td>Linear, clean</td><td>Short-lived branches, solo dev</td></tr>
+          <tr><td>--no-ff (3-way)</td><td>✅ Yes (2 parents)</td><td>Shows branch topology</td><td>Feature branches, shows when feature landed</td></tr>
+          <tr><td>--squash</td><td>❌ (1 commit)</td><td>Very clean, loses granularity</td><td>Noisy feature branches, clean PR history</td></tr>
+          <tr><td>Rebase + ff</td><td>❌ None</td><td>Linear, rewritten</td><td>Clean linear history lovers</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 6 — REBASE
+  ══════════════════════ -->
+  <section id="rebase" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-cyan">🔁</div>
+      <div class="section-meta">
+        <div class="section-label">Section 6</div>
+        <div class="section-title">Rebase — Regular &amp; Interactive</div>
+        <div class="section-sub">Rewrite history, clean commits, the golden rule</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔁 Regular Rebase</h3>
+      <p>Rebase moves (replays) commits on top of another branch, creating <strong>new commits</strong>
+         with different SHA hashes but same changes. Result: linear history.</p>
+      <div class="diagram">
+<span class="brn">BEFORE:</span>
+<span class="grn">  main:    A──B──C──F</span>
+<span class="brn">                └── D──E  feature</span>
+<span class="brn"></span>
+<span class="hi">AFTER (git rebase main on feature branch):</span>
+<span class="grn">  main:    A──B──C──F</span>
+<span class="brn">                    └── D'──E'  feature  (D' and E' are NEW commits)</span>
+<span class="brn">                         ↑ replayed on top of F (the tip of main)</span>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git rebase</span></div>
+        <pre>
+<span class="cm"># ── Basic rebase ──</span>
+<span class="cmd">git switch</span> <span class="br">feature/login</span>
+<span class="cmd">git rebase</span> <span class="br">main</span>                    <span class="cm"># replay feature commits on top of main</span>
+<span class="cm"># Then to integrate back:</span>
+<span class="cmd">git switch</span> <span class="br">main</span>
+<span class="cmd">git merge</span> <span class="flag">--ff-only</span> <span class="br">feature/login</span>  <span class="cm"># clean fast-forward (linear history!)</span>
+
+<span class="cm"># ── Rebase control ──</span>
+<span class="cmd">git rebase</span> <span class="flag">--abort</span>                 <span class="cm"># cancel rebase, restore original state</span>
+<span class="cmd">git rebase</span> <span class="flag">--continue</span>              <span class="cm"># after fixing conflicts, continue</span>
+<span class="cmd">git rebase</span> <span class="flag">--skip</span>                  <span class="cm"># skip current conflicting commit</span>
+<span class="cmd">git rebase</span> <span class="flag">--quit</span>                  <span class="cm"># stop rebase but keep changes so far (rare)</span>
+
+<span class="cm"># ── Rebase with upstream ──</span>
+<span class="cmd">git rebase</span> <span class="arg">origin/main</span>             <span class="cm"># rebase on remote main (common for PRs)</span>
+
+<span class="cm"># ── Rebase onto ── (transplant commits)</span>
+<span class="cmd">git rebase</span> <span class="flag">--onto</span> <span class="br">main</span> <span class="sha">abc123</span> <span class="br">feature</span>
+<span class="cm"># Take commits from feature that are NOT in abc123, replay onto main</span>
+<span class="cm"># Use: extract part of a branch to put elsewhere</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>✏️ Interactive Rebase — Rewrite History</h3>
+      <p>The most powerful Git command. Edit, squash, reorder, drop commits before they're shared.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git rebase -i — Interactive rebase</span></div>
+        <pre>
+<span class="cm"># ── Start interactive rebase ──</span>
+<span class="cmd">git rebase</span> <span class="flag">-i</span> <span class="arg">HEAD~4</span>              <span class="cm"># rewrite last 4 commits</span>
+<span class="cmd">git rebase</span> <span class="flag">-i</span> <span class="sha">abc123</span>             <span class="cm"># rewrite commits after abc123</span>
+<span class="cmd">git rebase</span> <span class="flag">-i</span> <span class="arg">HEAD~4</span> <span class="flag">--autosquash</span> <span class="cm"># auto-apply fixup! and squash! commits</span>
+<span class="cmd">git rebase</span> <span class="flag">-i --root</span>              <span class="cm"># rewrite entire history from first commit</span>
+
+<span class="cm"># ── Editor opens with list of commits (top=oldest, bottom=newest):</span>
+
+<span class="ok">pick abc1234 feat: add login form</span>
+<span class="ok">pick def5678 fix: correct email validation</span>
+<span class="ok">pick ghi9012 wip: temp test code</span>
+<span class="ok">pick jkl3456 fix: remove temp test code</span>
+
+<span class="cm"># ── Available commands (replace "pick"): ──</span>
+<span class="cm"># pick    (p) = use commit as-is</span>
+<span class="cm"># reword  (r) = use commit, but edit message</span>
+<span class="cm"># edit    (e) = use commit, but stop to amend files/message</span>
+<span class="cm"># squash  (s) = combine with previous commit, edit message</span>
+<span class="cm"># fixup   (f) = combine with previous, DISCARD this commit's message</span>
+<span class="cm"># drop    (d) = remove this commit entirely</span>
+<span class="cm"># exec    (x) = run shell command after this commit</span>
+<span class="cm"># break   (b) = stop for manual changes</span>
+<span class="cm"># label (l), reset (t), merge (m) — for complex rebase scripts</span>
+
+<span class="cm"># ── Rewrite to be: ──</span>
+<span class="ok">pick abc1234 feat: add login form</span>
+<span class="hl">reword def5678 fix: correct email validation   </span><span class="cm"># change message</span>
+<span class="hl">fixup ghi9012 wip: temp test code              </span><span class="cm"># merge into above, discard msg</span>
+<span class="hl">drop  jkl3456 fix: remove temp test code       </span><span class="cm"># delete commit</span>
+<span class="cm"># Save and close → interactive rebase executes steps</span></pre>
+      </div>
+
+      <div class="info-box danger">
+        <div class="ib-icon">🚨</div>
+        <div>
+          <strong>The Golden Rule of Rebasing:</strong>
+          <strong>Never rebase commits that have been pushed to a shared remote branch.</strong>
+          Rebase rewrites SHA hashes — if teammates have your old commits, their history
+          diverges and causes "force push needed" chaos.
+          <strong>Only rebase local unpublished commits, or on your own private branches.</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 7 — CONFLICTS
+  ══════════════════════ -->
+  <section id="conflicts" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-red">💥</div>
+      <div class="section-meta">
+        <div class="section-label">Section 7</div>
+        <div class="section-title">Conflict Resolution — Step by Step</div>
+        <div class="section-sub">Merge conflicts, rebase conflicts, conflict markers, tools</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>💥 Understanding Conflict Markers</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Text</span><span class="code-label">Conflict markers in a file</span></div>
+        <pre>
+<span class="cm">// file: UserService.java</span>
+<span class="kw">public</span> String <span class="fn">getUserName</span>() {
+
+<span class="err">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>               <span class="cm">// ← YOUR changes (current branch)</span>
+    <span class="kw">return</span> user.getFullName();
+<span class="hl">=======</span>                     <span class="cm">// ← DIVIDER between the two versions</span>
+    <span class="kw">return</span> user.getDisplayName();
+<span class="err">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/display-name</span>  <span class="cm">// ← THEIR changes (branch being merged)</span>
+}
+
+<span class="cm">// ── With diff3 style (shows common ancestor too) ──</span>
+<span class="cm">// Enable: git config merge.conflictstyle diff3</span>
+<span class="err">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+    <span class="kw">return</span> user.getFullName();
+<span class="hl">||||||| merged common ancestor</span>
+    <span class="kw">return</span> user.getName();
+<span class="hl">=======</span>
+    <span class="kw">return</span> user.getDisplayName();
+<span class="err">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/display-name</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>✅ Conflict Resolution — Complete Workflow</h3>
+      <div class="workflow">
+        <div class="wf-step">
+          <span class="wf-num">1</span>
+          <div class="wf-content">
+            <div class="wf-title">Conflict occurs during merge/rebase</div>
+            <div class="wf-desc">Git stops and marks conflicted files. Merge commit is incomplete.</div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">2</span>
+          <div class="wf-content">
+            <div class="wf-title">Find all conflicted files</div>
+            <div class="wf-desc"><code>git status</code> → shows "both modified"  |  <code>git diff --name-only --diff-filter=U</code></div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">3</span>
+          <div class="wf-content">
+            <div class="wf-title">Edit each conflicted file</div>
+            <div class="wf-desc">Choose "ours", "theirs", or manually write the combined version. Remove ALL conflict markers (&lt;&lt;&lt;, ===, &gt;&gt;&gt;).</div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">4</span>
+          <div class="wf-content">
+            <div class="wf-title">Stage the resolved files</div>
+            <div class="wf-desc"><code>git add UserService.java</code> — marks file as resolved</div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">5</span>
+          <div class="wf-content">
+            <div class="wf-title">Complete the merge/rebase</div>
+            <div class="wf-desc"><code>git merge --continue</code> or <code>git rebase --continue</code> — creates merge commit</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">Conflict resolution commands</span></div>
+        <pre>
+<span class="cm"># ── During merge conflict ──</span>
+<span class="cmd">git status</span>                      <span class="cm"># shows "both modified" files</span>
+<span class="cmd">git diff</span>                        <span class="cm"># shows conflict markers in working tree</span>
+
+<span class="cm"># ── Accept one side entirely (without editing) ──</span>
+<span class="cmd">git checkout</span> <span class="flag">--ours</span>   <span class="arg">file.txt</span>  <span class="cm"># take OUR version (current branch)</span>
+<span class="cmd">git checkout</span> <span class="flag">--theirs</span> <span class="arg">file.txt</span>  <span class="cm"># take THEIR version (merging branch)</span>
+<span class="cm"># Modern equivalent:</span>
+<span class="cmd">git restore</span> <span class="flag">--ours</span>   <span class="arg">file.txt</span>
+<span class="cmd">git restore</span> <span class="flag">--theirs</span> <span class="arg">file.txt</span>
+
+<span class="cm"># ── After resolving each file ──</span>
+<span class="cmd">git add</span> <span class="arg">file.txt</span>                <span class="cm"># mark as resolved</span>
+<span class="cmd">git merge</span> <span class="flag">--continue</span>            <span class="cm"># complete the merge</span>
+
+<span class="cm"># ── Or ABORT entire merge ──</span>
+<span class="cmd">git merge</span> <span class="flag">--abort</span>               <span class="cm"># cancel, restore pre-merge state</span>
+<span class="cmd">git rebase</span> <span class="flag">--abort</span>              <span class="cm"># cancel rebase</span>
+
+<span class="cm"># ── Merge tools ──</span>
+<span class="cmd">git mergetool</span>                   <span class="cm"># open configured merge tool</span>
+<span class="cmd">git mergetool</span> <span class="flag">--tool=vimdiff</span>    <span class="cm"># specify tool</span>
+<span class="cm"># Configure: git config --global merge.tool vscode</span>
+<span class="cm"># git config --global mergetool.vscode.cmd "code --wait $MERGED"</span>
+
+<span class="cm"># ── Check for unresolved markers ──</span>
+<span class="cmd">grep</span> <span class="flag">-r</span> <span class="arg">"&lt;&lt;&lt;&lt;&lt;&lt;&lt;"</span> <span class="arg">src/</span>          <span class="cm"># find any remaining conflict markers</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 8 — REMOTE
+  ══════════════════════ -->
+  <section id="remote" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-blue">🌐</div>
+      <div class="section-meta">
+        <div class="section-label">Section 8</div>
+        <div class="section-title">Remote Operations</div>
+        <div class="section-sub">Add, remove, rename remotes; tracking branches; fork workflow</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🌐 Managing Remotes</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git remote — full reference</span></div>
+        <pre>
+<span class="cm"># ── View remotes ──</span>
+<span class="cmd">git remote</span>                        <span class="cm"># list remote names</span>
+<span class="cmd">git remote</span> <span class="flag">-v</span>                     <span class="cm"># verbose: show fetch/push URLs</span>
+<span class="cmd">git remote</span> <span class="arg">show origin</span>           <span class="cm"># detailed info about origin (branches, tracking)</span>
+
+<span class="cm"># ── Manage remotes ──</span>
+<span class="cmd">git remote</span> <span class="arg">add origin</span> <span class="arg">https://github.com/user/repo.git</span>
+<span class="cmd">git remote</span> <span class="arg">add upstream</span> <span class="arg">https://github.com/original/repo.git</span>  <span class="cm"># fork workflow</span>
+<span class="cmd">git remote</span> <span class="arg">rename origin</span> <span class="arg">github</span>  <span class="cm"># rename remote</span>
+<span class="cmd">git remote</span> <span class="arg">remove upstream</span>       <span class="cm"># remove remote</span>
+<span class="cmd">git remote</span> <span class="arg">set-url origin</span> <span class="arg">git@github.com:user/repo.git</span>  <span class="cm"># change URL</span>
+<span class="cmd">git remote</span> <span class="arg">set-url --push origin</span> <span class="arg">https://...</span>  <span class="cm"># different push URL</span>
+<span class="cmd">git remote</span> <span class="arg">prune origin</span>          <span class="cm"># remove stale remote-tracking branches</span>
+<span class="cmd">git remote</span> <span class="flag">update --prune</span>        <span class="cm"># fetch all + prune</span>
+
+<span class="cm"># ── Fork workflow ──</span>
+<span class="cm"># 1. Fork repo on GitHub</span>
+<span class="cmd">git clone</span> <span class="arg">https://github.com/you/forked-repo.git</span>
+<span class="cmd">git remote</span> <span class="arg">add upstream</span> <span class="arg">https://github.com/original/repo.git</span>
+
+<span class="cm"># 2. Sync fork with upstream:</span>
+<span class="cmd">git fetch</span> <span class="arg">upstream</span>
+<span class="cmd">git switch</span> <span class="br">main</span>
+<span class="cmd">git merge</span> <span class="arg">upstream/main</span>          <span class="cm"># merge upstream changes into your fork</span>
+<span class="cm"># or:</span>
+<span class="cmd">git rebase</span> <span class="arg">upstream/main</span>         <span class="cm"># rebase your fork on upstream</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="br">main</span>              <span class="cm"># update your fork on GitHub</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 9 — STASH
+  ══════════════════════ -->
+  <section id="stash" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-yellow">🗃️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 9</div>
+        <div class="section-title">Stash &amp; Worktree</div>
+        <div class="section-sub">Save work-in-progress, multiple working trees</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🗃️ git stash — Save WIP Without Committing</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git stash — complete guide</span></div>
+        <pre>
+<span class="cm"># ── Save stash ──</span>
+<span class="cmd">git stash</span>                         <span class="cm"># stash tracked modified + staged files</span>
+<span class="cmd">git stash</span> <span class="arg">push</span>                    <span class="cm"># same as above (explicit)</span>
+<span class="cmd">git stash</span> <span class="arg">push</span> <span class="flag">-m</span> <span class="arg">"WIP: login form"</span>  <span class="cm"># stash with description</span>
+<span class="cmd">git stash</span> <span class="flag">-u</span>                      <span class="cm"># include untracked files</span>
+<span class="cmd">git stash</span> <span class="flag">-a</span>                      <span class="cm"># include ALL files (untracked + ignored)</span>
+<span class="cmd">git stash</span> <span class="flag">-p</span>                      <span class="cm"># interactive: choose which hunks to stash</span>
+<span class="cmd">git stash</span> <span class="arg">push</span> <span class="flag">--</span> <span class="arg">src/LoginForm.java</span>  <span class="cm"># stash specific file only</span>
+<span class="cmd">git stash</span> <span class="arg">push</span> <span class="flag">-k</span>                <span class="cm"># stash but keep staged files staged (-k=--keep-index)</span>
+
+<span class="cm"># ── List stashes ──</span>
+<span class="cmd">git stash list</span>                    <span class="cm"># stash@{0}: WIP on main: abc1234 message</span>
+<span class="cmd">git stash show</span>                    <span class="cm"># show files changed in latest stash</span>
+<span class="cmd">git stash show</span> <span class="flag">-p</span>                 <span class="cm"># show full diff of latest stash</span>
+<span class="cmd">git stash show</span> <span class="arg">stash@{2}</span>          <span class="cm"># show specific stash</span>
+
+<span class="cm"># ── Apply stash ──</span>
+<span class="cmd">git stash pop</span>                     <span class="cm"># apply latest stash + REMOVE from stash list</span>
+<span class="cmd">git stash apply</span>                   <span class="cm"># apply latest stash + KEEP in stash list</span>
+<span class="cmd">git stash apply</span> <span class="arg">stash@{2}</span>         <span class="cm"># apply specific stash</span>
+<span class="cmd">git stash pop</span> <span class="arg">stash@{1}</span>           <span class="cm"># pop specific stash</span>
+<span class="cmd">git stash branch</span> <span class="br">feature/wip</span>     <span class="cm"># create new branch from stash + apply (no conflicts!)</span>
+
+<span class="cm"># ── Remove stash ──</span>
+<span class="cmd">git stash drop</span>                    <span class="cm"># delete latest stash</span>
+<span class="cmd">git stash drop</span> <span class="arg">stash@{2}</span>          <span class="cm"># delete specific stash</span>
+<span class="cmd">git stash clear</span>                   <span class="cm"># delete ALL stashes ⚠️</span>
+
+<span class="cm"># ── Common stash workflow ──</span>
+<span class="cm"># You're working on feature, urgent bug comes in:</span>
+<span class="cmd">git stash push</span> <span class="flag">-m</span> <span class="arg">"WIP login form"</span>  <span class="cm"># save current work</span>
+<span class="cmd">git switch</span> <span class="br">main</span>
+<span class="cmd">git switch</span> <span class="flag">-c</span> <span class="br">hotfix/null-pointer</span>  <span class="cm"># fix the bug</span>
+<span class="cm"># ... fix and commit ...</span>
+<span class="cmd">git switch</span> <span class="br">feature/login</span>
+<span class="cmd">git stash pop</span>                       <span class="cm"># restore your WIP</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🌲 git worktree — Multiple Working Directories</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git worktree — work on multiple branches simultaneously</span></div>
+        <pre>
+<span class="cm"># Worktree = link a new working directory to a different branch</span>
+<span class="cm"># No need to stash! Work on TWO branches in two folders simultaneously</span>
+
+<span class="cmd">git worktree</span> <span class="arg">add</span> <span class="arg">../hotfix-branch</span> <span class="br">hotfix/bug-99</span>
+<span class="cm"># Creates folder: ../hotfix-branch  checked out to hotfix/bug-99</span>
+
+<span class="cmd">git worktree</span> <span class="arg">add</span> <span class="flag">-b</span> <span class="br">new-feature</span> <span class="arg">../new-feature-dir</span>
+<span class="cm"># Create new branch + new worktree</span>
+
+<span class="cmd">git worktree</span> <span class="arg">list</span>               <span class="cm"># list all worktrees</span>
+<span class="cmd">git worktree</span> <span class="arg">remove</span> <span class="arg">../hotfix-branch</span>  <span class="cm"># remove worktree</span>
+<span class="cmd">git worktree</span> <span class="arg">prune</span>              <span class="cm"># clean up stale worktree records</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 10 — LOG / DIFF
+  ══════════════════════ -->
+  <section id="history" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-cyan">🔍</div>
+      <div class="section-meta">
+        <div class="section-label">Section 10</div>
+        <div class="section-title">Log, History &amp; Diff</div>
+        <div class="section-sub">Every way to explore history and compare changes</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📜 git log — Exploring History</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git log — all formats and filters</span></div>
+        <pre>
+<span class="cm"># ── Basic output ──</span>
+<span class="cmd">git log</span>                           <span class="cm"># full log (press q to quit)</span>
+<span class="cmd">git log</span> <span class="flag">--oneline</span>                 <span class="cm"># short hash + first line of message</span>
+<span class="cmd">git log</span> <span class="flag">--oneline --graph --all --decorate</span>  <span class="cm"># visual branch graph (MOST USEFUL)</span>
+<span class="cmd">git log</span> <span class="flag">-n 5</span>                      <span class="cm"># last 5 commits</span>
+<span class="cmd">git log</span> <span class="flag">-5</span>                        <span class="cm"># same: last 5</span>
+<span class="cmd">git log</span> <span class="flag">-p</span>                        <span class="cm"># show diff for each commit</span>
+<span class="cmd">git log</span> <span class="flag">--stat</span>                    <span class="cm"># show files changed + insertions/deletions</span>
+<span class="cmd">git log</span> <span class="flag">--shortstat</span>               <span class="cm"># summary: N files changed, N insertions</span>
+<span class="cmd">git log</span> <span class="flag">--name-only</span>               <span class="cm"># show filenames only</span>
+<span class="cmd">git log</span> <span class="flag">--name-status</span>             <span class="cm"># A/M/D + filename</span>
+
+<span class="cm"># ── Pretty formats ──</span>
+<span class="cmd">git log</span> <span class="flag">--pretty=format:"%h %an %ar %s"</span>   <span class="cm"># hash author date subject</span>
+<span class="cmd">git log</span> <span class="flag">--pretty=format:"%C(yellow)%h%Creset %s"</span>  <span class="cm"># colored</span>
+<span class="cm"># Placeholders: %h=short hash %H=full hash %an=author name</span>
+<span class="cm">#   %ae=author email %ar=relative date %ad=absolute date</span>
+<span class="cm">#   %s=subject %b=body %D=refs(branch/tag) %n=newline</span>
+
+<span class="cm"># ── Filtering ──</span>
+<span class="cmd">git log</span> <span class="flag">--author=</span><span class="arg">"John"</span>           <span class="cm"># filter by author</span>
+<span class="cmd">git log</span> <span class="flag">--grep=</span><span class="arg">"fix:"</span>             <span class="cm"># filter by commit message</span>
+<span class="cmd">git log</span> <span class="flag">--since=</span><span class="arg">"2 weeks ago"</span>     <span class="cm"># since relative time</span>
+<span class="cmd">git log</span> <span class="flag">--since=</span><span class="arg">"2024-01-01"</span>      <span class="cm"># since specific date</span>
+<span class="cmd">git log</span> <span class="flag">--until=</span><span class="arg">"2024-06-01"</span>      <span class="cm"># until date</span>
+<span class="cmd">git log</span> <span class="flag">--after=</span><span class="arg">"yesterday"</span>
+<span class="cmd">git log</span> <span class="flag">-S</span> <span class="arg">"getUserById"</span>          <span class="cm"># commits that added/removed this string (pickaxe)</span>
+<span class="cmd">git log</span> <span class="flag">-G</span> <span class="arg">"getUserBy.*"</span>          <span class="cm"># commits with matching regex (grep pickaxe)</span>
+<span class="cmd">git log</span> <span class="flag">--</span> <span class="arg">src/UserService.java</span>   <span class="cm"># commits that touched this file</span>
+<span class="cmd">git log</span> <span class="flag">--diff-filter=D --</span> <span class="arg">"*.java"</span>  <span class="cm"># commits that DELETED Java files</span>
+<span class="cmd">git log</span> <span class="arg">main..feature</span>             <span class="cm"># commits in feature NOT in main</span>
+<span class="cmd">git log</span> <span class="arg">main...feature</span>            <span class="cm"># commits in either, not both (symmetric diff)</span>
+<span class="cmd">git log</span> <span class="flag">--no-merges</span>               <span class="cm"># hide merge commits</span>
+<span class="cmd">git log</span> <span class="flag">--merges</span>                  <span class="cm"># show ONLY merge commits</span>
+<span class="cmd">git log</span> <span class="flag">--first-parent</span>            <span class="cm"># follow only first parent (main line only)</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔎 git diff — Compare Changes</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git diff — all comparisons</span></div>
+        <pre>
+<span class="cm"># ── Working tree vs staging area ──</span>
+<span class="cmd">git diff</span>                          <span class="cm"># unstaged changes</span>
+<span class="cmd">git diff</span> <span class="arg">file.txt</span>                 <span class="cm"># unstaged changes in specific file</span>
+
+<span class="cm"># ── Staging area vs last commit ──</span>
+<span class="cmd">git diff</span> <span class="flag">--staged</span>                 <span class="cm"># what's staged (about to be committed)</span>
+<span class="cmd">git diff</span> <span class="flag">--cached</span>                 <span class="cm"># same as --staged</span>
+
+<span class="cm"># ── Between commits/branches ──</span>
+<span class="cmd">git diff</span> <span class="sha">abc123</span>                   <span class="cm"># working tree vs commit</span>
+<span class="cmd">git diff</span> <span class="sha">abc123</span> <span class="sha">def456</span>            <span class="cm"># two commits</span>
+<span class="cmd">git diff</span> <span class="br">main</span>..<span class="br">feature</span>            <span class="cm"># between tips of two branches</span>
+<span class="cmd">git diff</span> <span class="br">main</span>...<span class="br">feature</span>           <span class="cm"># feature changes since diverging from main</span>
+<span class="cmd">git diff</span> <span class="arg">HEAD~3</span>                   <span class="cm"># vs 3 commits ago</span>
+<span class="cmd">git diff</span> <span class="br">main</span>..<span class="br">feature</span> <span class="flag">--</span> <span class="arg">src/</span>    <span class="cm"># only in src/ directory</span>
+
+<span class="cm"># ── Format options ──</span>
+<span class="cmd">git diff</span> <span class="flag">--stat</span>                   <span class="cm"># summary view</span>
+<span class="cmd">git diff</span> <span class="flag">--name-only</span>              <span class="cm"># list changed filenames only</span>
+<span class="cmd">git diff</span> <span class="flag">--name-status</span>            <span class="cm"># A/M/D + filename</span>
+<span class="cmd">git diff</span> <span class="flag">--word-diff</span>              <span class="cm"># word-level diff (good for docs)</span>
+<span class="cmd">git diff</span> <span class="flag">-U0</span>                      <span class="cm"># no context lines (just changed lines)</span>
+<span class="cmd">git diff</span> <span class="flag">-U5</span>                      <span class="cm"># 5 lines of context</span>
+<span class="cmd">git diff</span> <span class="flag">--ignore-space-change</span>   <span class="cm"># ignore whitespace differences</span>
+<span class="cmd">git difftool</span>                      <span class="cm"># open diff in configured GUI tool</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 11 — UNDO
+  ══════════════════════ -->
+  <section id="undo" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-red">↩️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 11</div>
+        <div class="section-title">Undo — Reset, Revert, Restore</div>
+        <div class="section-sub">The right tool for every undo scenario</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🎯 Which Undo Command to Use?</h3>
+      <table class="comp-table">
+        <thead><tr><th>Command</th><th>What it does</th><th>Safe for shared?</th><th>When to use</th></tr></thead>
+        <tbody>
+          <tr><td>git restore</td><td>Discard working tree / staged changes</td><td>✅ N/A (local only)</td><td>Discard uncommitted changes</td></tr>
+          <tr><td>git commit --amend</td><td>Replace last commit (rewrite)</td><td>⚠️ Only if not pushed</td><td>Fix last commit message or add file</td></tr>
+          <tr><td>git reset --soft</td><td>Move HEAD, keep staged changes</td><td>⚠️ Only if not pushed</td><td>Uncommit but keep changes staged</td></tr>
+          <tr><td>git reset --mixed</td><td>Move HEAD, unstage changes, keep files</td><td>⚠️ Only if not pushed</td><td>Undo commit + unstage (DEFAULT)</td></tr>
+          <tr><td>git reset --hard</td><td>Move HEAD, DISCARD all changes</td><td>❌ Destroys history</td><td>Nuclear option: throw away commits</td></tr>
+          <tr><td>git revert</td><td>Create NEW commit that undoes changes</td><td>✅ Safe always</td><td>Undo published commits</td></tr>
+          <tr><td>git rebase -i</td><td>Rewrite history interactively</td><td>⚠️ Only if not pushed</td><td>Squash, edit, drop commits</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 All Undo Commands with Examples</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">Reset, Revert, Restore — all variants</span></div>
+        <pre>
+<span class="cm"># ═══ git restore (undo working tree / staged changes) ═══</span>
+<span class="cmd">git restore</span> <span class="arg">file.txt</span>              <span class="cm"># ❌ DISCARD working tree changes (unrecoverable)</span>
+<span class="cmd">git restore</span> <span class="arg">.</span>                     <span class="cm"># discard ALL working tree changes</span>
+<span class="cmd">git restore</span> <span class="flag">--staged</span> <span class="arg">file.txt</span>    <span class="cm"># unstage (move from staging → working tree)</span>
+<span class="cmd">git restore</span> <span class="flag">--staged --worktree</span> <span class="arg">file.txt</span>  <span class="cm"># unstage + discard (full reset of file)</span>
+<span class="cmd">git restore</span> <span class="flag">--source=</span><span class="sha">HEAD~2</span> <span class="arg">file.txt</span>  <span class="cm"># restore file to version from 2 commits ago</span>
+
+<span class="cm"># ═══ git reset ═══</span>
+<span class="cm"># ── --soft: move HEAD, keep everything else ──</span>
+<span class="cmd">git reset</span> <span class="flag">--soft</span> <span class="arg">HEAD~1</span>           <span class="cm"># uncommit last commit → changes still staged</span>
+<span class="cmd">git reset</span> <span class="flag">--soft</span> <span class="sha">abc123</span>           <span class="cm"># move to commit, all changes after = staged</span>
+
+<span class="cm"># ── --mixed: move HEAD + unstage (DEFAULT) ──</span>
+<span class="cmd">git reset</span> <span class="arg">HEAD~1</span>                  <span class="cm"># uncommit + unstage, files untouched</span>
+<span class="cmd">git reset</span> <span class="flag">--mixed</span> <span class="arg">HEAD~3</span>          <span class="cm"># undo last 3 commits, changes in working tree</span>
+
+<span class="cm"># ── --hard: move HEAD + discard everything ──</span>
+<span class="cmd">git reset</span> <span class="flag">--hard</span> <span class="arg">HEAD~1</span>           <span class="cm"># ⚠️ delete last commit AND its changes</span>
+<span class="cmd">git reset</span> <span class="flag">--hard</span> <span class="arg">origin/main</span>     <span class="cm"># ⚠️ reset to remote state (discard all local)</span>
+<span class="cmd">git reset</span> <span class="flag">--hard</span> <span class="sha">abc123</span>           <span class="cm"># ⚠️ go back to specific commit, lose everything after</span>
+
+<span class="cm"># ═══ git revert (SAFE — creates new commit) ═══</span>
+<span class="cmd">git revert</span> <span class="arg">HEAD</span>                   <span class="cm"># undo last commit (creates new "Revert..." commit)</span>
+<span class="cmd">git revert</span> <span class="sha">abc123</span>                <span class="cm"># undo specific commit</span>
+<span class="cmd">git revert</span> <span class="sha">abc123</span>..<span class="sha">def456</span>        <span class="cm"># undo range of commits</span>
+<span class="cmd">git revert</span> <span class="flag">--no-commit</span> <span class="sha">abc123</span>   <span class="cm"># stage the revert without committing yet</span>
+<span class="cmd">git revert</span> <span class="flag">-n</span> <span class="sha">abc123</span>             <span class="cm"># same as --no-commit</span>
+<span class="cmd">git revert</span> <span class="flag">--no-edit</span> <span class="sha">abc123</span>     <span class="cm"># auto-generate message without opening editor</span>
+<span class="cmd">git revert</span> <span class="flag">-m 1</span> <span class="sha">mergeCommit</span>     <span class="cm"># revert a merge commit (1 = first parent / main line)</span>
+
+<span class="cm"># ═══ Recover "lost" commits with reflog ═══</span>
+<span class="cmd">git reflog</span>                        <span class="cm"># shows ALL recent HEAD movements</span>
+<span class="cmd">git reflog</span> <span class="arg">show feature/login</span>    <span class="cm"># reflog for specific branch</span>
+<span class="cm"># Output: abc1234 HEAD@{0}: commit: feat: add login</span>
+<span class="cm">#         def5678 HEAD@{1}: reset: moving to HEAD~1</span>
+<span class="cmd">git reset</span> <span class="flag">--hard</span> <span class="arg">HEAD@{1}</span>         <span class="cm"># go back to before the reset!</span>
+<span class="cmd">git checkout</span> <span class="flag">-b</span> <span class="br">recovered</span> <span class="sha">abc1234</span>  <span class="cm"># recover a dropped commit as new branch</span></pre>
+      </div>
+
+      <div class="diagram">
+        <div class="d-title">git reset — What each mode affects</div>
+<span class="box">              HEAD & Branch      Staging Area     Working Tree</span>
+<span class="box">              (Commit History)   (Index)          (Files)</span>
+<span class="grn">--soft            MOVED            unchanged        unchanged</span>
+<span class="hi">--mixed (default) MOVED            CLEARED          unchanged</span>
+<span class="red">--hard            MOVED            CLEARED          CLEARED ⚠️</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 12 — ADVANCED
+  ══════════════════════ -->
+  <section id="advanced" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-purple">🔬</div>
+      <div class="section-meta">
+        <div class="section-label">Section 12</div>
+        <div class="section-title">Advanced — Cherry-pick, Bisect, Blame, Reflog</div>
+        <div class="section-sub">Power user commands for debugging and history mining</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🍒 git cherry-pick — Copy Specific Commits</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git cherry-pick</span></div>
+        <pre>
+<span class="cm"># Cherry-pick = copy a commit from one branch to another</span>
+<span class="cm"># Creates a NEW commit with same changes but different SHA</span>
+
+<span class="cm"># Use case: hotfix committed to feature branch that should also be on main</span>
+<span class="cmd">git switch</span> <span class="br">main</span>
+<span class="cmd">git cherry-pick</span> <span class="sha">abc1234</span>           <span class="cm"># copy commit abc1234 to current branch</span>
+<span class="cmd">git cherry-pick</span> <span class="sha">abc1234</span> <span class="sha">def5678</span>   <span class="cm"># cherry-pick multiple commits</span>
+<span class="cmd">git cherry-pick</span> <span class="sha">abc123</span>..<span class="sha">def456</span>   <span class="cm"># range (exclusive start)</span>
+<span class="cmd">git cherry-pick</span> <span class="sha">abc123</span>^..<span class="sha">def456</span>  <span class="cm"># range (inclusive start)</span>
+<span class="cmd">git cherry-pick</span> <span class="flag">-n</span> <span class="sha">abc1234</span>        <span class="cm"># apply changes but DON'T commit yet</span>
+<span class="cmd">git cherry-pick</span> <span class="flag">-x</span> <span class="sha">abc1234</span>        <span class="cm"># add "(cherry picked from commit...)" to message</span>
+<span class="cmd">git cherry-pick</span> <span class="flag">--edit</span> <span class="sha">abc1234</span>   <span class="cm"># edit commit message before applying</span>
+<span class="cmd">git cherry-pick</span> <span class="flag">--abort</span>           <span class="cm"># abort on conflict</span>
+<span class="cmd">git cherry-pick</span> <span class="flag">--continue</span>        <span class="cm"># continue after resolving conflict</span>
+<span class="cmd">git cherry-pick</span> <span class="flag">--skip</span>            <span class="cm"># skip current commit</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔎 git bisect — Binary Search for Bugs</h3>
+      <p>Finds the <strong>exact commit that introduced a bug</strong> using binary search.
+         Extremely efficient — finds bug in O(log n) commits.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git bisect — find the bad commit</span></div>
+        <pre>
+<span class="cmd">git bisect start</span>                  <span class="cm"># start bisect session</span>
+<span class="cmd">git bisect bad</span>                    <span class="cm"># current commit is BAD (has the bug)</span>
+<span class="cmd">git bisect good</span> <span class="sha">v1.0.0</span>           <span class="cm"># this tag/commit was GOOD (no bug)</span>
+
+<span class="cm"># Git checks out the midpoint commit automatically</span>
+<span class="cm"># Test if bug exists, then:</span>
+<span class="cmd">git bisect bad</span>                    <span class="cm"># this commit has the bug</span>
+<span class="cmd">git bisect good</span>                   <span class="cm"># this commit is fine</span>
+<span class="cm"># Repeat until Git says: "abc1234 is the first bad commit"</span>
+
+<span class="cmd">git bisect reset</span>                  <span class="cm"># exit bisect, return to original branch</span>
+
+<span class="cm"># ── Automated bisect with a script ──</span>
+<span class="cmd">git bisect start</span>
+<span class="cmd">git bisect bad HEAD</span>
+<span class="cmd">git bisect good</span> <span class="sha">v2.0</span>
+<span class="cmd">git bisect run</span> <span class="arg">mvn test -Dtest=UserServiceTest</span>  <span class="cm"># auto-run: exit 0=good, non-0=bad</span>
+<span class="cm"># Git automatically finds the bad commit!</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>👤 git blame &amp; git log — Annotate Code</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git blame — who wrote this line?</span></div>
+        <pre>
+<span class="cmd">git blame</span> <span class="arg">UserService.java</span>        <span class="cm"># show SHA + author + date for each line</span>
+<span class="cmd">git blame</span> <span class="flag">-L 10,20</span> <span class="arg">UserService.java</span>  <span class="cm"># lines 10-20 only</span>
+<span class="cmd">git blame</span> <span class="flag">-L /getUserById/,+10</span> <span class="arg">UserService.java</span>  <span class="cm"># from regex match, 10 lines</span>
+<span class="cmd">git blame</span> <span class="flag">-w</span> <span class="arg">UserService.java</span>     <span class="cm"># ignore whitespace changes</span>
+<span class="cmd">git blame</span> <span class="flag">-C</span> <span class="arg">UserService.java</span>     <span class="cm"># detect moved/copied lines</span>
+<span class="cmd">git blame</span> <span class="flag">-C -C -C</span> <span class="arg">UserService.java</span>  <span class="cm"># aggressive copy detection (across files)</span>
+<span class="cmd">git blame</span> <span class="sha">abc123</span> <span class="flag">--</span> <span class="arg">UserService.java</span>  <span class="cm"># blame at specific commit</span>
+
+<span class="cm"># ── git shortlog — summarize commits ──</span>
+<span class="cmd">git shortlog</span>                      <span class="cm"># commits grouped by author</span>
+<span class="cmd">git shortlog</span> <span class="flag">-sn</span>                  <span class="cm"># count commits per author, sorted</span>
+<span class="cmd">git shortlog</span> <span class="flag">-sn --no-merges</span>     <span class="cm"># exclude merge commits</span>
+
+<span class="cm"># ── git grep — search content ──</span>
+<span class="cmd">git grep</span> <span class="arg">"getUserById"</span>            <span class="cm"># search in tracked files (faster than grep)</span>
+<span class="cmd">git grep</span> <span class="flag">-n</span> <span class="arg">"TODO"</span>               <span class="cm"># show line numbers</span>
+<span class="cmd">git grep</span> <span class="arg">"pattern"</span> <span class="sha">abc123</span>        <span class="cm"># search in specific commit</span>
+<span class="cmd">git grep</span> <span class="flag">-l</span> <span class="arg">"pattern"</span>            <span class="cm"># list matching files only</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 13 — TAGS
+  ══════════════════════ -->
+  <section id="tags" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-yellow">🏷️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 13</div>
+        <div class="section-title">Tags &amp; Releases</div>
+        <div class="section-sub">Lightweight vs annotated, semantic versioning, pushing tags</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🏷️ Tags — Lightweight vs Annotated</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">git tag — complete reference</span></div>
+        <pre>
+<span class="cm"># ── Lightweight tag: just a pointer to commit ──</span>
+<span class="cmd">git tag</span> <span class="arg">v1.0.0</span>                    <span class="cm"># tag current commit</span>
+<span class="cmd">git tag</span> <span class="arg">v1.0.0</span> <span class="sha">abc1234</span>           <span class="cm"># tag specific commit</span>
+
+<span class="cm"># ── Annotated tag: full object with metadata ── (RECOMMENDED for releases) ──</span>
+<span class="cmd">git tag</span> <span class="flag">-a</span> <span class="arg">v1.0.0</span> <span class="flag">-m</span> <span class="arg">"Release 1.0.0 - Initial stable release"</span>
+<span class="cmd">git tag</span> <span class="flag">-a</span> <span class="arg">v1.2.0</span> <span class="sha">abc1234</span> <span class="flag">-m</span> <span class="arg">"v1.2.0"</span>  <span class="cm"># annotated on specific commit</span>
+<span class="cm"># Annotated tags store: tagger name, email, date, message, GPG signature option</span>
+
+<span class="cm"># ── Signed tag (GPG) ──</span>
+<span class="cmd">git tag</span> <span class="flag">-s</span> <span class="arg">v1.0.0</span> <span class="flag">-m</span> <span class="arg">"Signed release"</span>  <span class="cm"># sign with GPG key</span>
+<span class="cmd">git tag</span> <span class="flag">-v</span> <span class="arg">v1.0.0</span>                  <span class="cm"># verify signed tag</span>
+
+<span class="cm"># ── List tags ──</span>
+<span class="cmd">git tag</span>                            <span class="cm"># list all tags</span>
+<span class="cmd">git tag</span> <span class="flag">-l</span> <span class="arg">"v1.*"</span>                 <span class="cm"># list with pattern</span>
+<span class="cmd">git tag</span> <span class="flag">-n</span>                        <span class="cm"># list with tag messages</span>
+<span class="cmd">git show</span> <span class="arg">v1.0.0</span>                   <span class="cm"># show tag info + tagged commit</span>
+
+<span class="cm"># ── Push tags ──</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="arg">v1.0.0</span>            <span class="cm"># push specific tag</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="flag">--tags</span>            <span class="cm"># push ALL tags</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="flag">--follow-tags</span>     <span class="cm"># push commits + only annotated tags they reference</span>
+
+<span class="cm"># ── Delete tags ──</span>
+<span class="cmd">git tag</span> <span class="flag">-d</span> <span class="arg">v1.0.0</span>                 <span class="cm"># delete local tag</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> <span class="flag">--delete</span> <span class="arg">v1.0.0</span>  <span class="cm"># delete remote tag</span>
+<span class="cmd">git push</span> <span class="arg">origin</span> :refs/tags/<span class="arg">v1.0.0</span>  <span class="cm"># delete remote tag (old syntax)</span>
+
+<span class="cm"># ── Check out a tag ──</span>
+<span class="cmd">git checkout</span> <span class="arg">v1.0.0</span>               <span class="cm"># detached HEAD at tag</span>
+<span class="cmd">git checkout</span> <span class="flag">-b</span> <span class="br">patch-v1</span> <span class="arg">v1.0.0</span>   <span class="cm"># create branch from tag</span>
+
+<span class="cm"># ── Semantic Versioning: MAJOR.MINOR.PATCH ──</span>
+<span class="cm"># MAJOR: breaking changes  (v1.0.0 → v2.0.0)</span>
+<span class="cm"># MINOR: new features, backward compat  (v1.0.0 → v1.1.0)</span>
+<span class="cm"># PATCH: bug fixes  (v1.0.0 → v1.0.1)</span>
+<span class="cm"># Pre-release: v1.0.0-alpha.1  v1.0.0-beta.2  v1.0.0-rc.1</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 14 — GITIGNORE
+  ══════════════════════ -->
+  <section id="gitignore" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-orange">🚫</div>
+      <div class="section-meta">
+        <div class="section-label">Section 14</div>
+        <div class="section-title">.gitignore &amp; .gitattributes</div>
+        <div class="section-sub">Patterns, precedence, tracking ignore, attributes</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📄 .gitignore — Patterns Reference</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">gitignore</span><span class="code-label">Java/Spring Boot project .gitignore</span></div>
+        <pre>
+<span class="cm"># ── Pattern rules ──</span>
+<span class="cm"># #        → comment</span>
+<span class="cm"># *        → matches any sequence (NOT /)</span>
+<span class="cm"># **       → matches any sequence INCLUDING /</span>
+<span class="cm"># ?        → matches any single character</span>
+<span class="cm"># /path    → anchored to repo root (no leading / = match anywhere)</span>
+<span class="cm"># path/    → only match directories</span>
+<span class="cm"># !pattern → negate (re-include)</span>
+
+<span class="cm"># ── Build outputs ──</span>
+<span class="ok">target/</span>
+<span class="ok">build/</span>
+<span class="ok">out/</span>
+<span class="ok">*.class</span>
+<span class="ok">*.jar</span>
+<span class="ok">*.war</span>
+<span class="ok">*.ear</span>
+
+<span class="cm"># ── IDE files ──</span>
+<span class="ok">.idea/</span>
+<span class="ok">*.iml</span>
+<span class="ok">.eclipse/</span>
+<span class="ok">.classpath</span>
+<span class="ok">.project</span>
+<span class="ok">.settings/</span>
+<span class="ok">.vscode/</span>
+<span class="ok">*.code-workspace</span>
+
+<span class="cm"># ── OS files ──</span>
+<span class="ok">.DS_Store</span>
+<span class="ok">Thumbs.db</span>
+<span class="ok">desktop.ini</span>
+
+<span class="cm"># ── Environment / secrets ──</span>
+<span class="ok">.env</span>
+<span class="ok">.env.local</span>
+<span class="ok">.env.production</span>
+<span class="ok">*.key</span>
+<span class="ok">*.pem</span>
+<span class="ok">application-prod.yml</span>
+<span class="ok">application-secrets.yml</span>
+
+<span class="cm"># ── Test outputs ──</span>
+<span class="ok">**/test-results/</span>
+<span class="ok">**/surefire-reports/</span>
+<span class="ok">coverage/</span>
+<span class="ok">*.lcov</span>
+
+<span class="cm"># ── Logs ──</span>
+<span class="ok">*.log</span>
+<span class="ok">logs/</span>
+
+<span class="cm"># ── Negate rule example: track one file in ignored dir ──</span>
+<span class="ok">config/</span>        <span class="cm"># ignore entire config dir</span>
+<span class="ok">!config/example.yml</span>  <span class="cm"># but DO track this one file</span></pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">gitignore management commands</span></div>
+        <pre>
+<span class="cm"># ── Ignore hierarchy (later overrides earlier) ──</span>
+<span class="cm"># 1. ~/.config/git/ignore  (global, your machine)</span>
+<span class="cm"># 2. .git/info/exclude     (local, repo-specific, unshared)</span>
+<span class="cm"># 3. .gitignore files in repo (committed, shared with team)</span>
+
+<span class="cm"># Check why a file is ignored</span>
+<span class="cmd">git check-ignore</span> <span class="flag">-v</span> <span class="arg">target/app.jar</span>  <span class="cm"># shows which rule matched</span>
+
+<span class="cm"># Remove file from tracking (that's already tracked)</span>
+<span class="cmd">git rm</span> <span class="flag">--cached</span> <span class="arg">secret.key</span>        <span class="cm"># remove from tracking but keep file</span>
+<span class="cmd">git rm</span> <span class="flag">--cached -r</span> <span class="arg">target/</span>        <span class="cm"># remove directory from tracking</span>
+<span class="cm"># Then add to .gitignore, then commit</span>
+
+<span class="cm"># Global gitignore (for IDE files etc.)</span>
+<span class="cmd">git config</span> <span class="flag">--global</span> core.excludesFile <span class="arg">~/.gitignore_global</span>
+
+<span class="cm"># List all ignored files</span>
+<span class="cmd">git ls-files</span> <span class="flag">--ignored --exclude-standard</span>
+
+<span class="cm"># Clear gitignore cache (after adding rules for tracked files)</span>
+<span class="cmd">git rm</span> <span class="flag">-r --cached</span> <span class="arg">.</span>             <span class="cm"># remove all from tracking</span>
+<span class="cmd">git add</span> <span class="arg">.</span>                        <span class="cm"># re-add (now .gitignore is respected)</span>
+<span class="cmd">git commit</span> <span class="flag">-m</span> <span class="arg">"fix: apply gitignore rules"</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 15 — HOOKS
+  ══════════════════════ -->
+  <section id="hooks" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-pink">🪝</div>
+      <div class="section-meta">
+        <div class="section-label">Section 15</div>
+        <div class="section-title">Git Hooks</div>
+        <div class="section-sub">Client-side and server-side hooks, Husky</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🪝 Hook Types &amp; Execution Order</h3>
+      <table class="comp-table">
+        <thead><tr><th>Hook</th><th>When it runs</th><th>Common Use</th><th>Exit non-0 aborts?</th></tr></thead>
+        <tbody>
+          <tr><td>pre-commit</td><td>Before commit message entered</td><td>Lint, format, tests</td><td>✅ Yes</td></tr>
+          <tr><td>prepare-commit-msg</td><td>After default message created, before editor</td><td>Add ticket number from branch</td><td>✅ Yes</td></tr>
+          <tr><td>commit-msg</td><td>After message entered</td><td>Validate conventional commits</td><td>✅ Yes</td></tr>
+          <tr><td>post-commit</td><td>After commit completes</td><td>Notifications, logging</td><td>❌ No</td></tr>
+          <tr><td>pre-push</td><td>Before push to remote</td><td>Run full test suite</td><td>✅ Yes</td></tr>
+          <tr><td>pre-rebase</td><td>Before rebase starts</td><td>Prevent rebase of pushed commits</td><td>✅ Yes</td></tr>
+          <tr><td>post-merge</td><td>After successful merge</td><td>Reinstall dependencies</td><td>❌ No</td></tr>
+          <tr><td>post-checkout</td><td>After branch switch</td><td>Update dependencies, env setup</td><td>❌ No</td></tr>
+          <tr><td>pre-receive</td><td>Server: before accepting push</td><td>Enforce policy</td><td>✅ Yes</td></tr>
+          <tr><td>update</td><td>Server: per branch being updated</td><td>Branch protection</td><td>✅ Yes</td></tr>
+          <tr><td>post-receive</td><td>Server: after push accepted</td><td>Trigger CI/CD, notifications</td><td>❌ No</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 Writing Git Hooks</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">.git/hooks/pre-commit — lint and format check</span></div>
+        <pre>
+<span class="cm">#!/bin/bash</span>
+<span class="cm"># .git/hooks/pre-commit</span>
+<span class="cm"># Make executable: chmod +x .git/hooks/pre-commit</span>
+
+<span class="ok">echo "Running pre-commit checks..."</span>
+
+<span class="cm"># Run Maven checkstyle</span>
+<span class="ok">mvn checkstyle:check -q</span>
+<span class="kw">if</span> [ $? <span class="flag">-ne</span> 0 ]; <span class="kw">then</span>
+    <span class="err">echo "❌ Checkstyle failed! Fix before committing."</span>
+    <span class="kw">exit</span> 1  <span class="cm"># non-zero exit = ABORT commit</span>
+<span class="kw">fi</span>
+
+<span class="cm"># Check for debug statements</span>
+<span class="kw">if</span> <span class="cmd">git diff</span> <span class="flag">--cached --name-only</span> | <span class="cmd">xargs grep</span> <span class="flag">-l</span> <span class="arg">"System.out.println"</span> 2>/dev/null; <span class="kw">then</span>
+    <span class="err">echo "❌ Found System.out.println! Remove debug statements."</span>
+    <span class="kw">exit</span> 1
+<span class="kw">fi</span>
+
+<span class="ok">echo "✅ Pre-commit checks passed!"</span>
+<span class="kw">exit</span> 0  <span class="cm"># 0 = success, allow commit</span></pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Shell</span><span class="code-label">.git/hooks/commit-msg — enforce conventional commits</span></div>
+        <pre>
+<span class="cm">#!/bin/bash</span>
+<span class="cm"># .git/hooks/commit-msg</span>
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+<span class="cm"># Conventional commits regex</span>
+PATTERN="^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?(!)?: .{1,100}"
+
+<span class="kw">if</span> ! echo "$COMMIT_MSG" | <span class="cmd">grep</span> <span class="flag">-qE</span> "$PATTERN"; <span class="kw">then</span>
+    <span class="err">echo "❌ Invalid commit message format!"</span>
+    <span class="err">echo "   Required: type(scope): description"</span>
+    <span class="err">echo "   Example:  feat(auth): add login with OAuth2"</span>
+    <span class="kw">exit</span> 1
+<span class="kw">fi</span>
+
+<span class="kw">exit</span> 0</pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">JSON</span><span class="code-label">package.json — Husky (cross-platform Git hooks)</span></div>
+        <pre>
+<span class="cm">// npm install --save-dev husky lint-staged</span>
+<span class="cm">// npx husky install  (sets up .husky/ directory)</span>
+{
+  <span class="str">"scripts"</span>: {
+    <span class="str">"prepare"</span>: <span class="str">"husky install"</span>
+  },
+  <span class="str">"lint-staged"</span>: {
+    <span class="str">"*.java"</span>: [<span class="str">"checkstyle"</span>, <span class="str">"git add"</span>],
+    <span class="str">"*.{js,ts}"</span>: [<span class="str">"eslint --fix"</span>, <span class="str">"prettier --write"</span>]
+  }
+}
+
+<span class="cm">// .husky/pre-commit:</span>
+<span class="cm">// #!/usr/bin/env sh</span>
+<span class="cm">// . "$(dirname -- "$0")/_/husky.sh"</span>
+<span class="cm">// npx lint-staged</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 16 — STRATEGIES
+  ══════════════════════ -->
+  <section id="strategies" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-green">📋</div>
+      <div class="section-meta">
+        <div class="section-label">Section 16</div>
+        <div class="section-title">Branching Strategies</div>
+        <div class="section-sub">GitFlow, GitHub Flow, GitLab Flow, Trunk-Based Development</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🌊 GitFlow — Classic Enterprise Strategy</h3>
+<div class="diagram">
+  <div class="d-title">GitFlow — Branch Model</div>
+  <span class="brn">main          ●───────────────────────────────●────────── (production)</span>
+  <span class="brn">                 ╲                          ╱ merge+tag v1.1</span>
+  <span class="grn">develop       ●──●──●──●──●──●──●──●──●──●──● (integration branch)</span>
+  <span class="brn">                 ╲      ╲             ╱     ╱</span>
+  <span class="hi">feature/A     ●──●──●──● (merged to develop)</span>
+  <span class="hi">feature/B          ●──●──● (merged to develop)</span>
+  <span class="brn">                               ╲</span>
+  <span class="blu">release/1.1                 ●──●──● (bug fixes only → merge to main + develop)</span>
+  <span class="brn">                               ╲</span>
+  <span class="red">hotfix/urgent                 ●──● (critical fix → merge to main + develop)</span>
+</div>
+
+
+      <div class="content-card">
+        <h3>📁 GitFlow Branches</h3>
+        <table class="comp-table">
+          <thead><tr><th>Branch</th><th>Purpose</th><th>Merged Into</th><th>Naming</th></tr></thead>
+          <tbody>
+            <tr><td>main / master</td><td>Production-ready code, always stable</td><td>Never directly (only via release/hotfix)</td><td>main</td></tr>
+            <tr><td>develop</td><td>Integration branch, latest development</td><td>main (via release)</td><td>develop</td></tr>
+            <tr><td>feature/*</td><td>New features in progress</td><td>develop only</td><td>feature/user-auth</td></tr>
+            <tr><td>release/*</td><td>Release preparation (bug fixes, version bump)</td><td>main + develop</td><td>release/1.2.0</td></tr>
+            <tr><td>hotfix/*</td><td>Urgent production fixes</td><td>main + develop</td><td>hotfix/null-pointer-42</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🐙 GitHub Flow — Simple, CI/CD Friendly</h3>
+      <div class="diagram">
+        <div class="d-title">GitHub Flow — Simple 2-branch model</div>
+<span class="brn">main   ●────●──────────────────────●──── (always deployable)</span>
+<span class="brn">        ╲   ╲                    ╱</span>
+<span class="hi">feature  ●──●──● (PR → review → merge → deploy)</span>
+<span class="grn">          ↑ short-lived, one feature, merged quickly</span>
+      </div>
+
+      <div class="workflow">
+        <div class="wf-step">
+          <span class="wf-num">1</span>
+          <div class="wf-content">
+            <div class="wf-title">Create a branch from main</div>
+            <div class="wf-desc"><code>git switch -c feature/add-oauth</code></div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">2</span>
+          <div class="wf-content">
+            <div class="wf-title">Commit changes, push, open Pull Request</div>
+            <div class="wf-desc">PR describes what and why. CI runs automatically.</div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">3</span>
+          <div class="wf-content">
+            <div class="wf-title">Code review + discussion on PR</div>
+            <div class="wf-desc">Team reviews, requests changes, approves.</div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">4</span>
+          <div class="wf-content">
+            <div class="wf-title">Deploy for final testing (optional)</div>
+            <div class="wf-desc">Deploy feature branch to staging for verification.</div>
+          </div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">5</span>
+          <div class="wf-content">
+            <div class="wf-title">Merge to main → auto-deploy to production</div>
+            <div class="wf-desc">Squash merge or rebase merge into main. Delete feature branch.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📊 Strategy Comparison</h3>
+      <table class="comp-table">
+        <thead><tr><th>Strategy</th><th>Complexity</th><th>Release Cadence</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td>Trunk-Based</td><td>Simple</td><td>Multiple per day</td><td>High CI/CD maturity, microservices, Google/Facebook style</td></tr>
+          <tr><td>GitHub Flow</td><td>Simple</td><td>Continuous</td><td>SaaS, startups, continuous deployment teams</td></tr>
+          <tr><td>GitLab Flow</td><td>Medium</td><td>Flexible</td><td>Environment-based deployments (staging → prod)</td></tr>
+          <tr><td>GitFlow</td><td>Complex</td><td>Scheduled</td><td>Versioned software, mobile apps, enterprise</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 17 — CI/CD CONCEPTS
+  ══════════════════════ -->
+  <section id="cicd" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-blue">🔄</div>
+      <div class="section-meta">
+        <div class="section-label">Section 17</div>
+        <div class="section-title">CI/CD — Concepts &amp; Pipeline Design</div>
+        <div class="section-sub">Continuous Integration, Delivery, Deployment — what, why, how</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 CI/CD Definitions</h3>
+      <ul class="key-list">
+        <li>
+          <strong>Continuous Integration (CI):</strong> Automatically build + test every code change merged to shared branch. Goal: catch bugs early, validate code quality constantly.
+        </li>
+        <li class="green">
+          <strong>Continuous Delivery (CD):</strong> CI + automatically prepare artifact for deployment to any environment. <em>Deployment to production requires manual approval button.</em>
+        </li>
+        <li class="purple">
+          <strong>Continuous Deployment (CD):</strong> CI + automatically deploy to production on every passing build. <em>No human gate — requires very mature testing.</em>
+        </li>
+        <li class="yellow">
+          <strong>CI Pipeline:</strong> Automated sequence: Source → Build → Unit Test → Integration Test → Static Analysis → Package → Artifact Store
+        </li>
+        <li class="red">
+          <strong>CD Pipeline:</strong> Artifact → Deploy to Dev → Integration Tests → Deploy to Staging → UAT → Deploy to Production
+        </li>
+      </ul>
+    </div>
+
+    <div class="content-card">
+      <h3>🏗️ Typical Java CI/CD Pipeline Stages</h3>
+      <div class="diagram">
+        <div class="d-title">Java/Spring Boot CI/CD Pipeline</div>
+<span class="grn">Code Push → GitHub/GitLab Webhook</span>
+<span class="arr">    ↓</span>
+<span class="hi">── STAGE 1: Source ──────────────────────────</span>
+<span class="brn">   git clone  │  dependency cache restore</span>
+<span class="arr">    ↓</span>
+<span class="hi">── STAGE 2: Build ───────────────────────────</span>
+<span class="brn">   mvn compile  │  mvn package -DskipTests</span>
+<span class="arr">    ↓</span>
+<span class="hi">── STAGE 3: Test ────────────────────────────</span>
+<span class="brn">   mvn test (unit)  │  JaCoCo coverage  │  fail if coverage &lt; 80%</span>
+<span class="arr">    ↓</span>
+<span class="hi">── STAGE 4: Quality Gate ────────────────────</span>
+<span class="brn">   SonarQube analysis  │  OWASP dependency check  │  Checkstyle</span>
+<span class="arr">    ↓</span>
+<span class="hi">── STAGE 5: Package / Containerize ──────────</span>
+<span class="brn">   docker build  │  docker push → ECR/DockerHub  │  helm package</span>
+<span class="arr">    ↓</span>
+<span class="hi">── STAGE 6: Deploy to Dev ───────────────────</span>
+<span class="brn">   kubectl apply  │  integration tests  │  smoke tests</span>
+<span class="arr">    ↓</span>
+<span class="hi">── STAGE 7: Deploy to Staging ───────────────</span>
+<span class="brn">   performance tests  │  UAT  │  end-to-end tests</span>
+<span class="arr">    ↓</span>
+<span class="grn">── STAGE 8: Deploy to Production ────────────</span>
+<span class="brn">   blue/green deploy  │  canary release  │  health checks</span>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🚀 Deployment Strategies</h3>
+      <table class="comp-table">
+        <thead><tr><th>Strategy</th><th>How</th><th>Downtime</th><th>Rollback</th><th>Use When</th></tr></thead>
+        <tbody>
+          <tr><td>Recreate</td><td>Stop old, start new</td><td>Yes</td><td>Hard</td><td>Dev environments only</td></tr>
+          <tr><td>Rolling</td><td>Replace instances one by one</td><td>No</td><td>Slow</td><td>Default K8s strategy</td></tr>
+          <tr><td>Blue/Green</td><td>Two identical envs, switch traffic</td><td>No</td><td>Instant (flip LB)</td><td>Critical production systems</td></tr>
+          <tr><td>Canary</td><td>Route small % of traffic to new version</td><td>No</td><td>Easy (reduce %)</td><td>Risk mitigation, A/B testing</td></tr>
+          <tr><td>Feature Flags</td><td>Deploy code, toggle features in config</td><td>No</td><td>Instant (flip flag)</td><td>Decouple deployment from release</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 18 — GITHUB ACTIONS
+  ══════════════════════ -->
+  <section id="actions" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-purple">🤖</div>
+      <div class="section-meta">
+        <div class="section-label">Section 18</div>
+        <div class="section-title">GitHub Actions</div>
+        <div class="section-sub">Workflows, jobs, steps, actions, secrets, environments</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 GitHub Actions Core Concepts</h3>
+      <ul class="key-list">
+        <li><strong>Workflow:</strong> Automated process defined in YAML (.github/workflows/). Triggered by events.</li>
+        <li class="green"><strong>Event:</strong> Trigger — push, pull_request, schedule (cron), workflow_dispatch (manual), release</li>
+        <li class="purple"><strong>Job:</strong> Set of steps running on the same runner. Multiple jobs run in parallel by default.</li>
+        <li class="yellow"><strong>Step:</strong> Individual task — shell command or an Action</li>
+        <li class="red"><strong>Action:</strong> Reusable unit (from GitHub Marketplace or your own). e.g. actions/checkout</li>
+        <li class="blue"><strong>Runner:</strong> Virtual machine that executes jobs. GitHub-hosted: ubuntu-latest, windows-latest, macos-latest</li>
+      </ul>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 Complete Spring Boot CI Workflow</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">YAML</span><span class="code-label">.github/workflows/ci.yml — Spring Boot CI pipeline</span></div>
+        <pre>
+<span class="yaml-key">name</span>: <span class="yaml-val">Spring Boot CI/CD Pipeline</span>
+
+<span class="yaml-cm"># ── Triggers ──</span>
+<span class="yaml-key">on</span>:
+  <span class="yaml-key">push</span>:
+    <span class="yaml-key">branches</span>: [ <span class="yaml-val">main, develop</span> ]
+  <span class="yaml-key">pull_request</span>:
+    <span class="yaml-key">branches</span>: [ <span class="yaml-val">main, develop</span> ]
+  <span class="yaml-key">schedule</span>:
+    - <span class="yaml-key">cron</span>: <span class="yaml-val">"0 6 * * 1"</span>  <span class="yaml-cm"># Monday 6am UTC — weekly security scan</span>
+  <span class="yaml-key">workflow_dispatch</span>:    <span class="yaml-cm"># allow manual trigger from GitHub UI</span>
+    <span class="yaml-key">inputs</span>:
+      <span class="yaml-key">environment</span>:
+        <span class="yaml-key">description</span>: <span class="yaml-val">'Target environment'</span>
+        <span class="yaml-key">required</span>: <span class="yaml-kw">true</span>
+        <span class="yaml-key">default</span>: <span class="yaml-val">'staging'</span>
+
+<span class="yaml-key">env</span>:                    <span class="yaml-cm"># workflow-level env vars</span>
+  <span class="yaml-key">JAVA_VERSION</span>: <span class="yaml-val">'21'</span>
+  <span class="yaml-key">MAVEN_OPTS</span>: <span class="yaml-val">"-Xmx3200m"</span>
+
+<span class="yaml-key">jobs</span>:
+
+  <span class="yaml-cm"># ── JOB 1: Build & Test ──</span>
+  <span class="yaml-key">build-test</span>:
+    <span class="yaml-key">name</span>: <span class="yaml-val">Build, Test &amp; Quality</span>
+    <span class="yaml-key">runs-on</span>: <span class="yaml-val">ubuntu-latest</span>
+
+    <span class="yaml-key">strategy</span>:
+      <span class="yaml-key">matrix</span>:             <span class="yaml-cm"># run against multiple Java versions</span>
+        <span class="yaml-key">java</span>: [ <span class="yaml-val">17, 21</span> ]
+      <span class="yaml-key">fail-fast</span>: <span class="yaml-kw">false</span>    <span class="yaml-cm"># don't cancel other matrix jobs on failure</span>
+
+    <span class="yaml-key">services</span>:            <span class="yaml-cm"># spin up dependent services</span>
+      <span class="yaml-key">postgres</span>:
+        <span class="yaml-key">image</span>: <span class="yaml-val">postgres:15</span>
+        <span class="yaml-key">env</span>:
+          <span class="yaml-key">POSTGRES_DB</span>: <span class="yaml-val">testdb</span>
+          <span class="yaml-key">POSTGRES_USER</span>: <span class="yaml-val">test</span>
+          <span class="yaml-key">POSTGRES_PASSWORD</span>: <span class="yaml-val">test</span>
+        <span class="yaml-key">ports</span>: [ <span class="yaml-val">"5432:5432"</span> ]
+        <span class="yaml-key">options</span>: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    <span class="yaml-key">steps</span>:
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Checkout code</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">actions/checkout@v4</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">fetch-depth</span>: <span class="yaml-val">0</span>   <span class="yaml-cm"># full history for SonarQube</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Set up JDK ${{ matrix.java }}</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">actions/setup-java@v4</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">java-version</span>: <span class="yaml-val">${{ matrix.java }}</span>
+          <span class="yaml-key">distribution</span>: <span class="yaml-val">temurin</span>
+          <span class="yaml-key">cache</span>: <span class="yaml-val">maven</span>       <span class="yaml-cm"># cache ~/.m2 between runs</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Cache Maven dependencies</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">actions/cache@v4</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">path</span>: <span class="yaml-val">~/.m2</span>
+          <span class="yaml-key">key</span>: <span class="yaml-val">${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}</span>
+          <span class="yaml-key">restore-keys</span>: <span class="yaml-val">${{ runner.os }}-maven-</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Build with Maven</span>
+        <span class="yaml-key">run</span>: <span class="yaml-val">mvn clean package -DskipTests --batch-mode</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Run unit tests</span>
+        <span class="yaml-key">run</span>: <span class="yaml-val">mvn test --batch-mode</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Run integration tests</span>
+        <span class="yaml-key">run</span>: <span class="yaml-val">mvn verify -Pintegration-tests --batch-mode</span>
+        <span class="yaml-key">env</span>:
+          <span class="yaml-key">SPRING_DATASOURCE_URL</span>: <span class="yaml-val">jdbc:postgresql://localhost:5432/testdb</span>
+          <span class="yaml-key">SPRING_DATASOURCE_USERNAME</span>: <span class="yaml-val">test</span>
+          <span class="yaml-key">SPRING_DATASOURCE_PASSWORD</span>: <span class="yaml-val">test</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">SonarQube Analysis</span>
+        <span class="yaml-key">env</span>:
+          <span class="yaml-key">SONAR_TOKEN</span>: <span class="yaml-val">${{ secrets.SONAR_TOKEN }}</span>    <span class="yaml-cm"># stored in repo secrets</span>
+        <span class="yaml-key">run</span>: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=my-project \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=$SONAR_TOKEN
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Upload test results</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">actions/upload-artifact@v4</span>
+        <span class="yaml-key">if</span>: <span class="yaml-val">always()</span>    <span class="yaml-cm"># upload even if tests fail</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">name</span>: <span class="yaml-val">test-results-java-${{ matrix.java }}</span>
+          <span class="yaml-key">path</span>: <span class="yaml-val">target/surefire-reports/</span>
+          <span class="yaml-key">retention-days</span>: <span class="yaml-val">7</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Generate JaCoCo Coverage Report</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">jacoco-badge-generator/jacoco-badge-generator@v2</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">jacoco-csv-file</span>: <span class="yaml-val">target/site/jacoco/jacoco.csv</span>
+          <span class="yaml-key">minimum-coverage</span>: <span class="yaml-val">80</span>   <span class="yaml-cm"># fail if under 80%</span>
+
+  <span class="yaml-cm"># ── JOB 2: Docker Build & Push (runs only on main, after build-test) ──</span>
+  <span class="yaml-key">docker-publish</span>:
+    <span class="yaml-key">name</span>: <span class="yaml-val">Build &amp; Push Docker Image</span>
+    <span class="yaml-key">runs-on</span>: <span class="yaml-val">ubuntu-latest</span>
+    <span class="yaml-key">needs</span>: <span class="yaml-val">build-test</span>       <span class="yaml-cm"># wait for build-test to succeed</span>
+    <span class="yaml-key">if</span>: <span class="yaml-val">github.ref == 'refs/heads/main' &amp;&amp; github.event_name == 'push'</span>
+
+    <span class="yaml-key">steps</span>:
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Checkout</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">actions/checkout@v4</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Set up Docker Buildx</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">docker/setup-buildx-action@v3</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Login to DockerHub</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">docker/login-action@v3</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">username</span>: <span class="yaml-val">${{ secrets.DOCKERHUB_USERNAME }}</span>
+          <span class="yaml-key">password</span>: <span class="yaml-val">${{ secrets.DOCKERHUB_TOKEN }}</span>
+
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Build and push</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">docker/build-push-action@v5</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">context</span>: <span class="yaml-val">.</span>
+          <span class="yaml-key">push</span>: <span class="yaml-kw">true</span>
+          <span class="yaml-key">tags</span>: |
+            myapp/spring-app:latest
+            myapp/spring-app:${{ github.sha }}
+          <span class="yaml-key">cache-from</span>: <span class="yaml-val">type=gha</span>    <span class="yaml-cm"># GitHub Actions cache</span>
+          <span class="yaml-key">cache-to</span>: <span class="yaml-val">type=gha,mode=max</span>
+
+  <span class="yaml-cm"># ── JOB 3: Deploy to staging (manual approval required) ──</span>
+  <span class="yaml-key">deploy-staging</span>:
+    <span class="yaml-key">name</span>: <span class="yaml-val">Deploy to Staging</span>
+    <span class="yaml-key">runs-on</span>: <span class="yaml-val">ubuntu-latest</span>
+    <span class="yaml-key">needs</span>: <span class="yaml-val">docker-publish</span>
+    <span class="yaml-key">environment</span>:            <span class="yaml-cm"># GitHub Environment with protection rules</span>
+      <span class="yaml-key">name</span>: <span class="yaml-val">staging</span>
+      <span class="yaml-key">url</span>: <span class="yaml-val">https://staging.myapp.com</span>
+
+    <span class="yaml-key">steps</span>:
+      - <span class="yaml-key">name</span>: <span class="yaml-val">Deploy via SSH</span>
+        <span class="yaml-key">uses</span>: <span class="yaml-val">appleboy/ssh-action@v1</span>
+        <span class="yaml-key">with</span>:
+          <span class="yaml-key">host</span>: <span class="yaml-val">${{ secrets.STAGING_HOST }}</span>
+          <span class="yaml-key">username</span>: <span class="yaml-val">${{ secrets.STAGING_USER }}</span>
+          <span class="yaml-key">key</span>: <span class="yaml-val">${{ secrets.STAGING_SSH_KEY }}</span>
+          <span class="yaml-key">script</span>: |
+            docker pull myapp/spring-app:${{ github.sha }}
+            docker stop spring-app || true
+            docker rm spring-app || true
+            docker run -d --name spring-app -p 8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=staging \
+              myapp/spring-app:${{ github.sha }}</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔑 Useful GitHub Actions Features</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">YAML</span><span class="code-label">Useful GitHub Actions patterns</span></div>
+        <pre>
+<span class="yaml-cm"># ── Conditional execution ──</span>
+<span class="yaml-key">if</span>: <span class="yaml-val">github.event_name == 'push'</span>
+<span class="yaml-key">if</span>: <span class="yaml-val">github.ref == 'refs/heads/main'</span>
+<span class="yaml-key">if</span>: <span class="yaml-val">contains(github.event.head_commit.message, '[skip ci]')</span>
+<span class="yaml-key">if</span>: <span class="yaml-val">failure()</span>     <span class="yaml-cm"># run only if previous step failed</span>
+<span class="yaml-key">if</span>: <span class="yaml-val">always()</span>      <span class="yaml-cm"># run regardless of previous step result</span>
+<span class="yaml-key">if</span>: <span class="yaml-val">success()</span>     <span class="yaml-cm"># run only if previous steps succeeded (default)</span>
+<span class="yaml-key">if</span>: <span class="yaml-val">cancelled()</span>   <span class="yaml-cm"># run only if workflow was cancelled</span>
+
+<span class="yaml-cm"># ── Pass data between steps (outputs) ──</span>
+- <span class="yaml-key">name</span>: <span class="yaml-val">Get version</span>
+  <span class="yaml-key">id</span>: <span class="yaml-val">version</span>
+  <span class="yaml-key">run</span>: <span class="yaml-val">echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT</span>
+
+- <span class="yaml-key">name</span>: <span class="yaml-val">Use version</span>
+  <span class="yaml-key">run</span>: <span class="yaml-val">echo "Deploying version ${{ steps.version.outputs.version }}"</span>
+
+<span class="yaml-cm"># ── Secrets ──</span>
+<span class="yaml-key">env</span>:
+  <span class="yaml-key">DB_PASSWORD</span>: <span class="yaml-val">${{ secrets.DB_PASSWORD }}</span>      <span class="yaml-cm"># repository secret</span>
+  <span class="yaml-key">API_KEY</span>: <span class="yaml-val">${{ secrets.API_KEY }}</span>
+  <span class="yaml-key">GITHUB_TOKEN</span>: <span class="yaml-val">${{ secrets.GITHUB_TOKEN }}</span>    <span class="yaml-cm"># auto-provided by GitHub</span>
+
+<span class="yaml-cm"># ── Job outputs (pass between jobs) ──</span>
+<span class="yaml-key">jobs</span>:
+  <span class="yaml-key">job1</span>:
+    <span class="yaml-key">outputs</span>:
+      <span class="yaml-key">image-tag</span>: <span class="yaml-val">${{ steps.meta.outputs.tags }}</span>
+  <span class="yaml-key">job2</span>:
+    <span class="yaml-key">needs</span>: <span class="yaml-val">job1</span>
+    <span class="yaml-key">steps</span>:
+      - <span class="yaml-key">run</span>: <span class="yaml-val">echo "${{ needs.job1.outputs.image-tag }}"</span>
+
+<span class="yaml-cm"># ── Reusable workflows ──</span>
+<span class="yaml-cm"># In caller workflow:</span>
+<span class="yaml-key">jobs</span>:
+  <span class="yaml-key">call-reusable</span>:
+    <span class="yaml-key">uses</span>: <span class="yaml-val">./.github/workflows/reusable-test.yml</span>
+    <span class="yaml-key">with</span>:
+      <span class="yaml-key">java-version</span>: <span class="yaml-val">'21'</span>
+    <span class="yaml-key">secrets</span>: <span class="yaml-kw">inherit</span>   <span class="yaml-cm"># pass all secrets to reusable workflow</span>
+
+<span class="yaml-cm"># ── Concurrency control (cancel outdated runs) ──</span>
+<span class="yaml-key">concurrency</span>:
+  <span class="yaml-key">group</span>: <span class="yaml-val">${{ github.workflow }}-${{ github.ref }}</span>
+  <span class="yaml-key">cancel-in-progress</span>: <span class="yaml-kw">true</span>   <span class="yaml-cm"># cancel old run when new one starts for same branch</span>
+
+<span class="yaml-cm"># ── Timeout ──</span>
+<span class="yaml-key">jobs</span>:
+  <span class="yaml-key">build</span>:
+    <span class="yaml-key">timeout-minutes</span>: <span class="yaml-val">30</span>   <span class="yaml-cm"># fail job if it takes longer than 30 min</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 19 — JENKINS
+  ══════════════════════ -->
+  <section id="jenkins" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-orange">🏗️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 19</div>
+        <div class="section-title">Jenkins Pipeline</div>
+        <div class="section-sub">Declarative pipeline, stages, post actions, shared libraries</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 Complete Declarative Jenkinsfile</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Groovy</span><span class="code-label">Jenkinsfile — Spring Boot declarative pipeline</span></div>
+        <pre>
+<span class="kw">pipeline</span> {
+    <span class="cm">// Run on any available agent (or specify label: agent { label 'linux' })</span>
+    <span class="kw">agent</span> any
+
+    <span class="cm">// Tool versions configured in Jenkins Global Tool Configuration</span>
+    <span class="kw">tools</span> {
+        jdk <span class="str">'JDK-21'</span>
+        maven <span class="str">'Maven-3.9'</span>
+    }
+
+    <span class="kw">options</span> {
+        buildDiscarder(logRotator(numToKeepStr: <span class="str">'10'</span>))  <span class="cm">// keep last 10 builds</span>
+        timeout(time: <span class="num">30</span>, unit: <span class="str">'MINUTES'</span>)              <span class="cm">// timeout</span>
+        skipStagesAfterUnstable()
+        disableConcurrentBuilds()                          <span class="cm">// no parallel same-branch builds</span>
+        timestamps()                                       <span class="cm">// add timestamps to console</span>
+    }
+
+    <span class="kw">parameters</span> {
+        choice(name: <span class="str">'ENVIRONMENT'</span>, choices: [<span class="str">'dev'</span>, <span class="str">'staging'</span>, <span class="str">'prod'</span>],
+            description: <span class="str">'Target environment'</span>)
+        booleanParam(name: <span class="str">'RUN_INTEGRATION_TESTS'</span>, defaultValue: <span class="kw">true</span>)
+        string(name: <span class="str">'DOCKER_TAG'</span>, defaultValue: <span class="str">'latest'</span>)
+    }
+
+    <span class="kw">environment</span> {
+        <span class="cm">// credentials() fetches from Jenkins credentials store</span>
+        DOCKER_CREDENTIALS = credentials(<span class="str">'dockerhub-credentials'</span>)
+        SONAR_TOKEN        = credentials(<span class="str">'sonar-token'</span>)
+        APP_VERSION        = <span class="str">""</span>
+        IMAGE_NAME         = <span class="str">"mycompany/spring-app"</span>
+    }
+
+    <span class="kw">stages</span> {
+
+        <span class="kw">stage</span>(<span class="str">'Checkout'</span>) {
+            <span class="kw">steps</span> {
+                <span class="kw">git</span> branch: <span class="str">'main'</span>, url: <span class="str">'https://github.com/org/repo.git'</span>
+                script {
+                    APP_VERSION = sh(script: <span class="str">'mvn help:evaluate -Dexpression=project.version -q -DforceStdout'</span>, returnStdout: <span class="kw">true</span>).trim()
+                    echo <span class="str">"Building version: ${APP_VERSION}"</span>
+                }
+            }
+        }
+
+        <span class="kw">stage</span>(<span class="str">'Build'</span>) {
+            <span class="kw">steps</span> {
+                sh <span class="str">'mvn clean package -DskipTests --batch-mode'</span>
+            }
+            <span class="kw">post</span> {
+                success {
+                    archiveArtifacts artifacts: <span class="str">'target/*.jar'</span>, fingerprint: <span class="kw">true</span>
+                }
+            }
+        }
+
+        <span class="kw">stage</span>(<span class="str">'Test'</span>) {
+            <span class="kw">parallel</span> {   <span class="cm">// run unit and integration tests in parallel</span>
+                <span class="kw">stage</span>(<span class="str">'Unit Tests'</span>) {
+                    <span class="kw">steps</span> {
+                        sh <span class="str">'mvn test --batch-mode'</span>
+                    }
+                    <span class="kw">post</span> {
+                        always {
+                            junit <span class="str">'target/surefire-reports/*.xml'</span>
+                            jacoco(execPattern: <span class="str">'target/jacoco.exec'</span>,
+                                   classPattern: <span class="str">'target/classes'</span>,
+                                   minimumInstructionCoverage: <span class="str">'80'</span>)
+                        }
+                    }
+                }
+                <span class="kw">stage</span>(<span class="str">'Integration Tests'</span>) {
+                    <span class="kw">when</span> { expression { params.RUN_INTEGRATION_TESTS } }
+                    <span class="kw">steps</span> {
+                        sh <span class="str">'mvn verify -Pintegration-tests --batch-mode'</span>
+                    }
+                    <span class="kw">post</span> {
+                        always {
+                            junit <span class="str">'target/failsafe-reports/*.xml'</span>
+                        }
+                    }
+                }
+            }
+        }
+
+        <span class="kw">stage</span>(<span class="str">'Code Quality'</span>) {
+            <span class="kw">steps</span> {
+                withSonarQubeEnv(<span class="str">'SonarQube'</span>) {
+                    sh <span class="str">"""
+                        mvn sonar:sonar \
+                          -Dsonar.projectKey=my-project \
+                          -Dsonar.token=${SONAR_TOKEN}
+                    """</span>
+                }
+                timeout(time: <span class="num">2</span>, unit: <span class="str">'MINUTES'</span>) {
+                    waitForQualityGate abortPipeline: <span class="kw">true</span>  <span class="cm">// fail if quality gate fails</span>
+                }
+            }
+        }
+
+        <span class="kw">stage</span>(<span class="str">'Docker Build & Push'</span>) {
+            <span class="kw">when</span> { branch <span class="str">'main'</span> }  <span class="cm">// only on main branch</span>
+            <span class="kw">steps</span> {
+                script {
+                    <span class="kw">def</span> dockerImage = docker.build(<span class="str">"${IMAGE_NAME}:${APP_VERSION}"</span>)
+                    docker.withRegistry(<span class="str">'https://registry.hub.docker.com'</span>, <span class="str">'dockerhub-credentials'</span>) {
+                        dockerImage.push(APP_VERSION)
+                        dockerImage.push(<span class="str">'latest'</span>)
+                    }
+                }
+            }
+        }
+
+        <span class="kw">stage</span>(<span class="str">'Deploy'</span>) {
+            <span class="kw">when</span> { branch <span class="str">'main'</span> }
+            <span class="kw">steps</span> {
+                input message: <span class="str">"Deploy version ${APP_VERSION} to ${params.ENVIRONMENT}?"</span>,
+                      ok: <span class="str">'Deploy'</span>  <span class="cm">// manual approval gate</span>
+                script {
+                    sh <span class="str">"""
+                        kubectl set image deployment/spring-app \
+                          spring-app=${IMAGE_NAME}:${APP_VERSION} \
+                          --namespace=${params.ENVIRONMENT}
+                        kubectl rollout status deployment/spring-app \
+                          --namespace=${params.ENVIRONMENT}
+                    """</span>
+                }
+            }
+        }
+    }
+
+    <span class="kw">post</span> {   <span class="cm">// runs after all stages</span>
+        always {
+            cleanWs()   <span class="cm">// clean workspace</span>
+        }
+        success {
+            slackSend channel: <span class="str">'#deployments'</span>,
+                      color: <span class="str">'good'</span>,
+                      message: <span class="str">"✅ ${JOB_NAME} #${BUILD_NUMBER} - SUCCESS. Version: ${APP_VERSION}"</span>
+        }
+        failure {
+            slackSend channel: <span class="str">'#deployments'</span>,
+                      color: <span class="str">'danger'</span>,
+                      message: <span class="str">"❌ ${JOB_NAME} #${BUILD_NUMBER} - FAILED. Check: ${BUILD_URL}"</span>
+            emailext subject: <span class="str">"Build Failed: ${JOB_NAME}"</span>,
+                     body: <span class="str">"Build ${BUILD_NUMBER} failed. See ${BUILD_URL}"</span>,
+                     to: <span class="str">'team@company.com'</span>
+        }
+        unstable {
+            slackSend channel: <span class="str">'#deployments'</span>, color: <span class="str">'warning'</span>,
+                      message: <span class="str">"⚠️ ${JOB_NAME} #${BUILD_NUMBER} - UNSTABLE (test failures)"</span>
+        }
+    }
+}</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📊 GitHub Actions vs Jenkins</h3>
+      <table class="comp-table">
+        <thead><tr><th>Feature</th><th>GitHub Actions</th><th>Jenkins</th></tr></thead>
+        <tbody>
+          <tr><td>Hosting</td><td>Managed by GitHub (cloud)</td><td>Self-hosted (on-prem or cloud)</td></tr>
+          <tr><td>Setup</td><td>Zero setup, YAML in repo</td><td>Install Jenkins, configure plugins</td></tr>
+          <tr><td>Configuration</td><td>YAML in .github/workflows/</td><td>Jenkinsfile (Groovy DSL) in repo</td></tr>
+          <tr><td>Runners</td><td>GitHub-hosted (Ubuntu/Win/Mac) or self-hosted</td><td>Agents (nodes) — full control</td></tr>
+          <tr><td>Marketplace</td><td>Huge Actions marketplace</td><td>1800+ plugins</td></tr>
+          <tr><td>Cost</td><td>Free for public repos, minutes for private</td><td>Free (but infra cost)</td></tr>
+          <tr><td>Integration</td><td>Native GitHub (PRs, checks, secrets)</td><td>Integrates with anything</td></tr>
+          <tr><td>Language support</td><td>Any (shell-based)</td><td>Any (Groovy DSL)</td></tr>
+          <tr><td>Matrix builds</td><td>✅ Native</td><td>✅ With plugin</td></tr>
+          <tr><td>Air-gapped</td><td>❌ (needs internet for GitHub)</td><td>✅ Fully on-prem</td></tr>
+          <tr><td>Best for</td><td>Open source, GitHub-native, modern teams</td><td>Enterprise, complex pipelines, any VCS</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 20 — INTERVIEW
+  ══════════════════════ -->
+  <section id="interview" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-yellow">🎯</div>
+      <div class="section-meta">
+        <div class="section-label">Section 20</div>
+        <div class="section-title">Interview Q&amp;A</div>
+        <div class="section-sub">25+ most-asked Git &amp; CI/CD interview questions</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔥 Git Core Questions</h3>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between git merge and git rebase?</div>
+        <div class="iq-a">
+          <strong>git merge:</strong> Creates a new merge commit with two parents. Preserves the complete history showing exactly when branches diverged and merged. Non-destructive — never changes existing commits.<br>
+          <strong>git rebase:</strong> Replays commits from one branch on top of another, creating NEW commits with different SHAs. Results in a linear history. Rewrites history — never do on public/shared branches.<br>
+          <strong>When to use:</strong> Merge for feature completion to main (preserves context). Rebase for syncing local feature with updated main (keeps linear history, cleaner PRs).
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q2</span>What is git rebase --interactive used for?</div>
+        <div class="iq-a">
+          Interactive rebase lets you rewrite history of unpushed commits by: <strong>squash</strong> (combine multiple commits into one), <strong>reword</strong> (edit commit message), <strong>drop</strong> (delete a commit), <strong>edit</strong> (amend files in old commit), <strong>reorder</strong> (change commit order). Common before opening a PR to clean up "WIP" commits into meaningful units.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q3</span>What is the difference between git reset and git revert?</div>
+        <div class="iq-a">
+          <strong>git reset:</strong> Moves the branch pointer backward to a previous commit. Rewrites history. Three modes: --soft (keep staged), --mixed (unstage, keep files), --hard (discard everything). UNSAFE on shared branches.<br>
+          <strong>git revert:</strong> Creates a new commit that undoes the changes of a specific commit. Does NOT rewrite history. Safe to use on shared/public branches. Always prefer revert for pushed commits.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q4</span>What is HEAD in Git?</div>
+        <div class="iq-a">
+          HEAD is a pointer to the currently checked-out branch or commit. Normally it points to a branch (e.g., refs/heads/main), which in turn points to the latest commit. When you checkout a specific commit directly (<code>git checkout abc123</code>), HEAD points to that commit directly — this is called "detached HEAD" state. <code>HEAD~1</code> = one commit back. <code>HEAD^</code> = first parent. <code>HEAD~2</code> = two commits back.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q5</span>What is a fast-forward merge? When does it NOT happen?</div>
+        <div class="iq-a">
+          Fast-forward merge occurs when the target branch has NO new commits since the feature branch was created — Git simply moves the branch pointer forward to the feature branch tip. No merge commit is created. <br>
+          It does NOT happen when: (1) The target branch has diverged (new commits on both branches), (2) You use <code>--no-ff</code> flag to force a merge commit, (3) Merging across distant histories.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q6</span>How do you undo the last commit without losing changes?</div>
+        <div class="iq-a">
+          <code>git reset --soft HEAD~1</code> — moves HEAD back one commit, all changes from that commit remain STAGED.<br>
+          <code>git reset HEAD~1</code> (--mixed, default) — moves HEAD back, changes are UNSTAGED but preserved in working tree.<br>
+          <code>git reset --hard HEAD~1</code> — DANGEROUS: moves HEAD back AND discards all changes (unrecoverable, use with care). <br>
+          If already pushed: <code>git revert HEAD</code> creates a new undo commit (safe for shared branches).
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q7</span>What is the difference between git fetch and git pull?</div>
+        <div class="iq-a">
+          <strong>git fetch:</strong> Downloads objects and refs from remote but does NOT integrate changes into your working branch. Updates remote-tracking branches (origin/main etc.) only. Safe — never modifies your local work.<br>
+          <strong>git pull:</strong> = <code>git fetch</code> + <code>git merge</code> (or rebase if configured). Fetches AND integrates remote changes into current branch. Can cause merge conflicts. <br>
+          Best practice: <code>git fetch</code> first, inspect <code>git log origin/main</code>, then <code>git merge</code> manually.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q8</span>What is cherry-pick and when would you use it?</div>
+        <div class="iq-a">
+          <code>git cherry-pick &lt;SHA&gt;</code> copies a specific commit from one branch and applies it to the current branch as a new commit (same changes, different SHA). <br>
+          Use cases: (1) A hotfix was committed to the wrong branch — cherry-pick it to the correct one. (2) A feature branch has one useful commit but you don't want to merge the whole branch. (3) Backport a fix from main to an older release branch. Overuse is a code smell — prefer proper branching.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q9</span>What is git stash and when would you use it?</div>
+        <div class="iq-a">
+          <code>git stash</code> temporarily saves your uncommitted changes (working tree + staged) and reverts the working directory to the last commit. Changes are stored in a stack. Retrieve with <code>git stash pop</code> or <code>git stash apply</code>. <br>
+          Use cases: (1) Need to switch branches urgently but don't want to commit unfinished work. (2) Pull latest changes but working tree is dirty. (3) Try an experiment and save current WIP.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q10</span>How do you find the commit that introduced a bug?</div>
+        <div class="iq-a">
+          <strong>Manual approach:</strong> <code>git log --oneline</code> to find suspect commits, <code>git diff abc..def</code> to compare.<br>
+          <strong>git bisect (best):</strong> Binary search. Mark current commit as bad, an old working commit as good. Git checks out the midpoint. Test, mark good/bad. Repeat ~log2(n) times to find exact bad commit.<br>
+          <strong>Automated bisect:</strong> <code>git bisect run mvn test -Dtest=BugTest</code> — runs your test automatically to find the commit.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q11</span>What is the difference between an annotated and lightweight tag?</div>
+        <div class="iq-a">
+          <strong>Lightweight tag:</strong> <code>git tag v1.0</code> — just a pointer to a commit (like a branch that doesn't move). Stores no extra metadata.<br>
+          <strong>Annotated tag:</strong> <code>git tag -a v1.0 -m "message"</code> — full Git object with tagger name, email, date, message, and optional GPG signature. Has its own SHA. Checkable with <code>git show v1.0</code>. <br>
+          <strong>Use annotated for releases</strong> — they record who tagged and when, can be GPG-signed, and <code>git describe</code> uses them by default.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q12</span>Explain GitFlow vs Trunk-Based Development.</div>
+        <div class="iq-a">
+          <strong>GitFlow:</strong> Long-lived branches (main, develop, feature/*, release/*, hotfix/*). Structured, predictable releases. Good for versioned software. Con: complex, merge conflicts accumulate.<br>
+          <strong>Trunk-Based Development (TBD):</strong> Everyone commits to main (trunk) daily. Feature flags hide incomplete features. Very short-lived branches (&lt;2 days). Requires mature CI/CD and testing. Used by Google, Facebook. Encourages continuous integration. Con: requires discipline, feature flags complexity.<br>
+          <strong>GitHub Flow:</strong> Middle ground — simple (main + feature branches), continuous deployment, widely adopted for web apps.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q13</span>What is CI/CD and what are its benefits?</div>
+        <div class="iq-a">
+          <strong>CI (Continuous Integration):</strong> Automatically build + test every code change merged to main branch. Benefits: catch bugs early, validate integration, enforce code quality, reduce "integration hell".<br>
+          <strong>CD (Continuous Delivery/Deployment):</strong> Automatically deploy to environments after CI passes. Benefits: faster time-to-market, smaller (less risky) releases, faster feedback, reduced manual errors, more frequent deployments.<br>
+          Combined: enables teams to release multiple times per day confidently.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q14</span>How do you handle secrets in CI/CD pipelines?</div>
+        <div class="iq-a">
+          <strong>Never hardcode secrets in code or YAML!</strong> Solutions:<br>
+          1. <strong>GitHub Secrets / Jenkins Credentials</strong> — store in platform, inject as env vars<br>
+          2. <strong>HashiCorp Vault</strong> — dynamic secret management, rotate secrets<br>
+          3. <strong>AWS Secrets Manager / Azure Key Vault</strong> — cloud-native secret storage<br>
+          4. <strong>Environment-specific .env files</strong> — NOT committed to git, provided at runtime<br>
+          5. <strong>OIDC federation</strong> — GitHub Actions can assume AWS/GCP roles without long-lived credentials<br>
+          Best practice: rotate secrets regularly, use least-privilege, audit access logs.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q15</span>What is the difference between Continuous Delivery and Continuous Deployment?</div>
+        <div class="iq-a">
+          <strong>Continuous Delivery:</strong> Every change that passes all tests is packaged and ready to deploy to production. But deployment requires a <em>manual approval / button click</em>. Business can decide when to release. Suitable when releases need business sign-off.<br>
+          <strong>Continuous Deployment:</strong> Every passing change is AUTOMATICALLY deployed to production without human intervention. Requires very high test confidence (&gt;95% coverage, E2E, canary releases). Used by Netflix, Amazon. Faster feedback, no deployment backlog.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════
+       SECTION 21 — CHEAT SHEET
+  ══════════════════════ -->
+  <section id="cheatsheet" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-green">📋</div>
+      <div class="section-meta">
+        <div class="section-label">Section 21</div>
+        <div class="section-title">Master Cheat Sheet</div>
+        <div class="section-sub">Every essential command at a glance</div>
+      </div>
+    </div>
+
+    <div class="cheat-grid">
+
+      <div class="cheat-box">
+        <div class="cheat-title">🚀 Setup & Init</div>
+        <div class="cheat-row"><span class="cheat-cmd">git init</span><span class="cheat-desc">Init repo</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git clone &lt;url&gt;</span><span class="cheat-desc">Clone remote repo</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git config --global user.name</span><span class="cheat-desc">Set username</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git config --global user.email</span><span class="cheat-desc">Set email</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git config --list</span><span class="cheat-desc">View all config</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">📌 Stage & Commit</div>
+        <div class="cheat-row"><span class="cheat-cmd">git status -s</span><span class="cheat-desc">Short status</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git add .</span><span class="cheat-desc">Stage all</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git add -p</span><span class="cheat-desc">Interactive staging</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git commit -m "msg"</span><span class="cheat-desc">Commit</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git commit --amend</span><span class="cheat-desc">Fix last commit</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git restore --staged .</span><span class="cheat-desc">Unstage all</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🌿 Branches</div>
+        <div class="cheat-row"><span class="cheat-cmd">git branch</span><span class="cheat-desc">List local branches</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git switch -c &lt;name&gt;</span><span class="cheat-desc">Create & switch</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git switch &lt;name&gt;</span><span class="cheat-desc">Switch branch</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git switch -</span><span class="cheat-desc">Previous branch</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git branch -d &lt;name&gt;</span><span class="cheat-desc">Delete (safe)</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git branch -D &lt;name&gt;</span><span class="cheat-desc">Force delete</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git branch -m &lt;old&gt; &lt;new&gt;</span><span class="cheat-desc">Rename branch</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🔀 Merge & Rebase</div>
+        <div class="cheat-row"><span class="cheat-cmd">git merge &lt;branch&gt;</span><span class="cheat-desc">Merge branch</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git merge --no-ff</span><span class="cheat-desc">Force merge commit</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git merge --squash</span><span class="cheat-desc">Squash all commits</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git merge --abort</span><span class="cheat-desc">Cancel merge</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git rebase &lt;branch&gt;</span><span class="cheat-desc">Rebase onto branch</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git rebase -i HEAD~3</span><span class="cheat-desc">Interactive rebase</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git rebase --abort</span><span class="cheat-desc">Cancel rebase</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🌐 Remote</div>
+        <div class="cheat-row"><span class="cheat-cmd">git remote -v</span><span class="cheat-desc">List remotes</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git remote add origin &lt;url&gt;</span><span class="cheat-desc">Add remote</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git fetch --all --prune</span><span class="cheat-desc">Fetch all, prune</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git pull --rebase</span><span class="cheat-desc">Pull with rebase</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git push -u origin &lt;br&gt;</span><span class="cheat-desc">Push + set upstream</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git push --force-with-lease</span><span class="cheat-desc">Safe force push</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git push origin --delete &lt;br&gt;</span><span class="cheat-desc">Delete remote branch</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🔍 Log & Diff</div>
+        <div class="cheat-row"><span class="cheat-cmd">git log --oneline --graph --all</span><span class="cheat-desc">Visual graph</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git log -S "string"</span><span class="cheat-desc">Search code changes</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git log -- &lt;file&gt;</span><span class="cheat-desc">File history</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git diff --staged</span><span class="cheat-desc">Staged changes</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git diff main..feature</span><span class="cheat-desc">Branch diff</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git blame -L 10,20 &lt;file&gt;</span><span class="cheat-desc">Who wrote lines 10-20</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">↩️ Undo</div>
+        <div class="cheat-row"><span class="cheat-cmd">git restore &lt;file&gt;</span><span class="cheat-desc">Discard working changes</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git restore --staged &lt;file&gt;</span><span class="cheat-desc">Unstage file</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git reset --soft HEAD~1</span><span class="cheat-desc">Uncommit, keep staged</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git reset HEAD~1</span><span class="cheat-desc">Uncommit, unstage</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git reset --hard HEAD~1</span><span class="cheat-desc">⚠️ Delete commit + changes</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git revert HEAD</span><span class="cheat-desc">✅ Safe undo (new commit)</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git reflog</span><span class="cheat-desc">View all recent HEADs</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🗃️ Stash</div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash push -m "msg"</span><span class="cheat-desc">Stash with label</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash -u</span><span class="cheat-desc">Include untracked</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash list</span><span class="cheat-desc">List stashes</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash pop</span><span class="cheat-desc">Apply + remove latest</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash apply stash@{2}</span><span class="cheat-desc">Apply specific stash</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash drop</span><span class="cheat-desc">Delete latest stash</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash clear</span><span class="cheat-desc">⚠️ Delete all stashes</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🏷️ Tags</div>
+        <div class="cheat-row"><span class="cheat-cmd">git tag -a v1.0 -m "msg"</span><span class="cheat-desc">Annotated tag</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git tag</span><span class="cheat-desc">List tags</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git push origin v1.0</span><span class="cheat-desc">Push specific tag</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git push --tags</span><span class="cheat-desc">Push all tags</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git tag -d v1.0</span><span class="cheat-desc">Delete local tag</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git push origin --delete v1.0</span><span class="cheat-desc">Delete remote tag</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🍒 Advanced</div>
+        <div class="cheat-row"><span class="cheat-cmd">git cherry-pick &lt;sha&gt;</span><span class="cheat-desc">Copy commit to current branch</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git bisect start/bad/good</span><span class="cheat-desc">Find bug commit</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git bisect run &lt;test&gt;</span><span class="cheat-desc">Auto bisect</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git shortlog -sn</span><span class="cheat-desc">Commits per author</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git grep -n "pattern"</span><span class="cheat-desc">Search in files</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git archive --format=zip HEAD</span><span class="cheat-desc">Export repo as zip</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">🔧 Aliases to set</div>
+        <div class="cheat-row"><span class="cheat-cmd">alias.lg</span><span class="cheat-desc">"log --oneline --graph --all"</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">alias.st</span><span class="cheat-desc">status</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">alias.co</span><span class="cheat-desc">checkout</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">alias.oops</span><span class="cheat-desc">"commit --amend --no-edit"</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">alias.undo</span><span class="cheat-desc">"reset HEAD~1 --mixed"</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">alias.stash-all</span><span class="cheat-desc">"stash push -u"</span></div>
+      </div>
+
+      <div class="cheat-box">
+        <div class="cheat-title">⚡ Useful One-Liners</div>
+        <div class="cheat-row"><span class="cheat-cmd">git log --all --full-history -- "*.java"</span><span class="cheat-desc">Find deleted file history</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git branch --merged main | grep -v "main\|\*" | xargs git branch -d</span><span class="cheat-desc">Delete merged branches</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git stash branch new-branch stash@{0}</span><span class="cheat-desc">Branch from stash</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git log --oneline -1</span><span class="cheat-desc">Last commit</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git rev-parse --abbrev-ref HEAD</span><span class="cheat-desc">Current branch name</span></div>
+        <div class="cheat-row"><span class="cheat-cmd">git count-objects -vH</span><span class="cheat-desc">Repo size</span></div>
+      </div>
+
+    </div>
+  </section>
+
+</div><!-- end container -->
+
+<!-- ════ FOOTER ════ -->
+<footer class="page-footer">
+  <p>
+    📘 <strong>Part 18 of 20</strong> — Java Interview Notes Series |
+    Next: <strong>Part 19 — System Design &amp; Architecture (Microservices, Design Patterns, Caching, Load Balancing)</strong>
+  </p>
+  <p style="margin-top:8px; font-size:12px; color:var(--muted);">
+    Topics Covered: Git Internals (Objects, DAG, .git folder) • Three Areas (Working/Staging/Repo) •
+    Config &amp; Aliases • git add/commit/push/pull/fetch (all flags) • Branching (create/switch/delete) •
+    Detached HEAD • 3 Merge Strategies (FF / 3-way / Squash) • Rebase (regular + interactive, Golden Rule) •
+    Conflict Resolution (markers, ours/theirs, tools) • Remote Operations &amp; Fork Workflow •
+    Stash &amp; Worktree • git log (all formats &amp; filters) • git diff • Reset/Revert/Restore (comparison table) •
+    Cherry-pick • git bisect (manual + automated) • git blame • Tags (lightweight vs annotated, semver) •
+    .gitignore patterns • Git Hooks (pre-commit, commit-msg, pre-push) • Husky •
+    GitFlow / GitHub Flow / Trunk-Based Development • CI/CD Concepts &amp; Pipeline Stages •
+    Deployment Strategies (Blue/Green, Canary, Rolling) • GitHub Actions (complete YAML, matrix, environments, secrets) •
+    Jenkins Declarative Pipeline (parallel stages, quality gates, approval, notifications) •
+    GitHub Actions vs Jenkins comparison • 15 Interview Q&amp;As • Complete Cheat Sheet
+  </p>
+</footer>
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>

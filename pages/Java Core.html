@@ -1,0 +1,3000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Java Core — Complete Reference Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #1a0a2e 45%, #0d1a2e 100%); }
+    .hero h1 span { color: var(--accent-purple); }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+<button id="hamburger" aria-label="Toggle sidebar"><span></span><span></span><span></span></button>
+<div id="sidebar-overlay"></div>
+
+<!-- ════════════════════════════ SIDEBAR ════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">☕</div>
+    <div>
+      <div class="sidebar-title">Java Core</div>
+      <div class="sidebar-subtitle">Complete Reference</div>
+    </div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">🏠 Navigation</div>
+    <a href="../index.html" class="toc-link">← Back to Home</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 1 — JVM Internals</div>
+    <a href="#java-flow" class="toc-link">Java Program Flow</a>
+    <a href="#jdk-jre-jvm" class="toc-link">JDK vs JRE vs JVM</a>
+    <a href="#jvm-architecture" class="toc-link">JVM Architecture</a>
+    <a href="#classloader" class="toc-link">ClassLoader System</a>
+    <a href="#jmm" class="toc-link">Java Memory Model</a>
+    <a href="#gc" class="toc-link">Garbage Collector</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 2 — References & Memory</div>
+    <a href="#references" class="toc-link">Strong, Soft, Weak, Phantom</a>
+    <a href="#ref-maps" class="toc-link">References in Maps</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 3 — OOP Deep Dive</div>
+    <a href="#access-modifiers" class="toc-link">Access Modifiers</a>
+    <a href="#interface-abstract" class="toc-link">Interface vs Abstract Class</a>
+    <a href="#default-methods" class="toc-link">Default Methods & Ambiguity</a>
+    <a href="#inner-classes" class="toc-link">Inner Classes</a>
+    <a href="#associations" class="toc-link">Association, Aggregation, Composition</a>
+    <a href="#polymorphism" class="toc-link">Polymorphism & Dynamic Dispatch</a>
+    <a href="#static-override" class="toc-link">Override vs Method Hiding</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 4 — Exceptions</div>
+    <a href="#exceptions" class="toc-link">Exception Hierarchy</a>
+    <a href="#exception-handling" class="toc-link">Handling Patterns</a>
+    <a href="#finally-finalize" class="toc-link">finally vs finalize</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 5 — Generics & Type System</div>
+    <a href="#generics" class="toc-link">Generics Deep Dive</a>
+    <a href="#wildcards" class="toc-link">Wildcards & Variance</a>
+    <a href="#type-erasure" class="toc-link">Type Erasure</a>
+    <a href="#reflection" class="toc-link">Reflection API</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 6 — Functional Java</div>
+    <a href="#lambda" class="toc-link">Lambda Expressions</a>
+    <a href="#streams" class="toc-link">Streams API</a>
+    <a href="#optional" class="toc-link">Optional</a>
+    <a href="#comparator" class="toc-link">Comparator & Comparable</a>
+    <a href="#records-sealed" class="toc-link">Records & Sealed Classes</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 7 — Design Patterns</div>
+    <a href="#design-patterns" class="toc-link">Creational Patterns</a>
+    <a href="#structural-patterns" class="toc-link">Structural Patterns</a>
+    <a href="#behavioral-patterns" class="toc-link">Behavioral Patterns</a>
+    <a href="#delegation" class="toc-link">Delegation Pattern</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 8 — Advanced Topics</div>
+    <a href="#annotations" class="toc-link">Annotations System</a>
+    <a href="#serialization" class="toc-link">Serialization & transient</a>
+    <a href="#uuid" class="toc-link">UUID</a>
+    <a href="#packaging" class="toc-link">JAR, Classpath, Manifest</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════ MAIN ════════════════════════════ -->
+<main id="main">
+
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Senior Dev Notes — Every "Why" Explained</div>
+      <h1>☕ <span>Java Core</span> — Complete Deep Dive</h1>
+      <p class="hero-desc">From bytecode execution to garbage collection, from type erasure to design patterns. The internals every senior Java developer must know.</p>
+      <div class="hero-badges">
+        <span class="tag tag-purple">JVM Internals</span>
+        <span class="tag tag-blue">Generics</span>
+        <span class="tag tag-green">Streams</span>
+        <span class="tag tag-orange">Design Patterns</span>
+        <span class="tag tag-red">GC</span>
+        <span class="tag tag-cyan">Reflection</span>
+        <span class="tag tag-yellow">Records</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 1 — JVM INTERNALS
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">01</div>
+    <div>
+      <h2>JVM Internals</h2>
+      <p>How Java code travels from your editor to executing instructions — every layer demystified.</p>
+    </div>
+  </div>
+
+  <!-- Java Program Flow -->
+  <div class="section" id="java-flow">
+    <div class="section-header">
+      <h3>🔄 Complete Flow of a Java Program</h3>
+    </div>
+    <div class="card">
+      <h4>From Source Code to Running Program</h4>
+      <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│  YOU WRITE                                                      │
+│  <span class="d-blue">MyApp.java</span>  (human-readable source)                            │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │  <span class="d-orange">javac</span> (Java Compiler — part of JDK)
+                           │  Checks syntax, resolves types, generates bytecode
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  <span class="d-green">MyApp.class</span>  (platform-neutral bytecode — NOT machine code)    │
+│  Instructions for the JVM: iconst, istore, invokevirtual...     │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │  <span class="d-orange">java</span> command → starts JVM process
+                           ▼
+┌────────────────── JVM PROCESS ──────────────────────────────────┐
+│                                                                 │
+│  ① <span class="d-purple">ClassLoader Subsystem</span>                                        │
+│     Bootstrap CL → Extension CL → Application CL               │
+│     Loads .class bytes → Verifies bytecode → Prepares memory    │
+│                                                                 │
+│  ② <span class="d-blue">Runtime Data Areas</span>                                           │
+│     Method Area (class metadata, static fields)                 │
+│     Heap (all objects, GC managed)                              │
+│     Stack (per thread — frames, local vars, operand stack)      │
+│     PC Register (current bytecode instruction pointer)          │
+│     Native Method Stack                                         │
+│                                                                 │
+│  ③ <span class="d-orange">Execution Engine</span>                                              │
+│     Interpreter → reads bytecode line by line (slow start)      │
+│     JIT Compiler → detects hot methods, compiles to native      │
+│     GC → reclaims unreachable heap memory                       │
+│                                                                 │
+│  ④ <span class="d-green">Native Method Interface (JNI)</span>                                 │
+│     Bridge to C/C++ native libraries                            │
+└─────────────────────────────────────────────────────────────────┘
+                           │  CPU executes native machine code
+                           ▼
+                    <span class="d-green">Output / Side effects</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Interpreter vs JIT — The Performance Story</h4>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>🐢 Interpreter (startup)</h4>
+          <ul>
+            <li>Reads bytecode one instruction at a time</li>
+            <li>No compilation overhead</li>
+            <li>Fast startup for short-lived code</li>
+            <li>Same bytecode re-interpreted every call</li>
+            <li>10–100× slower than native code</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>🚀 JIT Compiler (after warmup)</h4>
+          <ul>
+            <li>Detects "hot" methods (called &gt; threshold)</li>
+            <li>Compiles entire method to native machine code</li>
+            <li>Optimizations: inlining, escape analysis, loop unrolling</li>
+            <li>Compiled code cached — subsequent calls instant</li>
+            <li>Near C++ performance at peak</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body"><strong>Tiered Compilation (Java 8+):</strong> Level 0 = interpreter → Level 1-3 = C1 (quick compile) → Level 4 = C2 (full optimization). JVM automatically promotes hot code up the tiers.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JDK JRE JVM -->
+  <div class="section" id="jdk-jre-jvm">
+    <div class="section-header">
+      <h3>📦 JDK vs JRE vs JVM — The Nesting Doll</h3>
+    </div>
+    <div class="card">
+      <h4>Visual Relationship</h4>
+      <div class="diagram">
+┌─── <span class="d-blue">JDK (Java Development Kit)</span> ─────────────────────────────────┐
+│  Everything you need to DEVELOP Java apps                       │
+│                                                                 │
+│  Tools: javac, jar, javadoc, jshell, jlink, jmap, jstack...    │
+│                                                                 │
+│  ┌─── <span class="d-green">JRE (Java Runtime Environment)</span> ─────────────────────┐   │
+│  │  Everything you need to RUN Java apps                   │   │
+│  │                                                         │   │
+│  │  Java Class Library (rt.jar / java.base module)         │   │
+│  │  java.lang, java.util, java.io, java.net...             │   │
+│  │                                                         │   │
+│  │  ┌─── <span class="d-orange">JVM (Java Virtual Machine)</span> ─────────────────┐   │   │
+│  │  │  Executes bytecode on specific OS/Hardware       │   │   │
+│  │  │  ClassLoader, Heap, Stack, JIT, GC              │   │   │
+│  │  │  Platform-SPECIFIC implementation (Windows/Mac) │   │   │
+│  │  └──────────────────────────────────────────────────┘   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+      </div>
+    </div>
+    <div class="card">
+      <h4>JVM — Detailed Architecture</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Component</th><th>What it stores</th><th>Shared?</th><th>GC'd?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Method Area</strong> (Metaspace Java 8+)</td><td>Class metadata, method bytecode, static variables, constant pool</td><td>All threads</td><td>Rarely (when class unloaded)</td></tr>
+            <tr><td><strong>Heap</strong></td><td>All object instances, arrays</td><td>All threads</td><td>✅ Yes — main GC target</td></tr>
+            <tr><td><strong>JVM Stack</strong></td><td>Stack frames (one per method call): local vars, operand stack, frame data</td><td>Per thread</td><td>❌ Auto-managed (pop on return)</td></tr>
+            <tr><td><strong>PC Register</strong></td><td>Address of current bytecode instruction</td><td>Per thread</td><td>❌</td></tr>
+            <tr><td><strong>Native Method Stack</strong></td><td>Frames for native (C/C++) method calls via JNI</td><td>Per thread</td><td>❌</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Heap Structure — Young Gen, Old Gen, Metaspace</h4>
+      <div class="diagram">
+┌────────────────────── HEAP ─────────────────────────────────────┐
+│                                                                 │
+│  ┌─── <span class="d-green">Young Generation</span> ───────────────────────────────────┐  │
+│  │                                                         │  │
+│  │  ┌─ <span class="d-blue">Eden</span> ─────────────────┐  ┌─ <span class="d-orange">Survivor S0</span> ─┐  ┌─ <span class="d-orange">S1</span> ─┐  │  │
+│  │  │ New objects born here  │  │ Age 1 objs  │  │      │  │  │
+│  │  │ Minor GC clears this   │  │             │  │      │  │  │
+│  │  └────────────────────────┘  └─────────────┘  └──────┘  │  │
+│  │  Minor GC: fast, frequent, STW pause ~ms                 │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ┌─── <span class="d-red">Old Generation (Tenured)</span> ────────────────────────────┐  │
+│  │  Objects that survived N minor GCs (age threshold)      │  │
+│  │  Long-lived objects: caches, singleton services         │  │
+│  │  Major/Full GC: slower, less frequent                   │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─── <span class="d-purple">Metaspace</span> (OFF-HEAP since Java 8) ────────────────────────┐
+│  Class metadata, method bytecodes                            │
+│  Not in heap — grows/shrinks automatically (no PermGen OOM) │
+└──────────────────────────────────────────────────────────────┘
+      </div>
+    </div>
+  </div>
+
+  <!-- ClassLoader -->
+  <div class="section" id="classloader">
+    <div class="section-header">
+      <h3>📂 ClassLoader System</h3>
+    </div>
+    <div class="card">
+      <h4>What ClassLoaders Do</h4>
+      <p>ClassLoaders are responsible for <strong>loading</strong>, <strong>linking</strong>, and <strong>initializing</strong> classes at runtime. Java uses a delegation model — every CL asks its parent first.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Loading</div>
+            <div class="step-desc">Read .class bytecodes from disk/network → create a <code>Class</code> object in the Method Area.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Linking — Verification</div>
+            <div class="step-desc">Bytecode verifier checks: valid bytecode format, no stack overflows, no illegal casts. Security gate.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Linking — Preparation</div>
+            <div class="step-desc">Allocate memory for static fields. Set them to default values (0, null, false — not your code's values yet).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Linking — Resolution</div>
+            <div class="step-desc">Resolve symbolic references (class names in bytecode) to direct memory references.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Initialization</div>
+            <div class="step-desc">Execute static initializers and static blocks. Assign actual values to static fields. This is when your <code>static { ... }</code> runs.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>The Three ClassLoaders (Parent Delegation)</h4>
+      <div class="diagram">
+Request to load "com.app.MyService"
+    │
+    ▼
+<span class="d-blue">Application ClassLoader</span>  (loads from classpath — your code)
+    │  "Let me ask my parent first"
+    ▼
+<span class="d-orange">Platform/Extension ClassLoader</span>  (loads Java extension modules)
+    │  "Let me ask my parent first"
+    ▼
+<span class="d-green">Bootstrap ClassLoader</span>  (loads core Java: java.lang, java.util)
+    │  "java.lang.String? I have it!"
+    │  "com.app.MyService? Not mine."
+    ▼ (not found — go back down)
+<span class="d-orange">Platform CL</span>: "Not mine either"
+    ▼
+<span class="d-blue">Application CL</span>: "Found it in /classpath/myapp.jar" → loads it
+      </div>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Why parent delegation?</strong> Security. A malicious class can't shadow <code>java.lang.String</code> because Bootstrap CL always loads it first. Also ensures the same class isn't loaded twice.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Custom ClassLoader — When and Why</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom ClassLoader for hot-reload</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">PluginClassLoader</span> <span class="kw">extends</span> <span class="type">ClassLoader</span> {
+
+    <span class="kw">private final</span> <span class="type">Path</span> pluginJar;
+
+    <span class="kw">public</span> <span class="type">PluginClassLoader</span>(<span class="type">Path</span> jar, <span class="type">ClassLoader</span> parent) {
+        <span class="kw">super</span>(parent);
+        <span class="kw">this</span>.pluginJar = jar;
+    }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">protected</span> <span class="type">Class</span>&lt;?&gt; <span class="fn">findClass</span>(<span class="type">String</span> name) <span class="kw">throws</span> <span class="type">ClassNotFoundException</span> {
+        <span class="kw">try</span> {
+            <span class="type">byte</span>[] bytes = <span class="fn">readClassBytes</span>(pluginJar, name); <span class="cmt">// read from JAR</span>
+            <span class="kw">return</span> <span class="fn">defineClass</span>(name, bytes, <span class="num">0</span>, bytes.length);  <span class="cmt">// create Class object</span>
+        } <span class="kw">catch</span> (<span class="type">IOException</span> e) {
+            <span class="kw">throw new</span> <span class="type">ClassNotFoundException</span>(name, e);
+        }
+    }
+}
+
+<span class="cmt">// Use case: load different plugin versions without conflict
+// Each version gets its own ClassLoader → isolated class namespace</span></code></pre>
+      </div>
+      <h5>Real-World Uses of Custom ClassLoaders</h5>
+      <ul>
+        <li><strong>OSGi (Eclipse, Spring DM):</strong> each bundle has isolated ClassLoader</li>
+        <li><strong>Application servers (Tomcat):</strong> each web app has its own CL</li>
+        <li><strong>Hot reload (JRebel, Spring DevTools):</strong> discard old CL, load new class bytes</li>
+        <li><strong>Bytecode manipulation (AspectJ, Mockito):</strong> transform bytes during loading</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- JMM -->
+  <div class="section" id="jmm">
+    <div class="section-header">
+      <h3>🧠 Java Memory Model (JMM)</h3>
+    </div>
+    <div class="card">
+      <h4>Why JMM Exists — The Problem</h4>
+      <p>Modern CPUs have multiple cores, each with L1/L2 caches. Without rules, Thread 1 on Core 1 could write to a variable, but Thread 2 on Core 2 reads a stale cached value. JMM defines <em>when writes by one thread become visible to others</em>.</p>
+      <div class="diagram">
+<span class="d-red">WITHOUT JMM guarantees (dangerous):</span>
+
+Thread 1 (Core 1)              Thread 2 (Core 2)
+  flag = true                    while (!flag) { spin }
+  data = 42                      System.out.println(data)
+                                 → might print 0! (data not yet flushed to main memory)
+
+<span class="d-green">WITH volatile / synchronized / JMM happens-before:</span>
+
+Thread 1                       Thread 2
+  data = 42                      (guaranteed to see data=42
+  flag = true  (volatile)        because volatile write on flag
+                                  happens-before volatile read)
+      </div>
+    </div>
+    <div class="card">
+      <h4>Happens-Before Relationship</h4>
+      <p>JMM guarantees that if action A <em>happens-before</em> action B, then all effects of A are visible to B. Key happens-before rules:</p>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Rule</th><th>Guarantee</th></tr></thead>
+          <tbody>
+            <tr><td>Within a thread</td><td>Each action HB next action in that thread (program order)</td></tr>
+            <tr><td><code>volatile</code> write</td><td>Write to volatile field HB any subsequent read of same field</td></tr>
+            <tr><td><code>synchronized</code> unlock</td><td>Monitor unlock HB any subsequent lock of same monitor</td></tr>
+            <tr><td>Thread start</td><td><code>thread.start()</code> HB any action in the started thread</td></tr>
+            <tr><td>Thread join</td><td>All actions in a thread HB <code>thread.join()</code> returning</td></tr>
+            <tr><td><code>static</code> initializer</td><td>Class init HB any thread accessing that class</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>volatile vs synchronized vs Atomic</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Mechanism</th><th>Visibility</th><th>Atomicity</th><th>Ordering</th><th>Use When</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>volatile</code></td>
+              <td>✅</td>
+              <td>Only for reads/writes of single primitive (not compound ops)</td>
+              <td>Prevents reordering around the volatile var</td>
+              <td>Single boolean flag, status field</td>
+            </tr>
+            <tr>
+              <td><code>synchronized</code></td>
+              <td>✅</td>
+              <td>✅ Entire block is atomic</td>
+              <td>✅ Full memory fence</td>
+              <td>Compound operations, shared mutable state</td>
+            </tr>
+            <tr>
+              <td><code>AtomicInteger</code> etc.</td>
+              <td>✅</td>
+              <td>✅ CAS-based (lock-free)</td>
+              <td>✅</td>
+              <td>High-throughput counters, compare-and-swap</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GC -->
+  <div class="section" id="gc">
+    <div class="section-header">
+      <h3>🗑️ Garbage Collector — Types & Algorithms</h3>
+    </div>
+    <div class="card">
+      <h4>How GC Finds Garbage — Reachability Analysis</h4>
+      <p>GC roots are always-reachable anchors: thread stacks, static fields, JNI references. Any object reachable from a root via reference chain is <em>alive</em>. Everything else is garbage.</p>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body"><strong>Reference counting is NOT used in Java</strong> (unlike Python). It can't handle circular references. Java uses tracing GC — trace from roots, anything unreachable is collectable.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>GC Algorithms — Core Concepts</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Algorithm</th><th>How It Works</th><th>STW?</th><th>Fragmentation?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Mark-Sweep</strong></td><td>Mark reachable. Sweep (free) unmarked.</td><td>Yes</td><td>Yes — holes left in memory</td></tr>
+            <tr><td><strong>Mark-Compact</strong></td><td>Mark reachable. Move live objects together. Update references.</td><td>Yes</td><td>No — compacted</td></tr>
+            <tr><td><strong>Copying (Scavenge)</strong></td><td>Copy all live objects to new space. Old space discarded entirely.</td><td>Yes (brief)</td><td>No</td></tr>
+            <tr><td><strong>Generational</strong></td><td>Apply copying to Young Gen (most objects die young). Compact/sweep Old Gen rarely.</td><td>Minor: brief. Major: longer.</td><td>Minimal</td></tr>
+            <tr><td><strong>Concurrent Marking</strong></td><td>Mark concurrently with running app. Small STW pauses only for initial/final steps.</td><td>Mostly no</td><td>Depends</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Available GC Implementations</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>Serial GC</h4>
+          <p><code>-XX:+UseSerialGC</code><br>Single-threaded. Stop-the-world for all collections. For small apps or single-core. Algorithm: copying (young) + mark-compact (old).</p>
+          <span class="pill pill-orange">Small apps only</span>
+        </div>
+        <div class="card-mini">
+          <h4>Parallel GC (default Java 8)</h4>
+          <p><code>-XX:+UseParallelGC</code><br>Multiple GC threads. Still STW but shorter pauses. Maximizes throughput. Algorithm: parallel copying + parallel compacting.</p>
+          <span class="pill pill-blue">Batch processing</span>
+        </div>
+        <div class="card-mini">
+          <h4>G1GC (default Java 9+)</h4>
+          <p><code>-XX:+UseG1GC</code><br>Divides heap into equal regions. Collects highest-garbage regions first. Predictable pause targets. Algorithm: concurrent marking + mixed collections.</p>
+          <span class="pill pill-green">Most apps (default)</span>
+        </div>
+        <div class="card-mini">
+          <h4>ZGC (Java 15+ production)</h4>
+          <p><code>-XX:+UseZGC</code><br>Sub-millisecond pauses regardless of heap size (TB scale). Concurrent compaction. Uses load barriers + colored pointers.</p>
+          <span class="pill pill-purple">Low-latency</span>
+        </div>
+        <div class="card-mini">
+          <h4>Shenandoah GC</h4>
+          <p><code>-XX:+UseShenandoahGC</code><br>Red Hat's concurrent compactor. Concurrent evacuation (moves objects while app runs). Competes with ZGC on latency.</p>
+          <span class="pill pill-purple">Low-latency alt</span>
+        </div>
+        <div class="card-mini">
+          <h4>Epsilon GC (Java 11+)</h4>
+          <p><code>-XX:+UseEpsilonGC</code><br>No-op GC. Allocates memory but never collects. OOM when heap full. For benchmarking, short-lived tools.</p>
+          <span class="pill pill-red">Testing only</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>G1GC Internals — The Most Important GC to Know</h4>
+      <div class="diagram">
+<span class="d-green">G1 Heap Layout</span> (not contiguous young/old — region-based)
+
+┌──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┐
+│E │S │E │O │O │E │H │O │E │S │O │E │H │O │E │O │
+└──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+ E=Eden  S=Survivor  O=Old  H=Humongous (>50% region)
+
+<span class="d-orange">G1 Collection Phases:</span>
+1. <span class="d-green">Young-only phase</span>: Minor GC — collect all Eden+Survivor regions
+2. <span class="d-orange">Concurrent Marking</span>: Mark live objects (app runs concurrently)
+3. <span class="d-blue">Space Reclamation (Mixed GC)</span>: Collect Young + most-garbage Old regions
+   → Uses "Collection Set" (CSet) — picks regions with most garbage/cost ratio
+
+<span class="d-purple">Pause target:</span> -XX:MaxGCPauseMillis=200 (hint, not guarantee)
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 2 — REFERENCES
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">02</div>
+    <div>
+      <h2>Reference Types & Memory Management</h2>
+      <p>Control over how GC treats your objects — from immortal singletons to automatically-collected cache entries.</p>
+    </div>
+  </div>
+
+  <div class="section" id="references">
+    <div class="section-header">
+      <h3>🔗 Strong, Soft, Weak & Phantom References</h3>
+    </div>
+    <div class="card">
+      <h4>The Four Reference Strengths</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Type</th><th>GC Behaviour</th><th>Class</th><th>Use Case</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Strong</strong></td>
+              <td>Never collected while reachable. OOM before GC clears it.</td>
+              <td>Default — every <code>Object ref</code></td>
+              <td>Regular variables</td>
+            </tr>
+            <tr>
+              <td><strong>Soft</strong></td>
+              <td>GC MAY collect when memory is low. JVM tries to keep soft refs alive.</td>
+              <td><code>SoftReference&lt;T&gt;</code></td>
+              <td>Memory-sensitive caches (image cache)</td>
+            </tr>
+            <tr>
+              <td><strong>Weak</strong></td>
+              <td>GC collects at next collection cycle if no strong refs exist.</td>
+              <td><code>WeakReference&lt;T&gt;</code></td>
+              <td>Canonicalized maps, listener cleanup</td>
+            </tr>
+            <tr>
+              <td><strong>Phantom</strong></td>
+              <td>Collected like weak. <code>get()</code> always returns null. Enqueued in ReferenceQueue after finalization.</td>
+              <td><code>PhantomReference&lt;T&gt;</code></td>
+              <td>Post-GC cleanup, off-heap resource release</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>How to Use Each Reference Type</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">All four reference types</span></div>
+        <pre><code><span class="cmt">// ── STRONG (default) ────────────────────────────────────────────</span>
+<span class="type">String</span> strong = <span class="kw">new</span> <span class="type">String</span>(<span class="str">"hello"</span>); <span class="cmt">// object lives as long as 'strong' variable exists</span>
+
+<span class="cmt">// ── SOFT REFERENCE ──────────────────────────────────────────────</span>
+<span class="type">SoftReference</span>&lt;<span class="type">byte</span>[]&gt; imageCache =
+    <span class="kw">new</span> <span class="type">SoftReference</span>&lt;&gt;(<span class="kw">new</span> <span class="kw">byte</span>[<span class="num">1024</span> * <span class="num">1024</span>]); <span class="cmt">// 1MB image</span>
+
+<span class="type">byte</span>[] img = imageCache.<span class="fn">get</span>(); <span class="cmt">// null if GC collected it</span>
+<span class="kw">if</span> (img == <span class="kw">null</span>) {
+    img = <span class="fn">loadFromDisk</span>();      <span class="cmt">// reload if evicted</span>
+    imageCache = <span class="kw">new</span> <span class="type">SoftReference</span>&lt;&gt;(img);
+}
+
+<span class="cmt">// ── WEAK REFERENCE ──────────────────────────────────────────────</span>
+<span class="type">WeakReference</span>&lt;<span class="type">MyObject</span>&gt; weakRef = <span class="kw">new</span> <span class="type">WeakReference</span>&lt;&gt;(<span class="kw">new</span> <span class="type">MyObject</span>());
+
+<span class="type">MyObject</span> obj = weakRef.<span class="fn">get</span>(); <span class="cmt">// null if GC ran and no strong refs exist</span>
+<span class="kw">if</span> (obj != <span class="kw">null</span>) {
+    obj.<span class="fn">doWork</span>();
+}
+
+<span class="cmt">// ── PHANTOM REFERENCE ──────────────────────────────────────────</span>
+<span class="type">ReferenceQueue</span>&lt;<span class="type">Resource</span>&gt; queue = <span class="kw">new</span> <span class="type">ReferenceQueue</span>&lt;&gt;();
+<span class="type">Resource</span> res = <span class="kw">new</span> <span class="type">Resource</span>();
+<span class="type">PhantomReference</span>&lt;<span class="type">Resource</span>&gt; phantom = <span class="kw">new</span> <span class="type">PhantomReference</span>&lt;&gt;(res, queue);
+
+res = <span class="kw">null</span>; <span class="cmt">// release strong ref → object eligible for GC</span>
+
+<span class="cmt">// After GC, phantom ref enqueued in 'queue'</span>
+<span class="type">Reference</span>&lt;?&gt; ref;
+<span class="kw">while</span> ((ref = queue.<span class="fn">poll</span>()) != <span class="kw">null</span>) {
+    <span class="fn">releaseNativeMemory</span>(); <span class="cmt">// safe cleanup after object is gone</span>
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="ref-maps">
+    <div class="section-header">
+      <h3>🗺️ References in Maps — WeakHashMap & Beyond</h3>
+    </div>
+    <div class="card">
+      <h4>WeakHashMap — Automatic Key Eviction</h4>
+      <p><code>WeakHashMap</code> holds weak references to its <em>keys</em>. When a key object has no strong references outside the map, it gets GC'd. The entry (key + value) is automatically removed. Prevents memory leaks in caches.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">WeakHashMap — listener registry example</span></div>
+        <pre><code><span class="cmt">// Problem with regular HashMap: listeners never freed even if button destroyed</span>
+<span class="type">Map</span>&lt;<span class="type">Button</span>, <span class="type">ClickListener</span>&gt; listeners = <span class="kw">new</span> <span class="type">WeakHashMap</span>&lt;&gt;();
+
+<span class="type">Button</span> btn = <span class="kw">new</span> <span class="type">Button</span>(<span class="str">"OK"</span>);
+listeners.<span class="fn">put</span>(btn, e -&gt; System.out.<span class="fn">println</span>(<span class="str">"clicked"</span>));
+
+btn = <span class="kw">null</span>; <span class="cmt">// no more strong refs to button</span>
+<span class="type">System</span>.<span class="fn">gc</span>();
+<span class="cmt">// After GC: entry automatically removed from map!
+// listeners.size() → 0</span>
+
+<span class="cmt">// Real-world: ThreadLocal uses WeakReference to Thread key
+// When thread dies → ThreadLocal entry auto-removed → no leak</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Building a Soft-Reference Cache</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Memory-sensitive image cache</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">SoftCache</span>&lt;<span class="type">K</span>, <span class="type">V</span>&gt; {
+    <span class="kw">private final</span> <span class="type">Map</span>&lt;<span class="type">K</span>, <span class="type">SoftReference</span>&lt;<span class="type">V</span>&gt;&gt; cache = <span class="kw">new</span> <span class="type">ConcurrentHashMap</span>&lt;&gt;();
+
+    <span class="kw">public void</span> <span class="fn">put</span>(<span class="type">K</span> key, <span class="type">V</span> value) {
+        cache.<span class="fn">put</span>(key, <span class="kw">new</span> <span class="type">SoftReference</span>&lt;&gt;(value));
+    }
+
+    <span class="kw">public</span> <span class="type">Optional</span>&lt;<span class="type">V</span>&gt; <span class="fn">get</span>(<span class="type">K</span> key) {
+        <span class="type">SoftReference</span>&lt;<span class="type">V</span>&gt; ref = cache.<span class="fn">get</span>(key);
+        <span class="kw">if</span> (ref == <span class="kw">null</span>) <span class="kw">return</span> <span class="type">Optional</span>.<span class="fn">empty</span>();
+        <span class="type">V</span> value = ref.<span class="fn">get</span>();  <span class="cmt">// null if GC evicted it</span>
+        <span class="kw">if</span> (value == <span class="kw">null</span>) cache.<span class="fn">remove</span>(key); <span class="cmt">// cleanup stale entry</span>
+        <span class="kw">return</span> <span class="type">Optional</span>.<span class="fn">ofNullable</span>(value);
+    }
+}
+<span class="cmt">// Under memory pressure: JVM evicts soft values → cache misses → reload from source
+// Normal conditions: soft values stay → fast cache hits</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 3 — OOP DEEP DIVE
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">03</div>
+    <div>
+      <h2>OOP Deep Dive</h2>
+      <p>Access control, inheritance mechanics, inner classes, and the subtleties that separate juniors from seniors.</p>
+    </div>
+  </div>
+
+  <!-- Access Modifiers -->
+  <div class="section" id="access-modifiers">
+    <div class="section-header">
+      <h3>🔐 Access Modifiers — Complete Rules</h3>
+    </div>
+    <div class="card">
+      <h4>Visibility Matrix</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Modifier</th><th>Same Class</th><th>Same Package</th><th>Subclass (diff pkg)</th><th>World</th></tr></thead>
+          <tbody>
+            <tr><td><code>private</code></td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+            <tr><td>(package-private / default)</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+            <tr><td><code>protected</code></td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+            <tr><td><code>public</code></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Access Modifiers in Interface</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Interface member visibility rules</span></div>
+        <pre><code><span class="kw">public interface</span> <span class="type">MyInterface</span> {
+
+    <span class="cmt">// ALL of these are implicitly public abstract:</span>
+    <span class="kw">void</span> <span class="fn">doWork</span>();               <span class="cmt">// public abstract</span>
+    <span class="kw">public void</span> <span class="fn">doWork2</span>();      <span class="cmt">// same — redundant public</span>
+
+    <span class="cmt">// Constants: implicitly public static final</span>
+    <span class="type">int</span> <span class="const">MAX</span> = <span class="num">100</span>;               <span class="cmt">// public static final int MAX = 100</span>
+
+    <span class="cmt">// Default methods (Java 8+): must be public (or package-private in Java 9+)</span>
+    <span class="kw">default void</span> <span class="fn">log</span>(<span class="type">String</span> msg) {    <span class="cmt">// public — accessible to implementors</span>
+        System.out.<span class="fn">println</span>(msg);
+    }
+
+    <span class="cmt">// Static methods (Java 8+): public by default, NOT inherited by impl classes</span>
+    <span class="kw">static</span> <span class="type">MyInterface</span> <span class="fn">create</span>() {
+        <span class="kw">return</span> () -&gt; System.out.<span class="fn">println</span>(<span class="str">"default"</span>);
+    }
+
+    <span class="cmt">// Private methods (Java 9+): helper for default methods</span>
+    <span class="kw">private void</span> <span class="fn">helper</span>() {     <span class="cmt">// NOT visible to implementors or callers</span>
+        System.out.<span class="fn">println</span>(<span class="str">"internal helper"</span>);
+    }
+
+    <span class="cmt">// ❌ ILLEGAL in interface: protected, package-private abstract methods</span>
+    <span class="cmt">// protected void forbidden(); // COMPILE ERROR before Java 9</span>
+}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Access Modifiers in Abstract Class</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Abstract class — all modifiers allowed</span></div>
+        <pre><code><span class="kw">public abstract class</span> <span class="type">Animal</span> {
+
+    <span class="cmt">// All modifiers fully supported (unlike interface)</span>
+    <span class="kw">private</span> <span class="type">String</span> id;                    <span class="cmt">// not visible to subclass</span>
+    <span class="kw">protected</span> <span class="type">String</span> name;               <span class="cmt">// visible to subclass — use for template state</span>
+    <span class="kw">public</span> <span class="type">String</span> species;               <span class="cmt">// visible everywhere</span>
+
+    <span class="cmt">// Abstract method: subclass MUST override</span>
+    <span class="kw">public abstract</span> <span class="type">String</span> <span class="fn">makeSound</span>();
+
+    <span class="cmt">// protected abstract — only visible to subclasses, but must override</span>
+    <span class="kw">protected abstract</span> <span class="kw">void</span> <span class="fn">breathe</span>();
+
+    <span class="cmt">// Concrete method: subclass inherits, can override</span>
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">describe</span>() {
+        <span class="kw">return</span> name + <span class="str">": "</span> + <span class="fn">makeSound</span>();  <span class="cmt">// template method pattern</span>
+    }
+
+    <span class="cmt">// Constructor: abstract class CAN have constructor (called via super())</span>
+    <span class="kw">protected</span> <span class="type">Animal</span>(<span class="type">String</span> name) {
+        <span class="kw">this</span>.name = name;
+    }
+}
+
+<span class="kw">public class</span> <span class="type">Dog</span> <span class="kw">extends</span> <span class="type">Animal</span> {
+    <span class="kw">public</span> <span class="type">Dog</span>() { <span class="kw">super</span>(<span class="str">"Dog"</span>); }         <span class="cmt">// must call abstract class constructor</span>
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">makeSound</span>() { <span class="kw">return</span> <span class="str">"Woof"</span>; }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">protected void</span> <span class="fn">breathe</span>() { <span class="cmt">/* ... */</span> }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interface vs Abstract -->
+  <div class="section" id="interface-abstract">
+    <div class="section-header">
+      <h3>🆚 Interface vs Abstract Class vs Inner Class</h3>
+    </div>
+    <div class="card">
+      <h4>The Decision Guide</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Criteria</th><th>Interface</th><th>Abstract Class</th></tr></thead>
+          <tbody>
+            <tr><td>Multiple inheritance</td><td>✅ A class can implement many</td><td>❌ One superclass only</td></tr>
+            <tr><td>State (instance fields)</td><td>❌ Only constants</td><td>✅ Any fields</td></tr>
+            <tr><td>Constructor</td><td>❌</td><td>✅</td></tr>
+            <tr><td>Access modifiers on methods</td><td>public / private (Java 9+)</td><td>All modifiers</td></tr>
+            <tr><td>IS-A relationship</td><td>CAN-DO relationship</td><td>IS-A relationship</td></tr>
+            <tr><td>When to use</td><td>Define a capability/contract: Serializable, Comparable, Runnable</td><td>Share common implementation with variation points</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Rule of thumb:</strong>
+          Use <code>interface</code> when you're defining a contract that unrelated classes will implement (<code>Flyable</code> could be implemented by Bird and Plane — very different IS-A hierarchies).<br><br>
+          Use <code>abstract class</code> when you have shared code + a clear IS-A hierarchy (Dog IS-A Animal IS-A LivingThing). Abstract class provides the template, subclasses fill in the blanks.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Default Methods & Ambiguity -->
+  <div class="section" id="default-methods">
+    <div class="section-header">
+      <h3>🔀 Default Methods & Method Ambiguity</h3>
+    </div>
+    <div class="card">
+      <h4>Why Default Methods Were Added (Java 8)</h4>
+      <p>Before Java 8, adding a method to an interface broke all implementing classes. Java 8 added <code>default</code> methods to allow interface evolution without breaking backward compatibility. The JDK used this to add <code>forEach</code>, <code>stream()</code> etc. to <code>Collection</code>.</p>
+    </div>
+    <div class="card">
+      <h4>The Diamond Problem — When Two Interfaces Have Same Default Method</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Diamond default method conflict — 3 resolution rules</span></div>
+        <pre><code><span class="kw">interface</span> <span class="type">A</span> {
+    <span class="kw">default</span> <span class="type">String</span> <span class="fn">hello</span>() { <span class="kw">return</span> <span class="str">"Hello from A"</span>; }
+}
+<span class="kw">interface</span> <span class="type">B</span> <span class="kw">extends</span> <span class="type">A</span> {
+    <span class="kw">default</span> <span class="type">String</span> <span class="fn">hello</span>() { <span class="kw">return</span> <span class="str">"Hello from B"</span>; } <span class="cmt">// more specific</span>
+}
+<span class="kw">interface</span> <span class="type">C</span> {
+    <span class="kw">default</span> <span class="type">String</span> <span class="fn">hello</span>() { <span class="kw">return</span> <span class="str">"Hello from C"</span>; }
+}
+
+<span class="cmt">// RULE 1: Classes win over interfaces
+// If the class itself (or a superclass) declares the method, it wins</span>
+<span class="kw">class</span> <span class="type">MyClass</span> <span class="kw">implements</span> <span class="type">A</span>, <span class="type">B</span> {
+    <span class="cmt">// B extends A → B's version is more specific → B wins automatically
+    // hello() returns "Hello from B" without any override needed</span>
+}
+
+<span class="cmt">// RULE 2: More specific interface wins (sub-interface over super-interface)
+// B extends A → B is more specific → B's default wins</span>
+
+<span class="cmt">// RULE 3: If still ambiguous (C and B are unrelated) → MUST override explicitly</span>
+<span class="kw">class</span> <span class="type">Ambiguous</span> <span class="kw">implements</span> <span class="type">B</span>, <span class="type">C</span> {
+    <span class="cmt">// COMPILE ERROR if no override: "types B and C are incompatible;
+    // both define hello(), but neither overrides the other"</span>
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">hello</span>() {
+        <span class="cmt">// Option 1: Pick one explicitly</span>
+        <span class="kw">return</span> <span class="type">B</span>.<span class="kw">super</span>.<span class="fn">hello</span>();   <span class="cmt">// InterfaceName.super.method()</span>
+
+        <span class="cmt">// Option 2: Combine both</span>
+        <span class="cmt">// return B.super.hello() + " & " + C.super.hello();</span>
+
+        <span class="cmt">// Option 3: Own implementation</span>
+        <span class="cmt">// return "My own hello";</span>
+    }
+}</code></pre>
+      </div>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>The three disambiguation rules (memorise these):</strong><br>
+          1. <strong>Class beats interface</strong> — concrete method in class/superclass always wins<br>
+          2. <strong>Specific beats general</strong> — sub-interface default overrides super-interface default<br>
+          3. <strong>Explicit override required</strong> — when two unrelated interfaces conflict, implementing class must resolve it
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Default Method vs Abstract Class — Practical Difference</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">When default method is still not enough</span></div>
+        <pre><code><span class="kw">interface</span> <span class="type">Logger</span> {
+    <span class="kw">default void</span> <span class="fn">log</span>(<span class="type">String</span> msg) {
+        System.out.<span class="fn">println</span>(<span class="fn">getPrefix</span>() + msg); <span class="cmt">// calls abstract method</span>
+    }
+    <span class="type">String</span> <span class="fn">getPrefix</span>();  <span class="cmt">// implementor provides this</span>
+    <span class="cmt">// ❌ Cannot have: private String prefix = "[LOG]"; — no state!</span>
+}
+
+<span class="kw">abstract class</span> <span class="type">AbstractLogger</span> {
+    <span class="kw">private final</span> <span class="type">String</span> prefix;    <span class="cmt">// ✅ Has state!</span>
+    <span class="kw">protected</span> <span class="type">AbstractLogger</span>(<span class="type">String</span> prefix) { <span class="kw">this</span>.prefix = prefix; }
+    <span class="kw">public void</span> <span class="fn">log</span>(<span class="type">String</span> msg) { System.out.<span class="fn">println</span>(prefix + msg); }
+}
+<span class="cmt">// Abstract class wins when you need shared mutable state or constructor logic</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inner Classes -->
+  <div class="section" id="inner-classes">
+    <div class="section-header">
+      <h3>🏠 Inner Classes — All Four Types</h3>
+    </div>
+    <div class="card">
+      <h4>Why Inner Classes Exist</h4>
+      <p>Inner classes logically group types that are only used in one place, increase encapsulation (inner class can access private members of outer), and lead to more readable code. Four flavours serve different needs.</p>
+    </div>
+    <div class="card">
+      <h4>1. Non-Static Inner Class (Member Inner Class)</h4>
+      <p>Has an implicit reference to the outer class instance. Can access all outer class members (including private). Requires outer instance to create.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Non-static inner class</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">LinkedList</span>&lt;<span class="type">T</span>&gt; {
+    <span class="kw">private</span> <span class="type">Node</span>&lt;<span class="type">T</span>&gt; head;
+    <span class="kw">private int</span> size;
+
+    <span class="cmt">// Inner class — Node is only meaningful inside LinkedList</span>
+    <span class="kw">private class</span> <span class="type">Node</span>&lt;<span class="type">E</span>&gt; {
+        <span class="type">E</span> data;
+        <span class="type">Node</span>&lt;<span class="type">E</span>&gt; next;
+    }
+
+    <span class="cmt">// Iterator inner class can access outer's private 'head' and 'size'</span>
+    <span class="kw">public class</span> <span class="type">ListIterator</span> {
+        <span class="kw">private</span> <span class="type">Node</span>&lt;<span class="type">T</span>&gt; current = head; <span class="cmt">// outer's head!</span>
+
+        <span class="kw">public boolean</span> <span class="fn">hasNext</span>() { <span class="kw">return</span> current != <span class="kw">null</span>; }
+        <span class="kw">public</span> <span class="type">T</span> <span class="fn">next</span>() {
+            <span class="type">T</span> val = current.data;
+            current = current.next;
+            <span class="kw">return</span> val;
+        }
+    }
+}
+
+<span class="cmt">// Creation requires outer instance:</span>
+<span class="type">LinkedList</span>&lt;<span class="type">String</span>&gt; list = <span class="kw">new</span> <span class="type">LinkedList</span>&lt;&gt;();
+<span class="type">LinkedList</span>.<span class="type">ListIterator</span> iter = list.<span class="kw">new</span> <span class="type">ListIterator</span>(); <span class="cmt">// list. before new!</span>
+
+<span class="cmt">// ⚠️ Memory leak risk: non-static inner class holds outer reference
+//    If inner class outlives outer → outer can't be GC'd
+//    Solution: use static inner class if you don't need outer access</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>2. Static Nested Class</h4>
+      <p>No implicit outer reference. Can only access outer's static members. Behaves like a top-level class but namespaced inside the outer. <strong>Prefer this over non-static inner when you don't need outer instance access.</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Static nested class — Builder pattern</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">HttpRequest</span> {
+    <span class="kw">private final</span> <span class="type">String</span> url;
+    <span class="kw">private final</span> <span class="type">String</span> method;
+    <span class="kw">private final</span> <span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">String</span>&gt; headers;
+
+    <span class="kw">private</span> <span class="type">HttpRequest</span>(<span class="type">Builder</span> b) {
+        <span class="kw">this</span>.url = b.url; <span class="kw">this</span>.method = b.method; <span class="kw">this</span>.headers = b.headers;
+    }
+
+    <span class="cmt">// Static nested — no outer instance needed, groups logically</span>
+    <span class="kw">public static class</span> <span class="type">Builder</span> {
+        <span class="kw">private</span> <span class="type">String</span> url, method = <span class="str">"GET"</span>;
+        <span class="kw">private</span> <span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">String</span>&gt; headers = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">url</span>(<span class="type">String</span> url) { <span class="kw">this</span>.url = url; <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">method</span>(<span class="type">String</span> m) { <span class="kw">this</span>.method = m; <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">header</span>(<span class="type">String</span> k, <span class="type">String</span> v) { headers.<span class="fn">put</span>(k, v); <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">HttpRequest</span> <span class="fn">build</span>() { <span class="kw">return new</span> <span class="type">HttpRequest</span>(<span class="kw">this</span>); }
+    }
+}
+
+<span class="cmt">// No outer instance needed:</span>
+<span class="type">HttpRequest</span> req = <span class="kw">new</span> <span class="type">HttpRequest</span>.<span class="type">Builder</span>()
+    .<span class="fn">url</span>(<span class="str">"https://api.example.com"</span>)
+    .<span class="fn">method</span>(<span class="str">"POST"</span>)
+    .<span class="fn">header</span>(<span class="str">"Content-Type"</span>, <span class="str">"application/json"</span>)
+    .<span class="fn">build</span>();</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>3. Local Class (Inside Method)</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Local class — scoped to method, captures effectively-final vars</span></div>
+        <pre><code><span class="kw">public void</span> <span class="fn">processOrders</span>(<span class="type">List</span>&lt;<span class="type">Order</span>&gt; orders, <span class="type">String</span> currency) {
+    <span class="cmt">// Local class visible only inside this method</span>
+    <span class="kw">class</span> <span class="type">CurrencyFormatter</span> {
+        <span class="type">String</span> <span class="fn">format</span>(<span class="type">BigDecimal</span> amount) {
+            <span class="kw">return</span> currency + <span class="str">" "</span> + amount; <span class="cmt">// captures 'currency' (effectively final)</span>
+        }
+    }
+    <span class="type">CurrencyFormatter</span> fmt = <span class="kw">new</span> <span class="type">CurrencyFormatter</span>();
+    orders.<span class="fn">forEach</span>(o -&gt; System.out.<span class="fn">println</span>(fmt.<span class="fn">format</span>(o.<span class="fn">getTotal</span>())));
+    <span class="cmt">// CurrencyFormatter not visible outside processOrders
+    // Rare in modern Java — lambda usually cleaner</span>
+}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>4. Anonymous Class</h4>
+      <p>Declare and instantiate a class in one expression. No class name. Used to provide one-off implementations. In modern Java, lambdas replace most anonymous class uses — except when implementing interfaces with multiple methods.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Anonymous class vs lambda</span></div>
+        <pre><code><span class="cmt">// ── Anonymous class (pre-Java 8) ────────────────────────────────</span>
+<span class="type">Runnable</span> r1 = <span class="kw">new</span> <span class="type">Runnable</span>() {
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">run</span>() { System.out.<span class="fn">println</span>(<span class="str">"Running"</span>); }
+};
+
+<span class="cmt">// ── Lambda (Java 8+) — same thing, less boilerplate ─────────────</span>
+<span class="type">Runnable</span> r2 = () -&gt; System.out.<span class="fn">println</span>(<span class="str">"Running"</span>);
+
+<span class="cmt">// ── Anonymous class still needed when: ──────────────────────────</span>
+<span class="cmt">// 1. Interface has multiple abstract methods</span>
+<span class="type">Comparator</span>&lt;<span class="type">Person</span>&gt; comp = <span class="kw">new</span> <span class="type">Comparator</span>&lt;<span class="type">Person</span>&gt;() {
+    <span class="kw2">@Override</span>
+    <span class="kw">public int</span> <span class="fn">compare</span>(<span class="type">Person</span> a, <span class="type">Person</span> b) { ... }
+    <span class="cmt">// if you needed to also override toString, equals, etc.</span>
+};
+
+<span class="cmt">// 2. Extending a class (not just implementing interface)</span>
+<span class="type">JButton</span> btn = <span class="kw">new</span> <span class="type">JButton</span>(<span class="str">"Click"</span>) {{      <span class="cmt">// Double-brace init (anti-pattern!)</span>
+    <span class="fn">setBackground</span>(<span class="type">Color</span>.RED);
+    <span class="fn">setEnabled</span>(<span class="kw">false</span>);
+}};
+
+<span class="cmt">// 3. When you need to access 'this' of the anonymous class itself</span>
+<span class="type">EventListener</span> listener = <span class="kw">new</span> <span class="type">EventListener</span>() {
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">onEvent</span>(<span class="type">Event</span> e) {
+        <span class="cmt">// 'this' = the EventListener instance
+        // In lambda, 'this' = the enclosing class instance</span>
+        source.<span class="fn">removeListener</span>(<span class="kw">this</span>); <span class="cmt">// self-removal after first event</span>
+    }
+};</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Static Initializer Block</h4>
+      <p>A special block that runs once when the class is loaded and initialized — before any instance is created. Used for complex static field initialization.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Static and instance init blocks</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">Config</span> {
+
+    <span class="kw">public static final</span> <span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">String</span>&gt; <span class="const">DEFAULTS</span>;
+
+    <span class="cmt">// ── Static initializer ── runs ONCE when class loads</span>
+    <span class="kw">static</span> {
+        <span class="const">DEFAULTS</span> = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+        <span class="const">DEFAULTS</span>.<span class="fn">put</span>(<span class="str">"timeout"</span>, <span class="str">"30s"</span>);
+        <span class="const">DEFAULTS</span>.<span class="fn">put</span>(<span class="str">"retries"</span>, <span class="str">"3"</span>);
+        <span class="cmt">// complex init that can't be done in field declaration</span>
+    }
+
+    <span class="kw">private</span> <span class="type">String</span> env;
+
+    <span class="cmt">// ── Instance initializer ── runs BEFORE constructor body, AFTER super()</span>
+    {
+        env = <span class="type">System</span>.<span class="fn">getenv</span>(<span class="str">"APP_ENV"</span>);
+        <span class="kw">if</span> (env == <span class="kw">null</span>) env = <span class="str">"development"</span>;
+    }
+}
+
+<span class="cmt">// Execution order (for new Config()):
+// 1. static block (only on first load)
+// 2. instance initializer { }
+// 3. constructor body</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Associations -->
+  <div class="section" id="associations">
+    <div class="section-header">
+      <h3>🔗 Association, Aggregation & Composition</h3>
+    </div>
+    <div class="card">
+      <h4>The Spectrum of "Has-A" Relationships</h4>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>🔵 Association</h4>
+          <p><strong>A uses B</strong>. Weakest relationship. No ownership. A can exist without B and vice versa. Often a method parameter or temporary reference.</p>
+          <div class="code-block"><div class="code-header"><span class="code-lang">Java</span></div><pre><code><span class="kw">class</span> <span class="type">Doctor</span> {
+    <span class="kw">void</span> <span class="fn">treat</span>(<span class="type">Patient</span> p) {
+        <span class="cmt">// association — Doctor uses Patient
+        // neither owns the other</span>
+    }
+}</code></pre></div>
+        </div>
+        <div class="compare-card">
+          <h4>🟡 Aggregation ("Has-A", weak)</h4>
+          <p><strong>A has B, but B can live without A</strong>. B is passed in, not created by A. B's lifetime is independent. If A is destroyed, B continues to exist.</p>
+          <div class="code-block"><div class="code-header"><span class="code-lang">Java</span></div><pre><code><span class="kw">class</span> <span class="type">Department</span> {
+    <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">Employee</span>&gt; employees;
+    <span class="cmt">// Employees exist independently
+    // Can move to another dept
+    // Department deleted → employees still exist</span>
+}</code></pre></div>
+        </div>
+        <div class="compare-card">
+          <h4>🟢 Composition ("Part-of", strong)</h4>
+          <p><strong>A owns B. B cannot exist without A</strong>. B is created by A. B's lifetime is tied to A. If A is destroyed, B is too.</p>
+          <div class="code-block"><div class="code-header"><span class="code-lang">Java</span></div><pre><code><span class="kw">class</span> <span class="type">House</span> {
+    <span class="kw">private final</span> <span class="type">List</span>&lt;<span class="type">Room</span>&gt; rooms;
+    <span class="kw">public</span> <span class="type">House</span>() {
+        rooms = <span class="type">List</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="type">Room</span>(<span class="str">"Living"</span>),
+                        <span class="kw">new</span> <span class="type">Room</span>(<span class="str">"Bedroom"</span>));
+        <span class="cmt">// Rooms created by House, no separate existence</span>
+    }
+}</code></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Polymorphism -->
+  <div class="section" id="polymorphism">
+    <div class="section-header">
+      <h3>🎭 Polymorphism & Dynamic Dispatch</h3>
+    </div>
+    <div class="card">
+      <h4>Three Types of Polymorphism</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Type</th><th>How</th><th>When Resolved</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Subtype (Runtime)</strong></td><td>Method override</td><td>Runtime via vtable</td><td><code>Animal a = new Dog(); a.speak();</code></td></tr>
+            <tr><td><strong>Ad-hoc (Compile-time)</strong></td><td>Method overloading</td><td>Compile time</td><td><code>add(int,int)</code> vs <code>add(double,double)</code></td></tr>
+            <tr><td><strong>Parametric</strong></td><td>Generics</td><td>Compile time (erased)</td><td><code>List&lt;T&gt;</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Dynamic Dispatch — How the JVM Calls the Right Method</h4>
+      <p>The JVM uses a <strong>virtual method table (vtable)</strong>. Each class has a vtable mapping method signatures to their implementations. At runtime, the actual object's type determines which vtable is consulted.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Dynamic dispatch in action</span></div>
+        <pre><code><span class="kw">class</span> <span class="type">Animal</span> {
+    <span class="kw">void</span> <span class="fn">speak</span>() { System.out.<span class="fn">println</span>(<span class="str">"..."</span>); }
+    <span class="kw">static void</span> <span class="fn">category</span>() { System.out.<span class="fn">println</span>(<span class="str">"Animal"</span>); } <span class="cmt">// NOT virtual</span>
+}
+<span class="kw">class</span> <span class="type">Dog</span> <span class="kw">extends</span> <span class="type">Animal</span> {
+    <span class="kw2">@Override</span>
+    <span class="kw">void</span> <span class="fn">speak</span>() { System.out.<span class="fn">println</span>(<span class="str">"Woof"</span>); } <span class="cmt">// overrides virtual method</span>
+    <span class="kw">static void</span> <span class="fn">category</span>() { System.out.<span class="fn">println</span>(<span class="str">"Dog"</span>); } <span class="cmt">// hides, not overrides</span>
+}
+
+<span class="type">Animal</span> a = <span class="kw">new</span> <span class="type">Dog</span>();   <span class="cmt">// compile-time type: Animal. runtime type: Dog</span>
+a.<span class="fn">speak</span>();               <span class="cmt">// → "Woof" (runtime type Dog's vtable)</span>
+<span class="type">Animal</span>.<span class="fn">category</span>();       <span class="cmt">// → "Animal" (static: resolved by reference type, not object type)</span>
+<span class="cmt">// ((Dog) a).category()  → "Dog" (cast changes reference type)</span>
+
+<span class="cmt">// JVM bytecode for a.speak():
+// invokevirtual Animal.speak()V
+// → JVM looks up actual class of 'a' at runtime → Dog → Dog.speak()</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Override vs Method Hiding -->
+  <div class="section" id="static-override">
+    <div class="section-header">
+      <h3>🔄 Override vs Method Hiding — The Full Truth</h3>
+    </div>
+    <div class="card">
+      <h4>Can You Override a Static Method?</h4>
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body"><strong>No. Static methods cannot be overridden.</strong> They can be <em>hidden</em>. The distinction is critical: overriding uses dynamic dispatch (runtime type). Hiding uses static dispatch (reference type).</div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Method hiding vs method overriding</span></div>
+        <pre><code><span class="kw">class</span> <span class="type">Parent</span> {
+    <span class="kw">static void</span> <span class="fn">staticMethod</span>() { System.out.<span class="fn">println</span>(<span class="str">"Parent static"</span>); }
+    <span class="kw">void</span>        <span class="fn">instanceMethod</span>() { System.out.<span class="fn">println</span>(<span class="str">"Parent instance"</span>); }
+}
+<span class="kw">class</span> <span class="type">Child</span> <span class="kw">extends</span> <span class="type">Parent</span> {
+    <span class="kw">static void</span> <span class="fn">staticMethod</span>() { System.out.<span class="fn">println</span>(<span class="str">"Child static"</span>); }  <span class="cmt">// HIDING</span>
+    <span class="kw2">@Override</span>
+    <span class="kw">void</span>        <span class="fn">instanceMethod</span>() { System.out.<span class="fn">println</span>(<span class="str">"Child instance"</span>); } <span class="cmt">// OVERRIDE</span>
+}
+
+<span class="type">Parent</span> ref = <span class="kw">new</span> <span class="type">Child</span>();
+
+ref.<span class="fn">staticMethod</span>();    <span class="cmt">// → "Parent static"  (HIDING — reference type wins)</span>
+ref.<span class="fn">instanceMethod</span>();  <span class="cmt">// → "Child instance" (OVERRIDE — runtime type wins)</span>
+
+<span class="type">Child</span> c = <span class="kw">new</span> <span class="type">Child</span>();
+c.<span class="fn">staticMethod</span>();      <span class="cmt">// → "Child static"   (Child reference)</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Can You Override the main() Method?</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">main() hiding — not true override</span></div>
+        <pre><code><span class="kw">class</span> <span class="type">Parent</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+        System.out.<span class="fn">println</span>(<span class="str">"Parent main"</span>);
+    }
+}
+<span class="kw">class</span> <span class="type">Child</span> <span class="kw">extends</span> <span class="type">Parent</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {  <span class="cmt">// HIDES Parent.main, does NOT override</span>
+        System.out.<span class="fn">println</span>(<span class="str">"Child main"</span>);
+    }
+}
+
+<span class="cmt">// java Parent → "Parent main"
+// java Child  → "Child main"
+// (JVM calls main() of the class you launch — no polymorphism involved)
+// Summary: main() is static → cannot be overridden → only hidden</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Rules for Valid Method Override</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Same signature</strong></td><td>Same name, same parameter types (not just compatible — exact match)</td></tr>
+            <tr><td><strong>Covariant return type</strong></td><td>Can return a subtype: if parent returns <code>Animal</code>, child can return <code>Dog</code></td></tr>
+            <tr><td><strong>Access modifier</strong></td><td>Can only widen, not narrow. Protected can become public. Public cannot become protected.</td></tr>
+            <tr><td><strong>Checked exceptions</strong></td><td>Can only declare fewer/narrower checked exceptions than parent. Can add unchecked.</td></tr>
+            <tr><td><strong>Not static</strong></td><td>Static methods hide, not override</td></tr>
+            <tr><td><strong>Not final</strong></td><td>Final methods cannot be overridden</td></tr>
+            <tr><td><strong>Not private</strong></td><td>Private methods are not visible to subclass — no override possible</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 4 — EXCEPTIONS
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">04</div>
+    <div>
+      <h2>Exception Handling</h2>
+      <p>The full exception hierarchy, checked vs unchecked, custom exceptions, and best practices.</p>
+    </div>
+  </div>
+
+  <div class="section" id="exceptions">
+    <div class="section-header">
+      <h3>🚨 Exception Hierarchy</h3>
+    </div>
+    <div class="card">
+      <h4>The Full Tree</h4>
+      <div class="diagram">
+<span class="d-blue">Throwable</span>  (root — anything you can throw/catch)
+    │
+    ├──► <span class="d-red">Error</span>  (serious JVM problems — usually don't catch)
+    │       ├── OutOfMemoryError
+    │       ├── StackOverflowError
+    │       ├── VirtualMachineError
+    │       ├── AssertionError
+    │       └── ThreadDeath
+    │
+    └──► <span class="d-orange">Exception</span>  (recoverable conditions)
+            │
+            ├──► <span class="d-green">RuntimeException</span>  (UNCHECKED — compiler doesn't force handling)
+            │       ├── NullPointerException
+            │       ├── IllegalArgumentException
+            │       ├── IllegalStateException
+            │       ├── IndexOutOfBoundsException
+            │       ├── ClassCastException
+            │       ├── UnsupportedOperationException
+            │       └── ArithmeticException
+            │
+            └──► Checked Exceptions  (CHECKED — must declare or handle)
+                    ├── IOException
+                    │     ├── FileNotFoundException
+                    │     └── SocketException
+                    ├── SQLException
+                    ├── CloneNotSupportedException
+                    └── InterruptedException
+      </div>
+    </div>
+    <div class="card">
+      <h4>Error vs Exception — Key Difference</h4>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>🔴 Error</h4>
+          <ul>
+            <li>JVM-level fatal conditions</li>
+            <li><strong>Never try to catch</strong> (except in top-level handlers)</li>
+            <li>Program cannot meaningfully recover</li>
+            <li><code>StackOverflowError</code>: infinite recursion</li>
+            <li><code>OutOfMemoryError</code>: heap exhausted</li>
+            <li>Signals a fundamental environmental problem</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>🟡 Exception</h4>
+          <ul>
+            <li>Recoverable conditions</li>
+            <li>Checked: caller MUST handle or declare</li>
+            <li>Unchecked: programmer errors, don't force handling</li>
+            <li><code>IOException</code>: network/file failure — retry or report</li>
+            <li><code>NullPointerException</code>: bug — fix the code</li>
+            <li>Signals a condition the application can respond to</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Checked vs Unchecked — The Design Debate</h4>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Checked exceptions (the compiler forces you):</strong><br>
+          Philosophy: "If you call this, something outside the program's control can fail — YOU decide how to handle it."<br><br>
+          <strong>Unchecked exceptions:</strong><br>
+          Philosophy: "This is a programming error. Fixing the code is the right response — not catching every method."<br><br>
+          <strong>Modern Java practice:</strong> Most frameworks (Spring, Hibernate) wrap checked exceptions into unchecked equivalents. Spring's <code>DataAccessException</code> is unchecked even though JDBC throws checked exceptions. Reason: forces callers to deal with them even when they can't meaningfully recover.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="exception-handling">
+    <div class="section-header">
+      <h3>🛡️ Exception Handling Patterns</h3>
+    </div>
+    <div class="card">
+      <h4>Complete Exception Syntax</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">All exception handling constructs</span></div>
+        <pre><code><span class="cmt">// ── try-catch-finally ───────────────────────────────────────────</span>
+<span class="kw">try</span> {
+    <span class="fn">riskyOperation</span>();
+} <span class="kw">catch</span> (<span class="type">FileNotFoundException</span> e) {   <span class="cmt">// most specific first</span>
+    <span class="fn">handleMissingFile</span>(e);
+} <span class="kw">catch</span> (<span class="type">IOException</span> e) {             <span class="cmt">// more general after</span>
+    <span class="fn">handleIOError</span>(e);
+} <span class="kw">catch</span> (<span class="type">NullPointerException</span> | <span class="type">IllegalArgumentException</span> e) { <span class="cmt">// multi-catch</span>
+    log.<span class="fn">error</span>(<span class="str">"Input error: "</span>, e);
+} <span class="kw">finally</span> {
+    <span class="fn">cleanUp</span>();  <span class="cmt">// ALWAYS runs — even if return or throw in try/catch</span>
+}
+
+<span class="cmt">// ── try-with-resources (Java 7+) ────────────────────────────────</span>
+<span class="cmt">// AutoCloseable resources auto-closed even if exception thrown</span>
+<span class="kw">try</span> (<span class="type">Connection</span> conn = <span class="fn">getConnection</span>();
+     <span class="type">PreparedStatement</span> ps = conn.<span class="fn">prepareStatement</span>(<span class="str">"SELECT ..."</span>)) {
+
+    <span class="type">ResultSet</span> rs = ps.<span class="fn">executeQuery</span>();
+    <span class="cmt">// conn and ps auto-closed in reverse declaration order</span>
+} <span class="kw">catch</span> (<span class="type">SQLException</span> e) {
+    <span class="fn">handleDbError</span>(e);
+}
+
+<span class="cmt">// ── Custom exception best practices ─────────────────────────────</span>
+<span class="kw">public class</span> <span class="type">OrderNotFoundException</span> <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+    <span class="kw">private final</span> <span class="type">Long</span> orderId;
+
+    <span class="kw">public</span> <span class="type">OrderNotFoundException</span>(<span class="type">Long</span> orderId) {
+        <span class="kw">super</span>(<span class="str">"Order not found: "</span> + orderId);  <span class="cmt">// meaningful message</span>
+        <span class="kw">this</span>.orderId = orderId;
+    }
+
+    <span class="kw">public</span> <span class="type">OrderNotFoundException</span>(<span class="type">Long</span> orderId, <span class="type">Throwable</span> cause) {
+        <span class="kw">super</span>(<span class="str">"Order not found: "</span> + orderId, cause); <span class="cmt">// preserve cause chain!</span>
+        <span class="kw">this</span>.orderId = orderId;
+    }
+
+    <span class="kw">public</span> <span class="type">Long</span> <span class="fn">getOrderId</span>() { <span class="kw">return</span> orderId; }
+}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Exception Handling Anti-Patterns</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">What NOT to do</span></div>
+        <pre><code><span class="cmt">// ❌ Swallowing exceptions — worst sin</span>
+<span class="kw">try</span> {
+    <span class="fn">connect</span>();
+} <span class="kw">catch</span> (<span class="type">IOException</span> e) {
+    <span class="cmt">// empty — exception eaten, no trace, impossible to debug</span>
+}
+
+<span class="cmt">// ❌ Catching generic Exception (hides bugs)</span>
+<span class="kw">try</span> { ... }
+<span class="kw">catch</span> (<span class="type">Exception</span> e) { <span class="cmt">// catches NullPointerException, ClassCastException — bugs!</span>
+    log.<span class="fn">error</span>(<span class="str">"Error"</span>, e);
+}
+
+<span class="cmt">// ❌ Exception for flow control (expensive — stack trace generation)</span>
+<span class="kw">try</span> {
+    <span class="type">int</span> val = <span class="type">Integer</span>.<span class="fn">parseInt</span>(input); <span class="cmt">// use if/regex check instead</span>
+} <span class="kw">catch</span> (<span class="type">NumberFormatException</span> e) {
+    useDefault();
+}
+
+<span class="cmt">// ❌ Losing cause chain</span>
+<span class="kw">try</span> { ... }
+<span class="kw">catch</span> (<span class="type">IOException</span> e) {
+    <span class="kw">throw new</span> <span class="type">ServiceException</span>(<span class="str">"Failed"</span>); <span class="cmt">// 'e' lost! no cause</span>
+    <span class="cmt">// ✅ throw new ServiceException("Failed", e); — preserve cause</span>
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="finally-finalize">
+    <div class="section-header">
+      <h3>🔚 finally vs finalize</h3>
+    </div>
+    <div class="card">
+      <h4>finally — The Guaranteed Block</h4>
+      <p><code>finally</code> always runs after <code>try</code> (and any <code>catch</code>) — except if <code>System.exit()</code> is called or JVM crashes. Use for resource cleanup, though try-with-resources is preferred.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">finally edge case — return in finally</span></div>
+        <pre><code><span class="kw">int</span> <span class="fn">danger</span>() {
+    <span class="kw">try</span> {
+        <span class="kw">return</span> <span class="num">1</span>;     <span class="cmt">// finally still runs before actual return</span>
+    } <span class="kw">finally</span> {
+        <span class="kw">return</span> <span class="num">2</span>;     <span class="cmt">// ❌ OVERRIDES the try's return! returns 2</span>
+    }                  <span class="cmt">// Also swallows any exception from try!</span>
+}
+<span class="cmt">// Rule: NEVER return or throw from finally — it masks original exception/return</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>finalize — Deprecated and Dangerous</h4>
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong><code>finalize()</code> is deprecated since Java 9, removed in Java 18. Do not use it.</strong><br><br>
+          Problems with finalize: no guaranteed call timing (or at all), can resurrect objects, causes GC pauses, unpredictable. Use <code>AutoCloseable</code> + try-with-resources or <code>Cleaner</code> API instead.
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Modern replacement — Cleaner API (Java 9+)</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">NativeResource</span> <span class="kw">implements</span> <span class="type">AutoCloseable</span> {
+    <span class="kw">private static final</span> <span class="type">Cleaner</span> CLEANER = <span class="type">Cleaner</span>.<span class="fn">create</span>();
+
+    <span class="kw">private final</span> <span class="type">Cleaner.Cleanable</span> cleanable;
+    <span class="kw">private final</span> <span class="type">State</span> state;
+
+    <span class="kw">public</span> <span class="type">NativeResource</span>() {
+        <span class="kw">this</span>.state = <span class="kw">new</span> <span class="type">State</span>();
+        <span class="kw">this</span>.cleanable = CLEANER.<span class="fn">register</span>(<span class="kw">this</span>, state); <span class="cmt">// state is Runnable</span>
+    }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">close</span>() { cleanable.<span class="fn">clean</span>(); } <span class="cmt">// explicit close</span>
+
+    <span class="kw">static class</span> <span class="type">State</span> <span class="kw">implements</span> <span class="type">Runnable</span> {
+        <span class="kw2">@Override</span>
+        <span class="kw">public void</span> <span class="fn">run</span>() {
+            System.out.<span class="fn">println</span>(<span class="str">"Releasing native memory"</span>); <span class="cmt">// safe cleanup</span>
+        }
+    }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 5 — GENERICS & TYPE SYSTEM
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">05</div>
+    <div>
+      <h2>Generics & Type System</h2>
+      <p>Wildcards, variance, type erasure, and the reflection workarounds — Java's most nuanced type features.</p>
+    </div>
+  </div>
+
+  <div class="section" id="generics">
+    <div class="section-header">
+      <h3>🔷 Generics Deep Dive</h3>
+    </div>
+    <div class="card">
+      <h4>Why Generics Were Added (Java 5)</h4>
+      <p>Before generics, Java collections were untyped. You'd store any <code>Object</code> and cast on retrieval — runtime <code>ClassCastException</code>. Generics move type safety to compile time.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Pre-generics problem vs generics solution</span></div>
+        <pre><code><span class="cmt">// ❌ Before generics (Java 1.4)</span>
+<span class="type">List</span> names = <span class="kw">new</span> <span class="type">ArrayList</span>();
+names.<span class="fn">add</span>(<span class="str">"Alice"</span>);
+names.<span class="fn">add</span>(<span class="num">42</span>);                    <span class="cmt">// compiles — no type check!</span>
+<span class="type">String</span> name = (<span class="type">String</span>) names.<span class="fn">get</span>(<span class="num">1</span>); <span class="cmt">// → ClassCastException at runtime</span>
+
+<span class="cmt">// ✅ With generics (Java 5+)</span>
+<span class="type">List</span>&lt;<span class="type">String</span>&gt; names = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+names.<span class="fn">add</span>(<span class="str">"Alice"</span>);
+names.<span class="fn">add</span>(<span class="num">42</span>);        <span class="cmt">// COMPILE ERROR: int not compatible with String</span>
+<span class="type">String</span> name = names.<span class="fn">get</span>(<span class="num">0</span>); <span class="cmt">// no cast needed — type is known</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Bounded Type Parameters</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Upper and lower bounds on type parameters</span></div>
+        <pre><code><span class="cmt">// ── Upper bound: T must be Number or subtype ────────────────────</span>
+<span class="kw">public</span> &lt;<span class="type">T</span> <span class="kw">extends</span> <span class="type">Number</span>&gt; <span class="type">double</span> <span class="fn">sum</span>(<span class="type">List</span>&lt;<span class="type">T</span>&gt; list) {
+    <span class="kw">return</span> list.<span class="fn">stream</span>()
+               .<span class="fn">mapToDouble</span>(<span class="type">Number</span>::<span class="fn">doubleValue</span>)  <span class="cmt">// T has doubleValue()</span>
+               .<span class="fn">sum</span>();
+}
+<span class="fn">sum</span>(<span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>));      <span class="cmt">// works — Integer extends Number</span>
+<span class="fn">sum</span>(<span class="type">List</span>.<span class="fn">of</span>(<span class="num">1.5</span>, <span class="num">2.5</span>));    <span class="cmt">// works — Double extends Number</span>
+
+<span class="cmt">// ── Multiple bounds: T extends Comparable AND Serializable ─────</span>
+<span class="kw">public</span> &lt;<span class="type">T</span> <span class="kw">extends</span> <span class="type">Comparable</span>&lt;<span class="type">T</span>&gt; &amp; <span class="type">Serializable</span>&gt; <span class="type">T</span> <span class="fn">max</span>(<span class="type">T</span> a, <span class="type">T</span> b) {
+    <span class="kw">return</span> a.<span class="fn">compareTo</span>(b) &gt;= <span class="num">0</span> ? a : b;
+}
+
+<span class="cmt">// ── Generic class ───────────────────────────────────────────────</span>
+<span class="kw">public class</span> <span class="type">Pair</span>&lt;<span class="type">A</span>, <span class="type">B</span>&gt; {
+    <span class="kw">private final</span> <span class="type">A</span> first;
+    <span class="kw">private final</span> <span class="type">B</span> second;
+
+    <span class="kw">public</span> <span class="type">Pair</span>(<span class="type">A</span> first, <span class="type">B</span> second) { <span class="kw">this</span>.first = first; <span class="kw">this</span>.second = second; }
+
+    <span class="kw">public</span> <span class="type">A</span> <span class="fn">getFirst</span>() { <span class="kw">return</span> first; }
+    <span class="kw">public</span> <span class="type">B</span> <span class="fn">getSecond</span>() { <span class="kw">return</span> second; }
+
+    <span class="cmt">// Generic method inside generic class</span>
+    <span class="kw">public</span> <span class="type">Pair</span>&lt;<span class="type">B</span>, <span class="type">A</span>&gt; <span class="fn">swap</span>() { <span class="kw">return new</span> <span class="type">Pair</span>&lt;&gt;(second, first); }
+}
+
+<span class="type">Pair</span>&lt;<span class="type">String</span>, <span class="type">Integer</span>&gt; p = <span class="kw">new</span> <span class="type">Pair</span>&lt;&gt;(<span class="str">"Alice"</span>, <span class="num">30</span>);
+<span class="type">Pair</span>&lt;<span class="type">Integer</span>, <span class="type">String</span>&gt; swapped = p.<span class="fn">swap</span>(); <span class="cmt">// (30, "Alice")</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="wildcards">
+    <div class="section-header">
+      <h3>🃏 Wildcards — Covariance & Contravariance</h3>
+    </div>
+    <div class="card">
+      <h4>Why Wildcards Exist — The Invariance Problem</h4>
+      <p>Java generics are <strong>invariant</strong> by default. <code>List&lt;Dog&gt;</code> is NOT a subtype of <code>List&lt;Animal&gt;</code> — even though <code>Dog IS-A Animal</code>. This is correct! If it were allowed, you could add a <code>Cat</code> to what should be a <code>List&lt;Dog&gt;</code>. Wildcards give you controlled flexibility.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Why invariance is necessary</span></div>
+        <pre><code><span class="cmt">// If List&lt;Dog&gt; were a subtype of List&lt;Animal&gt; (it's not, but hypothetically):</span>
+<span class="type">List</span>&lt;<span class="type">Dog</span>&gt; dogs = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+<span class="type">List</span>&lt;<span class="type">Animal</span>&gt; animals = dogs;      <span class="cmt">// hypothetical — COMPILE ERROR in reality</span>
+animals.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">Cat</span>());           <span class="cmt">// add Cat to what is really a List&lt;Dog&gt;!!</span>
+<span class="type">Dog</span> d = dogs.<span class="fn">get</span>(<span class="num">0</span>);             <span class="cmt">// → ClassCastException at runtime</span>
+<span class="cmt">// This is why Java arrays ARE covariant but you get ArrayStoreException</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Upper-Bounded Wildcard <code>? extends T</code> — Covariance — PRODUCER</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">? extends — read from it (covariant)</span></div>
+        <pre><code><span class="cmt">// ? extends Animal means: some specific subtype of Animal (we don't know which)
+// SAFE to READ — any element is at least an Animal
+// UNSAFE to WRITE — can't add because we don't know the exact subtype</span>
+
+<span class="kw">public double</span> <span class="fn">totalWeight</span>(<span class="type">List</span>&lt;? <span class="kw">extends</span> <span class="type">Animal</span>&gt; animals) {
+    <span class="kw">double</span> total = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">Animal</span> a : animals) {    <span class="cmt">// ✅ reading is safe — element IS an Animal</span>
+        total += a.<span class="fn">getWeight</span>();
+    }
+    <span class="kw">return</span> total;
+}
+<span class="cmt">// Can pass: List&lt;Dog&gt;, List&lt;Cat&gt;, List&lt;Animal&gt; ← all work!</span>
+
+<span class="kw">public void</span> <span class="fn">addCat</span>(<span class="type">List</span>&lt;? <span class="kw">extends</span> <span class="type">Animal</span>&gt; list) {
+    list.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">Cat</span>());   <span class="cmt">// ❌ COMPILE ERROR — list could be List&lt;Dog&gt;!</span>
+    list.<span class="fn">add</span>(<span class="kw">null</span>);        <span class="cmt">// ✅ only null is allowed to be added</span>
+}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Lower-Bounded Wildcard <code>? super T</code> — Contravariance — CONSUMER</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">? super — write to it (contravariant)</span></div>
+        <pre><code><span class="cmt">// ? super Dog means: Dog or any supertype (Animal, Object)
+// SAFE to WRITE Dog (or subtype) — container definitely holds Dog or wider
+// UNSAFE to READ as specific type — could be List&lt;Object&gt;, can only read as Object</span>
+
+<span class="kw">public void</span> <span class="fn">fillWithDogs</span>(<span class="type">List</span>&lt;? <span class="kw">super</span> <span class="type">Dog</span>&gt; list) {
+    list.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">Dog</span>());    <span class="cmt">// ✅ safe — list accepts Dog or supertype</span>
+    list.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">Puppy</span>()); <span class="cmt">// ✅ safe — Puppy IS-A Dog</span>
+    list.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">Cat</span>());   <span class="cmt">// ❌ Cat is not a Dog or subtype of Dog</span>
+
+    <span class="type">Object</span> o = list.<span class="fn">get</span>(<span class="num">0</span>); <span class="cmt">// ✅ can only get as Object (widest type)</span>
+    <span class="type">Dog</span> d = (<span class="type">Dog</span>) list.<span class="fn">get</span>(<span class="num">0</span>); <span class="cmt">// ⚠️ cast required — unsafe</span>
+}
+<span class="cmt">// Can pass: List&lt;Dog&gt;, List&lt;Animal&gt;, List&lt;Object&gt;</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>PECS — Producer Extends, Consumer Super</h4>
+      <div class="banner banner-blue">
+        <h4>The PECS Rule — Memorise This</h4>
+        <p>
+          <strong>P</strong>roducer <strong>E</strong>xtends: if a structure <em>produces</em> (you read from it) → use <code>? extends T</code><br>
+          <strong>C</strong>onsumer <strong>S</strong>uper: if a structure <em>consumes</em> (you write to it) → use <code>? super T</code><br><br>
+          Classic example: <code>Collections.copy(List&lt;? super T&gt; dest, List&lt;? extends T&gt; src)</code><br>
+          <code>src</code> is a producer (we read from it) → <code>? extends T</code><br>
+          <code>dest</code> is a consumer (we write to it) → <code>? super T</code>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="type-erasure">
+    <div class="section-header">
+      <h3>🧹 Type Erasure</h3>
+    </div>
+    <div class="card">
+      <h4>What Type Erasure Is</h4>
+      <p>Generic type parameters are removed at compile time and replaced with their bounds (or <code>Object</code> if unbounded). At runtime, <code>List&lt;String&gt;</code> and <code>List&lt;Integer&gt;</code> are the same <code>List</code> class. This was done for backward compatibility with pre-generics Java.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">What the compiler transforms</span></div>
+        <pre><code><span class="cmt">// ── Your source code ────────────────────────────────────────────</span>
+<span class="kw">public</span> &lt;<span class="type">T</span> <span class="kw">extends</span> <span class="type">Comparable</span>&lt;<span class="type">T</span>&gt;&gt; <span class="type">T</span> <span class="fn">max</span>(<span class="type">T</span> a, <span class="type">T</span> b) {
+    <span class="kw">return</span> a.<span class="fn">compareTo</span>(b) &gt;= <span class="num">0</span> ? a : b;
+}
+
+<span class="cmt">// ── After type erasure (what JVM sees) ──────────────────────────</span>
+<span class="kw">public</span> <span class="type">Comparable</span> <span class="fn">max</span>(<span class="type">Comparable</span> a, <span class="type">Comparable</span> b) { <span class="cmt">// T → Comparable (upper bound)</span>
+    <span class="kw">return</span> a.<span class="fn">compareTo</span>(b) &gt;= <span class="num">0</span> ? a : b;
+}
+
+<span class="cmt">// ── Consequences of type erasure ────────────────────────────────</span>
+
+<span class="cmt">// 1. Cannot create generic array</span>
+<span class="type">T</span>[] arr = <span class="kw">new</span> <span class="type">T</span>[<span class="num">10</span>]; <span class="cmt">// ❌ COMPILE ERROR — T unknown at runtime</span>
+
+<span class="cmt">// 2. Cannot use instanceof with generic type</span>
+<span class="kw">if</span> (obj <span class="kw">instanceof</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt;) {} <span class="cmt">// ❌ COMPILE ERROR</span>
+<span class="kw">if</span> (obj <span class="kw">instanceof</span> <span class="type">List</span>&lt;?&gt;) {}       <span class="cmt">// ✅ wildcard ok</span>
+
+<span class="cmt">// 3. Cannot distinguish List&lt;String&gt; from List&lt;Integer&gt; at runtime</span>
+<span class="kw">var</span> strings = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;<span class="type">String</span>&gt;();
+<span class="kw">var</span> ints    = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;<span class="type">Integer</span>&gt;();
+System.out.<span class="fn">println</span>(strings.<span class="fn">getClass</span>() == ints.<span class="fn">getClass</span>()); <span class="cmt">// → true!</span>
+
+<span class="cmt">// 4. Heap pollution via unchecked cast</span>
+<span class="type">List</span> raw = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;<span class="type">String</span>&gt;();
+<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; ints2 = (<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;) raw; <span class="cmt">// unchecked warning — runtime ClassCastException later</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Working Around Type Erasure — Passing Class Token</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Reified types via Class&lt;T&gt; token</span></div>
+        <pre><code><span class="cmt">// When you need the type at runtime, pass Class&lt;T&gt; explicitly</span>
+<span class="kw">public</span> &lt;<span class="type">T</span>&gt; <span class="type">T</span> <span class="fn">parseJson</span>(<span class="type">String</span> json, <span class="type">Class</span>&lt;<span class="type">T</span>&gt; type) {
+    <span class="kw">return</span> objectMapper.<span class="fn">readValue</span>(json, type);  <span class="cmt">// Jackson uses reflection with Class token</span>
+}
+
+<span class="type">User</span> user = <span class="fn">parseJson</span>(jsonStr, <span class="type">User</span>.class);
+
+<span class="cmt">// TypeToken pattern (Guava / Jackson) for generic types</span>
+<span class="type">TypeReference</span>&lt;<span class="type">List</span>&lt;<span class="type">User</span>&gt;&gt; listType = <span class="kw">new</span> <span class="type">TypeReference</span>&lt;&gt;() {};
+<span class="cmt">// Anonymous subclass — superclass type argument (List&lt;User&gt;) IS preserved in bytecode
+// Accessible via getClass().getGenericSuperclass()</span>
+<span class="type">List</span>&lt;<span class="type">User</span>&gt; users = objectMapper.<span class="fn">readValue</span>(json, listType);</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="reflection">
+    <div class="section-header">
+      <h3>🪞 Reflection API</h3>
+    </div>
+    <div class="card">
+      <h4>What Reflection Is — And Why It's Powerful (and Dangerous)</h4>
+      <p>Reflection lets you inspect and manipulate classes, fields, methods, and constructors at <em>runtime</em> — without knowing them at compile time. Used by Spring (DI), Jackson (JSON), JUnit (test discovery), Hibernate (entity mapping).</p>
+    </div>
+    <div class="card">
+      <h4>The Reflection API In Depth</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Complete reflection operations</span></div>
+        <pre><code><span class="kw">import</span> java.lang.reflect.*;
+
+<span class="cmt">// ── 1. Get Class object ─────────────────────────────────────────</span>
+<span class="type">Class</span>&lt;?&gt; clazz = <span class="type">Class</span>.<span class="fn">forName</span>(<span class="str">"com.app.User"</span>); <span class="cmt">// dynamic — string at runtime</span>
+<span class="type">Class</span>&lt;<span class="type">User</span>&gt; clazz2 = <span class="type">User</span>.class;                   <span class="cmt">// static — known at compile time</span>
+<span class="type">Class</span>&lt;?&gt; clazz3 = user.<span class="fn">getClass</span>();                 <span class="cmt">// from instance</span>
+
+<span class="cmt">// ── 2. Inspect class metadata ──────────────────────────────────</span>
+System.out.<span class="fn">println</span>(clazz.<span class="fn">getName</span>());             <span class="cmt">// "com.app.User"</span>
+System.out.<span class="fn">println</span>(clazz.<span class="fn">getSuperclass</span>().<fn>getName</fn>()); <span class="cmt">// superclass</span>
+<span class="type">Class</span>&lt;?&gt;[] interfaces = clazz.<span class="fn">getInterfaces</span>();   <span class="cmt">// implemented interfaces</span>
+
+<span class="cmt">// ── 3. Fields ──────────────────────────────────────────────────</span>
+<span class="type">Field</span>[] fields = clazz.<span class="fn">getDeclaredFields</span>();       <span class="cmt">// all fields incl. private</span>
+<span class="kw">for</span> (<span class="type">Field</span> f : fields) {
+    f.<span class="fn">setAccessible</span>(<span class="kw">true</span>);                          <span class="cmt">// bypass private</span>
+    System.out.<span class="fn">println</span>(f.<span class="fn">getName</span>() + <span class="str">" = "</span> + f.<span class="fn">get</span>(userInstance));
+}
+
+<span class="cmt">// ── 4. Methods ─────────────────────────────────────────────────</span>
+<span class="type">Method</span> method = clazz.<span class="fn">getDeclaredMethod</span>(<span class="str">"setName"</span>, <span class="type">String</span>.class);
+method.<span class="fn">setAccessible</span>(<span class="kw">true</span>);
+method.<span class="fn">invoke</span>(userInstance, <span class="str">"Alice"</span>);              <span class="cmt">// call setName("Alice")</span>
+
+<span class="cmt">// ── 5. Constructors ────────────────────────────────────────────</span>
+<span class="type">Constructor</span>&lt;?&gt; ctor = clazz.<span class="fn">getDeclaredConstructor</span>(<span class="type">String</span>.class, <span class="type">int</span>.class);
+ctor.<span class="fn">setAccessible</span>(<span class="kw">true</span>);
+<span class="type">Object</span> newUser = ctor.<span class="fn">newInstance</span>(<span class="str">"Bob"</span>, <span class="num">25</span>);      <span class="cmt">// create instance</span>
+
+<span class="cmt">// ── 6. Annotations ─────────────────────────────────────────────</span>
+<span class="kw">if</span> (clazz.<span class="fn">isAnnotationPresent</span>(<span class="type">Entity</span>.class)) {
+    <span class="type">Entity</span> entity = clazz.<span class="fn">getAnnotation</span>(<span class="type">Entity</span>.class);
+    System.out.<span class="fn">println</span>(entity.<span class="fn">name</span>());
+}
+
+<span class="cmt">// ── 7. Generic type info (survives erasure on declarations) ────</span>
+<span class="type">Field</span> listField = clazz.<span class="fn">getDeclaredField</span>(<span class="str">"items"</span>); <span class="cmt">// List&lt;String&gt; items</span>
+<span class="type">ParameterizedType</span> pt = (<span class="type">ParameterizedType</span>) listField.<span class="fn">getGenericType</span>();
+<span class="type">Class</span>&lt;?&gt; elementType = (<span class="type">Class</span>&lt;?&gt;) pt.<span class="fn">getActualTypeArguments</span>()[<span class="num">0</span>]; <span class="cmt">// → String.class</span></code></pre>
+      </div>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>Reflection downsides:</strong><br>
+          1. Performance — method lookup, access checks on every call<br>
+          2. Bypasses access control — can break encapsulation<br>
+          3. Breaks with Java modules (Java 9+) — module system restricts deep reflection<br>
+          4. Compile-time safety lost — errors at runtime<br><br>
+          Use only when genuinely necessary (frameworks, testing, serialization). Never in hot paths.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 6 — FUNCTIONAL JAVA
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">06</div>
+    <div>
+      <h2>Functional Java</h2>
+      <p>Lambda expressions, the Streams API, Optional, and modern Java value types.</p>
+    </div>
+  </div>
+
+  <div class="section" id="lambda">
+    <div class="section-header">
+      <h3>λ Lambda Expressions</h3>
+    </div>
+    <div class="card">
+      <h4>What Lambdas Are — Under The Hood</h4>
+      <p>Lambdas are syntactic sugar for <em>functional interfaces</em> (interfaces with exactly one abstract method). At runtime, the JVM uses <code>invokedynamic</code> bytecode — NOT anonymous classes — to create lambda instances. This is faster and uses less memory than anonymous classes.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Lambda syntax and functional interfaces</span></div>
+        <pre><code><span class="cmt">// ── Built-in functional interfaces (java.util.function) ─────────</span>
+
+<span class="cmt">// Runnable: () → void</span>
+<span class="type">Runnable</span> r = () -&gt; System.out.<span class="fn">println</span>(<span class="str">"run"</span>);
+
+<span class="cmt">// Supplier&lt;T&gt;: () → T (produces a value)</span>
+<span class="type">Supplier</span>&lt;<span class="type">String</span>&gt; greeting = () -&gt; <span class="str">"Hello, World!"</span>;
+
+<span class="cmt">// Consumer&lt;T&gt;: T → void (consumes a value)</span>
+<span class="type">Consumer</span>&lt;<span class="type">String</span>&gt; printer = s -&gt; System.out.<span class="fn">println</span>(s);
+<span class="type">Consumer</span>&lt;<span class="type">String</span>&gt; printer2 = System.out::<span class="fn">println</span>; <span class="cmt">// method reference</span>
+
+<span class="cmt">// Function&lt;T,R&gt;: T → R (transforms)</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>, <span class="type">Integer</span>&gt; len = <span class="type">String</span>::<span class="fn">length</span>;
+
+<span class="cmt">// BiFunction&lt;T,U,R&gt;: (T,U) → R</span>
+<span class="type">BiFunction</span>&lt;<span class="type">String</span>, <span class="type">String</span>, <span class="type">String</span>&gt; concat = (<span class="type">String</span>::<span class="fn">concat</span>);
+
+<span class="cmt">// Predicate&lt;T&gt;: T → boolean (tests)</span>
+<span class="type">Predicate</span>&lt;<span class="type">String</span>&gt; notEmpty = s -&gt; !s.<span class="fn">isEmpty</span>();
+<span class="type">Predicate</span>&lt;<span class="type">String</span>&gt; longEnough = s -&gt; s.<span class="fn">length</span>() &gt; <span class="num">5</span>;
+<span class="type">Predicate</span>&lt;<span class="type">String</span>&gt; combined = notEmpty.<span class="fn">and</span>(longEnough); <span class="cmt">// compose predicates</span>
+
+<span class="cmt">// UnaryOperator&lt;T&gt;: T → T (same type in and out)</span>
+<span class="type">UnaryOperator</span>&lt;<span class="type">String</span>&gt; upper = <span class="type">String</span>::<span class="fn">toUpperCase</span>;
+
+<span class="cmt">// BinaryOperator&lt;T&gt;: (T,T) → T</span>
+<span class="type">BinaryOperator</span>&lt;<span class="type">Integer</span>&gt; add = <span class="type">Integer</span>::<span class="fn">sum</span>;
+
+<span class="cmt">// ── Custom functional interface ──────────────────────────────────</span>
+<span class="kw2">@FunctionalInterface</span>
+<span class="kw">public interface</span> <span class="type">Transformer</span>&lt;<span class="type">I</span>, <span class="type">O</span>&gt; {
+    <span class="type">O</span> <span class="fn">transform</span>(<span class="type">I</span> input) <span class="kw">throws</span> <span class="type">Exception</span>; <span class="cmt">// can declare checked exception</span>
+}
+
+<span class="cmt">// ── Variable capture — only effectively final ────────────────────</span>
+<span class="type">String</span> prefix = <span class="str">"Hello"</span>;        <span class="cmt">// effectively final (never reassigned)</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>, <span class="type">String</span>&gt; greet = name -&gt; prefix + <span class="str">", "</span> + name;
+<span class="cmt">// prefix = "Hi"; ← COMPILE ERROR — would break effectively-final</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Method References — All Four Forms</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Method reference types</span></div>
+        <pre><code><span class="cmt">// 1. Static method reference:  ClassName::staticMethod</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>, <span class="type">Integer</span>&gt; parser = <span class="type">Integer</span>::<span class="fn">parseInt</span>;
+<span class="cmt">// equivalent to: s -> Integer.parseInt(s)</span>
+
+<span class="cmt">// 2. Instance method on arbitrary instance:  ClassName::instanceMethod</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>, <span class="type">String</span>&gt; upper = <span class="type">String</span>::<span class="fn">toUpperCase</span>;
+<span class="cmt">// equivalent to: s -> s.toUpperCase()</span>
+
+<span class="cmt">// 3. Instance method on specific instance:  instance::instanceMethod</span>
+<span class="type">String</span> prefix = <span class="str">"Hello"</span>;
+<span class="type">Predicate</span>&lt;<span class="type">String</span>&gt; startsWith = prefix::<span class="fn">equals</span>;
+<span class="cmt">// equivalent to: s -> prefix.equals(s)</span>
+
+<span class="cmt">// 4. Constructor reference:  ClassName::new</span>
+<span class="type">Supplier</span>&lt;<span class="type">ArrayList</span>&lt;<span class="type">String</span>&gt;&gt; listFactory = <span class="type">ArrayList</span>::<span class="kw">new</span>;
+<span class="type">Function</span>&lt;<span class="type">String</span>, <span class="type">User</span>&gt; userFactory = <span class="type">User</span>::<span class="kw">new</span>; <span class="cmt">// User(String name)</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="streams">
+    <div class="section-header">
+      <h3>🌊 Streams API</h3>
+    </div>
+    <div class="card">
+      <h4>What Streams Are</h4>
+      <p>A Stream is a <em>lazy, declarative pipeline</em> for processing sequences of elements. Not a data structure — does not store elements. Lazy: intermediate operations don't execute until a terminal operation triggers the pipeline.</p>
+      <div class="diagram">
+<span class="d-blue">Source</span>  →  <span class="d-orange">Intermediate Ops</span> (lazy, return Stream)  →  <span class="d-green">Terminal Op</span> (eager, triggers execution)
+
+Collection → filter → map → sorted → findFirst
+           ← ← ← ← pipeline built lazily ← ← ← ←
+           → → → → findFirst triggers: only processes until first match → →
+      </div>
+    </div>
+    <div class="card">
+      <h4>Complete Stream Operations Reference</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">All major stream operations</span></div>
+        <pre><code><span class="type">List</span>&lt;<span class="type">Order</span>&gt; orders = orderRepo.<span class="fn">findAll</span>();
+
+<span class="cmt">// ── INTERMEDIATE (lazy) ──────────────────────────────────────────</span>
+
+<span class="cmt">// filter: keep elements matching predicate</span>
+orders.<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(o -&gt; o.<span class="fn">getStatus</span>().<span class="fn">equals</span>(<span class="str">"PAID"</span>))
+
+<span class="cmt">// map: transform each element</span>
+    .<span class="fn">map</span>(<span class="type">Order</span>::<span class="fn">getTotal</span>)          <span class="cmt">// Stream&lt;BigDecimal&gt;</span>
+
+<span class="cmt">// flatMap: transform each element to stream, flatten</span>
+    .<span class="fn">flatMap</span>(<span class="type">Order</span>::<span class="fn">getItemsStream</span>) <span class="cmt">// Stream&lt;Stream&lt;Item&gt;&gt; → Stream&lt;Item&gt;</span>
+
+<span class="cmt">// distinct: remove duplicates (uses equals/hashCode)</span>
+    .<span class="fn">distinct</span>()
+
+<span class="cmt">// sorted: natural order or custom Comparator</span>
+    .<span class="fn">sorted</span>(<span class="type">Comparator</span>.<span class="fn">comparing</span>(<span class="type">Order</span>::<span class="fn">getCreatedAt</span>).<span class="fn">reversed</span>())
+
+<span class="cmt">// limit / skip: pagination</span>
+    .<span class="fn">skip</span>(<span class="num">20</span>).<span class="fn">limit</span>(<span class="num">10</span>)             <span class="cmt">// page 3 (20 per page)</span>
+
+<span class="cmt">// peek: side-effect without modifying stream (debugging)</span>
+    .<span class="fn">peek</span>(o -&gt; log.<span class="fn">debug</span>(<span class="str">"Processing: "</span> + o.<span class="fn">getId</span>()))
+
+<span class="cmt">// mapToInt/Long/Double: primitive stream (no boxing)</span>
+    .<span class="fn">mapToDouble</span>(o -&gt; o.<span class="fn">getTotal</span>().<fn>doubleValue</fn>())
+
+<span class="cmt">// ── TERMINAL (eager, triggers pipeline) ─────────────────────────</span>
+
+<span class="cmt">// collect: accumulate into collection</span>
+<span class="type">List</span>&lt;<span class="type">Order</span>&gt; paid = orders.<span class="fn">stream</span>().<span class="fn">filter</span>(...).collect(<span class="type">Collectors</span>.<fn>toList</fn>());
+<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">List</span>&lt;<span class="type">Order</span>&gt;&gt; byStatus = orders.<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">groupingBy</span>(<span class="type">Order</span>::<span class="fn">getStatus</span>));
+<span class="type">Map</span>&lt;<span class="type">Boolean</span>, <span class="type">List</span>&lt;<span class="type">Order</span>&gt;&gt; partitioned = orders.<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">partitioningBy</span>(o -&gt; o.<span class="fn">getTotal</span>().<fn>compareTo</fn>(BigDecimal.TEN) &gt; <span class="num">0</span>));
+
+<span class="cmt">// reduce: combine elements into single value</span>
+<span class="type">Optional</span>&lt;<span class="type">BigDecimal</span>&gt; total = orders.<span class="fn">stream</span>()
+    .<span class="fn">map</span>(<span class="type">Order</span>::<span class="fn">getTotal</span>)
+    .<span class="fn">reduce</span>(<span class="type">BigDecimal</span>::<span class="fn">add</span>);
+
+<span class="cmt">// count, sum, min, max, average</span>
+<span class="kw">long</span> count = orders.<span class="fn">stream</span>().<span class="fn">filter</span>(...).<span class="fn">count</span>();
+<span class="type">OptionalDouble</span> avg = orders.<span class="fn">stream</span>()
+    .<span class="fn">mapToDouble</span>(o -&gt; o.<span class="fn">getTotal</span>().<fn>doubleValue</fn>()).<span class="fn">average</span>();
+
+<span class="cmt">// anyMatch / allMatch / noneMatch</span>
+<span class="kw">boolean</span> hasExpired = orders.<span class="fn">stream</span>().<span class="fn">anyMatch</span>(o -&gt; o.<span class="fn">isExpired</span>());
+<span class="kw">boolean</span> allPaid = orders.<span class="fn">stream</span>().<span class="fn">allMatch</span>(o -&gt; o.<span class="fn">getStatus</span>().<fn>equals</fn>(<span class="str">"PAID"</span>));
+
+<span class="cmt">// findFirst / findAny</span>
+<span class="type">Optional</span>&lt;<span class="type">Order</span>&gt; first = orders.<span class="fn">stream</span>().<span class="fn">filter</span>(...).<span class="fn">findFirst</span>();
+
+<span class="cmt">// forEach</span>
+orders.<span class="fn">stream</span>().<span class="fn">forEach</span>(this::<span class="fn">processOrder</span>);
+
+<span class="cmt">// toList() (Java 16+) — unmodifiable</span>
+<span class="type">List</span>&lt;<span class="type">String</span>&gt; names = orders.<span class="fn">stream</span>().<span class="fn">map</span>(<span class="type">Order</span>::<span class="fn">getCustomerName</span>).<fn>toList</fn>();</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Parallel Streams — When to Use and When Not To</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Parallel stream gotchas</span></div>
+        <pre><code><span class="cmt">// ✅ Good for: CPU-bound, large data, no shared state, no IO</span>
+<span class="kw">long</span> count = bigList.<span class="fn">parallelStream</span>()
+    .<span class="fn">filter</span>(this::<span class="fn">expensiveFilter</span>)
+    .<span class="fn">count</span>();
+
+<span class="cmt">// ❌ Bad: mutable shared state → race conditions</span>
+<span class="type">List</span>&lt;<span class="type">String</span>&gt; results = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+list.<span class="fn">parallelStream</span>().<span class="fn">forEach</span>(s -&gt; results.<span class="fn">add</span>(s)); <span class="cmt">// race condition!</span>
+<span class="cmt">// ✅ Fix: collect() is thread-safe</span>
+<span class="type">List</span>&lt;<span class="type">String</span>&gt; safe = list.<span class="fn">parallelStream</span>().<fn>collect</fn>(<span class="type">Collectors</span>.<fn>toList</fn>());
+
+<span class="cmt">// ❌ Bad: IO operations — threads block, no CPU benefit</span>
+list.<span class="fn">parallelStream</span>().<span class="fn">forEach</span>(this::<span class="fn">saveToDatabase</span>); <span class="cmt">// wastes thread pool</span>
+
+<span class="cmt">// ❌ Bad: small lists — overhead > benefit</span>
+<span class="type">List</span>.<span class="fn">of</span>(<span class="str">"a"</span>, <span class="str">"b"</span>, <span class="str">"c"</span>).<fn>parallelStream</fn>().<fn>map</fn>(<span class="type">String</span>::<span class="fn">toUpperCase</span>); <span class="cmt">// slower!</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="optional">
+    <div class="section-header">
+      <h3>🎁 Optional</h3>
+    </div>
+    <div class="card">
+      <h4>What Optional Is — And What It's NOT</h4>
+      <p><code>Optional&lt;T&gt;</code> is a container that may or may not contain a value. Its purpose: <strong>express that a method may return nothing</strong> — forcing callers to handle the absent case explicitly. It's NOT a general-purpose null replacement for every field.</p>
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong>Optional anti-patterns:</strong><br>
+          ❌ Don't use as method parameter: <code>void foo(Optional&lt;String&gt; name)</code> — just overload or use null<br>
+          ❌ Don't use as class field — it's not Serializable<br>
+          ❌ Don't call <code>.get()</code> without checking — defeats the purpose<br>
+          ❌ Don't use to wrap primitives — use <code>OptionalInt</code>, <code>OptionalLong</code>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Optional correct usage patterns</span></div>
+        <pre><code><span class="cmt">// ── Creation ─────────────────────────────────────────────────────</span>
+<span class="type">Optional</span>&lt;<span class="type">String</span>&gt; present = <span class="type">Optional</span>.<span class="fn">of</span>(<span class="str">"hello"</span>);        <span class="cmt">// throws NPE if null</span>
+<span class="type">Optional</span>&lt;<span class="type">String</span>&gt; maybe   = <span class="type">Optional</span>.<span class="fn">ofNullable</span>(value);  <span class="cmt">// null → empty</span>
+<span class="type">Optional</span>&lt;<span class="type">String</span>&gt; empty   = <span class="type">Optional</span>.<span class="fn">empty</span>();
+
+<span class="cmt">// ── Consuming ────────────────────────────────────────────────────</span>
+
+<span class="cmt">// orElse — always evaluates (even if value present!)</span>
+<span class="type">String</span> val = maybe.<span class="fn">orElse</span>(<span class="str">"default"</span>);
+
+<span class="cmt">// orElseGet — lazy, only called if empty (prefer for expensive defaults)</span>
+<span class="type">String</span> val2 = maybe.<span class="fn">orElseGet</span>(() -&gt; <fn>computeDefault</fn>());
+
+<span class="cmt">// orElseThrow — throw if empty</span>
+<span class="type">String</span> val3 = maybe.<span class="fn">orElseThrow</span>(() -&gt; <span class="kw">new</span> <span class="type">NotFoundException</span>(<span class="str">"missing"</span>));
+
+<span class="cmt">// ifPresent — action only if value exists</span>
+maybe.<span class="fn">ifPresent</span>(s -&gt; log.<span class="fn">info</span>(<span class="str">"Got: "</span> + s));
+
+<span class="cmt">// ifPresentOrElse (Java 9+)</span>
+maybe.<span class="fn">ifPresentOrElse</span>(
+    s -&gt; log.<span class="fn">info</span>(<span class="str">"Got: "</span> + s),
+    () -&gt; log.<span class="fn">warn</span>(<span class="str">"Empty"</span>)
+);
+
+<span class="cmt">// ── Transforming ─────────────────────────────────────────────────</span>
+<span class="type">Optional</span>&lt;<span class="type">Integer</span>&gt; len = maybe.<span class="fn">map</span>(<span class="type">String</span>::<span class="fn">length</span>);   <span class="cmt">// Optional&lt;T&gt; → Optional&lt;U&gt;</span>
+
+<span class="cmt">// flatMap: unwrap nested Optional (when map would give Optional&lt;Optional&lt;T&gt;&gt;)</span>
+<span class="type">Optional</span>&lt;<span class="type">User</span>&gt; user = findById(<span class="num">1L</span>);
+<span class="type">Optional</span>&lt;<span class="type">Address</span>&gt; address = user.<span class="fn">flatMap</span>(<span class="type">User</span>::<span class="fn">getAddress</span>); <span class="cmt">// User::getAddress returns Optional</span>
+<span class="type">Optional</span>&lt;<span class="type">String</span>&gt; city = address.<span class="fn">map</span>(<span class="type">Address</span>::<span class="fn">getCity</span>);
+
+<span class="cmt">// filter</span>
+<span class="type">Optional</span>&lt;<span class="type">String</span>&gt; longName = maybe.<span class="fn">filter</span>(s -&gt; s.<span class="fn">length</span>() &gt; <span class="num">5</span>);
+
+<span class="cmt">// or (Java 9+): return alternative Optional if empty</span>
+<span class="type">Optional</span>&lt;<span class="type">User</span>&gt; result = findInCache(id)
+    .<span class="fn">or</span>(() -&gt; <span class="fn">findInDB</span>(id));              <span class="cmt">// lazy: only calls findInDB if cache empty</span>
+
+<span class="cmt">// stream (Java 9+): treat Optional as 0-or-1 element Stream</span>
+<span class="type">List</span>&lt;<span class="type">String</span>&gt; names = optionals.<span class="fn">stream</span>()
+    .<span class="fn">flatMap</span>(<span class="type">Optional</span>::<span class="fn">stream</span>)  <span class="cmt">// flatten empty optionals</span>
+    .<fn>toList</fn>();</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="comparator">
+    <div class="section-header">
+      <h3>⚖️ Comparator vs Comparable</h3>
+    </div>
+    <div class="card">
+      <h4>The Core Distinction</h4>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>Comparable&lt;T&gt; — Natural Ordering</h4>
+          <p>The object defines its own natural order. Implemented by the class itself. One fixed ordering per class. Used by: <code>Collections.sort()</code>, <code>TreeSet</code>, <code>Arrays.sort()</code>.</p>
+          <div class="code-block"><div class="code-header"><span class="code-lang">Java</span></div><pre><code><span class="kw">public class</span> <span class="type">Employee</span>
+    <span class="kw">implements</span> <span class="type">Comparable</span>&lt;<span class="type">Employee</span>&gt; {
+
+    <span class="kw">private</span> <span class="type">String</span> name;
+    <span class="kw">private</span> <span class="type">int</span> salary;
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public int</span> <span class="fn">compareTo</span>(<span class="type">Employee</span> other) {
+        <span class="kw">return</span> <span class="type">Integer</span>.<span class="fn">compare</span>(<span class="kw">this</span>.salary,
+                                other.salary);
+        <span class="cmt">// negative → this is less
+        // 0 → equal
+        // positive → this is greater</span>
+    }
+}</code></pre></div>
+        </div>
+        <div class="compare-card">
+          <h4>Comparator&lt;T&gt; — External Ordering</h4>
+          <p>Defines ordering externally. Can have multiple. Doesn't require modifying the class. Can chain with <code>thenComparing()</code>. Used when you need different orderings for different contexts.</p>
+          <div class="code-block"><div class="code-header"><span class="code-lang">Java</span></div><pre><code><span class="cmt">// Multiple comparators for Employee</span>
+<span class="type">Comparator</span>&lt;<span class="type">Employee</span>&gt; byName =
+    <span class="type">Comparator</span>.<span class="fn">comparing</span>(<span class="type">Employee</span>::<span class="fn">getName</span>);
+
+<span class="type">Comparator</span>&lt;<span class="type">Employee</span>&gt; bySalaryDesc =
+    <span class="type">Comparator</span>.<span class="fn">comparingInt</span>(<span class="type">Employee</span>::<span class="fn">getSalary</span>)
+              .<span class="fn">reversed</span>();
+
+<span class="type">Comparator</span>&lt;<span class="type">Employee</span>&gt; complex =
+    <span class="type">Comparator</span>.<span class="fn">comparing</span>(<span class="type">Employee</span>::<span class="fn">getDept</span>)
+              .<span class="fn">thenComparing</span>(<span class="type">Employee</span>::<span class="fn">getName</span>)
+              .<span class="fn">thenComparingInt</span>(<span class="type">Employee</span>::<span class="fn">getSalary</span>);
+
+employees.<span class="fn">sort</span>(complex);</code></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="records-sealed">
+    <div class="section-header">
+      <h3>📦 Records & Sealed Classes</h3>
+    </div>
+    <div class="card">
+      <h4>Records (Java 16) — Immutable Data Carriers</h4>
+      <p>Records are a special class kind for immutable data. The compiler generates: constructor, getters (no "get" prefix), <code>equals()</code>, <code>hashCode()</code>, <code>toString()</code>.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Records — what gets generated</span></div>
+        <pre><code><span class="cmt">// ── What you write ───────────────────────────────────────────────</span>
+<span class="kw">public record</span> <span class="type">Point</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {}
+
+<span class="cmt">// ── What compiler generates ──────────────────────────────────────</span>
+<span class="kw">public final class</span> <span class="type">Point</span> <span class="kw">extends</span> <span class="type">Record</span> {
+    <span class="kw">private final int</span> x;   <span class="cmt">// implicitly final!</span>
+    <span class="kw">private final int</span> y;
+
+    <span class="kw">public</span> <span class="type">Point</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) { <span class="kw">this</span>.x = x; <span class="kw">this</span>.y = y; }
+
+    <span class="kw">public int</span> <span class="fn">x</span>() { <span class="kw">return</span> x; }  <span class="cmt">// accessor: point.x() not point.getX()</span>
+    <span class="kw">public int</span> <span class="fn">y</span>() { <span class="kw">return</span> y; }
+
+    <span class="cmt">// equals: based on ALL components</span>
+    <span class="cmt">// hashCode: based on ALL components</span>
+    <span class="cmt">// toString: "Point[x=1, y=2]"</span>
+}
+
+<span class="cmt">// ── Customising records ──────────────────────────────────────────</span>
+<span class="kw">public record</span> <span class="type">User</span>(<span class="type">String</span> name, <span class="kw">int</span> age) {
+
+    <span class="cmt">// Compact canonical constructor — validate/transform</span>
+    <span class="kw">public</span> <span class="type">User</span> {
+        <span class="type">Objects</span>.<span class="fn">requireNonNull</span>(name, <span class="str">"name required"</span>);
+        <span class="kw">if</span> (age &lt; <span class="num">0</span>) <span class="kw">throw new</span> <span class="type">IllegalArgumentException</span>(<span class="str">"age negative"</span>);
+        name = name.<span class="fn">trim</span>(); <span class="cmt">// can transform</span>
+    }
+
+    <span class="cmt">// Add methods</span>
+    <span class="kw">public boolean</span> <span class="fn">isAdult</span>() { <span class="kw">return</span> age &gt;= <span class="num">18</span>; }
+
+    <span class="cmt">// Can implement interfaces</span>
+    <span class="cmt">// Cannot extend classes (already extends Record)</span>
+    <span class="cmt">// Cannot have non-static fields beyond components</span>
+}
+
+<span class="cmt">// ── Records with generics ────────────────────────────────────────</span>
+<span class="kw">public record</span> <span class="type">Result</span>&lt;<span class="type">T</span>&gt;(<span class="type">T</span> value, <span class="type">String</span> message, <span class="kw">boolean</span> success) {}
+
+<span class="type">Result</span>&lt;<span class="type">User</span>&gt; r = <span class="kw">new</span> <span class="type">Result</span>&lt;&gt;(user, <span class="str">"OK"</span>, <span class="kw">true</span>);
+System.out.<span class="fn">println</span>(r.value().name()); <span class="cmt">// "Alice"</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Sealed Classes (Java 17) — Controlled Inheritance</h4>
+      <p>Sealed classes restrict which classes can extend them. Enables exhaustive pattern matching. Models closed algebraic data types (like Kotlin's <code>sealed class</code>).</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Sealed hierarchy for payment types</span></div>
+        <pre><code><span class="cmt">// Sealed class — only Circle, Rectangle, Triangle can extend Shape</span>
+<span class="kw">public sealed class</span> <span class="type">Shape</span>
+    <span class="kw">permits</span> <span class="type">Circle</span>, <span class="type">Rectangle</span>, <span class="type">Triangle</span> {}
+
+<span class="cmt">// Permitted subclasses must be: final, sealed, or non-sealed</span>
+<span class="kw">public final class</span> <span class="type">Circle</span> <span class="kw">extends</span> <span class="type">Shape</span> {
+    <span class="kw">private final double</span> radius;
+}
+<span class="kw">public final class</span> <span class="type">Rectangle</span> <span class="kw">extends</span> <span class="type">Shape</span> {
+    <span class="kw">private final double</span> width, height;
+}
+<span class="kw">public non-sealed class</span> <span class="type">Triangle</span> <span class="kw">extends</span> <span class="type">Shape</span> {} <span class="cmt">// opens extension again</span>
+
+<span class="cmt">// ── Sealed + Pattern Matching Switch (Java 21) ───────────────────</span>
+<span class="kw">double</span> <span class="fn">area</span>(<span class="type">Shape</span> s) {
+    <span class="kw">return switch</span> (s) {
+        <span class="kw">case</span> <span class="type">Circle</span>    c  -&gt; <span class="type">Math</span>.PI * c.<span class="fn">radius</span>() * c.<span class="fn">radius</span>();
+        <span class="kw">case</span> <span class="type">Rectangle</span> r  -&gt; r.<span class="fn">width</span>() * r.<span class="fn">height</span>();
+        <span class="kw">case</span> <span class="type">Triangle</span>  t  -&gt; <span class="fn">triangleArea</span>(t);
+        <span class="cmt">// No default needed — compiler knows all cases covered!</span>
+    };
+}
+
+<span class="cmt">// ── Sealed + Records (perfect combo) ────────────────────────────</span>
+<span class="kw">public sealed interface</span> <span class="type">PaymentResult</span>
+    <span class="kw">permits</span> <span class="type">PaymentSuccess</span>, <span class="type">PaymentFailure</span>, <span class="type">PaymentPending</span> {}
+
+<span class="kw">public record</span> <span class="type">PaymentSuccess</span>(<span class="type">String</span> transactionId) <span class="kw">implements</span> <span class="type">PaymentResult</span> {}
+<span class="kw">public record</span> <span class="type">PaymentFailure</span>(<span class="type">String</span> reason, <span class="kw">int</span> code) <span class="kw">implements</span> <span class="type">PaymentResult</span> {}
+<span class="kw">public record</span> <span class="type">PaymentPending</span>(<span class="type">String</span> checkUrl) <span class="kw">implements</span> <span class="type">PaymentResult</span> {}
+
+<span class="cmt">// Exhaustive pattern switch — compile error if case missing</span>
+<span class="kw">String</span> message = <span class="kw">switch</span> (result) {
+    <span class="kw">case</span> <span class="type">PaymentSuccess</span>  s -&gt; <span class="str">"Paid: "</span> + s.<span class="fn">transactionId</span>();
+    <span class="kw">case</span> <span class="type">PaymentFailure</span>  f -&gt; <span class="str">"Failed: "</span> + f.<span class="fn">reason</span>();
+    <span class="kw">case</span> <span class="type">PaymentPending</span>  p -&gt; <span class="str">"Check: "</span> + p.<span class="fn">checkUrl</span>();
+};</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 7 — DESIGN PATTERNS
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">07</div>
+    <div>
+      <h2>Design Patterns</h2>
+      <p>The 23 Gang of Four patterns — what problem each solves, when to use it, and Java implementation.</p>
+    </div>
+  </div>
+
+  <div class="section" id="design-patterns">
+    <div class="section-header">
+      <h3>🏗️ Creational Patterns</h3>
+    </div>
+    <div class="card">
+      <h4>Pattern Types Overview</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Category</th><th>Purpose</th><th>Patterns</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Creational</strong></td><td>Object creation mechanisms</td><td>Singleton, Factory, Abstract Factory, Builder, Prototype</td></tr>
+            <tr><td><strong>Structural</strong></td><td>Composing objects/classes</td><td>Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy</td></tr>
+            <tr><td><strong>Behavioral</strong></td><td>Communication between objects</td><td>Chain of Responsibility, Command, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Singleton — One Instance</h4>
+      <p><strong>Problem:</strong> Need exactly one instance shared across the system (config, logging, thread pool).<br><strong>Why:</strong> Prevents wasteful duplication, provides global access point.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Thread-safe Singleton — 4 approaches</span></div>
+        <pre><code><span class="cmt">// ── Approach 1: Enum (Best — handles serialization, reflection attacks) ──</span>
+<span class="kw">public enum</span> <span class="type">AppConfig</span> {
+    <span class="const">INSTANCE</span>;
+    <span class="kw">private</span> <span class="type">String</span> dbUrl = <span class="str">"jdbc:postgres://..."</span>;
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">getDbUrl</span>() { <span class="kw">return</span> dbUrl; }
+}
+<span class="cmt">// Usage: AppConfig.INSTANCE.getDbUrl()</span>
+
+<span class="cmt">// ── Approach 2: Bill Pugh (Lazy + Thread-safe, no sync overhead) ─</span>
+<span class="kw">public class</span> <span class="type">Singleton</span> {
+    <span class="kw">private</span> <span class="type">Singleton</span>() {}
+
+    <span class="kw">private static class</span> <span class="type">Holder</span> {
+        <span class="cmt">// loaded only when getInstance() is called for the first time</span>
+        <span class="kw">static final</span> <span class="type">Singleton</span> <span class="const">INSTANCE</span> = <span class="kw">new</span> <span class="type">Singleton</span>();
+    }
+
+    <span class="kw">public static</span> <span class="type">Singleton</span> <span class="fn">getInstance</span>() { <span class="kw">return</span> <span class="type">Holder</span>.<span class="const">INSTANCE</span>; }
+}
+
+<span class="cmt">// ── Approach 3: Double-checked locking ──────────────────────────</span>
+<span class="kw">public class</span> <span class="type">Singleton</span> {
+    <span class="kw">private static volatile</span> <span class="type">Singleton</span> instance; <span class="cmt">// volatile required!</span>
+
+    <span class="kw">public static</span> <span class="type">Singleton</span> <span class="fn">getInstance</span>() {
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) {
+            <span class="kw">synchronized</span> (<span class="type">Singleton</span>.class) {
+                <span class="kw">if</span> (instance == <span class="kw">null</span>) {  <span class="cmt">// second check inside lock</span>
+                    instance = <span class="kw">new</span> <span class="type">Singleton</span>();
+                }
+            }
+        }
+        <span class="kw">return</span> instance;
+    }
+}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Factory Method — Delegate Creation</h4>
+      <p><strong>Problem:</strong> Want to create objects but let subclasses decide which class to instantiate.<br><strong>Why:</strong> Decouples object creation from usage. Easy to extend.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Factory Method pattern</span></div>
+        <pre><code><span class="kw">public interface</span> <span class="type">Notification</span> { <span class="kw">void</span> <span class="fn">send</span>(<span class="type">String</span> msg); }
+
+<span class="kw">public class</span> <span class="type">EmailNotification</span> <span class="kw">implements</span> <span class="type">Notification</span> {
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="type">String</span> msg) { System.out.<span class="fn">println</span>(<span class="str">"Email: "</span> + msg); }
+}
+<span class="kw">public class</span> <span class="type">SmsNotification</span> <span class="kw">implements</span> <span class="type">Notification</span> {
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="type">String</span> msg) { System.out.<span class="fn">println</span>(<span class="str">"SMS: "</span> + msg); }
+}
+
+<span class="cmt">// Factory — centralises creation logic</span>
+<span class="kw">public class</span> <span class="type">NotificationFactory</span> {
+    <span class="kw">public static</span> <span class="type">Notification</span> <span class="fn">create</span>(<span class="type">String</span> type) {
+        <span class="kw">return switch</span> (type) {
+            <span class="kw">case</span> <span class="str">"EMAIL"</span> -&gt; <span class="kw">new</span> <span class="type">EmailNotification</span>();
+            <span class="kw">case</span> <span class="str">"SMS"</span>   -&gt; <span class="kw">new</span> <span class="type">SmsNotification</span>();
+            <span class="kw">default</span> -&gt; <span class="kw">throw new</span> <span class="type">IllegalArgumentException</span>(<span class="str">"Unknown: "</span> + type);
+        };
+    }
+}
+<span class="cmt">// Caller: NotificationFactory.create("EMAIL").send("Hello")
+// Caller doesn't know EmailNotification exists</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Builder — Fluent Complex Construction</h4>
+      <p><strong>Problem:</strong> Object has many optional parameters. Telescoping constructors become unreadable.<br><strong>Why:</strong> Readable, immutable object construction. No setter hell.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Builder pattern</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">Email</span> {
+    <span class="kw">private final</span> <span class="type">String</span> to, from, subject, body;
+    <span class="kw">private final</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt; cc;
+    <span class="kw">private final</span> <span class="kw">boolean</span> html;
+
+    <span class="kw">private</span> <span class="type">Email</span>(<span class="type">Builder</span> b) {
+        <span class="kw">this</span>.to = b.to; <span class="kw">this</span>.from = b.from; <span class="kw">this</span>.subject = b.subject;
+        <span class="kw">this</span>.body = b.body; <span class="kw">this</span>.cc = <span class="type">List</span>.<span class="fn">copyOf</span>(b.cc); <span class="kw">this</span>.html = b.html;
+    }
+
+    <span class="kw">public static class</span> <span class="type">Builder</span> {
+        <span class="kw">private final</span> <span class="type">String</span> to;    <span class="cmt">// required</span>
+        <span class="kw">private</span> <span class="type">String</span> from = <span class="str">"noreply@app.com"</span>; <span class="cmt">// optional with default</span>
+        <span class="kw">private</span> <span class="type">String</span> subject = <span class="str">""</span>, body = <span class="str">""</span>;
+        <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt; cc = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">private boolean</span> html = <span class="kw">false</span>;
+
+        <span class="kw">public</span> <span class="type">Builder</span>(<span class="type">String</span> to) { <span class="kw">this</span>.to = to; }
+
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">from</span>(<span class="type">String</span> f) { <span class="kw">this</span>.from = f; <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">subject</span>(<span class="type">String</span> s) { <span class="kw">this</span>.subject = s; <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">body</span>(<span class="type">String</span> b) { <span class="kw">this</span>.body = b; <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">cc</span>(<span class="type">String</span>... addresses) { <span class="kw">this</span>.cc.<fn>addAll</fn>(<span class="type">Arrays</span>.<fn>asList</fn>(addresses)); <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">Builder</span> <span class="fn">html</span>() { <span class="kw">this</span>.html = <span class="kw">true</span>; <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="type">Email</span> <span class="fn">build</span>() { <span class="kw">return new</span> <span class="type">Email</span>(<span class="kw">this</span>); }
+    }
+}
+
+<span class="cmt">// Usage — readable and clean</span>
+<span class="type">Email</span> email = <span class="kw">new</span> <span class="type">Email</span>.<span class="type">Builder</span>(<span class="str">"alice@example.com"</span>)
+    .<span class="fn">subject</span>(<span class="str">"Hello!"</span>)
+    .<span class="fn">body</span>(<span class="str">"&lt;h1&gt;Hi Alice&lt;/h1&gt;"</span>)
+    .<span class="fn">html</span>()
+    .<span class="fn">cc</span>(<span class="str">"manager@example.com"</span>)
+    .<span class="fn">build</span>();</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Prototype — Clone to Create</h4>
+      <p><strong>Problem:</strong> Creating an object is expensive. Need many similar objects.<br><strong>Why:</strong> Copy existing instance, modify specific parts. Avoids costly initialization.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Prototype with deep copy</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">DocumentTemplate</span> <span class="kw">implements</span> <span class="type">Cloneable</span> {
+    <span class="kw">private</span> <span class="type">String</span> title;
+    <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt; sections;
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">DocumentTemplate</span> <span class="fn">clone</span>() {
+        <span class="kw">try</span> {
+            <span class="type">DocumentTemplate</span> copy = (<span class="type">DocumentTemplate</span>) <span class="kw">super</span>.<span class="fn">clone</span>(); <span class="cmt">// shallow copy</span>
+            copy.sections = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(<span class="kw">this</span>.sections);      <span class="cmt">// deep copy list!</span>
+            <span class="kw">return</span> copy;
+        } <span class="kw">catch</span> (<span class="type">CloneNotSupportedException</span> e) {
+            <span class="kw">throw new</span> <span class="type">AssertionError</span>();
+        }
+    }
+}
+<span class="cmt">// Real-world Java: prefer copy constructor over Cloneable
+// public DocumentTemplate(DocumentTemplate original) { ... }</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="structural-patterns">
+    <div class="section-header">
+      <h3>🏛️ Structural Patterns</h3>
+    </div>
+    <div class="card">
+      <h4>Adapter — Bridge Incompatible Interfaces</h4>
+      <p><strong>Problem:</strong> Have legacy class with incompatible interface. Can't modify it.<br><strong>Real Java:</strong> <code>InputStreamReader</code> adapts <code>InputStream</code> (bytes) to <code>Reader</code> (chars). Arrays.asList adapts array to List.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Adapter pattern</span></div>
+        <pre><code><span class="cmt">// Legacy payment processor with old API</span>
+<span class="kw">class</span> <span class="type">LegacyPaymentProcessor</span> {
+    <span class="kw">void</span> <span class="fn">processLegacy</span>(<span class="type">String</span> cardNum, <span class="kw">double</span> amount) { <span class="cmt">/* old logic */</span> }
+}
+
+<span class="cmt">// New interface the system expects</span>
+<span class="kw">interface</span> <span class="type">PaymentService</span> {
+    <span class="kw">void</span> <span class="fn">pay</span>(<span class="type">PaymentRequest</span> request);
+}
+
+<span class="cmt">// Adapter wraps legacy, presents new interface</span>
+<span class="kw">class</span> <span class="type">LegacyPaymentAdapter</span> <span class="kw">implements</span> <span class="type">PaymentService</span> {
+    <span class="kw">private final</span> <span class="type">LegacyPaymentProcessor</span> legacy = <span class="kw">new</span> <span class="type">LegacyPaymentProcessor</span>();
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">pay</span>(<span class="type">PaymentRequest</span> req) {
+        legacy.<span class="fn">processLegacy</span>(req.<span class="fn">getCardNumber</span>(), req.<span class="fn">getAmount</span>().<fn>doubleValue</fn>());
+    }
+}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Decorator — Add Behaviour Without Subclassing</h4>
+      <p><strong>Problem:</strong> Want to add responsibilities to objects dynamically without modifying the class or using deep inheritance.<br><strong>Real Java:</strong> <code>BufferedInputStream</code> decorates <code>InputStream</code>. <code>Collections.unmodifiableList()</code> decorates List.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Decorator for logging + caching</span></div>
+        <pre><code><span class="kw">interface</span> <span class="type">OrderService</span> { <span class="type">Order</span> <span class="fn">find</span>(<span class="type">Long</span> id); }
+
+<span class="cmt">// Base implementation</span>
+<span class="kw">class</span> <span class="type">OrderServiceImpl</span> <span class="kw">implements</span> <span class="type">OrderService</span> {
+    <span class="kw">public</span> <span class="type">Order</span> <span class="fn">find</span>(<span class="type">Long</span> id) { <span class="kw">return</span> db.<span class="fn">load</span>(id); }
+}
+
+<span class="cmt">// Logging decorator</span>
+<span class="kw">class</span> <span class="type">LoggingOrderService</span> <span class="kw">implements</span> <span class="type">OrderService</span> {
+    <span class="kw">private final</span> <span class="type">OrderService</span> wrapped;
+    <span class="kw">public</span> <span class="type">LoggingOrderService</span>(<span class="type">OrderService</span> ws) { <span class="kw">this</span>.wrapped = ws; }
+
+    <span class="kw">public</span> <span class="type">Order</span> <span class="fn">find</span>(<span class="type">Long</span> id) {
+        log.<span class="fn">info</span>(<span class="str">"Finding order: "</span> + id);
+        <span class="type">Order</span> o = wrapped.<span class="fn">find</span>(id);   <span class="cmt">// delegate to wrapped</span>
+        log.<span class="fn">info</span>(<span class="str">"Found: "</span> + o);
+        <span class="kw">return</span> o;
+    }
+}
+
+<span class="cmt">// Stack decorators</span>
+<span class="type">OrderService</span> service =
+    <span class="kw">new</span> <span class="type">LoggingOrderService</span>(
+        <span class="kw">new</span> <span class="type">CachingOrderService</span>(
+            <span class="kw">new</span> <span class="type">OrderServiceImpl</span>()
+        )
+    );</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Proxy — Control Access</h4>
+      <p><strong>Problem:</strong> Want to control access to an object (lazy loading, security, logging, remote call).<br><strong>Real Java:</strong> Spring AOP proxies, JDK dynamic proxies, Hibernate lazy entity proxies.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">JDK Dynamic Proxy</span></div>
+        <pre><code><span class="cmt">// Create proxy dynamically at runtime</span>
+<span class="type">OrderService</span> proxy = (<span class="type">OrderService</span>) <span class="type">Proxy</span>.<span class="fn">newProxyInstance</span>(
+    <span class="type">OrderService</span>.class.<span class="fn">getClassLoader</span>(),
+    <span class="kw">new</span> <span class="type">Class</span>[]{ <span class="type">OrderService</span>.class },
+    (<span class="type">proxyObj</span>, method, args) -&gt; {          <span class="cmt">// InvocationHandler</span>
+        System.out.<span class="fn">println</span>(<span class="str">"Before: "</span> + method.<span class="fn">getName</span>());
+        <span class="type">Object</span> result = method.<span class="fn">invoke</span>(realService, args); <span class="cmt">// delegate</span>
+        System.out.<span class="fn">println</span>(<span class="str">"After: "</span> + method.<span class="fn">getName</span>());
+        <span class="kw">return</span> result;
+    }
+);</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Facade — Simplify a Complex Subsystem</h4>
+      <p><strong>Problem:</strong> Subsystem is complex with many classes. Clients shouldn't deal with the complexity.<br><strong>Real Java:</strong> <code>slf4j</code> is a facade over Log4j/Logback/JUL. <code>JDBC</code> is a facade over database protocols.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Facade — video encoding system</span></div>
+        <pre><code><span class="cmt">// Complex subsystem</span>
+<span class="kw">class</span> <span class="type">VideoDecoder</span>     { <span class="type">VideoFile</span> <span class="fn">decode</span>(<span class="type">String</span> path) { ... } }
+<span class="kw">class</span> <span class="type">AudioMixer</span>       { <span class="kw">void</span> <span class="fn">mix</span>(<span class="type">VideoFile</span> f) { ... } }
+<span class="kw">class</span> <span class="type">VideoEncoder</span>     { <span class="kw">void</span> <span class="fn">encode</span>(<span class="type">VideoFile</span> f, <span class="type">String</span> format) { ... } }
+<span class="kw">class</span> <span class="type">BitrateCalculator</span>{ <span class="kw">void</span> <span class="fn">calculate</span>(<span class="type">VideoFile</span> f) { ... } }
+
+<span class="cmt">// Facade hides complexity</span>
+<span class="kw">class</span> <span class="type">VideoConversionFacade</span> {
+    <span class="kw">public void</span> <span class="fn">convert</span>(<span class="type">String</span> input, <span class="type">String</span> format) {
+        <span class="type">VideoFile</span> f = <span class="kw">new</span> <span class="type">VideoDecoder</span>().<span class="fn">decode</span>(input);
+        <span class="kw">new</span> <span class="type">AudioMixer</span>().<span class="fn">mix</span>(f);
+        <span class="kw">new</span> <span class="type">BitrateCalculator</span>().<span class="fn">calculate</span>(f);
+        <span class="kw">new</span> <span class="type">VideoEncoder</span>().<span class="fn">encode</span>(f, format);
+    }
+}
+<span class="cmt">// Client: new VideoConversionFacade().convert("video.mkv", "mp4");
+// No knowledge of decoder, mixer, bitrate calculation</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="behavioral-patterns">
+    <div class="section-header">
+      <h3>🎬 Behavioral Patterns</h3>
+    </div>
+    <div class="card">
+      <h4>Strategy — Swap Algorithms</h4>
+      <p><strong>Problem:</strong> Need to switch between different algorithms at runtime.<br><strong>Real Java:</strong> <code>Comparator</code> IS a strategy. <code>ThreadPoolExecutor</code>'s <code>RejectedExecutionHandler</code> is strategy.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Strategy — sorting/discount algorithms</span></div>
+        <pre><code><span class="cmt">// Strategy interface (often a functional interface in modern Java)</span>
+<span class="kw2">@FunctionalInterface</span>
+<span class="kw">interface</span> <span class="type">DiscountStrategy</span> {
+    <span class="type">BigDecimal</span> <span class="fn">apply</span>(<span class="type">BigDecimal</span> price);
+}
+
+<span class="cmt">// Concrete strategies — lambda-friendly</span>
+<span class="type">DiscountStrategy</span> noDiscount      = price -&gt; price;
+<span class="type">DiscountStrategy</span> tenPercentOff   = price -&gt; price.<fn>multiply</fn>(<span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"0.90"</span>));
+<span class="type">DiscountStrategy</span> flatTwentyOff   = price -&gt; price.<fn>subtract</fn>(<span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"20"</span>));
+<span class="type">DiscountStrategy</span> memberDiscount  = price -&gt; price.<fn>multiply</fn>(<span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"0.85"</span>));
+
+<span class="cmt">// Context uses strategy</span>
+<span class="kw">class</span> <span class="type">PricingEngine</span> {
+    <span class="kw">private</span> <span class="type">DiscountStrategy</span> strategy = noDiscount;
+
+    <span class="kw">public void</span> <span class="fn">setStrategy</span>(<span class="type">DiscountStrategy</span> s) { <span class="kw">this</span>.strategy = s; }
+    <span class="kw">public</span> <span class="type">BigDecimal</span> <span class="fn">calculatePrice</span>(<span class="type">BigDecimal</span> price) {
+        <span class="kw">return</span> strategy.<span class="fn">apply</span>(price);
+    }
+}
+
+<span class="cmt">// Runtime switch</span>
+<span class="kw">if</span> (user.<span class="fn">isPremium</span>()) engine.<span class="fn">setStrategy</span>(memberDiscount);</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Observer — Event / Publish-Subscribe</h4>
+      <p><strong>Problem:</strong> Multiple objects need to react when another object's state changes.<br><strong>Real Java:</strong> <code>EventListener</code> in Swing. Spring's <code>ApplicationEvent</code>. Java's <code>PropertyChangeListener</code>.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Observer — event system</span></div>
+        <pre><code><span class="cmt">// Modern Java approach with functional interface</span>
+<span class="kw">public class</span> <span class="type">EventBus</span>&lt;<span class="type">E</span>&gt; {
+    <span class="kw">private final</span> <span class="type">List</span>&lt;<span class="type">Consumer</span>&lt;<span class="type">E</span>&gt;&gt; listeners = <span class="kw">new</span> <span class="type">CopyOnWriteArrayList</span>&lt;&gt;();
+
+    <span class="kw">public void</span> <span class="fn">subscribe</span>(<span class="type">Consumer</span>&lt;<span class="type">E</span>&gt; listener) { listeners.<span class="fn">add</span>(listener); }
+    <span class="kw">public void</span> <span class="fn">unsubscribe</span>(<span class="type">Consumer</span>&lt;<span class="type">E</span>&gt; listener) { listeners.<span class="fn">remove</span>(listener); }
+    <span class="kw">public void</span> <span class="fn">publish</span>(<span class="type">E</span> event) { listeners.<span class="fn">forEach</span>(l -&gt; l.<fn>accept</fn>(event)); }
+}
+
+<span class="cmt">// Usage</span>
+<span class="type">EventBus</span>&lt;<span class="type">OrderPlacedEvent</span>&gt; bus = <span class="kw">new</span> <span class="type">EventBus</span>&lt;&gt;();
+bus.<span class="fn">subscribe</span>(e -&gt; emailService.<span class="fn">sendConfirmation</span>(e.<fn>getOrder</fn>()));
+bus.<span class="fn">subscribe</span>(e -&gt; inventoryService.<span class="fn">reserve</span>(e.<fn>getOrder</fn>()));
+bus.<span class="fn">subscribe</span>(e -&gt; analyticsService.<span class="fn">track</span>(e));
+
+<span class="cmt">// Publish event — all subscribers notified</span>
+bus.<span class="fn">publish</span>(<span class="kw">new</span> <span class="type">OrderPlacedEvent</span>(order));</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Template Method — Define Skeleton, Fill Gaps</h4>
+      <p><strong>Problem:</strong> Algorithm has fixed skeleton but specific steps vary between implementations.<br><strong>Real Java:</strong> <code>AbstractList</code>, <code>HttpServlet.service()</code> → calls <code>doGet()</code>/<code>doPost()</code>. <code>JdbcTemplate</code>.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Template Method — data migration</span></div>
+        <pre><code><span class="kw">public abstract class</span> <span class="type">DataMigration</span> {
+
+    <span class="cmt">// Template method — defines the skeleton</span>
+    <span class="kw">public final void</span> <span class="fn">migrate</span>() {      <span class="cmt">// final: subclasses can't change the flow</span>
+        <span class="fn">validateSource</span>();              <span class="cmt">// hook — optional override</span>
+        <span class="type">List</span>&lt;?&gt; data = <span class="fn">extractData</span>();  <span class="cmt">// abstract — must implement</span>
+        <span class="type">List</span>&lt;?&gt; xformed = <span class="fn">transform</span>(data);
+        <span class="fn">loadData</span>(xformed);
+        <span class="fn">sendReport</span>();
+    }
+
+    <span class="kw">protected abstract</span> <span class="type">List</span>&lt;?&gt; <span class="fn">extractData</span>();
+    <span class="kw">protected abstract</span> <span class="type">List</span>&lt;?&gt; <span class="fn">transform</span>(<span class="type">List</span>&lt;?&gt; raw);
+    <span class="kw">protected abstract void</span> <span class="fn">loadData</span>(<span class="type">List</span>&lt;?&gt; data);
+
+    <span class="cmt">// Hook — default implementation, subclass may override</span>
+    <span class="kw">protected void</span> <span class="fn">validateSource</span>() {}
+    <span class="kw">private void</span> <span class="fn">sendReport</span>() { System.out.<span class="fn">println</span>(<span class="str">"Migration complete"</span>); }
+}
+
+<span class="kw">public class</span> <span class="type">CsvToDbMigration</span> <span class="kw">extends</span> <span class="type">DataMigration</span> {
+    <span class="kw">protected</span> <span class="type">List</span>&lt;?&gt; <span class="fn">extractData</span>() { <span class="kw">return</span> <span class="fn">readCsv</span>(<span class="str">"data.csv"</span>); }
+    <span class="kw">protected</span> <span class="type">List</span>&lt;?&gt; <span class="fn">transform</span>(<span class="type">List</span>&lt;?&gt; raw) { <span class="kw">return</span> <span class="fn">mapToEntities</span>(raw); }
+    <span class="kw">protected void</span> <span class="fn">loadData</span>(<span class="type">List</span>&lt;?&gt; data) { repo.<fn>saveAll</fn>(data); }
+}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Chain of Responsibility — Pipeline Processing</h4>
+      <p><strong>Problem:</strong> Request needs to be processed by chain of handlers; each decides to handle or pass on.<br><strong>Real Java:</strong> Servlet Filters, Spring Security filter chain, exception handling chains.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Chain of Responsibility — request validation</span></div>
+        <pre><code><span class="kw">public abstract class</span> <span class="type">RequestValidator</span> {
+    <span class="kw">private</span> <span class="type">RequestValidator</span> next;
+
+    <span class="kw">public</span> <span class="type">RequestValidator</span> <span class="fn">setNext</span>(<span class="type">RequestValidator</span> n) { next = n; <span class="kw">return</span> n; }
+
+    <span class="kw">protected abstract boolean</span> <span class="fn">validate</span>(<span class="type">Request</span> req);
+
+    <span class="kw">public boolean</span> <span class="fn">handle</span>(<span class="type">Request</span> req) {
+        <span class="kw">if</span> (!<span class="fn">validate</span>(req)) <span class="kw">return false</span>;
+        <span class="kw">return</span> next == <span class="kw">null</span> || next.<span class="fn">handle</span>(req);
+    }
+}
+
+<span class="cmt">// Chain: AuthValidator → RateLimitValidator → PayloadSizeValidator</span>
+<span class="type">RequestValidator</span> auth = <span class="kw">new</span> <span class="type">AuthValidator</span>();
+<span class="type">RequestValidator</span> rate = <span class="kw">new</span> <span class="type">RateLimitValidator</span>();
+<span class="type">RequestValidator</span> size = <span class="kw">new</span> <span class="type">PayloadSizeValidator</span>();
+auth.<span class="fn">setNext</span>(rate).<span class="fn">setNext</span>(size);
+<span class="kw">boolean</span> valid = auth.<span class="fn">handle</span>(request);</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="delegation">
+    <div class="section-header">
+      <h3>🤝 Delegation Pattern</h3>
+    </div>
+    <div class="card">
+      <h4>What Delegation Is</h4>
+      <p>Delegation: an object handles a request by forwarding it to a helper (delegate) object. It's <em>composition over inheritance</em> in action. Instead of subclassing to inherit behaviour, hold a reference and forward method calls.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Delegation vs Inheritance</span></div>
+        <pre><code><span class="cmt">// ❌ Inheritance — tight coupling to parent's implementation</span>
+<span class="kw">class</span> <span class="type">MyList</span> <span class="kw">extends</span> <span class="type">ArrayList</span>&lt;<span class="type">String</span>&gt; {
+    <span class="kw">public void</span> <span class="fn">addUpperCase</span>(<span class="type">String</span> s) { <span class="fn">add</span>(s.<fn>toUpperCase</fn>()); }
+    <span class="cmt">// Problem: inherits ALL 30+ ArrayList methods, even unwanted ones
+    // If ArrayList internals change → MyList breaks</span>
+}
+
+<span class="cmt">// ✅ Delegation — loose coupling, selective exposure</span>
+<span class="kw">class</span> <span class="type">UpperCaseList</span> {
+    <span class="kw">private final</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt; delegate = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(); <span class="cmt">// composition</span>
+
+    <span class="kw">public void</span> <span class="fn">add</span>(<span class="type">String</span> s) { delegate.<span class="fn">add</span>(s.<fn>toUpperCase</fn>()); }
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">get</span>(<span class="kw">int</span> i) { <span class="kw">return</span> delegate.<span class="fn">get</span>(i); }      <span class="cmt">// forward selectively</span>
+    <span class="kw">public int</span>  <span class="fn">size</span>() { <span class="kw">return</span> delegate.<span class="fn">size</span>(); }
+    <span class="cmt">// Only expose what you want. No risk from ArrayList changes.</span>
+}
+
+<span class="cmt">// ── Real-world: Spring's delegation everywhere ───────────────────
+// JpaRepository delegates to SimpleJpaRepository
+// SimpleJpaRepository delegates to EntityManager
+// EntityManager delegates to Hibernate SessionImpl</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       PART 8 — ADVANCED
+  ═══════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">08</div>
+    <div>
+      <h2>Advanced Java Topics</h2>
+      <p>Annotations, serialization, UUID, and the packaging tools every developer needs.</p>
+    </div>
+  </div>
+
+  <div class="section" id="annotations">
+    <div class="section-header">
+      <h3>🏷️ Java Annotations System</h3>
+    </div>
+    <div class="card">
+      <h4>What Annotations Are</h4>
+      <p>Annotations are metadata attached to code elements (classes, methods, fields, parameters). They don't change program logic directly — they're read by the compiler, build tools, or frameworks at runtime via reflection.</p>
+    </div>
+    <div class="card">
+      <h4>Meta-Annotations (Annotations on Annotations)</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">All meta-annotations</span></div>
+        <pre><code><span class="cmt">// ── @Target — where the annotation can be applied ────────────────</span>
+<span class="kw2">@Target</span>({
+    <span class="type">ElementType</span>.TYPE,              <span class="cmt">// class, interface, enum, record</span>
+    <span class="type">ElementType</span>.METHOD,            <span class="cmt">// methods</span>
+    <span class="type">ElementType</span>.FIELD,             <span class="cmt">// fields</span>
+    <span class="type">ElementType</span>.PARAMETER,         <span class="cmt">// method parameters</span>
+    <span class="type">ElementType</span>.CONSTRUCTOR,       <span class="cmt">// constructors</span>
+    <span class="type">ElementType</span>.LOCAL_VARIABLE,    <span class="cmt">// local variables</span>
+    <span class="type">ElementType</span>.ANNOTATION_TYPE,   <span class="cmt">// meta-annotations</span>
+    <span class="type">ElementType</span>.PACKAGE,           <span class="cmt">// package-info.java</span>
+    <span class="type">ElementType</span>.TYPE_USE           <span class="cmt">// any type usage (Java 8+)</span>
+})
+
+<span class="cmt">// ── @Retention — how long annotation survives ────────────────────</span>
+<span class="kw2">@Retention</span>(<span class="type">RetentionPolicy</span>.SOURCE)   <span class="cmt">// only in source code (e.g., @Override)</span>
+<span class="kw2">@Retention</span>(<span class="type">RetentionPolicy</span>.CLASS)    <span class="cmt">// in .class file but not at runtime (default)</span>
+<span class="kw2">@Retention</span>(<span class="type">RetentionPolicy</span>.RUNTIME)  <span class="cmt">// available via reflection at runtime ← use this for frameworks</span>
+
+<span class="cmt">// ── @Documented — show in Javadoc ────────────────────────────────</span>
+<span class="kw2">@Documented</span>
+
+<span class="cmt">// ── @Inherited — subclasses inherit annotation ───────────────────</span>
+<span class="kw2">@Inherited</span>                            <span class="cmt">// only works on class-level annotations</span>
+
+<span class="cmt">// ── @Repeatable (Java 8+) — apply same annotation multiple times ─</span>
+<span class="kw2">@Repeatable</span>(<span class="type">Roles</span>.class)             <span class="cmt">// @Role("admin") @Role("user") on same element</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Creating a Custom Runtime Annotation</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom annotation + processor</span></div>
+        <pre><code><span class="cmt">// ── 1. Define the annotation ─────────────────────────────────────</span>
+<span class="kw2">@Target</span>(<span class="type">ElementType</span>.METHOD)
+<span class="kw2">@Retention</span>(<span class="type">RetentionPolicy</span>.RUNTIME)
+<span class="kw2">@Documented</span>
+<span class="kw">public @interface</span> <span class="type">RateLimit</span> {
+    <span class="kw">int</span> <span class="fn">requests</span>() <span class="kw">default</span> <span class="num">100</span>;     <span class="cmt">// annotation element with default</span>
+    <span class="kw">int</span> <span class="fn">seconds</span>() <span class="kw">default</span> <span class="num">60</span>;
+    <span class="type">String</span> <span class="fn">key</span>() <span class="kw">default</span> <span class="str">""</span>;
+}
+
+<span class="cmt">// ── 2. Use the annotation ────────────────────────────────────────</span>
+<span class="kw2">@RestController</span>
+<span class="kw">public class</span> <span class="type">ApiController</span> {
+
+    <span class="kw2">@RateLimit</span>(requests = <span class="num">10</span>, seconds = <span class="num">60</span>)
+    <span class="kw2">@GetMapping</span>(<span class="str">"/search"</span>)
+    <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Product</span>&gt; <span class="fn">search</span>(<span class="type">String</span> q) { ... }
+}
+
+<span class="cmt">// ── 3. Process via AOP ────────────────────────────────────────────</span>
+<span class="kw2">@Aspect</span> <span class="kw2">@Component</span>
+<span class="kw">public class</span> <span class="type">RateLimitAspect</span> {
+
+    <span class="kw2">@Around</span>(<span class="str">"@annotation(rateLimit)"</span>)
+    <span class="kw">public</span> <span class="type">Object</span> <span class="fn">limit</span>(<span class="type">ProceedingJoinPoint</span> pjp, <span class="type">RateLimit</span> rateLimit) <span class="kw">throws</span> <span class="type">Throwable</span> {
+        <span class="type">String</span> key = <span class="fn">getKey</span>(pjp, rateLimit);
+        <span class="kw">if</span> (rateLimiter.<span class="fn">isBlocked</span>(key, rateLimit.<span class="fn">requests</span>(), rateLimit.<span class="fn">seconds</span>())) {
+            <span class="kw">throw new</span> <span class="type">TooManyRequestsException</span>();
+        }
+        <span class="kw">return</span> pjp.<span class="fn">proceed</span>();
+    }
+}
+
+<span class="cmt">// ── Built-in Java annotations ─────────────────────────────────────
+// @Override      — verify override is valid (compiler check)
+// @Deprecated    — warn callers this is going away
+// @SuppressWarnings — suppress specific compiler warnings
+// @SafeVarargs   — suppress unchecked varargs warning
+// @FunctionalInterface — verify exactly one abstract method</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Annotation Processing at Compile Time</h4>
+      <p>Annotations can be processed at <em>compile time</em> by annotation processors (APT). They generate source files, validate code, create descriptors. Examples: Lombok (<code>@Data</code>, <code>@Builder</code>), MapStruct, Dagger2.</p>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Three annotation processing timings:</strong><br>
+          1. <strong>Source</strong> (retention=SOURCE): only during compilation → <code>@Override</code><br>
+          2. <strong>Class</strong> (retention=CLASS): in bytecode, bytecode tools → AspectJ compile-time weaving<br>
+          3. <strong>Runtime</strong> (retention=RUNTIME): reflection at runtime → Spring, JUnit, Jackson
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="serialization">
+    <div class="section-header">
+      <h3>💾 Serialization & transient</h3>
+    </div>
+    <div class="card">
+      <h4>What Serialization Is</h4>
+      <p>Serialization: convert object graph to bytes (ObjectOutputStream). Deserialization: bytes back to object (ObjectInputStream). Used for: caching, RMI, messaging, session persistence.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Serialization complete example</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">User</span> <span class="kw">implements</span> <span class="type">Serializable</span> {
+    <span class="cmt">// serialVersionUID prevents version mismatch — always define it!</span>
+    <span class="kw">private static final long</span> <span class="const">serialVersionUID</span> = <span class="num">1L</span>;
+
+    <span class="kw">private</span> <span class="type">String</span> name;
+    <span class="kw">private</span> <span class="kw">int</span> age;
+
+    <span class="cmt">// transient — NOT serialized (excluded from bytes)</span>
+    <span class="kw">private transient</span> <span class="type">String</span> password;      <span class="cmt">// security: never persist</span>
+    <span class="kw">private transient</span> <span class="type">Connection</span> dbConn;    <span class="cmt">// un-serializable resource</span>
+    <span class="kw">private transient</span> <span class="kw">int</span> cachedHashCode;   <span class="cmt">// derived/cached value</span>
+}
+
+<span class="cmt">// ── Serialize to file ────────────────────────────────────────────</span>
+<span class="kw">try</span> (<span class="kw">var</span> oos = <span class="kw">new</span> <span class="type">ObjectOutputStream</span>(<span class="kw">new</span> <span class="type">FileOutputStream</span>(<span class="str">"user.ser"</span>))) {
+    oos.<span class="fn">writeObject</span>(user);
+}
+
+<span class="cmt">// ── Deserialize from file ────────────────────────────────────────</span>
+<span class="kw">try</span> (<span class="kw">var</span> ois = <span class="kw">new</span> <span class="type">ObjectInputStream</span>(<span class="kw">new</span> <span class="type">FileInputStream</span>(<span class="str">"user.ser"</span>))) {
+    <span class="type">User</span> restored = (<span class="type">User</span>) ois.<span class="fn">readObject</span>();
+    <span class="cmt">// restored.password == null (was transient)
+    // restored.name, age restored from bytes</span>
+}
+
+<span class="cmt">// ── Custom serialization ─────────────────────────────────────────</span>
+<span class="kw">private void</span> <span class="fn">writeObject</span>(<span class="type">ObjectOutputStream</span> oos) <span class="kw">throws</span> <span class="type">IOException</span> {
+    oos.<span class="fn">defaultWriteObject</span>(); <span class="cmt">// write normal fields</span>
+    oos.<span class="fn">writeObject</span>(<span class="fn">encryptPassword</span>(password)); <span class="cmt">// write encrypted password</span>
+}
+
+<span class="kw">private void</span> <span class="fn">readObject</span>(<span class="type">ObjectInputStream</span> ois)
+        <span class="kw">throws</span> <span class="type">IOException</span>, <span class="type">ClassNotFoundException</span> {
+    ois.<span class="fn">defaultReadObject</span>();
+    password = <span class="fn">decryptPassword</span>((<span class="type">String</span>) ois.<span class="fn">readObject</span>());
+}</code></pre>
+      </div>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>serialVersionUID:</strong> If not declared, JVM computes one from class structure. Add a field → computed UID changes → old serialized data can't deserialize → <code>InvalidClassException</code>. Always declare it explicitly!
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Externalizable — Full Control</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Externalizable for performance</span></div>
+        <pre><code><span class="kw">public class</span> <span class="type">FastUser</span> <span class="kw">implements</span> <span class="type">Externalizable</span> {
+    <span class="kw">private</span> <span class="type">String</span> name;
+    <span class="kw">private</span> <span class="kw">int</span> age;
+
+    <span class="kw">public</span> <span class="type">FastUser</span>() {}  <span class="cmt">// ← required! Externalizable needs no-arg constructor</span>
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">writeExternal</span>(<span class="type">ObjectOutput</span> out) <span class="kw">throws</span> <span class="type">IOException</span> {
+        out.<span class="fn">writeUTF</span>(name);     <span class="cmt">// you control exactly what's written</span>
+        out.<span class="fn">writeInt</span>(age);
+    }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">readExternal</span>(<span class="type">ObjectInput</span> in) <span class="kw">throws</span> <span class="type">IOException</span> {
+        name = in.<span class="fn">readUTF</span>();
+        age = in.<span class="fn">readInt</span>();
+    }
+}
+<span class="cmt">// Faster than Serializable: no reflection, you write only what you need</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="uuid">
+    <div class="section-header">
+      <h3>🔑 UUID</h3>
+    </div>
+    <div class="card">
+      <h4>What UUID Is and When to Use It</h4>
+      <p>Universally Unique Identifier: 128-bit number (32 hex chars + 4 hyphens). Designed to be globally unique across space and time — two nodes generating UUIDs simultaneously should never produce the same value. Used when you can't rely on a central database for ID generation (distributed systems, client-generated IDs).</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">UUID types and usage</span></div>
+        <pre><code><span class="cmt">// ── UUID v4 (random) — most commonly used ───────────────────────</span>
+<span class="type">UUID</span> id = <span class="type">UUID</span>.<span class="fn">randomUUID</span>();         <span class="cmt">// 122 random bits + 6 version/variant bits</span>
+System.out.<span class="fn">println</span>(id);              <span class="cmt">// "550e8400-e29b-41d4-a716-446655440000"</span>
+
+<span class="cmt">// ── UUID v3/v5 (name-based, deterministic) ───────────────────────</span>
+<span class="type">UUID</span> namespace = <span class="type">UUID</span>.<span class="fn">fromString</span>(<span class="str">"6ba7b810-9dad-11d1-80b4-00c04fd430c8"</span>); <span class="cmt">// DNS namespace</span>
+<span class="type">UUID</span> named = <span class="type">UUID</span>.<span name="nameUUIDFromBytes">nameUUIDFromBytes</span>((<span class="str">"www.example.com"</span>).<fn>getBytes</fn>()); <span class="cmt">// v3 (MD5)</span>
+<span class="cmt">// Same name → always same UUID (idempotent)</span>
+
+<span class="cmt">// ── Usage in JPA entity ───────────────────────────────────────────</span>
+<span class="kw2">@Entity</span>
+<span class="kw">public class</span> <span class="type">Order</span> {
+    <span class="kw2">@Id</span>
+    <span class="kw">private</span> <span class="type">UUID</span> id = <span class="type">UUID</span>.<span class="fn">randomUUID</span>(); <span class="cmt">// generated before DB save</span>
+
+    <span class="cmt">// Alternative: use @GeneratedValue(strategy = GenerationType.UUID) in JPA 3.1</span>
+}
+
+<span class="cmt">// ── UUID as String vs UUID object ────────────────────────────────</span>
+<span class="type">String</span> uuidStr = <span class="type">UUID</span>.<span class="fn">randomUUID</span>().<span class="fn">toString</span>(); <span class="cmt">// "xxx-xxx-xxx-xxx"</span>
+<span class="type">UUID</span>   uuid    = <span class="type">UUID</span>.<span class="fn">fromString</span>(uuidStr);       <span class="cmt">// parse string back</span>
+
+<span class="cmt">// ── Performance note ──────────────────────────────────────────────
+// UUID v4 = 128 bits = 16 bytes (binary) or 36 chars (string)
+// Auto-increment int = 4 bytes. UUID takes 4x space in DB.
+// UUID is NOT sortable by creation time → random page splits in B-tree index.
+// If you need sortable UUIDs → use UUID v7 (time-ordered) or ULID</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="packaging">
+    <div class="section-header">
+      <h3>📦 JAR, Classpath, Manifest & Packaging</h3>
+    </div>
+    <div class="card">
+      <h4>JAR (Java ARchive)</h4>
+      <p>A JAR is a ZIP file containing compiled <code>.class</code> files, resources, and a <code>META-INF/MANIFEST.MF</code> file. It's the unit of distribution for Java libraries and applications.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">JAR commands</span></div>
+        <pre><code><span class="cmt"># Create JAR from class files</span>
+jar cvf myapp.jar -C build/ .
+
+<span class="cmt"># Create executable JAR with manifest</span>
+jar cvfm myapp.jar MANIFEST.MF -C build/ .
+
+<span class="cmt"># List JAR contents</span>
+jar tvf myapp.jar
+
+<span class="cmt"># Extract JAR</span>
+jar xvf myapp.jar
+
+<span class="cmt"># Run executable JAR</span>
+java -jar myapp.jar
+
+<span class="cmt"># Maven creates executable fat JAR (includes all dependencies):</span>
+mvn package
+<span class="cmt"># → target/myapp-1.0.jar (runnable: java -jar target/myapp-1.0.jar)</span></code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>MANIFEST.MF — The JAR Descriptor</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Text</span><span class="code-title">META-INF/MANIFEST.MF</span></div>
+        <pre><code>Manifest-Version: 1.0
+Main-Class: com.app.Main                        ← entry point for java -jar
+Class-Path: lib/logging.jar lib/commons.jar    ← additional JARs on classpath
+Implementation-Title: My Application
+Implementation-Version: 1.0.0
+Created-By: 17 (Oracle Corporation)
+
+<span class="cmt"># Spring Boot fat JAR manifest looks like:</span>
+Manifest-Version: 1.0
+Main-Class: org.springframework.boot.loader.JarLauncher
+Start-Class: com.app.MyApplication              ← your actual main class
+Spring-Boot-Version: 3.2.0
+Spring-Boot-Classes: BOOT-INF/classes/          ← your classes here
+Spring-Boot-Lib: BOOT-INF/lib/                  ← all dependencies here</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Classpath — How the JVM Finds Classes</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Bash</span><span class="code-title">Setting the classpath</span></div>
+        <pre><code><span class="cmt"># -cp or -classpath flag (overrides CLASSPATH env var)</span>
+java -cp ".:lib/*:config" com.app.Main
+
+<span class="cmt"># Classpath separators:
+# Unix: colon (:)
+# Windows: semicolon (;)</span>
+
+<span class="cmt"># . = current directory (compiled .class files)
+# lib/* = all JARs in lib directory
+# config = directory with properties files</span>
+
+<span class="cmt"># CLASSPATH environment variable (set system-wide)</span>
+export CLASSPATH=/home/app/lib/mylib.jar:/home/app/classes
+
+<span class="cmt"># Java Modules (Java 9+) — module path replaces classpath for modular apps</span>
+java --module-path mods -m com.app/com.app.Main
+
+<span class="cmt"># Check where a class was loaded from</span>
+java -verbose:class -cp . com.app.Main | grep "MyClass"</code></pre>
+      </div>
+      <h5>Classpath Resolution Order</h5>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Bootstrap ClassLoader</div>
+            <div class="step-desc">Loads JDK core classes (java.lang, java.util) from the JDK's module system. Highest priority.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Platform ClassLoader</div>
+            <div class="step-desc">Loads Java SE platform modules beyond the core.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Application ClassLoader</div>
+            <div class="step-desc">Loads from classpath in left-to-right order. First JAR/directory wins for duplicate classes.</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body"><strong>Classpath ordering matters!</strong> If two JARs contain the same class (e.g., different versions of the same library), the one listed first on the classpath wins. This is the root of "JAR hell" — use Maven/Gradle dependency management to avoid version conflicts.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Types of JARs</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Type</th><th>Description</th><th>Contains</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Regular JAR</strong></td>
+              <td>Library — added to other app's classpath</td>
+              <td>Your .class files only. Dependencies are external.</td>
+            </tr>
+            <tr>
+              <td><strong>Executable JAR</strong></td>
+              <td>Standalone runnable. <code>java -jar app.jar</code></td>
+              <td>Your .class files + Main-Class in manifest</td>
+            </tr>
+            <tr>
+              <td><strong>Fat/Uber JAR</strong></td>
+              <td>Self-contained — includes all dependencies</td>
+              <td>Your classes + all dependency classes merged/nested</td>
+            </tr>
+            <tr>
+              <td><strong>Sources JAR</strong></td>
+              <td>IDE source attachment</td>
+              <td>.java source files (not .class)</td>
+            </tr>
+            <tr>
+              <td><strong>Javadoc JAR</strong></td>
+              <td>IDE documentation</td>
+              <td>Generated HTML javadocs</td>
+            </tr>
+            <tr>
+              <td><strong>Integration JAR</strong></td>
+              <td>Test-specific classes for consumers</td>
+              <td>Test utilities, base test classes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <button id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+</main>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
+    document.getElementById('progress').style.width = pct + '%';
+  });
+
+  // ── Sidebar toggle (standardized) ──
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  // Close sidebar on nav-link click (mobile)
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
+
+  // Active nav highlight
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Back to top
+  const topBtn = document.getElementById('top-btn');
+  window.addEventListener('scroll', () => {
+    topBtn.style.opacity = window.scrollY > 400 ? '1' : '0';
+    topBtn.style.pointerEvents = window.scrollY > 400 ? 'auto' : 'none';
+  });
+</script>
+</body>
+</html>

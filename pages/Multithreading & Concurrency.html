@@ -1,0 +1,2507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Part 05 — Multithreading & Concurrency | Java Interview Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    
+    :root {
+      --bg:      #0f1117;
+      --surface: #1a1d27;
+      --card:    #21253a;
+      --border:  #2e3350;
+      --accent:  #00d4aa;
+      --a2:      #6c63ff;
+      --a3:      #ff6b6b;
+      --a4:      #ffd93d;
+      --a5:      #4ecdc4;
+      --pink:    #ec4899;
+      --orange:  #fb923c;
+      --text:    #e8eaf6;
+      --muted:   #8b92b8;
+      --code-bg: #13151f;
+    }
+
+    
+                    
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #100d1f 50%, #0f1117 100%);
+      padding: 56px 24px 48px; text-align: center;
+      border-bottom: 1px solid var(--border); position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 500px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+                    
+    /* ── LAYOUT ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+                        
+    /* ── SECTION ── */
+    .section { margin-bottom: 60px; }
+                                    
+        .section-label { font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .section-title { font-size: 26px; font-weight: 800; color: var(--text); }                            
+                            .info-box.orange { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.25); color: #fed7aa; }
+
+                        
+                            .key-list li.orange { border-left-color: var(--orange); }
+    
+                    .output-line.red  { color: var(--a3); }
+    .output-line.yellow { color: var(--a4); }
+
+                    
+    /* ── QUIZ ── */
+    .quiz-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; margin-bottom: 16px;
+    }
+    .quiz-q { font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 12px; display: flex; gap: 8px; }
+    .quiz-badge { background: rgba(255,107,107,0.15); color: var(--a3);
+      border-radius: 6px; padding: 2px 8px; font-size: 11px;
+      font-weight: 800; flex-shrink: 0; }
+    .quiz-reveal {
+      background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.2);
+      border-radius: 8px; padding: 12px 16px; margin-top: 10px;
+    }
+    .quiz-reveal-label { font-size: 10px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .quiz-ans { font-size: 13px; color: var(--muted); }
+
+    /* ── DIAGRAM ── */
+    .diagram {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin: 16px 0;
+      font-family: 'Fira Code', monospace; font-size: 12px;
+      color: var(--muted); overflow-x: auto; line-height: 1.9;
+    }
+    .diagram .d-title { color: var(--accent); font-weight: 700;
+      margin-bottom: 12px; font-size: 13px; }
+    .diagram     .diagram .hi  { color: var(--a4); }
+    .diagram .arr { color: var(--a2); }
+    .diagram .red { color: var(--a3); }
+    .diagram .grn { color: var(--accent); }
+    .diagram .pnk { color: var(--pink); }
+
+    /* ── THREAD STATE BOXES ── */
+    .state-flow {
+      display: flex; flex-wrap: wrap; gap: 0;
+      align-items: center; margin: 16px 0; justify-content: center;
+    }
+    .state-box {
+      padding: 10px 16px; border-radius: 10px;
+      font-size: 12px; font-weight: 700; text-align: center; min-width: 100px;
+    }
+    .state-arrow { font-size: 20px; color: var(--muted); padding: 0 8px; }
+    .s-new     { background: rgba(139,146,184,0.15); color: var(--muted);
+                 border: 1px solid rgba(139,146,184,0.3); }
+    .s-run     { background: rgba(0,212,170,0.15); color: var(--accent);
+                 border: 1px solid rgba(0,212,170,0.35); }
+    .s-block   { background: rgba(255,107,107,0.15); color: var(--a3);
+                 border: 1px solid rgba(255,107,107,0.35); }
+    .s-wait    { background: rgba(255,217,61,0.15); color: var(--a4);
+                 border: 1px solid rgba(255,217,61,0.35); }
+    .s-timed   { background: rgba(108,99,255,0.15); color: var(--a2);
+                 border: 1px solid rgba(108,99,255,0.35); }
+    .s-term    { background: rgba(236,72,153,0.15); color: var(--pink);
+                 border: 1px solid rgba(236,72,153,0.35); }
+
+    /* ── COMPLEXITY BADGE ── */
+    .feature-grid { display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+      gap: 12px; margin: 14px 0; }
+    .feature-box {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px;
+    }
+    .feature-title { font-size: 13px; font-weight: 700; color: var(--text);
+      margin-bottom: 6px; }
+    .feature-desc  { font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .feature-tag   { display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 6px; margin-top: 8px; }
+    .ft-green  { background: rgba(0,212,170,0.12); color: var(--accent); }
+    .ft-purple { background: rgba(108,99,255,0.12); color: var(--a2); }
+    .ft-red    { background: rgba(255,107,107,0.12); color: var(--a3); }
+    .ft-yellow { background: rgba(255,217,61,0.12); color: var(--a4); }
+    .ft-pink   { background: rgba(236,72,153,0.12); color: var(--pink); }
+    .ft-orange { background: rgba(251,146,60,0.12); color: var(--orange); }
+
+    
+        
+    @media (max-width: 600px) {
+            .feature-grid{ grid-template-columns: 1fr; }
+      .state-flow  { flex-direction: column; }
+      .state-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <!-- Hamburger toggle -->
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Collapsible Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <h2>🧵 Multithreading</h2>
+      <p>Part 05 — Concurrency</p>
+    </div>
+    <nav>
+      <div class="section-label">Thread Basics</div>
+      <a href="#creation">Thread Creation (4 Ways)</a>
+      <a href="#lifecycle">Thread Lifecycle & States</a>
+      <div class="section-label">Synchronization</div>
+      <a href="#sync">Synchronization</a>
+      <a href="#volatile">volatile Keyword</a>
+      <a href="#wait-notify">wait / notify</a>
+      <a href="#locks">Locks & ReentrantLock</a>
+      <div class="section-label">Executor & Thread Pools</div>
+      <a href="#threadpool">Thread Pools & Executor</a>
+      <a href="#callable-future">Callable & Future</a>
+      <a href="#completable">CompletableFuture</a>
+      <div class="section-label">Concurrency Utilities</div>
+      <a href="#deadlock">Deadlock & Prevention</a>
+      <a href="#atomic">Atomic Variables</a>
+      <a href="#utils">Concurrency Utilities</a>
+      <a href="#threadlocal">ThreadLocal</a>
+      <a href="#jmm">Java Memory Model</a>
+      <a href="#coding">Coding Problems</a>
+      <a href="#interview">Interview Q&A</a>
+      <div class="section-label">Navigate</div>
+      <a href="../index.html">🏠 Home</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main">
+<!-- ════ NAV ════ -->
+<nav class="topnav">
+  <div class="topnav-left">
+    <span class="nav-series">Java Notes</span>
+    <span style="color:var(--border)">›</span>
+    <span class="nav-title">Part 05 — Multithreading &amp; Concurrency</span>
+  </div>
+  <span class="nav-badge">Part 05 / 20</span>
+</nav>
+
+<!-- ════ HERO ════ -->
+<div class="hero">
+  <div class="hero-part-label">Part 05 of 20 — Core Java</div>
+  <h1>Multithreading &amp; Concurrency</h1>
+  <p class="hero-desc">
+    Thread creation, lifecycle, synchronization, volatile, locks, thread pools,
+    CompletableFuture, deadlock, atomic variables, concurrent utilities —
+    with deep internals and 25+ interview questions.
+  </p>
+  <div class="hero-pills">
+    <div class="hero-pill">🧵 Thread Creation</div>
+    <div class="hero-pill">♻️ Lifecycle</div>
+    <div class="hero-pill">🔒 Synchronization</div>
+    <div class="hero-pill">⚡ volatile</div>
+    <div class="hero-pill">🔑 Locks</div>
+    <div class="hero-pill">🏊 Thread Pools</div>
+    <div class="hero-pill">⚙️ CompletableFuture</div>
+    <div class="hero-pill">💀 Deadlock</div>
+    <div class="hero-pill">⚛️ Atomic</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ════ TOC ════ -->
+  <div class="toc">
+    <div class="toc-title">📋 Contents</div>
+    <div class="toc-grid">
+      <a href="#creation"        class="toc-item"><span class="toc-num">0</span>Thread Creation — 4 Ways</a>
+      <a href="#lifecycle"       class="toc-item"><span class="toc-num">1</span>Thread Lifecycle &amp; States</a>
+      <a href="#sync"            class="toc-item"><span class="toc-num">2</span>Synchronization &amp; Monitors</a>
+      <a href="#volatile"        class="toc-item"><span class="toc-num">3</span>volatile Keyword</a>
+      <a href="#wait-notify"     class="toc-item"><span class="toc-num">4</span>wait / notify / notifyAll</a>
+      <a href="#locks"           class="toc-item"><span class="toc-num">5</span>Locks — ReentrantLock etc.</a>
+      <a href="#threadpool"      class="toc-item"><span class="toc-num">6</span>Thread Pools &amp; ExecutorService</a>
+      <a href="#callable-future" class="toc-item"><span class="toc-num">7</span>Callable &amp; Future</a>
+      <a href="#completable"     class="toc-item"><span class="toc-num">8</span>CompletableFuture</a>
+      <a href="#deadlock"        class="toc-item"><span class="toc-num">9</span>Deadlock / Livelock / Starvation</a>
+      <a href="#atomic"          class="toc-item"><span class="toc-num">10</span>Atomic Variables</a>
+      <a href="#utils"           class="toc-item"><span class="toc-num">11</span>CountDownLatch, Semaphore etc.</a>
+      <a href="#threadlocal"     class="toc-item"><span class="toc-num">12</span>ThreadLocal</a>
+      <a href="#jmm"             class="toc-item"><span class="toc-num">13</span>Java Memory Model</a>
+      <a href="#coding"          class="toc-item"><span class="toc-num">14</span>Coding Problems</a>
+      <a href="#interview"       class="toc-item"><span class="toc-num">15</span>Interview Q&amp;A</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SECTION 0 — THREAD CREATION
+  ══════════════════════════════════ -->
+  <section id="creation" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-green">🧵</div>
+      <div class="section-meta">
+        <div class="section-label">Section 0</div>
+        <div class="section-title">Thread Creation — 4 Ways</div>
+        <div class="section-sub">extends Thread, implements Runnable, Callable+Future, Virtual Threads</div>
+      </div>
+    </div>
+
+    <!-- Way 1 -->
+    <div class="content-card">
+      <h3>🔷 Way 1 — Extend Thread class</h3>
+      <p>Override <code>run()</code> and call <code>start()</code>. Limitation: cannot extend any other class.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">extends Thread</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">MyThread</span> <span class="kw">extends</span> <span class="cl">Thread</span> {
+    <span class="kw">private</span> <span class="cl">String</span> taskName;
+
+    <span class="cl">MyThread</span>(<span class="cl">String</span> name) {
+        <span class="kw">super</span>(name);           <span class="cm">// sets thread name</span>
+        <span class="kw">this</span>.taskName = name;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">run</span>() {
+        <span class="cl">System</span>.out.println(
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">getName</span>()
+            + <span class="str">" is running task: "</span> + taskName
+        );
+    }
+}
+
+<span class="cl">MyThread</span> t = <span class="kw">new</span> <span class="cl">MyThread</span>(<span class="str">"Task-A"</span>);
+t.<span class="fn">start</span>(); <span class="cm">// ✅ Starts a new thread and calls run() on it</span>
+t.<span class="fn">run</span>();   <span class="cm">// ❌ Runs on SAME (main) thread — no new thread created!</span></pre>
+      </div>
+      <div class="info-box warn">
+        <div class="ib-icon">⚠️</div>
+        <div><strong>Key Interview Trap:</strong> Always call <code>start()</code>, NEVER <code>run()</code> directly.
+        <code>run()</code> is just a normal method call on the current thread.
+        <code>start()</code> registers the thread with JVM and schedules it.</div>
+      </div>
+    </div>
+
+    <!-- Way 2 -->
+    <div class="content-card">
+      <h3>🔶 Way 2 — Implement Runnable (Preferred)</h3>
+      <p>Better than extending Thread — class can still extend another class. Also can be used with lambdas (functional interface).</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">implements Runnable</span></div>
+        <pre>
+<span class="cm">// Traditional approach</span>
+<span class="kw">class</span> <span class="cl">MyRunnable</span> <span class="kw">implements</span> <span class="cl">Runnable</span> {
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">run</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"Runnable running on: "</span>
+            + <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">getName</span>());
+    }
+}
+
+<span class="cl">Thread</span> t1 = <span class="kw">new</span> <span class="cl">Thread</span>(<span class="kw">new</span> <span class="cl">MyRunnable</span>(), <span class="str">"Worker-1"</span>);
+t1.<span class="fn">start</span>();
+
+<span class="cm">// Lambda (Runnable is @FunctionalInterface)</span>
+<span class="cl">Thread</span> t2 = <span class="kw">new</span> <span class="cl">Thread</span>(() ->
+    <span class="cl">System</span>.out.println(<span class="str">"Lambda thread: "</span> + <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">getName</span>()),
+    <span class="str">"Worker-2"</span>
+);
+t2.<span class="fn">start</span>();
+
+<span class="cm">// Thread utility methods</span>
+<span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span>);         <span class="cm">// pause current thread for 1s (throws InterruptedException)</span>
+<span class="cl">Thread</span>.<span class="fn">currentThread</span>();    <span class="cm">// reference to current executing thread</span>
+t1.<span class="fn">join</span>();                 <span class="cm">// wait for t1 to finish before continuing</span>
+t1.<span class="fn">join</span>(<span class="num">2000</span>);            <span class="cm">// wait max 2 seconds</span>
+t1.<span class="fn">interrupt</span>();           <span class="cm">// request thread to stop (sets interrupted flag)</span>
+<span class="cl">Thread</span>.<span class="fn">interrupted</span>();     <span class="cm">// checks and CLEARS interrupted flag</span>
+t1.<span class="fn">isInterrupted</span>();      <span class="cm">// checks without clearing flag</span>
+t1.<span class="fn">setDaemon</span>(<span class="kw">true</span>);      <span class="cm">// must be set BEFORE start() — daemon = background thread</span>
+t1.<span class="fn">setPriority</span>(<span class="cl">Thread</span>.MAX_PRIORITY); <span class="cm">// 1 (MIN) to 10 (MAX), default 5</span></pre>
+      </div>
+    </div>
+
+    <!-- Way 3 -->
+    <div class="content-card">
+      <h3>🔷 Way 3 — Callable + Future (return value from thread)</h3>
+      <p><code>Runnable</code> cannot return a value or throw checked exceptions.
+         <code>Callable&lt;V&gt;</code> solves both — returns a value and can throw exceptions.
+         Result is accessed via <code>Future&lt;V&gt;</code>.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Callable + Future</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.*;
+
+<span class="cm">// Callable — returns Integer, can throw exception</span>
+<span class="cl">Callable</span>&lt;<span class="cl">Integer</span>&gt; task = () -> {
+    <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span>);
+    <span class="kw">return</span> <span class="num">42</span>;
+};
+
+<span class="cl">ExecutorService</span> executor = <span class="cl">Executors</span>.<span class="fn">newSingleThreadExecutor</span>();
+<span class="cl">Future</span>&lt;<span class="cl">Integer</span>&gt; future = executor.<span class="fn">submit</span>(task);
+
+<span class="cm">// Future methods</span>
+future.<span class="fn">isDone</span>();           <span class="cm">// check if completed</span>
+future.<span class="fn">isCancelled</span>();      <span class="cm">// check if cancelled</span>
+future.<span class="fn">cancel</span>(<span class="kw">true</span>);       <span class="cm">// attempt to cancel</span>
+
+<span class="cl">Integer</span> result = future.<span class="fn">get</span>();         <span class="cm">// blocks until done</span>
+<span class="cl">Integer</span> r2     = future.<span class="fn">get</span>(<span class="num">2</span>, <span class="cl">TimeUnit</span>.SECONDS); <span class="cm">// timeout version</span>
+
+<span class="cl">System</span>.out.println(<span class="str">"Result: "</span> + result); <span class="cm">// 42</span>
+executor.<span class="fn">shutdown</span>();</pre>
+      </div>
+    </div>
+
+    <!-- Way 4 -->
+    <div class="content-card">
+      <h3>🔶 Way 4 — Virtual Threads (Java 21 — Project Loom)</h3>
+      <p>Virtual threads are <strong>lightweight</strong> threads managed by the JVM (not OS).
+         You can create <strong>millions</strong> of them without exhausting resources.
+         Perfect for I/O-bound tasks.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java 21</span><span class="code-label">Virtual Threads — Project Loom</span></div>
+        <pre>
+<span class="cm">// Create virtual thread (Java 21+)</span>
+<span class="cl">Thread</span> vt = <span class="cl">Thread</span>.<span class="fn">ofVirtual</span>().<span class="fn">name</span>(<span class="str">"vt-1"</span>).<span class="fn">start</span>(() ->
+    <span class="cl">System</span>.out.println(<span class="str">"Virtual thread: "</span> + <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">isVirtual</span>())
+);
+
+<span class="cm">// Virtual thread with factory</span>
+<span class="cl">Thread</span>.<span class="cl">Builder</span> builder = <span class="cl">Thread</span>.<span class="fn">ofVirtual</span>().<span class="fn">name</span>(<span class="str">"worker-"</span>, <span class="num">0</span>);
+<span class="cl">Thread</span> t1 = builder.<span class="fn">start</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"Task 1"</span>));
+<span class="cl">Thread</span> t2 = builder.<span class="fn">start</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"Task 2"</span>));
+
+<span class="cm">// Virtual thread ExecutorService — creates a new virtual thread per task</span>
+<span class="kw">try</span> (<span class="cl">ExecutorService</span> exec = <span class="cl">Executors</span>.<span class="fn">newVirtualThreadPerTaskExecutor</span>()) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">10_000</span>; i++) {
+        <span class="kw">final int</span> id = i;
+        exec.<span class="fn">submit</span>(() -> <span class="cm">/* I/O or DB call */</span> <span class="cl">System</span>.out.println(<span class="str">"Task: "</span> + id));
+    }
+} <span class="cm">// auto-shutdown via try-with-resources</span>
+
+<span class="cm">// Check if virtual</span>
+<span class="cl">System</span>.out.println(<span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">isVirtual</span>()); <span class="cm">// false for platform threads</span></pre>
+      </div>
+
+      <div class="info-box note">
+        <div class="ib-icon">💡</div>
+        <div>
+          <strong>Virtual vs Platform Threads:</strong>
+          Platform threads = OS threads (expensive, limited ~1000s).
+          Virtual threads = JVM-managed (cheap, can create millions).
+          Virtual threads block cheaply — JVM automatically unmounts from carrier thread during I/O.
+          <strong>Don't pool virtual threads</strong> — create a new one per task.
+        </div>
+      </div>
+
+      <table class="comp-table">
+        <thead><tr><th>Feature</th><th>extends Thread</th><th>implements Runnable</th><th>Callable</th><th>Virtual Thread</th></tr></thead>
+        <tbody>
+          <tr><td>Return value</td><td>❌</td><td>❌</td><td>✅</td><td>✅ (via submit)</td></tr>
+          <tr><td>Checked exception</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Extend other class</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Lambda support</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Lightweight</td><td>❌</td><td>❌</td><td>❌</td><td>✅ Millions possible</td></tr>
+          <tr><td>Recommended</td><td>Legacy</td><td>✅ Classic</td><td>✅ With result</td><td>✅ Java 21+ I/O</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 1 — LIFECYCLE
+  ══════════════════════════════════ -->
+  <section id="lifecycle" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-purple">♻️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 1</div>
+        <div class="section-title">Thread Lifecycle &amp; States</div>
+        <div class="section-sub">6 states defined in Thread.State enum</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📊 Thread.State — All 6 States</h3>
+
+      <div class="state-flow">
+        <div class="state-box s-new">NEW<br><small>created, not started</small></div>
+        <div class="state-arrow">→</div>
+        <div class="state-box s-run">RUNNABLE<br><small>start() called</small></div>
+        <div class="state-arrow">→</div>
+        <div class="state-box s-block">BLOCKED<br><small>waiting for lock</small></div>
+      </div>
+      <div class="state-flow" style="margin-top:8px">
+        <div class="state-box s-run">RUNNABLE</div>
+        <div class="state-arrow">→</div>
+        <div class="state-box s-wait">WAITING<br><small>wait() / join()</small></div>
+        <div class="state-arrow">→</div>
+        <div class="state-box s-run">RUNNABLE<br><small>notify() called</small></div>
+      </div>
+      <div class="state-flow" style="margin-top:8px">
+        <div class="state-box s-run">RUNNABLE</div>
+        <div class="state-arrow">→</div>
+        <div class="state-box s-timed">TIMED_WAITING<br><small>sleep(n) / join(n)</small></div>
+        <div class="state-arrow">→</div>
+        <div class="state-box s-run">RUNNABLE<br><small>timeout expires</small></div>
+      </div>
+      <div class="state-flow" style="margin-top:8px">
+        <div class="state-box s-run">RUNNABLE</div>
+        <div class="state-arrow">→</div>
+        <div class="state-box s-term">TERMINATED<br><small>run() completes</small></div>
+      </div>
+
+      <div class="diagram" style="margin-top:20px">
+        <div class="d-title">Full Thread State Transition Diagram</div>
+<span class="hi">              new Thread()                </span>
+<span>                   ↓ NEW                   </span>
+<span class="hi">              t.start()                    </span>
+<span>                   ↓ RUNNABLE              </span>
+<span class="arr">     ┌─────────────┼──────────────┐        </span>
+<span>     ↓             ↓              ↓        </span>
+<span class="red">  BLOCKED       WAITING      TIMED_WAITING  </span>
+<span>  (lock busy)  (wait/join)  (sleep/join n)  </span>
+<span class="arr">     ↓             ↓              ↓        </span>
+<span>  (lock free)  (notify)      (timeout)      </span>
+<span class="arr">     └─────────────┼──────────────┘        </span>
+<span>                   ↓ RUNNABLE              </span>
+<span class="hi">            run() completes                </span>
+<span class="pnk">                   ↓ TERMINATED            </span>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 Checking Thread State Programmatically</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Thread state demonstration</span></div>
+        <pre>
+<span class="cl">Thread</span> t = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+    <span class="kw">try</span> { <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">2000</span>); } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+        <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>(); <span class="cm">// restore interrupted flag</span>
+    }
+});
+
+<span class="cl">System</span>.out.println(t.<span class="fn">getState</span>()); <span class="cm">// NEW</span>
+t.<span class="fn">start</span>();
+<span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">500</span>);
+<span class="cl">System</span>.out.println(t.<span class="fn">getState</span>()); <span class="cm">// TIMED_WAITING (in sleep)</span>
+t.<span class="fn">join</span>();
+<span class="cl">System</span>.out.println(t.<span class="fn">getState</span>()); <span class="cm">// TERMINATED</span>
+
+<span class="cm">// Daemon thread — JVM exits when all non-daemon threads finish</span>
+<span class="cl">Thread</span> daemon = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+    <span class="kw">while</span> (<span class="kw">true</span>) { <span class="cm">/* background monitoring */</span> }
+});
+daemon.<span class="fn">setDaemon</span>(<span class="kw">true</span>); <span class="cm">// MUST be before start()</span>
+daemon.<span class="fn">start</span>();
+<span class="cl">System</span>.out.println(daemon.<span class="fn">isDaemon</span>()); <span class="cm">// true</span>
+
+<span class="cm">// Thread groups</span>
+<span class="cl">ThreadGroup</span> group = <span class="kw">new</span> <span class="cl">ThreadGroup</span>(<span class="str">"MyGroup"</span>);
+<span class="cl">Thread</span> t2 = <span class="kw">new</span> <span class="cl">Thread</span>(group, () -> {}, <span class="str">"grouped-thread"</span>);
+<span class="cl">System</span>.out.println(t2.<span class="fn">getThreadGroup</span>().<span class="fn">getName</span>()); <span class="cm">// MyGroup</span></pre>
+      </div>
+    </div>
+
+    <div class="iq-title">🎯 Interview Questions — Thread Lifecycle</div>
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between BLOCKED and WAITING state?</div>
+      <div class="iq-a">
+        <strong>BLOCKED:</strong> Thread is waiting to acquire a <code>synchronized</code> lock held by another thread. It will automatically become RUNNABLE when the lock is released — no explicit notification needed.<br>
+        <strong>WAITING:</strong> Thread called <code>wait()</code>, <code>join()</code>, or <code>LockSupport.park()</code> and is indefinitely waiting for an explicit signal (<code>notify()</code>, <code>notifyAll()</code>, or thread completion).
+      </div>
+    </div>
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q2</span>What is a daemon thread? Give examples.</div>
+      <div class="iq-a">
+        Daemon threads are background threads that JVM automatically kills when all user (non-daemon) threads finish. You cannot set a thread as daemon after it starts.<br>
+        <strong>Examples of JVM daemon threads:</strong> Garbage Collector, JIT compiler, Finalizer thread.<br>
+        <strong>Use case:</strong> Background monitoring, heartbeats, cleanup tasks that should not prevent JVM from shutting down.
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 2 — SYNCHRONIZATION
+  ══════════════════════════════════ -->
+  <section id="sync" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-red">🔒</div>
+      <div class="section-meta">
+        <div class="section-label">Section 2</div>
+        <div class="section-title">Synchronization &amp; Monitors</div>
+        <div class="section-sub">synchronized methods, blocks, static sync, intrinsic locks, reentrancy</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>⚙️ The Race Condition Problem</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Race Condition Demo — Problem</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Counter</span> {
+    <span class="kw">private int</span> count = <span class="num">0</span>;
+
+    <span class="cm">// ❌ NOT thread-safe — count++ is NOT atomic!</span>
+    <span class="cm">// count++ = read count + increment + write back (3 operations)</span>
+    <span class="kw">public void</span> <span class="fn">increment</span>() { count++; }
+
+    <span class="kw">public int</span> <span class="fn">getCount</span>() { <span class="kw">return</span> count; }
+}
+
+<span class="cm">// Two threads each incrementing 1000 times</span>
+<span class="cl">Counter</span> counter = <span class="kw">new</span> <span class="cl">Counter</span>();
+<span class="cl">Runnable</span> task = () -> {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">1000</span>; i++) counter.<span class="fn">increment</span>();
+};
+<span class="cl">Thread</span> t1 = <span class="kw">new</span> <span class="cl">Thread</span>(task), t2 = <span class="kw">new</span> <span class="cl">Thread</span>(task);
+t1.<span class="fn">start</span>(); t2.<span class="fn">start</span>();
+t1.<span class="fn">join</span>(); t2.<span class="fn">join</span>();
+<span class="cm">// Expected: 2000  Actual: ANYTHING from 1000-2000 (non-deterministic)</span>
+<span class="cl">System</span>.out.println(counter.<span class="fn">getCount</span>());</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔐 synchronized — 4 Variants</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">synchronized — All 4 Forms</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">BankAccount</span> {
+    <span class="kw">private double</span> balance;
+    <span class="kw">private static int</span> totalAccounts = <span class="num">0</span>;
+    <span class="kw">private final</span> <span class="cl">Object</span> balanceLock = <span class="kw">new</span> <span class="cl">Object</span>(); <span class="cm">// private lock object</span>
+
+    <span class="cm">// ── FORM 1: synchronized instance method ──</span>
+    <span class="cm">// Locks on "this" (the BankAccount instance)</span>
+    <span class="kw">public synchronized void</span> <span class="fn">deposit</span>(<span class="kw">double</span> amount) {
+        balance += amount;
+    }
+
+    <span class="cm">// ── FORM 2: synchronized block — on "this" ──</span>
+    <span class="cm">// Better: only critical section is locked, more granular</span>
+    <span class="kw">public void</span> <span class="fn">withdraw</span>(<span class="kw">double</span> amount) {
+        <span class="kw">synchronized</span> (<span class="kw">this</span>) {
+            <span class="kw">if</span> (balance >= amount) balance -= amount;
+        }
+    }
+
+    <span class="cm">// ── FORM 3: synchronized block — private lock (BEST practice) ──</span>
+    <span class="cm">// Prevents external code from locking on "this" — more secure</span>
+    <span class="kw">public void</span> <span class="fn">transfer</span>(<span class="kw">double</span> amount, <span class="cl">BankAccount</span> to) {
+        <span class="kw">synchronized</span> (balanceLock) {
+            <span class="kw">this</span>.balance -= amount;
+            to.balance   += amount;
+        }
+    }
+
+    <span class="cm">// ── FORM 4: synchronized static method ──</span>
+    <span class="cm">// Locks on Class object (BankAccount.class) — shared across ALL instances</span>
+    <span class="kw">public static synchronized void</span> <span class="fn">registerAccount</span>() {
+        totalAccounts++;
+    }
+}
+
+<span class="cm">// Reentrancy demo — synchronized is REENTRANT</span>
+<span class="cm">// A thread that already holds a lock CAN re-acquire it</span>
+<span class="kw">class</span> <span class="cl">ReentrantDemo</span> {
+    <span class="kw">synchronized void</span> <span class="fn">outer</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"outer"</span>);
+        <span class="fn">inner</span>(); <span class="cm">// ✅ allowed — same thread, reentrant lock</span>
+    }
+    <span class="kw">synchronized void</span> <span class="fn">inner</span>() {
+        <span class="cl">System</span>.out.println(<span class="str">"inner"</span>);
+    }
+}</pre>
+      </div>
+
+      <div class="info-box note">
+        <div class="ib-icon">💡</div>
+        <div>
+          <strong>How it works internally:</strong> Every Java object has an intrinsic lock
+          (monitor). <code>synchronized</code> acquires the monitor before entering the block
+          and releases it on exit (even if exception is thrown). Only one thread can hold
+          a monitor at a time — others go to BLOCKED state.
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📊 synchronized Granularity — Performance Impact</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Fine-grained vs Coarse-grained locking</span></div>
+        <pre>
+<span class="cm">// ❌ Coarse-grained: entire method locked even for unrelated ops</span>
+<span class="kw">synchronized void</span> <span class="fn">processOrder</span>(<span class="cl">Order</span> order) {
+    <span class="fn">validateOrder</span>(order);     <span class="cm">// doesn't need lock</span>
+    <span class="fn">updateInventory</span>(order);   <span class="cm">// needs lock</span>
+    <span class="fn">sendNotification</span>(order);  <span class="cm">// doesn't need lock</span>
+}
+
+<span class="cm">// ✅ Fine-grained: only lock the critical section</span>
+<span class="kw">void</span> <span class="fn">processOrder</span>(<span class="cl">Order</span> order) {
+    <span class="fn">validateOrder</span>(order);          <span class="cm">// no lock needed</span>
+    <span class="kw">synchronized</span> (inventoryLock) {
+        <span class="fn">updateInventory</span>(order);     <span class="cm">// only this needs lock</span>
+    }
+    <span class="fn">sendNotification</span>(order);       <span class="cm">// no lock needed</span>
+}</pre>
+      </div>
+    </div>
+
+    <div class="iq-title">🎯 Interview Questions — Synchronization</div>
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q1</span>Can two synchronized methods of the same object run concurrently?</div>
+      <div class="iq-a">No. Both lock on <code>this</code> — only one thread can hold the <code>this</code> monitor at a time. So if Thread-1 is in <code>deposit()</code>, Thread-2 cannot enter <code>withdraw()</code> either. However, if one is an instance method and another is <code>static synchronized</code>, they lock on different objects (instance vs Class) so they CAN run concurrently.</div>
+    </div>
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q2</span>What is object-level vs class-level locking?</div>
+      <div class="iq-a">
+        <strong>Object-level:</strong> <code>synchronized</code> instance methods / <code>synchronized(this)</code> → locks on the specific object instance. Different instances can be accessed concurrently.<br>
+        <strong>Class-level:</strong> <code>static synchronized</code> methods / <code>synchronized(ClassName.class)</code> → locks on the Class object. Only one thread can access across ALL instances simultaneously.
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 3 — VOLATILE
+  ══════════════════════════════════ -->
+  <section id="volatile" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-yellow">⚡</div>
+      <div class="section-meta">
+        <div class="section-label">Section 3</div>
+        <div class="section-title">volatile Keyword</div>
+        <div class="section-sub">Visibility guarantee, happens-before, when to use it</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🧠 Java Memory Model — Why volatile is needed</h3>
+      <p>
+        Each thread has its own <strong>CPU cache / working memory</strong>. Without
+        <code>volatile</code>, a thread might read a stale cached value instead of the
+        latest value from main memory.
+      </p>
+
+      <div class="diagram">
+        <div class="d-title">Without volatile — CPU Cache Problem</div>
+<span class="hi">Thread-1 (CPU Core 1)          Thread-2 (CPU Core 2)</span>
+<span>┌─────────────────────┐        ┌─────────────────────┐</span>
+<span>│ L1 Cache: flag=false│        │ L1 Cache: flag=false│ ← stale!</span>
+<span>└─────────┬───────────┘        └─────────┬───────────┘</span>
+<span class="arr">          │  writes               reads  │            </span>
+<span>          ▼                              ▼            </span>
+<span class="hi">     ┌─────────────────────────────────────┐         </span>
+<span>     │        Main Memory: flag=true       │         </span>
+<span class="hi">     └─────────────────────────────────────┘         </span>
+<span class="red">Thread-2 never sees the update! → infinite loop      </span>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 volatile — Correct Usage</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">volatile — Stop flag pattern</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">Worker</span> <span class="kw">implements</span> <span class="cl">Runnable</span> {
+    <span class="cm">// ✅ volatile ensures Thread-2 always sees Thread-1's update</span>
+    <span class="kw">private volatile boolean</span> running = <span class="kw">true</span>;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">run</span>() {
+        <span class="kw">while</span> (running) {
+            <span class="cm">// do work...</span>
+        }
+        <span class="cl">System</span>.out.println(<span class="str">"Worker stopped"</span>);
+    }
+
+    <span class="kw">public void</span> <span class="fn">stop</span>() {
+        running = <span class="kw">false</span>; <span class="cm">// ← write to volatile: immediately visible to all threads</span>
+    }
+}
+
+<span class="cm">// Without volatile: Thread might loop forever reading cached flag=true</span>
+<span class="cm">// With volatile: Write in stop() is immediately flushed to main memory</span>
+<span class="cm">//               Read in run() always fetches from main memory</span>
+
+<span class="cm">// ─── Double-Checked Locking + volatile (Singleton) ───</span>
+<span class="kw">class</span> <span class="cl">Singleton</span> {
+    <span class="cm">// volatile prevents instruction reordering during object creation</span>
+    <span class="kw">private static volatile</span> <span class="cl">Singleton</span> instance;
+
+    <span class="kw">private</span> <span class="cl">Singleton</span>() {}
+
+    <span class="kw">public static</span> <span class="cl">Singleton</span> <span class="fn">getInstance</span>() {
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) {               <span class="cm">// 1st check (no lock)</span>
+            <span class="kw">synchronized</span> (<span class="cl">Singleton</span>.<span class="kw">class</span>) {
+                <span class="kw">if</span> (instance == <span class="kw">null</span>) {       <span class="cm">// 2nd check (with lock)</span>
+                    instance = <span class="kw">new</span> <span class="cl">Singleton</span>(); <span class="cm">// volatile prevents partial init</span>
+                }
+            }
+        }
+        <span class="kw">return</span> instance;
+    }
+}</pre>
+      </div>
+
+      <table class="comp-table">
+        <thead><tr><th>Feature</th><th>volatile</th><th>synchronized</th></tr></thead>
+        <tbody>
+          <tr><td>Visibility guarantee</td><td>✅ Yes</td><td>✅ Yes</td></tr>
+          <tr><td>Atomicity guarantee</td><td>❌ No (except read/write of long/double)</td><td>✅ Yes</td></tr>
+          <tr><td>Prevents reordering</td><td>✅ Partial (read/write)</td><td>✅ Full</td></tr>
+          <tr><td>Mutual exclusion</td><td>❌ No</td><td>✅ Yes</td></tr>
+          <tr><td>Overhead</td><td>Low</td><td>Higher</td></tr>
+          <tr><td>Use case</td><td>Stop flags, status flags</td><td>Compound operations, state changes</td></tr>
+          <tr><td>i++ thread-safe?</td><td>❌ No</td><td>✅ Yes (if in sync block)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-box danger">
+        <div class="ib-icon">🚨</div>
+        <div><strong>volatile does NOT make compound operations atomic!</strong>
+        <code>volatile int count; count++;</code> is STILL a race condition — read + increment + write are 3 separate operations.
+        Use <code>AtomicInteger</code> or <code>synchronized</code> for compound operations.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 4 — WAIT / NOTIFY
+  ══════════════════════════════════ -->
+  <section id="wait-notify" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-cyan">📨</div>
+      <div class="section-meta">
+        <div class="section-label">Section 4</div>
+        <div class="section-title">wait() / notify() / notifyAll()</div>
+        <div class="section-sub">Inter-thread communication — Producer-Consumer pattern</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 Rules for wait() / notify()</h3>
+      <ul class="key-list">
+        <li><strong>Must be called from a synchronized context</strong> — otherwise IllegalMonitorStateException</li>
+        <li class="purple"><strong>wait() releases the lock</strong> and puts thread in WAITING state</li>
+        <li class="yellow"><strong>notify() wakes up ONE random waiting thread</strong> on the same object</li>
+        <li class="red"><strong>notifyAll() wakes up ALL waiting threads</strong> — they compete for the lock</li>
+        <li class="pink"><strong>Always use wait() in a loop</strong> (while, not if) — guards against spurious wakeups</li>
+      </ul>
+    </div>
+
+    <div class="content-card">
+      <h3>🏭 Classic Producer-Consumer Pattern</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Producer-Consumer using wait/notify</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">SharedBuffer</span> {
+    <span class="kw">private final</span> <span class="cl">Queue</span>&lt;<span class="cl">Integer</span>&gt; buffer = <span class="kw">new</span> <span class="cl">LinkedList</span>&lt;&gt;();
+    <span class="kw">private final int</span> CAPACITY = <span class="num">5</span>;
+
+    <span class="cm">// Producer: add item — waits if buffer is full</span>
+    <span class="kw">public synchronized void</span> <span class="fn">produce</span>(<span class="kw">int</span> item) <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        <span class="cm">// ✅ while loop — not if — protects against spurious wakeups</span>
+        <span class="kw">while</span> (buffer.<span class="fn">size</span>() == CAPACITY) {
+            <span class="cl">System</span>.out.println(<span class="str">"Buffer full, producer waiting..."</span>);
+            <span class="fn">wait</span>(); <span class="cm">// ← releases lock, enters WAITING</span>
+        }
+        buffer.<span class="fn">add</span>(item);
+        <span class="cl">System</span>.out.println(<span class="str">"Produced: "</span> + item + <span class="str">" | Size: "</span> + buffer.<span class="fn">size</span>());
+        <span class="fn">notifyAll</span>(); <span class="cm">// ← wake up waiting consumers</span>
+    }
+
+    <span class="cm">// Consumer: remove item — waits if buffer is empty</span>
+    <span class="kw">public synchronized int</span> <span class="fn">consume</span>() <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        <span class="kw">while</span> (buffer.<span class="fn">isEmpty</span>()) {
+            <span class="cl">System</span>.out.println(<span class="str">"Buffer empty, consumer waiting..."</span>);
+            <span class="fn">wait</span>(); <span class="cm">// ← releases lock, enters WAITING</span>
+        }
+        <span class="kw">int</span> item = buffer.<span class="fn">poll</span>();
+        <span class="cl">System</span>.out.println(<span class="str">"Consumed: "</span> + item + <span class="str">" | Size: "</span> + buffer.<span class="fn">size</span>());
+        <span class="fn">notifyAll</span>(); <span class="cm">// ← wake up waiting producers</span>
+        <span class="kw">return</span> item;
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="cl">SharedBuffer</span> buf = <span class="kw">new</span> <span class="cl">SharedBuffer</span>();
+
+<span class="cl">Thread</span> producer = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">10</span>; i++) {
+        <span class="kw">try</span> { buf.<span class="fn">produce</span>(i); }
+        <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+        }
+    }
+}, <span class="str">"Producer"</span>);
+
+<span class="cl">Thread</span> consumer = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">10</span>; i++) {
+        <span class="kw">try</span> { buf.<span class="fn">consume</span>(); }
+        <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+        }
+    }
+}, <span class="str">"Consumer"</span>);
+
+producer.<span class="fn">start</span>(); consumer.<span class="fn">start</span>();</pre>
+      </div>
+
+      <div class="info-box tip">
+        <div class="ib-icon">✅</div>
+        <div>
+          <strong>Modern Alternative:</strong> Use <code>BlockingQueue</code>
+          (<code>ArrayBlockingQueue</code>, <code>LinkedBlockingQueue</code>)
+          instead of manual wait/notify. It handles all synchronization internally
+          with <code>put()</code> (blocks when full) and <code>take()</code> (blocks when empty).
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Producer-Consumer using BlockingQueue (preferred)</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.*;
+
+<span class="cl">BlockingQueue</span>&lt;<span class="cl">Integer</span>&gt; queue = <span class="kw">new</span> <span class="cl">ArrayBlockingQueue</span>&lt;&gt;(<span class="num">5</span>);
+
+<span class="cm">// Producer</span>
+<span class="cl">Thread</span> producer = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">10</span>; i++) {
+        <span class="kw">try</span> {
+            queue.<span class="fn">put</span>(i);  <span class="cm">// blocks if queue is full</span>
+            <span class="cl">System</span>.out.println(<span class="str">"Produced: "</span> + i);
+        } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+        }
+    }
+});
+
+<span class="cm">// Consumer</span>
+<span class="cl">Thread</span> consumer = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">10</span>; i++) {
+        <span class="kw">try</span> {
+            <span class="kw">int</span> item = queue.<span class="fn">take</span>(); <span class="cm">// blocks if queue is empty</span>
+            <span class="cl">System</span>.out.println(<span class="str">"Consumed: "</span> + item);
+        } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+        }
+    }
+});
+
+producer.<span class="fn">start</span>(); consumer.<span class="fn">start</span>();</pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 5 — LOCKS
+  ══════════════════════════════════ -->
+  <section id="locks" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-purple">🔑</div>
+      <div class="section-meta">
+        <div class="section-label">Section 5</div>
+        <div class="section-title">Locks — ReentrantLock, ReadWriteLock, StampedLock</div>
+        <div class="section-sub">java.util.concurrent.locks — more flexible than synchronized</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔷 ReentrantLock — Explicit Lock</h3>
+      <p>More flexible than <code>synchronized</code>: supports tryLock, timed lock, interruptible locking, and fairness.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ReentrantLock — Complete Usage</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.locks.*;
+
+<span class="kw">class</span> <span class="cl">ThreadSafeCounter</span> {
+    <span class="kw">private int</span> count = <span class="num">0</span>;
+    <span class="kw">private final</span> <span class="cl">ReentrantLock</span> lock = <span class="kw">new</span> <span class="cl">ReentrantLock</span>(<span class="kw">true</span>); <span class="cm">// true=fair</span>
+
+    <span class="kw">public void</span> <span class="fn">increment</span>() {
+        lock.<span class="fn">lock</span>(); <span class="cm">// acquire lock (blocks if unavailable)</span>
+        <span class="kw">try</span> {
+            count++;
+        } <span class="kw">finally</span> {
+            lock.<span class="fn">unlock</span>(); <span class="cm">// ALWAYS unlock in finally!</span>
+        }
+    }
+
+    <span class="cm">// tryLock — non-blocking, returns false immediately if locked</span>
+    <span class="kw">public boolean</span> <span class="fn">tryIncrement</span>() {
+        <span class="kw">if</span> (lock.<span class="fn">tryLock</span>()) { <span class="cm">// returns true if lock acquired</span>
+            <span class="kw">try</span> { count++; <span class="kw">return true</span>; }
+            <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); }
+        }
+        <span class="kw">return false</span>; <span class="cm">// couldn't acquire lock</span>
+    }
+
+    <span class="cm">// tryLock with timeout</span>
+    <span class="kw">public boolean</span> <span class="fn">timedIncrement</span>() <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        <span class="kw">if</span> (lock.<span class="fn">tryLock</span>(<span class="num">500</span>, <span class="cl">TimeUnit</span>.MILLISECONDS)) {
+            <span class="kw">try</span> { count++; <span class="kw">return true</span>; }
+            <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); }
+        }
+        <span class="kw">return false</span>;
+    }
+
+    <span class="cm">// lockInterruptibly — can be interrupted while waiting</span>
+    <span class="kw">public void</span> <span class="fn">interruptibleIncrement</span>() <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        lock.<span class="fn">lockInterruptibly</span>(); <span class="cm">// throws InterruptedException if interrupted</span>
+        <span class="kw">try</span> { count++; }
+        <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); }
+    }
+
+    <span class="kw">public int</span> <span class="fn">getCount</span>()     { <span class="kw">return</span> count; }
+    <span class="kw">public int</span> <span class="fn">getHoldCount</span>() { <span class="kw">return</span> lock.<span class="fn">getHoldCount</span>(); } <span class="cm">// reentrancy count</span>
+    <span class="kw">public boolean</span> <span class="fn">isLocked</span>() { <span class="kw">return</span> lock.<span class="fn">isLocked</span>(); }
+}</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔶 ReadWriteLock — Concurrent Reads, Exclusive Writes</h3>
+      <p>Allows multiple threads to read simultaneously, but only one thread to write (no concurrent reads during write).</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ReadWriteLock — Read-heavy workload optimization</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">CachedData</span> {
+    <span class="kw">private</span> <span class="cl">Map</span>&lt;<span class="cl">String</span>, <span class="cl">String</span>&gt; cache = <span class="kw">new</span> <span class="cl">HashMap</span>&lt;&gt;();
+    <span class="kw">private final</span> <span class="cl">ReadWriteLock</span> rwLock = <span class="kw">new</span> <span class="cl">ReentrantReadWriteLock</span>();
+    <span class="kw">private final</span> <span class="cl">Lock</span> readLock  = rwLock.<span class="fn">readLock</span>();
+    <span class="kw">private final</span> <span class="cl">Lock</span> writeLock = rwLock.<span class="fn">writeLock</span>();
+
+    <span class="cm">// Multiple threads can read simultaneously</span>
+    <span class="kw">public</span> <span class="cl">String</span> <span class="fn">get</span>(<span class="cl">String</span> key) {
+        readLock.<span class="fn">lock</span>();
+        <span class="kw">try</span> {
+            <span class="kw">return</span> cache.<span class="fn">get</span>(key);
+        } <span class="kw">finally</span> {
+            readLock.<span class="fn">unlock</span>();
+        }
+    }
+
+    <span class="cm">// Only one thread can write — all readers/writers blocked</span>
+    <span class="kw">public void</span> <span class="fn">put</span>(<span class="cl">String</span> key, <span class="cl">String</span> value) {
+        writeLock.<span class="fn">lock</span>();
+        <span class="kw">try</span> {
+            cache.<span class="fn">put</span>(key, value);
+        } <span class="kw">finally</span> {
+            writeLock.<span class="fn">unlock</span>();
+        }
+    }
+}
+
+<span class="cm">// ─── StampedLock (Java 8+) — even more efficient ───</span>
+<span class="cl">StampedLock</span> sl = <span class="kw">new</span> <span class="cl">StampedLock</span>();
+
+<span class="cm">// Optimistic read — no lock! Just check for concurrent write</span>
+<span class="kw">long</span> stamp = sl.<span class="fn">tryOptimisticRead</span>();
+<span class="kw">double</span> x = <span class="cm">/* read field */</span> <span class="num">0</span>;
+<span class="kw">if</span> (!sl.<span class="fn">validate</span>(stamp)) { <span class="cm">// check if write happened during read</span>
+    stamp = sl.<span class="fn">readLock</span>(); <span class="cm">// fall back to regular read lock</span>
+    <span class="kw">try</span> { x = <span class="cm">/* re-read */</span> <span class="num">0</span>; }
+    <span class="kw">finally</span> { sl.<span class="fn">unlockRead</span>(stamp); }
+}</pre>
+      </div>
+
+      <table class="comp-table">
+        <thead><tr><th>Feature</th><th>synchronized</th><th>ReentrantLock</th><th>ReadWriteLock</th><th>StampedLock</th></tr></thead>
+        <tbody>
+          <tr><td>tryLock</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Timed lock</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Interruptible</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Fairness</td><td>❌</td><td>✅ optional</td><td>✅ optional</td><td>❌</td></tr>
+          <tr><td>Concurrent reads</td><td>❌</td><td>❌</td><td>✅</td><td>✅ + optimistic</td></tr>
+          <tr><td>Condition</td><td>wait/notify</td><td>✅ Condition obj</td><td>✅</td><td>❌</td></tr>
+          <tr><td>Reentrancy</td><td>✅</td><td>✅</td><td>✅</td><td>❌ Not reentrant</td></tr>
+          <tr><td>Performance</td><td>Medium</td><td>Similar</td><td>Better reads</td><td>Best reads</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-card">
+      <h3>📬 Condition — Advanced wait/notify with ReentrantLock</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Condition — separate wait sets</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">BoundedBuffer</span>&lt;T&gt; {
+    <span class="kw">private final</span> <span class="cl">Object</span>[] items;
+    <span class="kw">private int</span> head, tail, count;
+    <span class="kw">private final</span> <span class="cl">ReentrantLock</span> lock = <span class="kw">new</span> <span class="cl">ReentrantLock</span>();
+
+    <span class="cm">// Two separate condition queues — more efficient than notifyAll</span>
+    <span class="kw">private final</span> <span class="cl">Condition</span> notFull  = lock.<span class="fn">newCondition</span>();
+    <span class="kw">private final</span> <span class="cl">Condition</span> notEmpty = lock.<span class="fn">newCondition</span>();
+
+    <span class="cl">BoundedBuffer</span>(<span class="kw">int</span> capacity) { items = <span class="kw">new</span> <span class="cl">Object</span>[capacity]; }
+
+    <span class="kw">public void</span> <span class="fn">put</span>(T item) <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        lock.<span class="fn">lock</span>();
+        <span class="kw">try</span> {
+            <span class="kw">while</span> (count == items.length) notFull.<span class="fn">await</span>(); <span class="cm">// wait until space</span>
+            items[tail] = item;
+            tail = (tail + <span class="num">1</span>) % items.length;
+            count++;
+            notEmpty.<span class="fn">signal</span>(); <span class="cm">// signal ONLY consumer — efficient!</span>
+        } <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); }
+    }
+
+    <span class="an">@SuppressWarnings</span>(<span class="str">"unchecked"</span>)
+    <span class="kw">public</span> T <span class="fn">take</span>() <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        lock.<span class="fn">lock</span>();
+        <span class="kw">try</span> {
+            <span class="kw">while</span> (count == <span class="num">0</span>) notEmpty.<span class="fn">await</span>(); <span class="cm">// wait until data</span>
+            T item = (T) items[head];
+            head = (head + <span class="num">1</span>) % items.length;
+            count--;
+            notFull.<span class="fn">signal</span>(); <span class="cm">// signal ONLY producer — efficient!</span>
+            <span class="kw">return</span> item;
+        } <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); }
+    }
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 6 — THREAD POOLS
+  ══════════════════════════════════ -->
+  <section id="threadpool" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-green">🏊</div>
+      <div class="section-meta">
+        <div class="section-label">Section 6</div>
+        <div class="section-title">Thread Pools &amp; ExecutorService</div>
+        <div class="section-sub">Executors factory, ThreadPoolExecutor internals, shutdown</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🏗️ Why Thread Pools?</h3>
+      <ul class="key-list">
+        <li><strong>Thread creation is expensive</strong> — OS-level resource allocation</li>
+        <li class="purple"><strong>Reuse threads</strong> across multiple tasks — eliminates creation/destruction overhead</li>
+        <li class="yellow"><strong>Bounded resources</strong> — prevents OutOfMemoryError from unlimited thread creation</li>
+        <li class="red"><strong>Better throughput</strong> — queue tasks, execute with fixed thread count</li>
+      </ul>
+    </div>
+
+    <div class="content-card">
+      <h3>🏭 5 Types of Executors — Executors factory</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Executors Factory Methods</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.*;
+
+<span class="cm">// ── 1. Fixed Thread Pool ──</span>
+<span class="cm">// Fixed N threads. Queue tasks when all busy.</span>
+<span class="cm">// Use: CPU-intensive tasks, N = number of CPU cores</span>
+<span class="cl">ExecutorService</span> fixed = <span class="cl">Executors</span>.<span class="fn">newFixedThreadPool</span>(<span class="num">4</span>);
+
+<span class="cm">// ── 2. Cached Thread Pool ──</span>
+<span class="cm">// Creates new threads as needed, reuses idle ones (60s TTL)</span>
+<span class="cm">// Use: large number of short-lived async tasks</span>
+<span class="cm">// WARNING: can create unlimited threads if tasks arrive fast!</span>
+<span class="cl">ExecutorService</span> cached = <span class="cl">Executors</span>.<span class="fn">newCachedThreadPool</span>();
+
+<span class="cm">// ── 3. Single Thread Executor ──</span>
+<span class="cm">// Exactly 1 thread. Tasks executed sequentially.</span>
+<span class="cm">// Use: sequential task processing, event loops</span>
+<span class="cl">ExecutorService</span> single = <span class="cl">Executors</span>.<span class="fn">newSingleThreadExecutor</span>();
+
+<span class="cm">// ── 4. Scheduled Thread Pool ──</span>
+<span class="cm">// For delayed or periodic tasks</span>
+<span class="cl">ScheduledExecutorService</span> sched = <span class="cl">Executors</span>.<span class="fn">newScheduledThreadPool</span>(<span class="num">2</span>);
+sched.<span class="fn">schedule</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"Delayed 2s"</span>), <span class="num">2</span>, <span class="cl">TimeUnit</span>.SECONDS);
+sched.<span class="fn">scheduleAtFixedRate</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"Every 1s"</span>),
+    <span class="num">0</span>, <span class="num">1</span>, <span class="cl">TimeUnit</span>.SECONDS);   <span class="cm">// initial delay=0, period=1s</span>
+sched.<span class="fn">scheduleWithFixedDelay</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"With 1s delay after each"</span>),
+    <span class="num">0</span>, <span class="num">1</span>, <span class="cl">TimeUnit</span>.SECONDS);   <span class="cm">// delay between END of last and START of next</span>
+
+<span class="cm">// ── 5. Work Stealing Pool (Java 8+) ──</span>
+<span class="cm">// Uses all available CPUs, tasks can steal from other queues (ForkJoin)</span>
+<span class="cl">ExecutorService</span> workSteal = <span class="cl">Executors</span>.<span class="fn">newWorkStealingPool</span>();
+
+<span class="cm">// ─── Submitting tasks ───</span>
+fixed.<span class="fn">execute</span>(runnable);                   <span class="cm">// fire and forget</span>
+<span class="cl">Future</span>&lt;?&gt; f1    = fixed.<span class="fn">submit</span>(runnable);  <span class="cm">// returns Future</span>
+<span class="cl">Future</span>&lt;<span class="cl">Integer</span>&gt; f2 = fixed.<span class="fn">submit</span>(callable); <span class="cm">// returns Future with result</span>
+<span class="cl">List</span>&lt;<span class="cl">Future</span>&lt;<span class="cl">String</span>&gt;&gt; futures =
+    fixed.<span class="fn">invokeAll</span>(callables);             <span class="cm">// submit all, wait for all</span>
+<span class="cl">String</span> first = fixed.<span class="fn">invokeAny</span>(callables);  <span class="cm">// return first successful result</span>
+
+<span class="cm">// ─── Shutdown ───</span>
+fixed.<span class="fn">shutdown</span>();           <span class="cm">// stop accepting new tasks, finish submitted ones</span>
+fixed.<span class="fn">shutdownNow</span>();        <span class="cm">// interrupt all running tasks, return pending</span>
+fixed.<span class="fn">isShutdown</span>();         <span class="cm">// true after shutdown() called</span>
+fixed.<span class="fn">isTerminated</span>();       <span class="cm">// true when all tasks finished</span>
+fixed.<span class="fn">awaitTermination</span>(<span class="num">10</span>, <span class="cl">TimeUnit</span>.SECONDS); <span class="cm">// wait for termination</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>⚙️ ThreadPoolExecutor — Custom Pool (Under the Hood)</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ThreadPoolExecutor — Full Configuration</span></div>
+        <pre>
+<span class="cm">// ThreadPoolExecutor is what Executors.newFixedThreadPool() creates internally</span>
+<span class="cl">ThreadPoolExecutor</span> pool = <span class="kw">new</span> <span class="cl">ThreadPoolExecutor</span>(
+    <span class="num">4</span>,                              <span class="cm">// corePoolSize: min threads always alive</span>
+    <span class="num">10</span>,                             <span class="cm">// maximumPoolSize: max threads</span>
+    <span class="num">60L</span>, <span class="cl">TimeUnit</span>.SECONDS,          <span class="cm">// keepAliveTime: idle thread TTL</span>
+    <span class="kw">new</span> <span class="cl">ArrayBlockingQueue</span>&lt;&gt;(<span class="num">100</span>), <span class="cm">// workQueue: task queue</span>
+    <span class="cl">Executors</span>.<span class="fn">defaultThreadFactory</span>(), <span class="cm">// threadFactory</span>
+    <span class="kw">new</span> <span class="cl">ThreadPoolExecutor</span>.<span class="cl">CallerRunsPolicy</span>() <span class="cm">// rejection policy</span>
+);
+
+<span class="cm">// Rejection Policies (when queue is full AND maxPoolSize reached):</span>
+<span class="cm">// AbortPolicy (default) → throws RejectedExecutionException</span>
+<span class="cm">// CallerRunsPolicy     → caller thread runs the task (back pressure)</span>
+<span class="cm">// DiscardPolicy        → silently discards task</span>
+<span class="cm">// DiscardOldestPolicy  → discards oldest queued task, retries</span>
+
+<span class="cm">// Monitor the pool</span>
+pool.<span class="fn">getPoolSize</span>();          <span class="cm">// current thread count</span>
+pool.<span class="fn">getActiveCount</span>();       <span class="cm">// executing threads</span>
+pool.<span class="fn">getCompletedTaskCount</span>();<span class="cm">// total completed tasks</span>
+pool.<span class="fn">getQueue</span>().<span class="fn">size</span>();      <span class="cm">// pending tasks</span>
+
+<span class="cm">// Hook methods (override for monitoring)</span>
+<span class="cl">ThreadPoolExecutor</span> poolWithHooks = <span class="kw">new</span> <span class="cl">ThreadPoolExecutor</span>(<span class="num">2</span>,<span class="num">4</span>,<span class="num">60L</span>,
+    <span class="cl">TimeUnit</span>.SECONDS, <span class="kw">new</span> <span class="cl">LinkedBlockingQueue</span>&lt;&gt;()) {
+    <span class="an">@Override</span>
+    <span class="kw">protected void</span> <span class="fn">beforeExecute</span>(<span class="cl">Thread</span> t, <span class="cl">Runnable</span> r) {
+        <span class="cl">System</span>.out.println(<span class="str">"Before: "</span> + t.<span class="fn">getName</span>());
+    }
+    <span class="an">@Override</span>
+    <span class="kw">protected void</span> <span class="fn">afterExecute</span>(<span class="cl">Runnable</span> r, <span class="cl">Throwable</span> t) {
+        <span class="cl">System</span>.out.println(<span class="str">"After task"</span>);
+    }
+};</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="d-title">ThreadPoolExecutor — Task Execution Flow</div>
+<span class="hi">  submit(task)</span>
+<span class="arr">       ↓</span>
+<span>  Running threads &lt; corePoolSize?</span>
+<span class="grn">    YES → create new thread, run task immediately</span>
+<span>    NO ↓</span>
+<span>  Work queue has space?</span>
+<span class="grn">    YES → add task to queue, run when thread free</span>
+<span>    NO ↓</span>
+<span>  Running threads &lt; maximumPoolSize?</span>
+<span class="grn">    YES → create new (non-core) thread, run task</span>
+<span>    NO ↓</span>
+<span class="red">  Apply RejectionHandler (AbortPolicy / CallerRuns / Discard...)</span>
+      </div>
+    </div>
+
+    <div class="iq-title">🎯 Interview Questions — Thread Pools</div>
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between shutdown() and shutdownNow()?</div>
+      <div class="iq-a">
+        <strong>shutdown():</strong> Initiates orderly shutdown. No new tasks accepted. Previously submitted tasks continue to execute. Non-blocking — returns immediately.<br>
+        <strong>shutdownNow():</strong> Attempts to stop all actively executing tasks by calling <code>interrupt()</code> on all threads. Returns list of tasks that were waiting in queue. Threads must respond to interruption to actually stop.
+      </div>
+    </div>
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q2</span>How many threads should be in a thread pool?</div>
+      <div class="iq-a">
+        Depends on task type:<br>
+        <strong>CPU-bound tasks:</strong> N = number of CPU cores (or N+1). Adding more won't help — CPU is the bottleneck.<br>
+        <strong>I/O-bound tasks:</strong> N = CPU_cores × (1 + wait_time/compute_time). More threads can be beneficial since threads spend time waiting for I/O. <br>
+        Formula: <code>Runtime.getRuntime().availableProcessors()</code> for CPU count.
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 7 — CALLABLE & FUTURE
+  ══════════════════════════════════ -->
+  <section id="callable-future" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-yellow">🔮</div>
+      <div class="section-meta">
+        <div class="section-label">Section 7</div>
+        <div class="section-title">Callable &amp; Future — Advanced</div>
+        <div class="section-sub">FutureTask, invokeAll, invokeAny, cancellation</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 Future — Complete API</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Future — All Operations</span></div>
+        <pre>
+<span class="cl">ExecutorService</span> exec = <span class="cl">Executors</span>.<span class="fn">newFixedThreadPool</span>(<span class="num">4</span>);
+
+<span class="cm">// Submit multiple Callables</span>
+<span class="cl">List</span>&lt;<span class="cl">Callable</span>&lt;<span class="cl">String</span>&gt;&gt; tasks = <span class="cl">List</span>.<span class="fn">of</span>(
+    () -> { <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span>); <span class="kw">return</span> <span class="str">"Task-1"</span>; },
+    () -> { <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">500</span>);  <span class="kw">return</span> <span class="str">"Task-2"</span>; },
+    () -> <span class="str">"Task-3"</span>
+);
+
+<span class="cm">// invokeAll — waits for ALL tasks to complete (or fail)</span>
+<span class="cl">List</span>&lt;<span class="cl">Future</span>&lt;<span class="cl">String</span>&gt;&gt; futures = exec.<span class="fn">invokeAll</span>(tasks);
+<span class="kw">for</span> (<span class="cl">Future</span>&lt;<span class="cl">String</span>&gt; f : futures) {
+    <span class="kw">try</span> {
+        <span class="cl">System</span>.out.println(f.<span class="fn">get</span>()); <span class="cm">// blocks until each is done</span>
+    } <span class="kw">catch</span> (<span class="cl">ExecutionException</span> e) {
+        <span class="cl">System</span>.out.println(<span class="str">"Task failed: "</span> + e.<span class="fn">getCause</span>());
+    }
+}
+
+<span class="cm">// invokeAny — returns first successfully completed result</span>
+<span class="cl">String</span> fastest = exec.<span class="fn">invokeAny</span>(tasks); <span class="cm">// "Task-3" (fastest)</span>
+<span class="cl">System</span>.out.println(<span class="str">"Fastest: "</span> + fastest);
+
+<span class="cm">// FutureTask — can use with Thread directly (no ExecutorService)</span>
+<span class="cl">FutureTask</span>&lt;<span class="cl">Integer</span>&gt; futureTask = <span class="kw">new</span> <span class="cl">FutureTask</span>&lt;&gt;(() -> {
+    <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span>);
+    <span class="kw">return</span> <span class="num">100</span>;
+});
+<span class="kw">new</span> <span class="cl">Thread</span>(futureTask).<span class="fn">start</span>(); <span class="cm">// FutureTask implements Runnable</span>
+<span class="cl">System</span>.out.println(futureTask.<span class="fn">get</span>()); <span class="cm">// 100</span>
+
+exec.<span class="fn">shutdown</span>();</pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 8 — COMPLETABLE FUTURE
+  ══════════════════════════════════ -->
+  <section id="completable" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-pink">⚙️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 8</div>
+        <div class="section-title">CompletableFuture</div>
+        <div class="section-sub">Non-blocking async pipelines, thenApply, thenCompose, allOf, anyOf</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔷 CompletableFuture — Why Better Than Future?</h3>
+      <ul class="key-list">
+        <li><strong>Non-blocking</strong> — chain callbacks with thenApply/thenAccept (no need to call get())</li>
+        <li class="purple"><strong>Composable</strong> — chain multiple async operations like a pipeline</li>
+        <li class="yellow"><strong>Error handling</strong> — exceptionally(), handle() for async error recovery</li>
+        <li class="red"><strong>Combine futures</strong> — allOf, anyOf to wait for multiple futures</li>
+        <li class="pink"><strong>Can complete manually</strong> — complete(), completeExceptionally()</li>
+      </ul>
+    </div>
+
+    <div class="content-card">
+      <h3>💻 CompletableFuture — Complete API Reference</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">CompletableFuture — Full Usage</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.*;
+
+<span class="cm">// ─── Creation ───</span>
+<span class="cm">// supplyAsync — runs Supplier in ForkJoinPool.commonPool()</span>
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; cf1 =
+    <span class="cl">CompletableFuture</span>.<span class="fn">supplyAsync</span>(() -> {
+        <span class="cm">/* some async work */</span>
+        <span class="kw">return</span> <span class="str">"Hello"</span>;
+    });
+
+<span class="cm">// with custom executor</span>
+<span class="cl">ExecutorService</span> exec = <span class="cl">Executors</span>.<span class="fn">newFixedThreadPool</span>(<span class="num">4</span>);
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; cf2 =
+    <span class="cl">CompletableFuture</span>.<span class="fn">supplyAsync</span>(() -> <span class="str">"World"</span>, exec);
+
+<span class="cm">// runAsync — no return value</span>
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">Void</span>&gt; cf3 =
+    <span class="cl">CompletableFuture</span>.<span class="fn">runAsync</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"side effect"</span>));
+
+<span class="cm">// ─── Transformation ───</span>
+<span class="cm">// thenApply — transform result (like Stream.map) — same or different thread</span>
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">Integer</span>&gt; cf4 = cf1
+    .<span class="fn">thenApply</span>(s -> s + <span class="str">" World"</span>)        <span class="cm">// "Hello World"</span>
+    .<span class="fn">thenApply</span>(<span class="cl">String</span>::length)             <span class="cm">// 11</span>
+    .<span class="fn">thenApplyAsync</span>(n -> n * <span class="num">2</span>);          <span class="cm">// 22 (in new thread)</span>
+
+<span class="cm">// thenAccept — consume result (no return)</span>
+cf1.<span class="fn">thenAccept</span>(s -> <span class="cl">System</span>.out.println(<span class="str">"Result: "</span> + s));
+
+<span class="cm">// thenRun — run action after completion (no input, no output)</span>
+cf1.<span class="fn">thenRun</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"Done!"</span>));
+
+<span class="cm">// ─── Composition ───</span>
+<span class="cm">// thenCompose — flatten nested CompletableFutures (like flatMap)</span>
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; result = cf1
+    .<span class="fn">thenCompose</span>(s ->
+        <span class="cl">CompletableFuture</span>.<span class="fn">supplyAsync</span>(() -> s + <span class="str">" from compose"</span>)
+    );
+
+<span class="cm">// thenCombine — combine two independent futures</span>
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; combined =
+    cf1.<span class="fn">thenCombine</span>(cf2, (a, b) -> a + <span class="str">" "</span> + b); <span class="cm">// "Hello World"</span>
+
+<span class="cm">// ─── Waiting for multiple ───</span>
+<span class="cm">// allOf — wait for ALL (returns Void)</span>
+<span class="cl">CompletableFuture</span>.<span class="fn">allOf</span>(cf1, cf2, cf3)
+    .<span class="fn">thenRun</span>(() -> <span class="cl">System</span>.out.println(<span class="str">"All done"</span>));
+
+<span class="cm">// anyOf — complete as soon as ANY one completes</span>
+<span class="cl">CompletableFuture</span>.<span class="fn">anyOf</span>(cf1, cf2)
+    .<span class="fn">thenAccept</span>(r -> <span class="cl">System</span>.out.println(<span class="str">"First: "</span> + r));
+
+<span class="cm">// ─── Error Handling ───</span>
+cf1.<span class="fn">exceptionally</span>(ex -> {
+    <span class="cl">System</span>.out.println(<span class="str">"Error: "</span> + ex.getMessage());
+    <span class="kw">return</span> <span class="str">"default"</span>; <span class="cm">// fallback value</span>
+});
+
+<span class="cm">// handle — runs regardless of success or failure</span>
+cf1.<span class="fn">handle</span>((result2, ex) -> {
+    <span class="kw">if</span> (ex != <span class="kw">null</span>) <span class="kw">return</span> <span class="str">"error-fallback"</span>;
+    <span class="kw">return</span> result2.<span class="fn">toUpperCase</span>();
+});
+
+<span class="cm">// whenComplete — observe result/exception but can't change value</span>
+cf1.<span class="fn">whenComplete</span>((res, ex) -> {
+    <span class="kw">if</span> (ex != <span class="kw">null</span>) <span class="cl">System</span>.out.println(<span class="str">"Failed"</span>);
+    <span class="kw">else</span> <span class="cl">System</span>.out.println(<span class="str">"Success: "</span> + res);
+});
+
+<span class="cm">// ─── Manual completion ───</span>
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; manual = <span class="kw">new</span> <span class="cl">CompletableFuture</span>&lt;&gt;();
+<span class="cm">// ... some external event triggers completion:</span>
+manual.<span class="fn">complete</span>(<span class="str">"done"</span>);                  <span class="cm">// complete normally</span>
+manual.<span class="fn">completeExceptionally</span>(<span class="kw">new</span> <span class="cl">RuntimeException</span>(<span class="str">"fail"</span>));
+
+exec.<span class="fn">shutdown</span>();</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔗 Real-World Pipeline Example</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Async pipeline — fetch user, get orders, calculate total</span></div>
+        <pre>
+<span class="cm">// Simulated async service calls</span>
+<span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; pipeline =
+    <span class="cl">CompletableFuture</span>
+        .<span class="fn">supplyAsync</span>(() -> <span class="fn">fetchUser</span>(<span class="num">42</span>))         <span class="cm">// async DB call</span>
+        .<span class="fn">thenCompose</span>(user -> <span class="fn">fetchOrders</span>(user))    <span class="cm">// depends on user</span>
+        .<span class="fn">thenApply</span>(orders -> <span class="fn">calculateTotal</span>(orders)) <span class="cm">// transform</span>
+        .<span class="fn">thenApply</span>(total -> <span class="str">"Total: $"</span> + total)
+        .<span class="fn">exceptionally</span>(ex -> <span class="str">"Error: "</span> + ex.getMessage());
+
+<span class="cm">// Non-blocking — do other work while pipeline executes</span>
+<span class="cl">System</span>.out.println(<span class="str">"Doing other work..."</span>);
+
+<span class="cm">// Only block when you actually need the result</span>
+<span class="cl">System</span>.out.println(pipeline.<span class="fn">get</span>()); <span class="cm">// "Total: $150.00"</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 9 — DEADLOCK
+  ══════════════════════════════════ -->
+  <section id="deadlock" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-red">💀</div>
+      <div class="section-meta">
+        <div class="section-label">Section 9</div>
+        <div class="section-title">Deadlock, Livelock &amp; Starvation</div>
+        <div class="section-sub">Detection, prevention, 4 necessary conditions</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔴 Deadlock — 4 Necessary Conditions (Coffman)</h3>
+      <ul class="key-list">
+        <li><strong>Mutual Exclusion:</strong> At least one resource is non-shareable</li>
+        <li class="purple"><strong>Hold and Wait:</strong> Thread holds a resource while waiting for another</li>
+        <li class="red"><strong>No Preemption:</strong> Resources can't be forcibly taken — only voluntarily released</li>
+        <li class="yellow"><strong>Circular Wait:</strong> Thread-1 waits for Thread-2, Thread-2 waits for Thread-1</li>
+      </ul>
+
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Deadlock — Classic Demo</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">DeadlockDemo</span> {
+    <span class="kw">private static final</span> <span class="cl">Object</span> LOCK_A = <span class="kw">new</span> <span class="cl">Object</span>();
+    <span class="kw">private static final</span> <span class="cl">Object</span> LOCK_B = <span class="kw">new</span> <span class="cl">Object</span>();
+
+    <span class="cm">// ❌ DEADLOCK: Thread-1 holds A, wants B</span>
+    <span class="cm">//             Thread-2 holds B, wants A</span>
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">Thread</span> t1 = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+            <span class="kw">synchronized</span> (LOCK_A) {
+                <span class="cl">System</span>.out.println(<span class="str">"T1: Holding A..."</span>);
+                <span class="kw">try</span> { <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">100</span>); } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {}
+                <span class="kw">synchronized</span> (LOCK_B) {   <span class="cm">// waits for B — DEADLOCK!</span>
+                    <span class="cl">System</span>.out.println(<span class="str">"T1: Holding A and B"</span>);
+                }
+            }
+        }, <span class="str">"Thread-1"</span>);
+
+        <span class="cl">Thread</span> t2 = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+            <span class="kw">synchronized</span> (LOCK_B) {
+                <span class="cl">System</span>.out.println(<span class="str">"T2: Holding B..."</span>);
+                <span class="kw">try</span> { <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">100</span>); } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {}
+                <span class="kw">synchronized</span> (LOCK_A) {   <span class="cm">// waits for A — DEADLOCK!</span>
+                    <span class="cl">System</span>.out.println(<span class="str">"T2: Holding B and A"</span>);
+                }
+            }
+        }, <span class="str">"Thread-2"</span>);
+
+        t1.<span class="fn">start</span>(); t2.<span class="fn">start</span>(); <span class="cm">// Both threads hang forever</span>
+    }
+}</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>✅ Deadlock Prevention — 4 Strategies</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Deadlock Prevention Strategies</span></div>
+        <pre>
+<span class="cm">// ✅ STRATEGY 1: Lock Ordering (always acquire locks in same order)</span>
+<span class="kw">class</span> <span class="cl">DeadlockFix1</span> {
+    <span class="kw">void</span> <span class="fn">transfer</span>(<span class="cl">Account</span> from, <span class="cl">Account</span> to, <span class="kw">double</span> amount) {
+        <span class="cm">// Always lock account with smaller ID first</span>
+        <span class="cl">Account</span> first  = from.id < to.id ? from : to;
+        <span class="cl">Account</span> second = from.id < to.id ? to : from;
+        <span class="kw">synchronized</span> (first) {
+            <span class="kw">synchronized</span> (second) {
+                from.balance -= amount;
+                to.balance   += amount;
+            }
+        }
+    }
+}
+
+<span class="cm">// ✅ STRATEGY 2: tryLock with timeout (no indefinite waiting)</span>
+<span class="kw">class</span> <span class="cl">DeadlockFix2</span> {
+    <span class="cl">ReentrantLock</span> lockA = <span class="kw">new</span> <span class="cl">ReentrantLock</span>();
+    <span class="cl">ReentrantLock</span> lockB = <span class="kw">new</span> <span class="cl">ReentrantLock</span>();
+
+    <span class="kw">void</span> <span class="fn">task</span>() <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        <span class="kw">while</span> (<span class="kw">true</span>) {
+            <span class="kw">if</span> (lockA.<span class="fn">tryLock</span>(<span class="num">100</span>, <span class="cl">TimeUnit</span>.MILLISECONDS)) {
+                <span class="kw">try</span> {
+                    <span class="kw">if</span> (lockB.<span class="fn">tryLock</span>(<span class="num">100</span>, <span class="cl">TimeUnit</span>.MILLISECONDS)) {
+                        <span class="kw">try</span> {
+                            <span class="cm">// Do work safely</span>
+                            <span class="kw">return</span>;
+                        } <span class="kw">finally</span> { lockB.<span class="fn">unlock</span>(); }
+                    }
+                } <span class="kw">finally</span> { lockA.<span class="fn">unlock</span>(); }
+            }
+            <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">50</span>); <span class="cm">// backoff before retry</span>
+        }
+    }
+}
+
+<span class="cm">// ✅ STRATEGY 3: Use higher-level concurrent utilities</span>
+<span class="cm">// ConcurrentHashMap, BlockingQueue — no manual locking needed</span>
+
+<span class="cm">// ✅ STRATEGY 4: Reduce lock scope / use atomic operations</span>
+<span class="cl">AtomicInteger</span> balance = <span class="kw">new</span> <span class="cl">AtomicInteger</span>(<span class="num">1000</span>);
+balance.<span class="fn">addAndGet</span>(-<span class="num">100</span>); <span class="cm">// atomic — no lock needed</span></pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔄 Livelock vs Starvation</h3>
+      <table class="comp-table">
+        <thead><tr><th>Problem</th><th>Description</th><th>Analogy</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Deadlock</td>
+            <td>Threads wait for each other indefinitely — no progress</td>
+            <td>Two cars in a one-lane road, neither moves</td>
+            <td>Lock ordering, tryLock timeout</td>
+          </tr>
+          <tr>
+            <td>Livelock</td>
+            <td>Threads are active but keep responding to each other, making no progress</td>
+            <td>Two people in hallway stepping left/right simultaneously</td>
+            <td>Random backoff, priority assignment</td>
+          </tr>
+          <tr>
+            <td>Starvation</td>
+            <td>Thread never gets CPU time because others keep getting priority</td>
+            <td>A person never gets to use ATM because others keep cutting in line</td>
+            <td>Fair locks, priority adjustment</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="iq-title">🎯 Interview Questions — Deadlock</div>
+    <div class="iq-card">
+      <div class="iq-q"><span class="iq-q-num">Q1</span>How would you detect a deadlock in production?</div>
+      <div class="iq-a">
+        1. <strong>Thread dump:</strong> <code>jstack &lt;pid&gt;</code> or kill -3 on Linux. JVM prints "Found one Java-level deadlock" with the full chain.<br>
+        2. <strong>JConsole/VisualVM:</strong> Detect deadlocks via thread monitoring tab.<br>
+        3. <strong>ThreadMXBean programmatically:</strong>
+        <code>ThreadMXBean tmx = ManagementFactory.getThreadMXBean(); long[] ids = tmx.findDeadlockedThreads();</code><br>
+        4. <strong>APM tools:</strong> New Relic, Datadog show thread states.
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 10 — ATOMIC
+  ══════════════════════════════════ -->
+  <section id="atomic" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-orange">⚛️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 10</div>
+        <div class="section-title">Atomic Variables</div>
+        <div class="section-sub">AtomicInteger, AtomicLong, AtomicReference, CAS operations</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔷 Atomic Classes — Lock-free Thread Safety</h3>
+      <p>Atomic classes use <strong>Compare-And-Swap (CAS)</strong> — a single CPU instruction.
+         No locking needed. Much faster than synchronized for simple counters/flags.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Atomic Variables — Complete Reference</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.atomic.*;
+
+<span class="cm">// ── AtomicInteger ──</span>
+<span class="cl">AtomicInteger</span> counter = <span class="kw">new</span> <span class="cl">AtomicInteger</span>(<span class="num">0</span>);
+
+counter.<span class="fn">get</span>();                    <span class="cm">// read</span>
+counter.<span class="fn">set</span>(<span class="num">10</span>);                  <span class="cm">// write</span>
+counter.<span class="fn">incrementAndGet</span>();        <span class="cm">// ++i (returns new value)</span>
+counter.<span class="fn">getAndIncrement</span>();        <span class="cm">// i++ (returns old value)</span>
+counter.<span class="fn">decrementAndGet</span>();        <span class="cm">// --i</span>
+counter.<span class="fn">addAndGet</span>(<span class="num">5</span>);             <span class="cm">// returns new value after add</span>
+counter.<span class="fn">getAndAdd</span>(<span class="num">5</span>);             <span class="cm">// returns old value before add</span>
+
+<span class="cm">// CAS — Compare-And-Swap (most powerful atomic operation)</span>
+<span class="kw">boolean</span> success = counter.<span class="fn">compareAndSet</span>(<span class="num">10</span>, <span class="num">20</span>);
+<span class="cm">// if current == 10, set to 20 and return true</span>
+<span class="cm">// else return false (no change)</span>
+
+<span class="cm">// Java 8+ functional methods</span>
+counter.<span class="fn">updateAndGet</span>(v -> v * <span class="num">2</span>);          <span class="cm">// multiply by 2 atomically</span>
+counter.<span class="fn">accumulateAndGet</span>(<span class="num">5</span>, <span class="cl">Integer</span>::sum); <span class="cm">// add 5 atomically</span>
+
+<span class="cm">// ── AtomicBoolean ──</span>
+<span class="cl">AtomicBoolean</span> flag = <span class="kw">new</span> <span class="cl">AtomicBoolean</span>(<span class="kw">false</span>);
+<span class="kw">boolean</span> prev = flag.<span class="fn">getAndSet</span>(<span class="kw">true</span>); <span class="cm">// atomic get+set</span>
+flag.<span class="fn">compareAndSet</span>(<span class="kw">true</span>, <span class="kw">false</span>);     <span class="cm">// CAS</span>
+
+<span class="cm">// ── AtomicReference ──</span>
+<span class="cl">AtomicReference</span>&lt;<span class="cl">String</span>&gt; ref = <span class="kw">new</span> <span class="cl">AtomicReference</span>&lt;&gt;(<span class="str">"initial"</span>);
+ref.<span class="fn">compareAndSet</span>(<span class="str">"initial"</span>, <span class="str">"updated"</span>); <span class="cm">// atomic reference swap</span>
+ref.<span class="fn">updateAndGet</span>(s -> s.<span class="fn">toUpperCase</span>());  <span class="cm">// transform atomically</span>
+
+<span class="cm">// ── AtomicLong ──</span>
+<span class="cl">AtomicLong</span> total = <span class="kw">new</span> <span class="cl">AtomicLong</span>(<span class="num">0L</span>);
+total.<span class="fn">addAndGet</span>(<span class="num">1000L</span>);
+
+<span class="cm">// ── LongAdder / LongAccumulator (Java 8+ — better for high contention) ──</span>
+<span class="cl">LongAdder</span> adder = <span class="kw">new</span> <span class="cl">LongAdder</span>();
+adder.<span class="fn">increment</span>();         <span class="cm">// multiple threads can increment different cells</span>
+adder.<span class="fn">add</span>(<span class="num">10</span>);
+adder.<span class="fn">sum</span>();               <span class="cm">// sum all cells — only accurate when no contention</span>
+
+<span class="cm">// LongAdder is faster than AtomicLong under high contention</span>
+<span class="cm">// Uses "cell striping" — each thread writes to its own cell</span></pre>
+      </div>
+
+      <div class="info-box note">
+        <div class="ib-icon">💡</div>
+        <div>
+          <strong>CAS vs Lock:</strong> CAS is optimistic — assumes no conflict, retries if wrong.
+          Locks are pessimistic — always lock before modifying.
+          CAS wins when contention is low. Under very high contention,
+          CAS spin-loops can waste CPU — use <code>LongAdder</code> instead.
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📦 AtomicIntegerArray / AtomicReferenceArray</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Atomic Arrays</span></div>
+        <pre>
+<span class="cm">// Array where each element can be updated atomically</span>
+<span class="cl">AtomicIntegerArray</span> arr = <span class="kw">new</span> <span class="cl">AtomicIntegerArray</span>(<span class="num">10</span>);
+arr.<span class="fn">set</span>(<span class="num">0</span>, <span class="num">100</span>);                     <span class="cm">// set index 0 to 100</span>
+arr.<span class="fn">incrementAndGet</span>(<span class="num">0</span>);             <span class="cm">// increment at index 0</span>
+arr.<span class="fn">compareAndSet</span>(<span class="num">0</span>, <span class="num">101</span>, <span class="num">200</span>);    <span class="cm">// CAS at index 0</span>
+arr.<span class="fn">get</span>(<span class="num">0</span>);                          <span class="cm">// read index 0</span>
+
+<span class="cm">// Use case: concurrent vote counters, per-bucket stats</span>
+<span class="cl">AtomicIntegerArray</span> bucketCounts = <span class="kw">new</span> <span class="cl">AtomicIntegerArray</span>(<span class="num">256</span>);
+<span class="kw">int</span> bucket = hash % <span class="num">256</span>;
+bucketCounts.<span class="fn">incrementAndGet</span>(bucket); <span class="cm">// thread-safe per-bucket counter</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 11 — CONCURRENT UTILS
+  ══════════════════════════════════ -->
+  <section id="utils" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-cyan">🛠️</div>
+      <div class="section-meta">
+        <div class="section-label">Section 11</div>
+        <div class="section-title">CountDownLatch, CyclicBarrier, Semaphore, Exchanger</div>
+        <div class="section-sub">java.util.concurrent synchronization utilities</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>⏳ CountDownLatch — "Wait until N tasks done"</h3>
+      <p>One-shot counter. Threads call <code>countDown()</code>.
+         Main thread calls <code>await()</code> and blocks until count reaches zero.
+         <strong>Cannot be reset.</strong></p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">CountDownLatch — Parallel initialization</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.*;
+
+<span class="cl">CountDownLatch</span> latch = <span class="kw">new</span> <span class="cl">CountDownLatch</span>(<span class="num">3</span>); <span class="cm">// count = 3</span>
+
+<span class="cm">// 3 worker threads — each decrements latch</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">3</span>; i++) {
+    <span class="kw">final int</span> id = i;
+    <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+        <span class="kw">try</span> {
+            <span class="cl">System</span>.out.println(<span class="str">"Service "</span> + id + <span class="str">" starting..."</span>);
+            <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span> * id); <span class="cm">// simulate init time</span>
+            <span class="cl">System</span>.out.println(<span class="str">"Service "</span> + id + <span class="str">" ready!"</span>);
+        } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+        } <span class="kw">finally</span> {
+            latch.<span class="fn">countDown</span>(); <span class="cm">// decrement count (3→2→1→0)</span>
+        }
+    }).<span class="fn">start</span>();
+}
+
+<span class="cm">// Main thread waits until all 3 services are ready</span>
+latch.<span class="fn">await</span>();                       <span class="cm">// blocks until count == 0</span>
+latch.<span class="fn">await</span>(<span class="num">10</span>, <span class="cl">TimeUnit</span>.SECONDS);   <span class="cm">// timeout version</span>
+<span class="cl">System</span>.out.println(<span class="str">"All services ready! Starting application..."</span>);</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔄 CyclicBarrier — "All threads wait for each other"</h3>
+      <p>All N threads must arrive at the barrier before any can proceed.
+         <strong>Can be reset and reused</strong> — that's the difference from CountDownLatch.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">CyclicBarrier — Parallel computation phases</span></div>
+        <pre>
+<span class="kw">int</span> numThreads = <span class="num">4</span>;
+<span class="cm">// Barrier action runs when all threads reach barrier</span>
+<span class="cl">CyclicBarrier</span> barrier = <span class="kw">new</span> <span class="cl">CyclicBarrier</span>(numThreads,
+    () -> <span class="cl">System</span>.out.println(<span class="str">"All threads reached phase boundary!"</span>)
+);
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < numThreads; i++) {
+    <span class="kw">final int</span> id = i;
+    <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+        <span class="kw">try</span> {
+            <span class="cm">// Phase 1</span>
+            <span class="cl">System</span>.out.println(<span class="str">"Thread "</span> + id + <span class="str">": Phase 1 work"</span>);
+            barrier.<span class="fn">await</span>(); <span class="cm">// wait for ALL threads to finish phase 1</span>
+
+            <span class="cm">// Phase 2 — all threads start together</span>
+            <span class="cl">System</span>.out.println(<span class="str">"Thread "</span> + id + <span class="str">": Phase 2 work"</span>);
+            barrier.<span class="fn">await</span>(); <span class="cm">// cyclic! reused for phase 2 boundary</span>
+
+        } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> | <span class="cl">BrokenBarrierException</span> e) {
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+        }
+    }).<span class="fn">start</span>();
+}</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🚦 Semaphore — "Limit concurrent access to N"</h3>
+      <p>Controls access to a pool of resources. Permits can be acquired/released.
+         Use for connection pools, rate limiting.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Semaphore — Connection pool simulation</span></div>
+        <pre>
+<span class="cm">// Allow max 3 concurrent DB connections</span>
+<span class="cl">Semaphore</span> semaphore = <span class="kw">new</span> <span class="cl">Semaphore</span>(<span class="num">3</span>, <span class="kw">true</span>); <span class="cm">// true = fair</span>
+
+<span class="cm">// 10 threads competing for 3 connections</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">10</span>; i++) {
+    <span class="kw">final int</span> id = i;
+    <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+        <span class="kw">try</span> {
+            semaphore.<span class="fn">acquire</span>();    <span class="cm">// blocks if no permits available</span>
+            <span class="cl">System</span>.out.println(<span class="str">"Thread "</span> + id + <span class="str">": using connection"</span>);
+            <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span>);   <span class="cm">// simulate DB work</span>
+        } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+            <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+        } <span class="kw">finally</span> {
+            semaphore.<span class="fn">release</span>();   <span class="cm">// ALWAYS release in finally!</span>
+        }
+    }).<span class="fn">start</span>();
+}
+
+<span class="cm">// Other semaphore methods</span>
+semaphore.<span class="fn">tryAcquire</span>();                     <span class="cm">// non-blocking — returns false if unavailable</span>
+semaphore.<span class="fn">tryAcquire</span>(<span class="num">500</span>, <span class="cl">TimeUnit</span>.MILLISECONDS); <span class="cm">// with timeout</span>
+semaphore.<span class="fn">availablePermits</span>();               <span class="cm">// current available permits</span>
+semaphore.<span class="fn">acquire</span>(<span class="num">2</span>);                       <span class="cm">// acquire 2 permits at once</span>
+semaphore.<span class="fn">release</span>(<span class="num">2</span>);                       <span class="cm">// release 2 permits at once</span>
+
+<span class="cm">// Binary semaphore (1 permit) = mutex-like (but not reentrant)</span>
+<span class="cl">Semaphore</span> mutex = <span class="kw">new</span> <span class="cl">Semaphore</span>(<span class="num">1</span>);</pre>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📊 CountDownLatch vs CyclicBarrier vs Semaphore</h3>
+      <table class="comp-table">
+        <thead><tr><th>Feature</th><th>CountDownLatch</th><th>CyclicBarrier</th><th>Semaphore</th></tr></thead>
+        <tbody>
+          <tr><td>Purpose</td><td>Wait for N events/tasks</td><td>All threads sync at barrier</td><td>Limit concurrent access</td></tr>
+          <tr><td>Reusable</td><td>❌ One-shot</td><td>✅ Cyclic (reset)</td><td>✅ Yes</td></tr>
+          <tr><td>Who waits</td><td>Main thread waits</td><td>All threads wait for each other</td><td>Any thread acquiring</td></tr>
+          <tr><td>Count direction</td><td>Count down to 0</td><td>Count up to N</td><td>Acquire/Release permits</td></tr>
+          <tr><td>Barrier action</td><td>❌</td><td>✅ Runs when all arrive</td><td>❌</td></tr>
+          <tr><td>Use case</td><td>Parallel init, test setup</td><td>Multi-phase parallel algorithms</td><td>Connection pools, rate limiting</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 12 — THREADLOCAL
+  ══════════════════════════════════ -->
+  <section id="threadlocal" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-yellow">🧵</div>
+      <div class="section-meta">
+        <div class="section-label">Section 12</div>
+        <div class="section-title">ThreadLocal</div>
+        <div class="section-sub">Per-thread state, use cases, memory leak warning</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>💡 ThreadLocal — Each Thread Gets Its Own Copy</h3>
+      <p>
+        <code>ThreadLocal</code> provides thread-isolated storage.
+        Each thread accessing the variable gets its <strong>own independent copy</strong>.
+        No synchronization needed — threads cannot interfere with each other's data.
+      </p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">ThreadLocal — Usage and Pitfalls</span></div>
+        <pre>
+<span class="cm">// ─── Basic ThreadLocal ───</span>
+<span class="kw">class</span> <span class="cl">RequestContext</span> {
+    <span class="cm">// Each thread has its own userId</span>
+    <span class="kw">private static final</span> <span class="cl">ThreadLocal</span>&lt;<span class="cl">String</span>&gt; userIdHolder =
+        <span class="kw">new</span> <span class="cl">ThreadLocal</span>&lt;&gt;();
+
+    <span class="kw">public static void</span> <span class="fn">setUserId</span>(<span class="cl">String</span> userId) {
+        userIdHolder.<span class="fn">set</span>(userId);
+    }
+    <span class="kw">public static</span> <span class="cl">String</span> <span class="fn">getUserId</span>() {
+        <span class="kw">return</span> userIdHolder.<span class="fn">get</span>();
+    }
+    <span class="cm">// ⚠️ MUST call remove() — prevents memory leak in thread pools!</span>
+    <span class="kw">public static void</span> <span class="fn">clear</span>() {
+        userIdHolder.<span class="fn">remove</span>();
+    }
+}
+
+<span class="cm">// Each request thread sets its own userId</span>
+<span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+    <span class="cl">RequestContext</span>.<span class="fn">setUserId</span>(<span class="str">"user-123"</span>);
+    <span class="cl">System</span>.out.println(<span class="cl">RequestContext</span>.<span class="fn">getUserId</span>()); <span class="cm">// "user-123"</span>
+    <span class="cm">// ... process request ...</span>
+    <span class="cl">RequestContext</span>.<span class="fn">clear</span>(); <span class="cm">// ✅ clean up!</span>
+}).<span class="fn">start</span>();
+
+<span class="cm">// ─── ThreadLocal with initialValue ───</span>
+<span class="kw">static final</span> <span class="cl">ThreadLocal</span>&lt;<span class="cl">SimpleDateFormat</span>&gt; DATE_FORMAT =
+    <span class="cl">ThreadLocal</span>.<span class="fn">withInitial</span>(() -> <span class="kw">new</span> <span class="cl">SimpleDateFormat</span>(<span class="str">"yyyy-MM-dd"</span>));
+<span class="cm">// SimpleDateFormat is NOT thread-safe — ThreadLocal gives each thread its own instance</span>
+
+<span class="cm">// ─── InheritableThreadLocal ───</span>
+<span class="cm">// Child threads inherit value from parent thread</span>
+<span class="kw">static final</span> <span class="cl">InheritableThreadLocal</span>&lt;<span class="cl">String</span>&gt; CONTEXT =
+    <span class="kw">new</span> <span class="cl">InheritableThreadLocal</span>&lt;&gt;();
+CONTEXT.<span class="fn">set</span>(<span class="str">"parent-context"</span>);
+<span class="kw">new</span> <span class="cl">Thread</span>(() ->
+    <span class="cl">System</span>.out.println(CONTEXT.<span class="fn">get</span>()) <span class="cm">// "parent-context" — inherited!</span>
+).<span class="fn">start</span>();</pre>
+      </div>
+
+      <div class="info-box danger">
+        <div class="ib-icon">🚨</div>
+        <div>
+          <strong>Memory Leak Warning with Thread Pools!</strong>
+          In thread pools, threads are reused. If you call <code>set()</code>
+          but forget <code>remove()</code>, the value persists for the lifetime of the thread,
+          even across different requests. This causes stale data bugs AND memory leaks.
+          <strong>Always call <code>ThreadLocal.remove()</code> in a finally block.</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 13 — JMM
+  ══════════════════════════════════ -->
+  <section id="jmm" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-pink">🧠</div>
+      <div class="section-meta">
+        <div class="section-label">Section 13</div>
+        <div class="section-title">Java Memory Model (JMM)</div>
+        <div class="section-sub">Happens-before, visibility, reordering — essential for interviews</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>📖 JMM — Key Rules (Happens-Before Relationships)</h3>
+      <p>
+        The JMM defines when one action is guaranteed to be <strong>visible</strong> to another.
+        If action A <em>happens-before</em> action B, then A's effects are visible to B.
+      </p>
+      <table class="comp-table">
+        <thead><tr><th>Happens-Before Rule</th><th>Explanation</th></tr></thead>
+        <tbody>
+          <tr><td>Program Order</td><td>Each action in a thread happens-before every subsequent action in the same thread</td></tr>
+          <tr><td>Monitor Lock</td><td>Unlock of a monitor happens-before every subsequent lock of the same monitor</td></tr>
+          <tr><td>volatile Write</td><td>Write to a volatile field happens-before every subsequent read of that field</td></tr>
+          <tr><td>Thread Start</td><td><code>Thread.start()</code> happens-before any action in the started thread</td></tr>
+          <tr><td>Thread Join</td><td>All actions in a thread happen-before <code>Thread.join()</code> returns in another thread</td></tr>
+          <tr><td>Transitivity</td><td>If A hb B and B hb C, then A hb C</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 14 — CODING PROBLEMS
+  ══════════════════════════════════ -->
+  <section id="coding" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-orange">💻</div>
+      <div class="section-meta">
+        <div class="section-label">Section 14</div>
+        <div class="section-title">Coding Problems</div>
+        <div class="section-sub">Real multithreading coding problems asked in interviews</div>
+      </div>
+    </div>
+
+    <!-- Print Even/Odd -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">C1</span>Two threads — one prints even numbers, one prints odd numbers in order</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Alternating Even/Odd Print</span></div>
+        <pre>
+<span class="kw">class</span> <span class="cl">EvenOddPrinter</span> {
+    <span class="kw">private int</span> number = <span class="num">1</span>;
+    <span class="kw">private final int</span> max = <span class="num">20</span>;
+    <span class="kw">private final</span> <span class="cl">Object</span> lock = <span class="kw">new</span> <span class="cl">Object</span>();
+
+    <span class="kw">public void</span> <span class="fn">printOdd</span>() {
+        <span class="kw">while</span> (number <= max) {
+            <span class="kw">synchronized</span> (lock) {
+                <span class="kw">while</span> (number <= max && number % <span class="num">2</span> == <span class="num">0</span>) {
+                    <span class="kw">try</span> { lock.<span class="fn">wait</span>(); } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+                        <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+                    }
+                }
+                <span class="kw">if</span> (number <= max) {
+                    <span class="cl">System</span>.out.print(<span class="str">"ODD:"</span>  + number++ + <span class="str">"  "</span>);
+                    lock.<span class="fn">notifyAll</span>();
+                }
+            }
+        }
+    }
+
+    <span class="kw">public void</span> <span class="fn">printEven</span>() {
+        <span class="kw">while</span> (number <= max) {
+            <span class="kw">synchronized</span> (lock) {
+                <span class="kw">while</span> (number <= max && number % <span class="num">2</span> != <span class="num">0</span>) {
+                    <span class="kw">try</span> { lock.<span class="fn">wait</span>(); } <span class="kw">catch</span> (<span class="cl">InterruptedException</span> e) {
+                        <span class="cl">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+                    }
+                }
+                <span class="kw">if</span> (number <= max) {
+                    <span class="cl">System</span>.out.print(<span class="str">"EVEN:"</span> + number++ + <span class="str">"  "</span>);
+                    lock.<span class="fn">notifyAll</span>();
+                }
+            }
+        }
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+        <span class="cl">EvenOddPrinter</span> printer = <span class="kw">new</span> <span class="cl">EvenOddPrinter</span>();
+        <span class="kw">new</span> <span class="cl">Thread</span>(printer::<span class="fn">printOdd</span>,  <span class="str">"OddThread"</span> ).<span class="fn">start</span>();
+        <span class="kw">new</span> <span class="cl">Thread</span>(printer::<span class="fn">printEven</span>, <span class="str">"EvenThread"</span>).<span class="fn">start</span>();
+    }
+}</pre>
+      </div>
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">ODD:1  EVEN:2  ODD:3  EVEN:4  ODD:5  EVEN:6  ... ODD:19  EVEN:20</div>
+      </div>
+    </div>
+
+    <!-- Singleton - Thread Safe -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">C2</span>Thread-safe Singleton — 3 approaches</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Thread-safe Singleton Patterns</span></div>
+        <pre>
+<span class="cm">// ── Approach 1: Eager Initialization (simplest, always thread-safe)</span>
+<span class="kw">class</span> <span class="cl">EagerSingleton</span> {
+    <span class="kw">private static final</span> <span class="cl">EagerSingleton</span> INSTANCE = <span class="kw">new</span> <span class="cl">EagerSingleton</span>();
+    <span class="kw">private</span> <span class="cl">EagerSingleton</span>() {}
+    <span class="kw">public static</span> <span class="cl">EagerSingleton</span> <span class="fn">getInstance</span>() { <span class="kw">return</span> INSTANCE; }
+}
+
+<span class="cm">// ── Approach 2: Double-Checked Locking (lazy + thread-safe)</span>
+<span class="kw">class</span> <span class="cl">DCLSingleton</span> {
+    <span class="kw">private static volatile</span> <span class="cl">DCLSingleton</span> instance; <span class="cm">// volatile is critical!</span>
+    <span class="kw">private</span> <span class="cl">DCLSingleton</span>() {}
+    <span class="kw">public static</span> <span class="cl">DCLSingleton</span> <span class="fn">getInstance</span>() {
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) {
+            <span class="kw">synchronized</span> (<span class="cl">DCLSingleton</span>.<span class="kw">class</span>) {
+                <span class="kw">if</span> (instance == <span class="kw">null</span>) {
+                    instance = <span class="kw">new</span> <span class="cl">DCLSingleton</span>();
+                }
+            }
+        }
+        <span class="kw">return</span> instance;
+    }
+}
+
+<span class="cm">// ── Approach 3: Bill Pugh (best — lazy, thread-safe, no synchronization overhead)</span>
+<span class="kw">class</span> <span class="cl">BillPughSingleton</span> {
+    <span class="kw">private</span> <span class="cl">BillPughSingleton</span>() {}
+
+    <span class="cm">// Inner class is loaded only when getInstance() is first called</span>
+    <span class="cm">// Class loading is thread-safe by JVM ClassLoader</span>
+    <span class="kw">private static class</span> <span class="cl">Holder</span> {
+        <span class="kw">static final</span> <span class="cl">BillPughSingleton</span> INSTANCE = <span class="kw">new</span> <span class="cl">BillPughSingleton</span>();
+    }
+
+    <span class="kw">public static</span> <span class="cl">BillPughSingleton</span> <span class="fn">getInstance</span>() {
+        <span class="kw">return</span> <span class="cl">Holder</span>.INSTANCE; <span class="cm">// triggers Holder class loading — lazy + thread-safe</span>
+    }
+}
+
+<span class="cm">// ── Approach 4: Enum Singleton (Joshua Bloch recommended)</span>
+<span class="kw">enum</span> <span class="cl">EnumSingleton</span> {
+    INSTANCE;
+    <span class="kw">public void</span> <span class="fn">doSomething</span>() { <span class="cm">/* ... */</span> }
+}
+<span class="cm">// Usage: EnumSingleton.INSTANCE.doSomething()</span>
+<span class="cm">// Thread-safe + serialization-safe (enum values are singletons by spec)</span></pre>
+      </div>
+    </div>
+
+    <!-- Thread-safe Counter -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">C3</span>Implement a thread-safe counter — 4 approaches with performance comparison</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Thread-safe counter — 4 implementations</span></div>
+        <pre>
+<span class="cm">// 1. synchronized — correct but slowest (lock contention)</span>
+<span class="kw">class</span> <span class="cl">SyncCounter</span> {
+    <span class="kw">private int</span> count = <span class="num">0</span>;
+    <span class="kw">public synchronized void</span> <span class="fn">increment</span>() { count++; }
+    <span class="kw">public synchronized int</span>  <span class="fn">get</span>() { <span class="kw">return</span> count; }
+}
+
+<span class="cm">// 2. volatile — visibility only, NOT thread-safe for compound ops!</span>
+<span class="kw">class</span> <span class="cl">VolatileCounter</span> {  <span class="cm">// ❌ still has race condition</span>
+    <span class="kw">private volatile int</span> count = <span class="num">0</span>;
+    <span class="kw">public void</span> <span class="fn">increment</span>() { count++; } <span class="cm">// NOT atomic!</span>
+}
+
+<span class="cm">// 3. AtomicInteger — lock-free CAS, best for single-variable ops</span>
+<span class="kw">class</span> <span class="cl">AtomicCounter</span> {
+    <span class="kw">private</span> <span class="cl">AtomicInteger</span> count = <span class="kw">new</span> <span class="cl">AtomicInteger</span>(<span class="num">0</span>);
+    <span class="kw">public void</span> <span class="fn">increment</span>() { count.<span class="fn">incrementAndGet</span>(); }
+    <span class="kw">public int</span>  <span class="fn">get</span>()       { <span class="kw">return</span> count.<span class="fn">get</span>(); }
+}
+
+<span class="cm">// 4. LongAdder — fastest for high-contention increments</span>
+<span class="kw">class</span> <span class="cl">LongAdderCounter</span> {
+    <span class="kw">private</span> <span class="cl">LongAdder</span> count = <span class="kw">new</span> <span class="cl">LongAdder</span>();
+    <span class="kw">public void</span> <span class="fn">increment</span>() { count.<span class="fn">increment</span>(); }
+    <span class="kw">public long</span> <span class="fn">get</span>()       { <span class="kw">return</span> count.<span class="fn">sum</span>(); } <span class="cm">// approximate during contention</span>
+}
+
+<span class="cm">// Performance ranking (high contention, many threads):
+// LongAdder > AtomicInteger > synchronized
+// LongAdder splits counter across CPU caches — much less contention</span></pre>
+      </div>
+    </div>
+
+    <!-- CompletableFuture Parallel Tasks -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">C4</span>Fetch 3 APIs in parallel and combine results using CompletableFuture</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Parallel API calls with CompletableFuture</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.*;
+
+<span class="kw">class</span> <span class="cl">ParallelApiFetcher</span> {
+
+    <span class="kw">static</span> <span class="cl">String</span> <span class="fn">fetchUser</span>()    { <span class="cm">/* simulate */</span> <span class="kw">return</span> <span class="str">"Alice"</span>; }
+    <span class="kw">static</span> <span class="cl">String</span> <span class="fn">fetchOrders</span>()  { <span class="cm">/* simulate */</span> <span class="kw">return</span> <span class="str">"[Order1,Order2]"</span>; }
+    <span class="kw">static</span> <span class="cl">String</span> <span class="fn">fetchInventory</span>(){ <span class="cm">/* simulate */</span> <span class="kw">return</span> <span class="str">"100 items"</span>; }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) <span class="kw">throws Exception</span> {
+        <span class="cl">ExecutorService</span> exec = <span class="cl">Executors</span>.<span class="fn">newFixedThreadPool</span>(<span class="num">3</span>);
+
+        <span class="cm">// All 3 run IN PARALLEL</span>
+        <span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; userFuture =
+            <span class="cl">CompletableFuture</span>.<span class="fn">supplyAsync</span>(<span class="cl">ParallelApiFetcher</span>::fetchUser, exec);
+        <span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; ordersFuture =
+            <span class="cl">CompletableFuture</span>.<span class="fn">supplyAsync</span>(<span class="cl">ParallelApiFetcher</span>::fetchOrders, exec);
+        <span class="cl">CompletableFuture</span>&lt;<span class="cl">String</span>&gt; invFuture =
+            <span class="cl">CompletableFuture</span>.<span class="fn">supplyAsync</span>(<span class="cl">ParallelApiFetcher</span>::fetchInventory, exec);
+
+        <span class="cm">// Wait for all 3 to complete</span>
+        <span class="cl">CompletableFuture</span>&lt;<span class="cl">Void</span>&gt; allDone =
+            <span class="cl">CompletableFuture</span>.<span class="fn">allOf</span>(userFuture, ordersFuture, invFuture);
+
+        <span class="cm">// Combine results after all complete</span>
+        <span class="cl">String</span> report = allDone.<span class="fn">thenApply</span>(v -> {
+            <span class="kw">try</span> {
+                <span class="kw">return</span> <span class="str">"User: "</span>      + userFuture.<span class="fn">get</span>()
+                    + <span class="str">"\nOrders: "</span>   + ordersFuture.<span class="fn">get</span>()
+                    + <span class="str">"\nInventory: "</span> + invFuture.<span class="fn">get</span>();
+            } <span class="kw">catch</span> (<span class="cl">Exception</span> e) { <span class="kw">throw new</span> <span class="cl">RuntimeException</span>(e); }
+        }).<span class="fn">get</span>(); <span class="cm">// block here — all 3 already done at this point</span>
+
+        <span class="cl">System</span>.out.println(report);
+        exec.<span class="fn">shutdown</span>();
+    }
+}</pre>
+      </div>
+      <div class="output-box">
+        <div class="output-label">Output</div>
+        <div class="output-line">User: Alice</div>
+        <div class="output-line">Orders: [Order1,Order2]</div>
+        <div class="output-line">Inventory: 100 items</div>
+      </div>
+    </div>
+
+    <!-- Implement Blocking Queue -->
+    <div class="quiz-card">
+      <div class="quiz-q"><span class="quiz-badge">C5</span>Implement a custom BlockingQueue from scratch</div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Custom BlockingQueue</span></div>
+        <pre>
+<span class="kw">import</span> java.util.concurrent.locks.*;
+
+<span class="kw">public class</span> <span class="cl">MyBlockingQueue</span>&lt;T&gt; {
+    <span class="kw">private final</span> <span class="cl">Object</span>[] buffer;
+    <span class="kw">private int</span> head = <span class="num">0</span>, tail = <span class="num">0</span>, count = <span class="num">0</span>;
+    <span class="kw">private final</span> <span class="cl">ReentrantLock</span> lock = <span class="kw">new</span> <span class="cl">ReentrantLock</span>();
+    <span class="kw">private final</span> <span class="cl">Condition</span> notFull  = lock.<span class="fn">newCondition</span>();
+    <span class="kw">private final</span> <span class="cl">Condition</span> notEmpty = lock.<span class="fn">newCondition</span>();
+
+    <span class="kw">public</span> <span class="cl">MyBlockingQueue</span>(<span class="kw">int</span> capacity) {
+        buffer = <span class="kw">new</span> <span class="cl">Object</span>[capacity];
+    }
+
+    <span class="kw">public void</span> <span class="fn">put</span>(T item) <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        lock.<span class="fn">lock</span>();
+        <span class="kw">try</span> {
+            <span class="kw">while</span> (count == buffer.length)
+                notFull.<span class="fn">await</span>(); <span class="cm">// wait until space available</span>
+            buffer[tail] = item;
+            tail = (tail + <span class="num">1</span>) % buffer.length;
+            count++;
+            notEmpty.<span class="fn">signal</span>(); <span class="cm">// wake up consumer</span>
+        } <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); }
+    }
+
+    <span class="an">@SuppressWarnings</span>(<span class="str">"unchecked"</span>)
+    <span class="kw">public</span> T <span class="fn">take</span>() <span class="kw">throws</span> <span class="cl">InterruptedException</span> {
+        lock.<span class="fn">lock</span>();
+        <span class="kw">try</span> {
+            <span class="kw">while</span> (count == <span class="num">0</span>)
+                notEmpty.<span class="fn">await</span>(); <span class="cm">// wait until item available</span>
+            T item = (T) buffer[head];
+            buffer[head] = <span class="kw">null</span>; <span class="cm">// help GC</span>
+            head = (head + <span class="num">1</span>) % buffer.length;
+            count--;
+            notFull.<span class="fn">signal</span>();  <span class="cm">// wake up producer</span>
+            <span class="kw">return</span> item;
+        } <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); }
+    }
+
+    <span class="kw">public int</span>     <span class="fn">size</span>()    { <span class="kw">return</span> count; }
+    <span class="kw">public boolean</span> <span class="fn">isEmpty</span>() { <span class="kw">return</span> count == <span class="num">0</span>; }
+    <span class="kw">public boolean</span> <span class="fn">isFull</span>()  { <span class="kw">return</span> count == buffer.length; }
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════
+       SECTION 15 — INTERVIEW Q&A
+  ══════════════════════════════════ -->
+  <section id="interview" class="section">
+    <div class="section-header">
+      <div class="section-icon ic-yellow">🎯</div>
+      <div class="section-meta">
+        <div class="section-label">Section 15</div>
+        <div class="section-title">Master Interview Q&amp;A</div>
+        <div class="section-sub">25+ most asked multithreading interview questions</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>🔥 Core Multithreading Q&amp;A</h3>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between process and thread?</div>
+        <div class="iq-a">
+          <strong>Process:</strong> Independent program in execution. Has its own memory space (heap, stack, code, data). Heavy-weight. IPC needed for communication.<br>
+          <strong>Thread:</strong> Lightweight unit of execution within a process. Shares process memory (heap, code). Has own stack and registers. Communication via shared memory. Faster to create/destroy than processes.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q2</span>What is the difference between Runnable and Callable?</div>
+        <div class="iq-a">
+          <strong>Runnable:</strong> <code>void run()</code> — no return value, cannot throw checked exceptions.<br>
+          <strong>Callable:</strong> <code>V call() throws Exception</code> — returns a value, can throw checked exceptions. Used with ExecutorService.submit() which returns a Future.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q3</span>What is the purpose of the synchronized keyword?</div>
+        <div class="iq-a">
+          Provides two guarantees: <strong>Mutual Exclusion</strong> (only one thread can execute the synchronized block at a time) and <strong>Visibility</strong> (changes made inside synchronized block are visible to other threads after the lock is released). Internally uses the object's monitor (intrinsic lock).
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q4</span>Can we synchronize a constructor in Java?</div>
+        <div class="iq-a">No. Constructors cannot be synchronized because only one thread can access a new object during construction — other threads don't have a reference to it yet. Using <code>synchronized</code> on a constructor causes a compile error. However, you can use synchronized blocks inside a constructor.</div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q5</span>What is the difference between sleep() and wait()?</div>
+        <div class="iq-a">
+          <strong>Thread.sleep(n):</strong> Static method. Pauses current thread for n milliseconds. Does NOT release lock. Thread goes to TIMED_WAITING. Doesn't need synchronized context.<br>
+          <strong>object.wait():</strong> Instance method on Object. <strong>Releases the lock</strong>. Thread goes to WAITING. Must be called from synchronized block. Thread resumes when notify()/notifyAll() is called.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q6</span>What is thread starvation and how to prevent it?</div>
+        <div class="iq-a">
+          Starvation occurs when a thread is perpetually denied CPU time because other threads with higher priority keep running. Fixes: (1) Use fair locks — <code>new ReentrantLock(true)</code>. (2) Avoid indefinite priority escalation. (3) Use <code>ThreadPoolExecutor</code> with bounded queue so all tasks eventually execute.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q7</span>What is a spurious wakeup and how to handle it?</div>
+        <div class="iq-a">
+          A thread can wake up from <code>wait()</code> without being notified — this is a spurious wakeup (hardware/OS level, not a bug). Fix: <strong>Always call wait() in a loop</strong> (while, not if), re-checking the condition after wakeup:
+          <code>while (!condition) { lock.wait(); }</code> — not <code>if (!condition) { lock.wait(); }</code>
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q8</span>What is the difference between notify() and notifyAll()?</div>
+        <div class="iq-a">
+          <strong>notify():</strong> Wakes up ONE arbitrarily chosen thread waiting on the same object. Others remain WAITING. Risk: if wrong thread is woken up, it may wait again and never make progress (use notifyAll for safety).<br>
+          <strong>notifyAll():</strong> Wakes up ALL waiting threads. They all compete for the lock — only one gets it, others go back to BLOCKED/WAITING after re-checking condition. Safer but less efficient.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q9</span>What is the Java Memory Model (JMM)?</div>
+        <div class="iq-a">
+          JMM defines the rules for how threads interact through memory. Key problems it addresses: (1) <strong>Visibility:</strong> Changes by one thread may not be visible to others (CPU caching). (2) <strong>Atomicity:</strong> Multi-step operations can be interleaved. (3) <strong>Reordering:</strong> Compiler/CPU may reorder instructions. Solutions: <code>volatile</code>, <code>synchronized</code>, Atomic classes, happens-before relationships.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q10</span>What is ThreadLocal memory leak and how to prevent it?</div>
+        <div class="iq-a">
+          In thread pools, threads are reused. If <code>ThreadLocal.remove()</code> is not called, the value remains in the ThreadLocalMap for the life of the thread. This: (1) Leaks memory. (2) Causes stale data bugs where old request data bleeds into new request. Fix: Always call <code>remove()</code> in a <code>finally</code> block after use.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q11</span>What is ForkJoinPool and when to use it?</div>
+        <div class="iq-a">
+          ForkJoinPool is designed for <strong>divide-and-conquer tasks</strong> (recursively split work). It uses <strong>work-stealing</strong> — idle threads steal tasks from busy threads' queues. Used by: parallel streams, CompletableFuture (default), <code>Executors.newWorkStealingPool()</code>. Best for CPU-intensive recursive tasks (merge sort, tree traversal, parallel reduction).
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q12</span>Difference between ConcurrentHashMap and synchronizedMap?</div>
+        <div class="iq-a">
+          <strong>Collections.synchronizedMap:</strong> Wraps entire map with single lock. Only one thread can access ANY operation at a time. Iteration requires external sync too.<br>
+          <strong>ConcurrentHashMap:</strong> Fine-grained locking (Java 7: 16 segments, Java 8: bucket-level CAS + sync). Multiple threads can read/write different buckets simultaneously. No lock for reads. Iteration is weakly consistent (no CME). Also no null keys/values.
+        </div>
+      </div>
+
+      <div class="iq-card">
+        <div class="iq-q"><span class="iq-q-num">Q13</span>What happens if an exception occurs in a thread?</div>
+        <div class="iq-a">
+          The thread terminates abnormally. The exception does NOT propagate to the parent thread. To handle it: (1) Use <code>Thread.setUncaughtExceptionHandler()</code>. (2) For ExecutorService: exceptions from Runnable are swallowed; from Callable they're wrapped in <code>ExecutionException</code> and thrown when <code>future.get()</code> is called. (3) Use try-catch inside the thread's <code>run()</code>.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tricky Output Questions -->
+    <div class="content-card">
+      <h3>🧠 Tricky Output &amp; Snippet Questions</h3>
+
+      <div class="quiz-card">
+        <div class="quiz-q"><span class="quiz-badge">S1</span>What is the output? How many times does "done" print?</div>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Tricky visibility bug</span></div>
+          <pre>
+<span class="kw">class</span> <span class="cl">VisibilityTest</span> {
+    <span class="kw">static boolean</span> stop = <span class="kw">false</span>; <span class="cm">// no volatile!</span>
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) <span class="kw">throws Exception</span> {
+        <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+            <span class="kw">while</span> (!stop) {} <span class="cm">// spin</span>
+            <span class="cl">System</span>.out.println(<span class="str">"done"</span>);
+        }).<span class="fn">start</span>();
+        <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span>);
+        stop = <span class="kw">true</span>;
+        <span class="cl">System</span>.out.println(<span class="str">"main done"</span>);
+    }
+}</pre>
+        </div>
+        <div class="quiz-reveal">
+          <div class="quiz-reveal-label">✅ Answer</div>
+          <div class="quiz-ans">
+            <strong>Possible outputs: (a) "main done" then "done" OR (b) just "main done" — the loop may never exit!</strong><br>
+            Without <code>volatile</code>, the worker thread may cache <code>stop=false</code> in its CPU register/L1 cache and never see the updated value from main thread. Add <code>volatile</code> to <code>stop</code> to guarantee visibility.
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-card">
+        <div class="quiz-q"><span class="quiz-badge">S2</span>Is this code thread-safe? What's the output range?</div>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Race condition with volatile</span></div>
+          <pre>
+<span class="kw">class</span> <span class="cl">RaceTest</span> {
+    <span class="kw">volatile int</span> x = <span class="num">0</span>;
+    <span class="kw">void</span> <span class="fn">increment</span>() { x++; }
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) <span class="kw">throws Exception</span> {
+        <span class="cl">RaceTest</span> rt = <span class="kw">new</span> <span class="cl">RaceTest</span>();
+        <span class="cl">Thread</span> t1 = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+            <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<<span class="num">1000</span>;i++) rt.<span class="fn">increment</span>();
+        });
+        <span class="cl">Thread</span> t2 = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+            <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<<span class="num">1000</span>;i++) rt.<span class="fn">increment</span>();
+        });
+        t1.<span class="fn">start</span>(); t2.<span class="fn">start</span>(); t1.<span class="fn">join</span>(); t2.<span class="fn">join</span>();
+        <span class="cl">System</span>.out.println(rt.x);
+    }
+}</pre>
+        </div>
+        <div class="quiz-reveal">
+          <div class="quiz-reveal-label">✅ Answer</div>
+          <div class="quiz-ans">
+            <strong>NOT thread-safe. Output: 1000-2000 (non-deterministic).</strong><br>
+            <code>volatile</code> only ensures visibility — it does NOT make <code>x++</code> atomic. x++ = read x + add 1 + write x (3 ops). Both threads can read x=5 simultaneously, both compute 6, both write 6 → increment lost. Fix: Use <code>AtomicInteger</code> or <code>synchronized</code>.
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-card">
+        <div class="quiz-q"><span class="quiz-badge">S3</span>What is the output of this program?</div>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">Java</span><span class="code-label">Thread join() behavior</span></div>
+          <pre>
+<span class="kw">public class</span> <span class="cl">JoinTest</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) <span class="kw">throws Exception</span> {
+        <span class="cl">Thread</span> t = <span class="kw">new</span> <span class="cl">Thread</span>(() -> {
+            <span class="kw">try</span> { <span class="cl">Thread</span>.<span class="fn">sleep</span>(<span class="num">500</span>); } <span class="kw">catch</span>(<span class="cl">Exception</span> e) {}
+            <span class="cl">System</span>.out.println(<span class="str">"Child"</span>);
+        });
+        t.<span class="fn">start</span>();
+        t.<span class="fn">join</span>(); <span class="cm">// main waits for t to finish</span>
+        <span class="cl">System</span>.out.println(<span class="str">"Main"</span>);
+    }
+}</pre>
+        </div>
+        <div class="quiz-reveal">
+          <div class="quiz-reveal-label">✅ Answer</div>
+          <div class="quiz-ans">
+            <strong>Output: Child → Main (always in this order)</strong><br>
+            <code>join()</code> makes the calling thread (main) wait until thread <code>t</code> completes. Without <code>join()</code>, output could be "Main → Child" or "Child → Main" — non-deterministic. <code>join()</code> establishes a happens-before relationship.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Reference -->
+    <div class="content-card">
+      <h3>⚡ Quick Decision Guide</h3>
+      <table class="comp-table">
+        <thead><tr><th>Situation</th><th>Best Choice</th></tr></thead>
+        <tbody>
+          <tr><td>Simple thread with no return</td><td><code>Runnable</code> + <code>ExecutorService</code></td></tr>
+          <tr><td>Thread that returns a value</td><td><code>Callable</code> + <code>Future</code></td></tr>
+          <tr><td>Async pipeline / non-blocking</td><td><code>CompletableFuture</code></td></tr>
+          <tr><td>Simple counter / flag</td><td><code>AtomicInteger</code> / <code>AtomicBoolean</code></td></tr>
+          <tr><td>High-concurrency counter</td><td><code>LongAdder</code></td></tr>
+          <tr><td>Simple lock with extra features</td><td><code>ReentrantLock</code></td></tr>
+          <tr><td>Many reads, few writes</td><td><code>ReadWriteLock</code> / <code>StampedLock</code></td></tr>
+          <tr><td>Wait for N services to start</td><td><code>CountDownLatch</code></td></tr>
+          <tr><td>Sync N threads at barrier</td><td><code>CyclicBarrier</code></td></tr>
+          <tr><td>Limit concurrent access</td><td><code>Semaphore</code></td></tr>
+          <tr><td>Thread-specific data</td><td><code>ThreadLocal</code></td></tr>
+          <tr><td>Thread-safe Map (concurrent)</td><td><code>ConcurrentHashMap</code></td></tr>
+          <tr><td>Thread-safe producer-consumer</td><td><code>ArrayBlockingQueue</code> / <code>LinkedBlockingQueue</code></td></tr>
+          <tr><td>CPU-bound task pool</td><td><code>newFixedThreadPool(N_CPU)</code></td></tr>
+          <tr><td>I/O-bound, millions of tasks</td><td>Virtual Threads (Java 21)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div><!-- end container -->
+
+<!-- ════ FOOTER ════ -->
+<footer class="page-footer">
+  <p>
+    📘 <strong>Part 05 of 20</strong> — Java Interview Notes Series |
+    Next: <strong>Part 06 — Java 8+ Features (Streams, Lambdas, Optional, Functional Interfaces)</strong>
+  </p>
+  <p style="margin-top:8px; font-size:12px;">
+    Topics Covered: Thread Creation (4 ways) • Virtual Threads (Java 21) •
+    Thread Lifecycle (6 states) • synchronized (4 forms) • volatile vs synchronized •
+    wait/notify/notifyAll • Producer-Consumer • ReentrantLock • ReadWriteLock •
+    StampedLock • Condition • Thread Pools • ExecutorService • ThreadPoolExecutor internals •
+    Callable & Future • CompletableFuture (full API) • Deadlock (4 conditions) •
+    Deadlock Prevention • Livelock & Starvation • AtomicInteger/LongAdder/CAS •
+    CountDownLatch • CyclicBarrier • Semaphore • ThreadLocal + Memory Leak •
+    Java Memory Model • 5 Coding Problems • 13 Interview Q&As • 3 Tricky Snippets
+  </p>
+</footer>
+
+  </main><!-- /#main -->
+
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+
+  // Restore persisted state on desktop
+  (function () {
+    if (window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  })();
+
+  // Scroll progress bar
+  window.addEventListener('scroll', function () {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    const fill = document.getElementById('progress');
+    if (fill) fill.style.width = pct + '%';
+  });
+
+  // Active nav link highlight (scroll-spy)
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a[href^="#"]');
+  window.addEventListener('scroll', function () {
+    let current = '';
+    sections.forEach(function (section) {
+      if (window.scrollY >= section.offsetTop - 140) current = section.id;
+    });
+    navLinks.forEach(function (link) {
+      link.style.color = '';
+      link.style.borderLeftColor = '';
+      if (link.getAttribute('href') === '#' + current) {
+        link.style.color = 'var(--accent-blue, var(--accent, #58a6ff))';
+        link.style.borderLeftColor = 'var(--accent-blue, var(--accent, #58a6ff))';
+      }
+    });
+  });
+</script>
+</body>
+</html>

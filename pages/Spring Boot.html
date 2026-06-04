@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spring Boot — Comprehensive Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero{background:linear-gradient(135deg,#0d1117 0%,#0a1f1a 45%,#0d2a1a 100%);}
+    .hero h1 span{color:var(--accent-green);}
+  </style>
+</head>
+<body>
+
+<!-- ── Progress Bar ── -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ── Hamburger ── -->
+<button id="hamburger" aria-label="Toggle sidebar">
+  <span></span><span></span><span></span>
+</button>
+<div id="sidebar-overlay"></div>
+
+<!-- ════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🍃</div>
+    <div>
+      <div class="sidebar-title">Spring Boot</div>
+      <div class="sidebar-subtitle">Comprehensive Notes</div>
+    </div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">🏠 Navigation</div>
+    <a href="../index.html" class="toc-link">← Back to Home</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 1 — Foundations</div>
+    <a href="#spring-vs-springboot" class="toc-link">Spring vs Spring Boot</a>
+    <a href="#xml-config" class="toc-link">XML & Java Config</a>
+    <a href="#maven" class="toc-link">Maven & POM.xml</a>
+    <a href="#ioc-di" class="toc-link">IoC & Dependency Injection</a>
+    <a href="#context" class="toc-link">ApplicationContext & BeanFactory</a>
+    <a href="#servlet-tomcat" class="toc-link">Servlet, Tomcat & Containers</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 2 — Beans & Annotations</div>
+    <a href="#bean-lifecycle" class="toc-link">Bean Lifecycle & Scopes</a>
+    <a href="#annotations" class="toc-link">Core Annotations</a>
+    <a href="#di-types" class="toc-link">DI Types & Circular Deps</a>
+    <a href="#qualifier-primary" class="toc-link">@Qualifier & @Primary</a>
+    <a href="#autoconfiguration" class="toc-link">Auto-Configuration</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 3 — AOP</div>
+    <a href="#aop-intro" class="toc-link">What is AOP?</a>
+    <a href="#aop-internals" class="toc-link">AOP Internals</a>
+    <a href="#aop-pointcut" class="toc-link">Pointcut, Advice, Aspect</a>
+    <a href="#aop-custom" class="toc-link">Custom Annotation & Interceptor</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 4 — Transactions</div>
+    <a href="#transactions-intro" class="toc-link">Transaction Basics</a>
+    <a href="#isolation" class="toc-link">Isolation Levels</a>
+    <a href="#propagation" class="toc-link">Propagation Types</a>
+    <a href="#tx-manager" class="toc-link">Transaction Manager</a>
+    <a href="#tx-declarative" class="toc-link">Declarative vs Programmatic</a>
+    <a href="#concurrency" class="toc-link">Optimistic vs Pessimistic</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 5 — Async & Threads</div>
+    <a href="#async" class="toc-link">@Async Internals</a>
+    <a href="#threadpool" class="toc-link">ThreadPoolExecutor</a>
+    <a href="#async-tx" class="toc-link">Async + Transactions</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 6 — Spring Data & JPA</div>
+    <a href="#jpa-vs-springdatajpa" class="toc-link">JPA vs Spring Data JPA</a>
+    <a href="#jpa-annotations" class="toc-link">JPA Annotations Deep-Dive</a>
+    <a href="#jpa-mappings" class="toc-link">Entity Mappings</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Senior Dev Notes for Juniors</div>
+      <h1>🍃 <span>Spring Boot</span> — Complete Reference</h1>
+      <p class="hero-desc">From raw Servlet containers to auto-configuration magic. Every internal, every annotation, every "why".</p>
+      <div class="hero-badges">
+        <span class="tag tag-green">Spring Boot 3.x</span>
+        <span class="tag tag-blue">Java 17+</span>
+        <span class="tag tag-purple">AOP</span>
+        <span class="tag tag-orange">Transactions</span>
+        <span class="tag tag-cyan">Async</span>
+        <span class="tag tag-yellow">JPA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 1 — FOUNDATIONS
+  ══════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">01</div>
+    <div>
+      <h2>Foundations</h2>
+      <p>Why Spring exists, how configuration evolved, and what Spring Boot actually does under the hood.</p>
+    </div>
+  </div>
+
+  <!-- ── Spring vs Spring Boot ── -->
+  <div class="section" id="spring-vs-springboot">
+    <div class="section-header">
+      <h3>🌱 Spring vs Spring Boot</h3>
+    </div>
+
+    <div class="card">
+      <h4>Why Spring Framework Was Introduced</h4>
+      <p>Before Spring (early 2000s), Java enterprise development meant <strong>EJB (Enterprise JavaBeans)</strong> — a heavyweight, complex, XML-heavy spec that required a full J2EE application server. Problems it caused:</p>
+      <ul>
+        <li>Hard to unit-test (EJBs needed a running container)</li>
+        <li>Tightly coupled code — classes managed their own dependencies</li>
+        <li>Enormous XML descriptors just to wire components together</li>
+        <li>Slow startup, slow development feedback loop</li>
+      </ul>
+      <p><strong>Rod Johnson</strong> released Spring Framework in 2002 to fix all of this. The core idea: <em>let a container manage your object graph</em> — you write plain Java objects (POJOs), Spring wires them together.</p>
+    </div>
+
+    <div class="card">
+      <h4>What Spring Framework Solves</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>Inversion of Control</h4>
+          <p>You don't <code>new</code> your dependencies — the container creates and injects them. Decouples consumers from implementations.</p>
+        </div>
+        <div class="card-mini">
+          <h4>Aspect-Oriented Programming</h4>
+          <p>Cross-cutting concerns (logging, security, transactions) are woven in declaratively — not mixed into business logic.</p>
+        </div>
+        <div class="card-mini">
+          <h4>Data Access Abstraction</h4>
+          <p>JdbcTemplate, ORM support, consistent exception hierarchy. Removes boilerplate JDBC code.</p>
+        </div>
+        <div class="card-mini">
+          <h4>Testability</h4>
+          <p>POJOs are easily unit-tested. Spring Test module provides container-backed integration tests.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Spring Problem — Why Spring Boot Was Needed</h4>
+      <p>Spring solved EJB complexity but introduced its own: configuration hell. A typical Spring MVC app needed:</p>
+      <ul>
+        <li><code>web.xml</code> — DispatcherServlet registration</li>
+        <li><code>applicationContext.xml</code> — bean definitions</li>
+        <li><code>dispatcher-servlet.xml</code> — MVC config</li>
+        <li>Manual dependency version management in <code>pom.xml</code></li>
+        <li>Manual server deployment (WAR → Tomcat)</li>
+      </ul>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body"><strong>The 80/20 Problem:</strong> 80% of apps use the same configuration. Developers were copy-pasting XML across projects and wasting hours on setup that added zero business value.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Spring Boot's Answer — Convention Over Configuration</h4>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>✅ Spring Boot</h4>
+          <ul>
+            <li>Embedded Tomcat — no WAR deployment</li>
+            <li><strong>Auto-configuration</strong> — detects classpath and configures beans automatically</li>
+            <li>Starter POMs — curated, compatible dependency sets</li>
+            <li>Opinionated defaults — override only what you need</li>
+            <li>Actuator — production-ready monitoring out of the box</li>
+            <li>No XML required — pure Java config</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>❌ Plain Spring</h4>
+          <ul>
+            <li>Manual Tomcat/Jetty setup + WAR packaging</li>
+            <li>Every bean must be explicitly declared</li>
+            <li>Dependency version conflicts — you manage them</li>
+            <li>Pages of XML or @Configuration classes for basic setup</li>
+            <li>No built-in health checks</li>
+            <li>Steep learning curve for new projects</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner banner-green">
+      <h4>One-Line Mental Model</h4>
+      <p><strong>Spring Framework</strong> = The engine (IoC, AOP, Data, MVC).<br>
+         <strong>Spring Boot</strong> = A pre-configured car built on that engine — ready to drive, just add your business logic.</p>
+    </div>
+  </div>
+
+  <!-- ── XML & Java Configuration ── -->
+  <div class="section" id="xml-config">
+    <div class="section-header">
+      <h3>⚙️ XML vs Java Configuration</h3>
+    </div>
+
+    <div class="card">
+      <h4>Evolution of Spring Configuration</h4>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="ti-title">Spring 1.x — XML Only (2004)</div>
+          <div class="ti-body">Every bean declared in <code>applicationContext.xml</code>. Verbose but explicit. Separation of config from code.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-title">Spring 2.5 — Annotation-Based (2007)</div>
+          <div class="ti-body"><code>@Component</code>, <code>@Autowired</code> introduced. Component scanning reduced XML. Still needed XML to bootstrap scanning.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-title">Spring 3.0 — Java Config (2009)</div>
+          <div class="ti-body"><code>@Configuration</code> + <code>@Bean</code>. 100% XML-free Spring possible. Type-safe, IDE-friendly configuration.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-title">Spring Boot 1.0 — Auto-Config (2014)</div>
+          <div class="ti-body">Auto-configuration via <code>spring.factories</code>. Write zero config for standard setups. Convention-over-configuration era begins.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-title">Spring Boot 3.x — AOT & Virtual Threads (2022+)</div>
+          <div class="ti-body">Ahead-of-time compilation for GraalVM native images. Virtual thread support (Java 21). <code>AutoConfiguration.imports</code> replaces <code>spring.factories</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>XML Configuration (Legacy)</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">XML</span><span class="code-title">applicationContext.xml</span></div>
+        <pre><code><span class="tag">&lt;beans</span> xmlns="http://www.springframework.org/schema/beans"&gt;
+
+    <span class="cmt">&lt;!-- Explicit bean declaration --&gt;</span>
+    <span class="tag">&lt;bean</span> id="userRepository" class="com.app.UserRepositoryImpl"<span class="tag">/&gt;</span>
+
+    <span class="cmt">&lt;!-- Constructor injection --&gt;</span>
+    <span class="tag">&lt;bean</span> id="userService" class="com.app.UserServiceImpl"<span class="tag">&gt;</span>
+        <span class="tag">&lt;constructor-arg</span> ref="userRepository"<span class="tag">/&gt;</span>
+    <span class="tag">&lt;/bean&gt;</span>
+
+    <span class="cmt">&lt;!-- Property (setter) injection --&gt;</span>
+    <span class="tag">&lt;bean</span> id="emailService" class="com.app.EmailService"<span class="tag">&gt;</span>
+        <span class="tag">&lt;property</span> name="smtpHost" value="smtp.gmail.com"<span class="tag">/&gt;</span>
+    <span class="tag">&lt;/bean&gt;</span>
+
+<span class="tag">&lt;/beans&gt;</span></code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>@Configuration — Java-Based Config</h4>
+      <p><code>@Configuration</code> marks a class as a <em>bean definition source</em>. It is itself a Spring bean. Spring Boot uses this everywhere.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">AppConfig.java</span></div>
+        <pre><code><span class="kw2">@Configuration</span>                        <span class="cmt">// Tells Spring: this class defines beans</span>
+<span class="kw2">@ComponentScan</span>("com.app")             <span class="cmt">// Scan this package for @Component etc.</span>
+<span class="kw2">@PropertySource</span>("classpath:app.properties") <span class="cmt">// Load properties file</span>
+<span class="kw">public class</span> <span class="type">AppConfig</span> {
+
+    <span class="kw2">@Value</span>("<span class="str">${smtp.host}</span>")
+    <span class="kw">private</span> <span class="type">String</span> smtpHost;
+
+    <span class="kw2">@Bean</span>                              <span class="cmt">// Returns a managed bean</span>
+    <span class="kw">public</span> <span class="type">UserRepository</span> <span class="fn">userRepository</span>() {
+        <span class="kw">return new</span> <span class="type">UserRepositoryImpl</span>();
+    }
+
+    <span class="kw2">@Bean</span>
+    <span class="kw">public</span> <span class="type">UserService</span> <span class="fn">userService</span>(<span class="type">UserRepository</span> userRepository) {
+        <span class="cmt">// Spring auto-injects userRepository from above</span>
+        <span class="kw">return new</span> <span class="type">UserServiceImpl</span>(userRepository);
+    }
+
+    <span class="kw2">@Bean</span>
+    <span class="kw2">@Conditional</span>(<span class="type">OnProductionCondition</span>.class) <span class="cmt">// Only in prod</span>
+    <span class="kw">public</span> <span class="type">EmailService</span> <span class="fn">emailService</span>() {
+        <span class="kw">return new</span> <span class="type">RealEmailService</span>(smtpHost);
+    }
+}</code></pre>
+      </div>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Internal trick:</strong> <code>@Configuration</code> classes are subclassed by CGLIB at runtime. When you call <code>userService()</code> inside the config, CGLIB intercepts the call and returns the existing singleton bean — it does NOT create a new one. This is why <code>@Configuration</code> is different from <code>@Component</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>@SpringBootApplication — The Entry Point</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">What @SpringBootApplication expands to</span></div>
+        <pre><code><span class="cmt">// @SpringBootApplication is a composed annotation equal to:</span>
+
+<span class="kw2">@SpringBootConfiguration</span>   <span class="cmt">// ← same as @Configuration for Spring Boot</span>
+<span class="kw2">@EnableAutoConfiguration</span>   <span class="cmt">// ← load all auto-config classes from the classpath</span>
+<span class="kw2">@ComponentScan</span>             <span class="cmt">// ← scan current package and sub-packages</span>
+<span class="kw">public class</span> <span class="type">MyApp</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+        <span class="type">SpringApplication</span>.<span class="fn">run</span>(<span class="type">MyApp</span>.class, args);
+    }
+}</code></pre>
+      </div>
+      <h5>@EnableAutoConfiguration Internals</h5>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Import AutoConfigurationImportSelector</div>
+            <div class="step-desc"><code>@EnableAutoConfiguration</code> imports this selector class via <code>@Import</code>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Read AutoConfiguration.imports</div>
+            <div class="step-desc">The selector reads <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code> (SB3) listing hundreds of auto-config classes.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Apply @Conditional filters</div>
+            <div class="step-desc">Each auto-config class has conditions like <code>@ConditionalOnClass</code>, <code>@ConditionalOnMissingBean</code> — only applied when relevant.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Register matching beans</div>
+            <div class="step-desc">Qualifying config classes are loaded into the ApplicationContext, registering their beans.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Maven ── -->
+  <div class="section" id="maven">
+    <div class="section-header">
+      <h3>📦 Maven & POM.xml</h3>
+    </div>
+
+    <div class="card">
+      <h4>What Maven Solves</h4>
+      <p>Before Maven: manually download JARs, manage class paths, write build scripts (Ant). Maven standardised the build lifecycle and dependency resolution across all Java projects.</p>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>Dependency Management</h4>
+          <p>Declare what you need; Maven fetches it and all transitive dependencies from Central Repository.</p>
+        </div>
+        <div class="card-mini">
+          <h4>Standard Lifecycle</h4>
+          <p><code>validate → compile → test → package → verify → install → deploy</code></p>
+        </div>
+        <div class="card-mini">
+          <h4>Spring Boot Parent POM</h4>
+          <p>Inheriting from <code>spring-boot-starter-parent</code> gives you pre-tested dependency versions — no conflicts.</p>
+        </div>
+        <div class="card-mini">
+          <h4>Starters</h4>
+          <p><code>spring-boot-starter-web</code> pulls Spring MVC + Jackson + Tomcat as one unit. No version juggling.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Anatomy of Spring Boot POM.xml</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">XML</span><span class="code-title">pom.xml — complete structure</span></div>
+        <pre><code><span class="tag">&lt;project&gt;</span>
+    <span class="cmt">&lt;!-- 1. Inherit Spring Boot's BOM (Bill of Materials) --&gt;</span>
+    <span class="tag">&lt;parent&gt;</span>
+        <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+        <span class="tag">&lt;artifactId&gt;</span>spring-boot-starter-parent<span class="tag">&lt;/artifactId&gt;</span>
+        <span class="tag">&lt;version&gt;</span>3.2.0<span class="tag">&lt;/version&gt;</span>
+    <span class="tag">&lt;/parent&gt;</span>
+
+    <span class="cmt">&lt;!-- 2. Project identity --&gt;</span>
+    <span class="tag">&lt;groupId&gt;</span>com.example<span class="tag">&lt;/groupId&gt;</span>
+    <span class="tag">&lt;artifactId&gt;</span>my-service<span class="tag">&lt;/artifactId&gt;</span>
+    <span class="tag">&lt;version&gt;</span>1.0.0<span class="tag">&lt;/version&gt;</span>
+    <span class="tag">&lt;packaging&gt;</span>jar<span class="tag">&lt;/packaging&gt;</span>  <span class="cmt">&lt;!-- embedded Tomcat → JAR not WAR --&gt;</span>
+
+    <span class="cmt">&lt;!-- 3. Properties (override parent defaults) --&gt;</span>
+    <span class="tag">&lt;properties&gt;</span>
+        <span class="tag">&lt;java.version&gt;</span>17<span class="tag">&lt;/java.version&gt;</span>
+    <span class="tag">&lt;/properties&gt;</span>
+
+    <span class="cmt">&lt;!-- 4. Dependencies — no versions needed (BOM manages them) --&gt;</span>
+    <span class="tag">&lt;dependencies&gt;</span>
+        <span class="tag">&lt;dependency&gt;</span>
+            <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+            <span class="tag">&lt;artifactId&gt;</span>spring-boot-starter-web<span class="tag">&lt;/artifactId&gt;</span>
+        <span class="tag">&lt;/dependency&gt;</span>
+        <span class="tag">&lt;dependency&gt;</span>
+            <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+            <span class="tag">&lt;artifactId&gt;</span>spring-boot-starter-data-jpa<span class="tag">&lt;/artifactId&gt;</span>
+        <span class="tag">&lt;/dependency&gt;</span>
+        <span class="tag">&lt;dependency&gt;</span>
+            <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+            <span class="tag">&lt;artifactId&gt;</span>spring-boot-starter-test<span class="tag">&lt;/artifactId&gt;</span>
+            <span class="tag">&lt;scope&gt;</span>test<span class="tag">&lt;/scope&gt;</span>
+        <span class="tag">&lt;/dependency&gt;</span>
+    <span class="tag">&lt;/dependencies&gt;</span>
+
+    <span class="cmt">&lt;!-- 5. Build plugins --&gt;</span>
+    <span class="tag">&lt;build&gt;</span>
+        <span class="tag">&lt;plugins&gt;</span>
+            <span class="tag">&lt;plugin&gt;</span>
+                <span class="cmt">&lt;!-- Creates executable fat JAR with embedded server --&gt;</span>
+                <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+                <span class="tag">&lt;artifactId&gt;</span>spring-boot-maven-plugin<span class="tag">&lt;/artifactId&gt;</span>
+            <span class="tag">&lt;/plugin&gt;</span>
+        <span class="tag">&lt;/plugins&gt;</span>
+    <span class="tag">&lt;/build&gt;</span>
+<span class="tag">&lt;/project&gt;</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── IoC & DI ── -->
+  <div class="section" id="ioc-di">
+    <div class="section-header">
+      <h3>🔄 IoC & Dependency Injection</h3>
+    </div>
+
+    <div class="card">
+      <h4>Inversion of Control — The Core Principle</h4>
+      <p>Normally, an object controls its own dependencies (calls <code>new</code>). IoC <em>inverts</em> this — a container (the IoC Container) creates objects and wires them. You give up control; the framework takes it.</p>
+      <div class="diagram">
+<span class="d-red">WITHOUT IoC</span>
+<span class="d-blue">UserService</span> ──creates──► <span class="d-green">new UserRepository()</span>
+                      └──creates──► <span class="d-green">new EmailService()</span>
+  → Tight coupling. Hard to test. Impossible to swap implementations.
+
+<span class="d-green">WITH IoC (Spring)</span>
+<span class="d-orange">Spring Container</span> ──creates──► <span class="d-blue">UserService</span>
+                   ──injects──► <span class="d-green">UserRepository impl</span>
+                   ──injects──► <span class="d-green">EmailService impl</span>
+  → Loose coupling. Easily testable. Swap beans without touching UserService.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Dependency Injection — How Wiring Happens</h4>
+      <p>DI is the <em>mechanism</em> through which IoC is implemented. Spring supports three types:</p>
+    </div>
+  </div>
+
+  <!-- ── ApplicationContext ── -->
+  <div class="section" id="context">
+    <div class="section-header">
+      <h3>🏗️ ApplicationContext vs BeanFactory</h3>
+    </div>
+
+    <div class="card">
+      <h4>BeanFactory — The Base Contract</h4>
+      <p><code>BeanFactory</code> is the root interface of the Spring IoC container. It provides basic bean instantiation, wiring, and lifecycle management. Beans are created <em>lazily</em> (only when requested).</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">BeanFactory usage (rare in practice)</span></div>
+        <pre><code><span class="type">Resource</span> resource = <span class="kw">new</span> <span class="type">ClassPathResource</span>(<span class="str">"beans.xml"</span>);
+<span class="type">BeanFactory</span> factory = <span class="kw">new</span> <span class="type">XmlBeanFactory</span>(resource); <span class="cmt">// deprecated</span>
+<span class="type">MyBean</span> bean = (<span class="type">MyBean</span>) factory.<span class="fn">getBean</span>(<span class="str">"myBean"</span>); <span class="cmt">// created NOW (lazy)</span></code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>ApplicationContext — The Full Container</h4>
+      <p><code>ApplicationContext</code> extends <code>BeanFactory</code> and adds enterprise features. This is what you always use in Spring Boot.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Feature</th><th>BeanFactory</th><th>ApplicationContext</th></tr></thead>
+          <tbody>
+            <tr><td>Bean instantiation</td><td>✅ Lazy</td><td>✅ Eager (singletons at startup)</td></tr>
+            <tr><td>AOP integration</td><td>❌ Manual</td><td>✅ Automatic</td></tr>
+            <tr><td>Event publishing</td><td>❌</td><td>✅ ApplicationEvent system</td></tr>
+            <tr><td>Internationalization (i18n)</td><td>❌</td><td>✅ MessageSource</td></tr>
+            <tr><td>Environment / Profiles</td><td>❌</td><td>✅</td></tr>
+            <tr><td>BeanPostProcessors</td><td>Manual registration</td><td>✅ Auto-detected</td></tr>
+            <tr><td>When to use</td><td><span class="pill pill-orange">Very limited resources</span></td><td><span class="pill pill-green">Always use this</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>ApplicationContext Implementations</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>AnnotationConfigApplicationContext</h4>
+          <p>For standalone Java apps using <code>@Configuration</code> classes. No XML.</p>
+          <div class="code-block"><div class="code-header"><span class="code-lang">Java</span></div><pre><code><span class="kw">var</span> ctx = <span class="kw">new</span> <span class="type">AnnotationConfigApplicationContext</span>(<span class="type">AppConfig</span>.class);
+<span class="type">MyService</span> svc = ctx.<span class="fn">getBean</span>(<span class="type">MyService</span>.class);</code></pre></div>
+        </div>
+        <div class="card-mini">
+          <h4>AnnotationConfigServletWebServerApplicationContext</h4>
+          <p>Used internally by Spring Boot for web apps. Creates embedded Tomcat and registers DispatcherServlet.</p>
+        </div>
+        <div class="card-mini">
+          <h4>ClassPathXmlApplicationContext</h4>
+          <p>Legacy XML-based. Loads <code>applicationContext.xml</code> from classpath.</p>
+        </div>
+        <div class="card-mini">
+          <h4>GenericWebApplicationContext</h4>
+          <p>For programmatic web context setup in tests (<code>@WebAppConfiguration</code>).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Servlet & Tomcat ── -->
+  <div class="section" id="servlet-tomcat">
+    <div class="section-header">
+      <h3>🌐 Servlet, Tomcat & Containers</h3>
+    </div>
+
+    <div class="card">
+      <h4>What is a Servlet?</h4>
+      <p>A <strong>Servlet</strong> is a Java class that handles HTTP requests. It implements the <code>javax.servlet.Servlet</code> (or <code>jakarta.servlet.Servlet</code> in Jakarta EE) interface. The lifecycle:</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><div class="step-title">init()</div><div class="step-desc">Called once when servlet loads. Initialize resources (DB connections, config).</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><div class="step-title">service()</div><div class="step-desc">Called for every request. Dispatches to doGet(), doPost(), etc.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><div class="step-title">destroy()</div><div class="step-desc">Called once when servlet is unloaded. Release resources.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Tomcat — The Servlet Container</h4>
+      <p>Tomcat implements the Servlet specification. It listens on a port, parses HTTP, and invokes the correct Servlet. In Spring Boot, Tomcat is <em>embedded</em> — it's a library inside your JAR, not a separate server you deploy to.</p>
+      <div class="diagram">
+<span class="d-blue">HTTP Request</span> ──► <span class="d-orange">Tomcat (port 8080)</span>
+                               │
+                               ├─ Parses HTTP
+                               ├─ Creates HttpServletRequest / Response
+                               └──► <span class="d-green">DispatcherServlet</span>  ← Spring's front controller
+                                          │
+                                          ├──► <span class="d-purple">HandlerMapping</span>   → finds @RequestMapping
+                                          ├──► <span class="d-purple">HandlerAdapter</span>   → invokes @Controller method
+                                          ├──► <span class="d-purple">ViewResolver</span>     → resolves template/JSON
+                                          └──► <span class="d-blue">HTTP Response</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Servlet Container vs Spring Container</h4>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>🔵 Servlet Container (Tomcat)</h4>
+          <ul>
+            <li>Manages HTTP lifecycle</li>
+            <li>Creates Servlet instances</li>
+            <li>Thread pool for requests</li>
+            <li>Handles sessions, cookies</li>
+            <li>Scope: web infrastructure</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>🟢 Spring Container (ApplicationContext)</h4>
+          <ul>
+            <li>Manages bean lifecycle</li>
+            <li>Handles dependency injection</li>
+            <li>AOP proxy creation</li>
+            <li>Transaction management</li>
+            <li>Scope: application logic</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">In Spring Boot, both containers start together. <code>SpringApplication.run()</code> starts Tomcat (Servlet container) and inside it registers the Spring ApplicationContext as a Servlet context attribute.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 2 — BEANS & ANNOTATIONS
+  ══════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">02</div>
+    <div>
+      <h2>Beans & Annotations</h2>
+      <p>The heart of Spring — how objects are created, configured, scoped, and wired together.</p>
+    </div>
+  </div>
+
+  <!-- ── Bean Lifecycle ── -->
+  <div class="section" id="bean-lifecycle">
+    <div class="section-header">
+      <h3>🫘 Bean Lifecycle & Scopes</h3>
+    </div>
+
+    <div class="card">
+      <h4>Complete Bean Lifecycle (in order)</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Instantiation</div>
+            <div class="step-desc">Spring calls the constructor (or factory method) to create the raw object.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Dependency Injection</div>
+            <div class="step-desc">Properties and constructor args are injected. <code>@Autowired</code> fields are populated.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">BeanNameAware / BeanFactoryAware</div>
+            <div class="step-desc">If bean implements Aware interfaces, Spring calls <code>setBeanName()</code>, <code>setBeanFactory()</code>, etc.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">BeanPostProcessor — postProcessBeforeInitialization()</div>
+            <div class="step-desc">All registered BPPs run before init. This is where annotations like <code>@Autowired</code> are processed (<code>AutowiredAnnotationBeanPostProcessor</code>).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">@PostConstruct / InitializingBean.afterPropertiesSet()</div>
+            <div class="step-desc">Your custom initialization logic runs here. Use <code>@PostConstruct</code> — it's standard. <code>afterPropertiesSet()</code> couples your class to Spring.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-title">BeanPostProcessor — postProcessAfterInitialization()</div>
+            <div class="step-desc"><strong>AOP proxies are created here.</strong> The real bean is wrapped in a proxy object that adds cross-cutting concerns.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <div class="step-title">Bean is Ready — In Use</div>
+            <div class="step-desc">The bean (possibly a proxy) is placed in the singleton cache and served to dependants.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">8</div>
+          <div class="step-body">
+            <div class="step-title">@PreDestroy / DisposableBean.destroy()</div>
+            <div class="step-desc">On application shutdown, cleanup methods run. Close connections, flush caches, etc.</div>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Bean lifecycle methods in code</span></div>
+        <pre><code><span class="kw2">@Component</span>
+<span class="kw">public class</span> <span class="type">DatabasePool</span> <span class="kw">implements</span> <span class="type">InitializingBean</span>, <span class="type">DisposableBean</span> {
+
+    <span class="kw2">@Autowired</span>
+    <span class="kw">private</span> <span class="type">DataSourceConfig</span> config; <span class="cmt">// injected at step 2</span>
+
+    <span class="kw2">@PostConstruct</span>              <span class="cmt">// step 5 — preferred</span>
+    <span class="kw">public void</span> <span class="fn">init</span>() {
+        System.out.<span class="fn">println</span>(<span class="str">"Opening connections to: "</span> + config.<span class="fn">getUrl</span>());
+    }
+
+    <span class="kw2">@Override</span>                    <span class="cmt">// also step 5 (after @PostConstruct)</span>
+    <span class="kw">public void</span> <span class="fn">afterPropertiesSet</span>() {
+        <span class="cmt">// avoid — couples to Spring API</span>
+    }
+
+    <span class="kw2">@PreDestroy</span>                 <span class="cmt">// step 8 — preferred</span>
+    <span class="kw">public void</span> <span class="fn">cleanup</span>() {
+        System.out.<span class="fn">println</span>(<span class="str">"Closing all connections"</span>);
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Bean Scopes</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Scope</th><th>When Created</th><th>How Many Instances</th><th>Use Case</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>singleton</strong> (default)</td>
+              <td>Application startup</td>
+              <td>1 per ApplicationContext</td>
+              <td><span class="pill pill-green">Services, Repos, Controllers</span></td>
+            </tr>
+            <tr>
+              <td><strong>prototype</strong></td>
+              <td>Every <code>getBean()</code> call</td>
+              <td>New instance each time</td>
+              <td><span class="pill pill-blue">Stateful helpers, builders</span></td>
+            </tr>
+            <tr>
+              <td><strong>request</strong></td>
+              <td>Each HTTP request</td>
+              <td>1 per request</td>
+              <td><span class="pill pill-blue">Request-scoped context, shopping cart</span></td>
+            </tr>
+            <tr>
+              <td><strong>session</strong></td>
+              <td>Each HTTP session</td>
+              <td>1 per user session</td>
+              <td><span class="pill pill-blue">User preferences, login state</span></td>
+            </tr>
+            <tr>
+              <td><strong>application</strong></td>
+              <td>Application startup</td>
+              <td>1 per ServletContext</td>
+              <td><span class="pill pill-orange">Global config (similar to singleton)</span></td>
+            </tr>
+            <tr>
+              <td><strong>websocket</strong></td>
+              <td>Each WebSocket connection</td>
+              <td>1 per connection</td>
+              <td><span class="pill pill-purple">Chat sessions</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h5>Prototype Scope — Real-World Use Case</h5>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Prototype for stateful PDF report generator</span></div>
+        <pre><code><span class="kw2">@Component</span>
+<span class="kw2">@Scope</span>(<span class="str">"prototype"</span>)   <span class="cmt">// New instance every injection</span>
+<span class="kw">public class</span> <span class="type">ReportBuilder</span> {
+    <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt; pages = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();  <span class="cmt">// mutable state</span>
+
+    <span class="kw">public void</span> <span class="fn">addPage</span>(<span class="type">String</span> content) { pages.<span class="fn">add</span>(content); }
+    <span class="kw">public</span> <span class="type">Report</span> <span class="fn">build</span>() { <span class="kw">return new</span> <span class="type">Report</span>(pages); }
+}
+
+<span class="cmt">// ⚠️ Problem: injecting prototype into singleton freezes the instance</span>
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">ReportService</span> {
+
+    <span class="kw">private final</span> <span class="type">ApplicationContext</span> ctx; <span class="cmt">// Use context to get fresh instance</span>
+
+    <span class="kw">public</span> <span class="type">Report</span> <span class="fn">generateReport</span>() {
+        <span class="type">ReportBuilder</span> builder = ctx.<span class="fn">getBean</span>(<span class="type">ReportBuilder</span>.class); <span class="cmt">// NEW each time</span>
+        builder.<span class="fn">addPage</span>(<span class="str">"Cover"</span>);
+        builder.<span class="fn">addPage</span>(<span class="str">"Chapter 1"</span>);
+        <span class="kw">return</span> builder.<span class="fn">build</span>();
+    }
+}</code></pre>
+      </div>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body"><strong>Scoped Bean Trap:</strong> Injecting a <code>prototype</code> bean via <code>@Autowired</code> into a <code>singleton</code> only creates one prototype instance (at singleton creation). Use <code>ApplicationContext.getBean()</code>, <code>ObjectFactory&lt;T&gt;</code>, or <code>@Lookup</code> to get a fresh prototype every time.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Annotations ── -->
+  <div class="section" id="annotations">
+    <div class="section-header">
+      <h3>🏷️ Core Annotations Deep Dive</h3>
+    </div>
+
+    <div class="card">
+      <h4>Stereotype Annotations — @Component Family</h4>
+      <p>All four are functionally equivalent to Spring's component scanner — they all register a bean. The difference is <em>semantic</em> and enables Spring to apply layer-specific behaviour.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Annotation</th><th>Layer</th><th>Extra Behaviour Added by Spring</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>@Component</code></td>
+              <td>Generic</td>
+              <td>Base annotation. No layer-specific processing.</td>
+            </tr>
+            <tr>
+              <td><code>@Service</code></td>
+              <td>Business Logic</td>
+              <td>Semantic only. No extra processing currently, but signals intent. Some AOP advice may target this layer.</td>
+            </tr>
+            <tr>
+              <td><code>@Repository</code></td>
+              <td>Data Access</td>
+              <td><strong>Enables exception translation</strong> via <code>PersistenceExceptionTranslationPostProcessor</code> — converts JPA/Hibernate exceptions to Spring's <code>DataAccessException</code> hierarchy.</td>
+            </tr>
+            <tr>
+              <td><code>@Controller</code></td>
+              <td>Web Layer</td>
+              <td>Marks class as handler for <code>DispatcherServlet</code>. Required for <code>@RequestMapping</code> to work in MVC.</td>
+            </tr>
+            <tr>
+              <td><code>@RestController</code></td>
+              <td>REST Web Layer</td>
+              <td><code>@Controller</code> + <code>@ResponseBody</code>. Every method return value is written directly to HTTP response body as JSON/XML.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>@Autowired — How It Works Internally</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">AutowiredAnnotationBeanPostProcessor scans</div>
+            <div class="step-desc">This BPP (registered automatically) finds all <code>@Autowired</code> fields, constructors, and methods during bean initialization.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Type matching</div>
+            <div class="step-desc">Spring looks in the ApplicationContext for beans matching the required type.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">If multiple matches — name matching</div>
+            <div class="step-desc">Spring tries to match by field/parameter name. If still ambiguous, throws <code>NoUniqueBeanDefinitionException</code>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Inject via reflection</div>
+            <div class="step-desc">Uses <code>Field.set()</code> or constructor/method invocation to inject the dependency.</div>
+          </div>
+        </div>
+      </div>
+
+      <h5>All @Autowired Variants</h5>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Three injection styles</span></div>
+        <pre><code><span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">OrderService</span> {
+
+    <span class="cmt">// ────── 1. Constructor Injection (RECOMMENDED) ──────</span>
+    <span class="kw">private final</span> <span class="type">OrderRepository</span> orderRepo;
+    <span class="kw">private final</span> <span class="type">PaymentService</span> paymentService;
+
+    <span class="cmt">// @Autowired is optional since Spring 4.3 for single constructors</span>
+    <span class="kw">public</span> <span class="type">OrderService</span>(<span class="type">OrderRepository</span> orderRepo, <span class="type">PaymentService</span> paymentService) {
+        <span class="kw">this</span>.orderRepo = orderRepo;
+        <span class="kw">this</span>.paymentService = paymentService;
+    }
+
+    <span class="cmt">// ────── 2. Setter Injection ──────</span>
+    <span class="kw">private</span> <span class="type">NotificationService</span> notifService;
+
+    <span class="kw2">@Autowired</span>
+    <span class="kw">public void</span> <span class="fn">setNotifService</span>(<span class="type">NotificationService</span> s) {
+        <span class="kw">this</span>.notifService = s;
+    }
+
+    <span class="cmt">// ────── 3. Field Injection (AVOID in production) ──────</span>
+    <span class="kw2">@Autowired</span>                     <span class="cmt">// Breaks testability — can't inject mock without Spring</span>
+    <span class="kw">private</span> <span class="type">AuditService</span> auditService;
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Controller Layer Annotations — Complete Reference</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">RestController with all common annotations</span></div>
+        <pre><code><span class="kw2">@RestController</span>                              <span class="cmt">// @Controller + @ResponseBody</span>
+<span class="kw2">@RequestMapping</span>(<span class="str">"/api/v1/orders"</span>)            <span class="cmt">// base path for all methods</span>
+<span class="kw2">@CrossOrigin</span>(origins = <span class="str">"http://localhost:3000"</span>)
+<span class="kw2">@Validated</span>                                   <span class="cmt">// enable method-level validation</span>
+<span class="kw">public class</span> <span class="type">OrderController</span> {
+
+    <span class="kw">private final</span> <span class="type">OrderService</span> orderService;
+
+    <span class="kw">public</span> <span class="type">OrderController</span>(<span class="type">OrderService</span> orderService) {
+        <span class="kw">this</span>.orderService = orderService;
+    }
+
+    <span class="kw2">@GetMapping</span>                               <span class="cmt">// GET /api/v1/orders</span>
+    <span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">List</span>&lt;<span class="type">OrderDTO</span>&gt;&gt; <span class="fn">getAll</span>(
+            <span class="kw2">@RequestParam</span>(defaultValue = <span class="str">"0"</span>) <span class="type">int</span> page,
+            <span class="kw2">@RequestParam</span>(defaultValue = <span class="str">"20"</span>) <span class="type">int</span> size) {
+        <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">ok</span>(orderService.<span class="fn">findAll</span>(page, size));
+    }
+
+    <span class="kw2">@GetMapping</span>(<span class="str">"/{id}"</span>)                      <span class="cmt">// GET /api/v1/orders/42</span>
+    <span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">OrderDTO</span>&gt; <span class="fn">getById</span>(<span class="kw2">@PathVariable</span> <span class="type">Long</span> id) {
+        <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">ok</span>(orderService.<span class="fn">findById</span>(id));
+    }
+
+    <span class="kw2">@PostMapping</span>                              <span class="cmt">// POST /api/v1/orders</span>
+    <span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">OrderDTO</span>&gt; <span class="fn">create</span>(
+            <span class="kw2">@Valid</span> <span class="kw2">@RequestBody</span> <span class="type">CreateOrderRequest</span> req) {
+        <span class="type">OrderDTO</span> created = orderService.<span class="fn">create</span>(req);
+        <span class="type">URI</span> location = <span class="type">URI</span>.<span class="fn">create</span>(<span class="str">"/api/v1/orders/"</span> + created.<span class="fn">getId</span>());
+        <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">created</span>(location).<span class="fn">body</span>(created);
+    }
+
+    <span class="kw2">@PutMapping</span>(<span class="str">"/{id}"</span>)                     <span class="cmt">// Full update</span>
+    <span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">OrderDTO</span>&gt; <span class="fn">update</span>(
+            <span class="kw2">@PathVariable</span> <span class="type">Long</span> id,
+            <span class="kw2">@Valid</span> <span class="kw2">@RequestBody</span> <span class="type">UpdateOrderRequest</span> req) {
+        <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">ok</span>(orderService.<span class="fn">update</span>(id, req));
+    }
+
+    <span class="kw2">@PatchMapping</span>(<span class="str">"/{id}/status"</span>)           <span class="cmt">// Partial update</span>
+    <span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">Void</span>&gt; <span class="fn">updateStatus</span>(
+            <span class="kw2">@PathVariable</span> <span class="type">Long</span> id,
+            <span class="kw2">@RequestParam</span> <span class="type">String</span> status) {
+        orderService.<span class="fn">updateStatus</span>(id, status);
+        <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">noContent</span>().<span class="fn">build</span>();
+    }
+
+    <span class="kw2">@DeleteMapping</span>(<span class="str">"/{id}"</span>)                 <span class="cmt">// DELETE /api/v1/orders/42</span>
+    <span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">Void</span>&gt; <span class="fn">delete</span>(<span class="kw2">@PathVariable</span> <span class="type">Long</span> id) {
+        orderService.<span class="fn">delete</span>(id);
+        <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">noContent</span>().<span class="fn">build</span>();  <span class="cmt">// 204</span>
+    }
+
+    <span class="kw2">@ExceptionHandler</span>(<span class="type">OrderNotFoundException</span>.class)
+    <span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">ErrorResponse</span>&gt; <span class="fn">handleNotFound</span>(<span class="type">OrderNotFoundException</span> ex) {
+        <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">status</span>(<span class="num">404</span>)
+                .<span class="fn">body</span>(<span class="kw">new</span> <span class="type">ErrorResponse</span>(ex.<span class="fn">getMessage</span>()));
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Service Layer Annotations</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Service with transaction + validation</span></div>
+        <pre><code><span class="kw2">@Service</span>
+<span class="kw2">@Transactional</span>(readOnly = <span class="kw">true</span>)  <span class="cmt">// default for all read methods</span>
+<span class="kw">public class</span> <span class="type">OrderService</span> {
+
+    <span class="kw">private final</span> <span class="type">OrderRepository</span> repo;
+    <span class="kw">private final</span> <span class="type">OrderMapper</span> mapper;
+
+    <span class="kw">public</span> <span class="type">OrderService</span>(<span class="type">OrderRepository</span> repo, <span class="type">OrderMapper</span> mapper) {
+        <span class="kw">this</span>.repo = repo;
+        <span class="kw">this</span>.mapper = mapper;
+    }
+
+    <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">OrderDTO</span>&gt; <span class="fn">findAll</span>(<span class="type">int</span> page, <span class="type">int</span> size) {
+        <span class="kw">return</span> repo.<span class="fn">findAll</span>(<span class="type">PageRequest</span>.<span class="fn">of</span>(page, size))
+                   .<span class="fn">stream</span>()
+                   .<span class="fn">map</span>(mapper::<span class="fn">toDTO</span>)
+                   .<span class="fn">toList</span>();
+    }
+
+    <span class="kw2">@Transactional</span>               <span class="cmt">// override: write operation needs full tx</span>
+    <span class="kw">public</span> <span class="type">OrderDTO</span> <span class="fn">create</span>(<span class="type">CreateOrderRequest</span> req) {
+        <span class="type">Order</span> order = mapper.<span class="fn">toEntity</span>(req);
+        order.<span class="fn">setCreatedAt</span>(<span class="type">Instant</span>.<span class="fn">now</span>());
+        <span class="kw">return</span> mapper.<span class="fn">toDTO</span>(repo.<span class="fn">save</span>(order));
+    }
+
+    <span class="kw">public</span> <span class="type">OrderDTO</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+        <span class="kw">return</span> repo.<span class="fn">findById</span>(id)
+                   .<span class="fn">map</span>(mapper::<span class="fn">toDTO</span>)
+                   .<span class="fn">orElseThrow</span>(() -&gt; <span class="kw">new</span> <span class="type">OrderNotFoundException</span>(id));
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Repository Layer Annotations</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Spring Data JPA Repository</span></div>
+        <pre><code><span class="kw2">@Repository</span>  <span class="cmt">// optional with Spring Data — JpaRepository already implies it</span>
+<span class="kw">public interface</span> <span class="type">OrderRepository</span> <span class="kw">extends</span> <span class="type">JpaRepository</span>&lt;<span class="type">Order</span>, <span class="type">Long</span>&gt; {
+
+    <span class="cmt">// Query derivation — Spring generates SQL from method name</span>
+    <span class="type">List</span>&lt;<span class="type">Order</span>&gt; <span class="fn">findByCustomerIdAndStatus</span>(<span class="type">Long</span> customerId, <span class="type">String</span> status);
+
+    <span class="cmt">// JPQL query</span>
+    <span class="kw2">@Query</span>(<span class="str">"SELECT o FROM Order o WHERE o.total > :amount ORDER BY o.createdAt DESC"</span>)
+    <span class="type">List</span>&lt;<span class="type">Order</span>&gt; <span class="fn">findHighValueOrders</span>(<span class="kw2">@Param</span>(<span class="str">"amount"</span>) <span class="type">BigDecimal</span> amount);
+
+    <span class="cmt">// Native SQL</span>
+    <span class="kw2">@Query</span>(value = <span class="str">"SELECT * FROM orders WHERE customer_id = ?1 LIMIT 10"</span>,
+           nativeQuery = <span class="kw">true</span>)
+    <span class="type">List</span>&lt;<span class="type">Order</span>&gt; <span class="fn">findRecentByCustomer</span>(<span class="type">Long</span> customerId);
+
+    <span class="cmt">// Modifying query</span>
+    <span class="kw2">@Modifying</span>
+    <span class="kw2">@Transactional</span>
+    <span class="kw2">@Query</span>(<span class="str">"UPDATE Order o SET o.status = :status WHERE o.id = :id"</span>)
+    <span class="type">int</span> <span class="fn">updateStatus</span>(<span class="kw2">@Param</span>(<span class="str">"id"</span>) <span class="type">Long</span> id, <span class="kw2">@Param</span>(<span class="str">"status"</span>) <span class="type">String</span> status);
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Configuration & Component Annotations — Full Table</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Annotation</th><th>Purpose</th><th>Common With</th></tr></thead>
+          <tbody>
+            <tr><td><code>@Configuration</code></td><td>Java config class (CGLIB-proxied)</td><td><code>@Bean</code></td></tr>
+            <tr><td><code>@Bean</code></td><td>Declares a Spring-managed bean from a method</td><td><code>@Configuration</code></td></tr>
+            <tr><td><code>@Value("${key}")</code></td><td>Injects property value</td><td><code>@Component</code>, <code>@Configuration</code></td></tr>
+            <tr><td><code>@ConfigurationProperties</code></td><td>Binds a properties prefix to a POJO</td><td><code>@Component</code></td></tr>
+            <tr><td><code>@Profile("dev")</code></td><td>Bean only active for named profile</td><td><code>@Component</code>, <code>@Configuration</code></td></tr>
+            <tr><td><code>@Conditional</code></td><td>Register bean only when condition true</td><td><code>@Bean</code></td></tr>
+            <tr><td><code>@ConditionalOnClass</code></td><td>Bean if class on classpath</td><td>Auto-config</td></tr>
+            <tr><td><code>@ConditionalOnProperty</code></td><td>Bean if property set/matches value</td><td>Auto-config</td></tr>
+            <tr><td><code>@ConditionalOnMissingBean</code></td><td>Bean only if user hasn't provided their own</td><td>Auto-config</td></tr>
+            <tr><td><code>@Lazy</code></td><td>Create bean lazily (on first access)</td><td><code>@Component</code>, <code>@Bean</code></td></tr>
+            <tr><td><code>@DependsOn</code></td><td>Force one bean to initialize before another</td><td><code>@Bean</code></td></tr>
+            <tr><td><code>@Primary</code></td><td>Preferred bean when multiple candidates exist</td><td><code>@Component</code>, <code>@Bean</code></td></tr>
+            <tr><td><code>@Qualifier("name")</code></td><td>Select specific bean by name</td><td><code>@Autowired</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DI Types & Circular ── -->
+  <div class="section" id="di-types">
+    <div class="section-header">
+      <h3>🔗 DI Types & Circular Dependencies</h3>
+    </div>
+
+    <div class="card">
+      <h4>Constructor vs Setter vs Field Injection</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Type</th><th>Testability</th><th>Immutability</th><th>Circular Dep?</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Constructor</td>
+              <td>✅ Best — no Spring needed in tests</td>
+              <td>✅ Final fields possible</td>
+              <td>❌ Fails at startup (good!)</td>
+              <td><span class="pill pill-green">Always use this</span></td>
+            </tr>
+            <tr>
+              <td>Setter</td>
+              <td>✅ Can inject mocks via setter</td>
+              <td>❌ Mutable</td>
+              <td>✅ Spring can resolve</td>
+              <td><span class="pill pill-blue">Optional deps only</span></td>
+            </tr>
+            <tr>
+              <td>Field</td>
+              <td>❌ Requires Spring context to test</td>
+              <td>❌ Mutable</td>
+              <td>✅ Spring can resolve</td>
+              <td><span class="pill pill-red">Avoid</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Circular Dependencies — What They Are & How to Fix</h4>
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong>A ↔ B circular dependency:</strong> ServiceA needs ServiceB; ServiceB needs ServiceA. With constructor injection, Spring throws <code>BeanCurrentlyInCreationException</code> at startup — this is actually <em>good</em>, it exposes a design problem.
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Circular dependency — detection and fixes</span></div>
+        <pre><code><span class="cmt">// ❌ CIRCULAR: ServiceA → ServiceB → ServiceA</span>
+<span class="kw2">@Service</span> <span class="kw">public class</span> <span class="type">ServiceA</span> {
+    <span class="kw">public</span> <span class="type">ServiceA</span>(<span class="type">ServiceB</span> b) {} <span class="cmt">// needs B</span>
+}
+<span class="kw2">@Service</span> <span class="kw">public class</span> <span class="type">ServiceB</span> {
+    <span class="kw">public</span> <span class="type">ServiceB</span>(<span class="type">ServiceA</span> a) {} <span class="cmt">// needs A → BANG! BeanCurrentlyInCreationException</span>
+}
+
+<span class="cmt">// ✅ FIX 1: Break the cycle with an event / mediator</span>
+<span class="kw2">@Service</span> <span class="kw">public class</span> <span class="type">ServiceA</span> {
+    <span class="kw">private final</span> <span class="type">ApplicationEventPublisher</span> events;
+    <span class="kw">public</span> <span class="type">ServiceA</span>(<span class="type">ApplicationEventPublisher</span> events) { <span class="kw">this</span>.events = events; }
+}
+
+<span class="cmt">// ✅ FIX 2: Use @Lazy on one side (defers creation)</span>
+<span class="kw2">@Service</span> <span class="kw">public class</span> <span class="type">ServiceA</span> {
+    <span class="kw">public</span> <span class="type">ServiceA</span>(<span class="kw2">@Lazy</span> <span class="type">ServiceB</span> b) {} <span class="cmt">// B created lazily → breaks cycle</span>
+}
+
+<span class="cmt">// ✅ FIX 3: Extract shared logic to a third service</span>
+<span class="kw2">@Service</span> <span class="kw">public class</span> <span class="type">SharedService</span> {} <span class="cmt">// A and B both depend on this</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Qualifier & Primary ── -->
+  <div class="section" id="qualifier-primary">
+    <div class="section-header">
+      <h3>🎯 @Qualifier & @Primary — Resolving Conflicts</h3>
+    </div>
+
+    <div class="card">
+      <h4>When Multiple Beans Match the Same Type</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Two implementations of same interface</span></div>
+        <pre><code><span class="kw">public interface</span> <span class="type">NotificationService</span> {
+    <span class="kw">void</span> <span class="fn">send</span>(<span class="type">String</span> message);
+}
+
+<span class="kw2">@Service</span>
+<span class="kw2">@Primary</span>                           <span class="cmt">// ← preferred candidate when no @Qualifier specified</span>
+<span class="kw">public class</span> <span class="type">EmailNotificationService</span> <span class="kw">implements</span> <span class="type">NotificationService</span> {
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="type">String</span> msg) { <span class="cmt">/* send email */</span> }
+}
+
+<span class="kw2">@Service</span>
+<span class="kw2">@Qualifier</span>(<span class="str">"sms"</span>)                  <span class="cmt">// ← named for explicit selection</span>
+<span class="kw">public class</span> <span class="type">SmsNotificationService</span> <span class="kw">implements</span> <span class="type">NotificationService</span> {
+    <span class="kw">public void</span> <span class="fn">send</span>(<span class="type">String</span> msg) { <span class="cmt">/* send SMS */</span> }
+}
+
+<span class="cmt">// ── Usage ────────────────────────────────</span>
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">AlertService</span> {
+
+    <span class="kw">private final</span> <span class="type">NotificationService</span> emailNotif;  <span class="cmt">// gets EmailNotificationService (@Primary)</span>
+    <span class="kw">private final</span> <span class="type">NotificationService</span> smsNotif;
+
+    <span class="kw">public</span> <span class="type">AlertService</span>(
+            <span class="type">NotificationService</span> emailNotif,           <span class="cmt">// @Primary wins</span>
+            <span class="kw2">@Qualifier</span>(<span class="str">"sms"</span>) <span class="type">NotificationService</span> smsNotif) {
+        <span class="kw">this</span>.emailNotif = emailNotif;
+        <span class="kw">this</span>.smsNotif = smsNotif;
+    }
+
+    <span class="kw">public void</span> <span class="fn">alertAll</span>(<span class="type">String</span> msg) {
+        emailNotif.<span class="fn">send</span>(msg);
+        smsNotif.<span class="fn">send</span>(msg);
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Custom Qualifier Annotation</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Type-safe custom qualifier</span></div>
+        <pre><code><span class="cmt">// Define the annotation</span>
+<span class="kw2">@Target</span>({<span class="type">ElementType</span>.FIELD, <span class="type">ElementType</span>.PARAMETER})
+<span class="kw2">@Retention</span>(<span class="type">RetentionPolicy</span>.RUNTIME)
+<span class="kw2">@Qualifier</span>
+<span class="kw">public @interface</span> <span class="type">SmsChannel</span> {}
+
+<span class="cmt">// Apply to bean</span>
+<span class="kw2">@Service</span>
+<span class="kw2">@SmsChannel</span>
+<span class="kw">public class</span> <span class="type">SmsNotificationService</span> <span class="kw">implements</span> <span class="type">NotificationService</span> { ... }
+
+<span class="cmt">// Inject with type-safe annotation</span>
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">AlertService</span> {
+    <span class="kw">private final</span> <span class="type">NotificationService</span> smsNotif;
+    <span class="kw">public</span> <span class="type">AlertService</span>(<span class="kw2">@SmsChannel</span> <span class="type">NotificationService</span> smsNotif) {
+        <span class="kw">this</span>.smsNotif = smsNotif;
+    }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Auto-Configuration ── -->
+  <div class="section" id="autoconfiguration">
+    <div class="section-header">
+      <h3>⚡ @EnableAutoConfiguration Internals</h3>
+    </div>
+
+    <div class="card">
+      <h4>How Auto-Configuration Works Step-by-Step</h4>
+      <div class="diagram">
+<span class="d-green">App starts</span>
+    │
+    ▼
+<span class="d-blue">@SpringBootApplication</span>
+    │  includes @EnableAutoConfiguration
+    ▼
+<span class="d-purple">AutoConfigurationImportSelector.selectImports()</span>
+    │
+    ├─ reads META-INF/spring/
+    │   org.springframework.boot.autoconfigure.AutoConfiguration.imports
+    │   (150+ entries like DataSourceAutoConfiguration, WebMvcAutoConfiguration...)
+    │
+    ▼
+<span class="d-orange">Filter by @Conditional annotations</span>
+    │
+    ├─ @ConditionalOnClass(DataSource.class) → only if JDBC driver on classpath
+    ├─ @ConditionalOnMissingBean(DataSource.class) → only if user hasn't defined one
+    ├─ @ConditionalOnProperty("spring.datasource.url") → only if property set
+    │
+    ▼
+<span class="d-green">Surviving configs loaded → beans registered</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Example: DataSourceAutoConfiguration</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Simplified DataSourceAutoConfiguration (Spring Boot source)</span></div>
+        <pre><code><span class="kw2">@AutoConfiguration</span>                              <span class="cmt">// marks as auto-config candidate</span>
+<span class="kw2">@ConditionalOnClass</span>({ <span class="type">DataSource</span>.class, <span class="type">EmbeddedDatabaseType</span>.class })
+<span class="kw2">@ConditionalOnMissingBean</span>(type = <span class="str">"io.r2dbc.spi.ConnectionFactory"</span>)
+<span class="kw2">@EnableConfigurationProperties</span>(<span class="type">DataSourceProperties</span>.class) <span class="cmt">// binds spring.datasource.*</span>
+<span class="kw">public class</span> <span class="type">DataSourceAutoConfiguration</span> {
+
+    <span class="kw2">@Bean</span>
+    <span class="kw2">@ConditionalOnMissingBean</span>                    <span class="cmt">// only if user hasn't defined DataSource</span>
+    <span class="kw">public</span> <span class="type">DataSource</span> <span class="fn">dataSource</span>(<span class="type">DataSourceProperties</span> properties) {
+        <span class="kw">return</span> properties.<span class="fn">initializeDataSourceBuilder</span>().<span class="fn">build</span>();
+    }
+}</code></pre>
+      </div>
+      <div class="callout success">
+        <div class="icon">✅</div>
+        <div class="body"><strong>Key insight:</strong> If you define your own <code>DataSource</code> bean, Spring Boot's auto-configured one is <em>skipped</em> because of <code>@ConditionalOnMissingBean</code>. This is how you override any auto-config — just define the bean yourself.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Seeing What's Auto-Configured</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Properties</span><span class="code-title">application.properties — enable debug output</span></div>
+        <pre><code>debug=true   <span class="cmt"># prints CONDITIONS EVALUATION REPORT at startup</span></code></pre>
+      </div>
+      <p>Output shows:</p>
+      <ul>
+        <li><strong>Positive matches</strong> — configs that were applied and why</li>
+        <li><strong>Negative matches</strong> — configs that were skipped and why</li>
+        <li><strong>Exclusions</strong> — configs you explicitly excluded</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 3 — AOP
+  ══════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">03</div>
+    <div>
+      <h2>Aspect-Oriented Programming</h2>
+      <p>Separation of cross-cutting concerns — logging, security, transactions — without polluting business logic.</p>
+    </div>
+  </div>
+
+  <div class="section" id="aop-intro">
+    <div class="section-header">
+      <h3>🔭 What is AOP & Why We Need It</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Problem AOP Solves</h4>
+      <p>Some concerns cut <em>across</em> many classes — they don't belong to any single business domain. Examples:</p>
+      <div class="card-grid">
+        <div class="card-mini"><h4>🔒 Security</h4><p>Every service method needs authorization checks.</p></div>
+        <div class="card-mini"><h4>📝 Logging</h4><p>Log method entry/exit, execution time across all services.</p></div>
+        <div class="card-mini"><h4>💾 Transaction</h4><p>Begin/commit/rollback around data operations.</p></div>
+        <div class="card-mini"><h4>📊 Metrics</h4><p>Count invocations, measure latency for monitoring.</p></div>
+      </div>
+      <p>Without AOP, you'd copy-paste the same code into every method. AOP lets you write it once and <em>weave</em> it in automatically.</p>
+    </div>
+  </div>
+
+  <div class="section" id="aop-internals">
+    <div class="section-header">
+      <h3>⚙️ AOP Internals — How It Actually Works</h3>
+    </div>
+
+    <div class="card">
+      <h4>Proxy-Based AOP (Spring's Approach)</h4>
+      <p>Spring uses <strong>runtime proxies</strong>. When a bean is created that has aspects applied to it, Spring wraps it in a proxy object. Callers interact with the proxy, not the real object.</p>
+      <div class="diagram">
+<span class="d-blue">Caller</span>
+  │
+  ▼  calls userService.createUser(...)
+<span class="d-orange">UserService Proxy</span>  (created by Spring AOP — a subclass via CGLIB)
+  │
+  ├─► BEFORE advice runs  (e.g., log method call, check auth)
+  │
+  ├─► delegate to real method: <span class="d-green">UserServiceImpl.createUser()</span>
+  │       └─► executes business logic
+  │
+  ├─► AFTER RETURNING advice  (log return value)
+  │
+  └─► AFTER (FINALLY) advice  (always runs)
+      </div>
+
+      <h5>CGLIB vs JDK Dynamic Proxy</h5>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th></th><th>JDK Dynamic Proxy</th><th>CGLIB Proxy</th></tr></thead>
+          <tbody>
+            <tr><td>Requirement</td><td>Bean must implement an interface</td><td>Works on any class (creates subclass)</td></tr>
+            <tr><td>How</td><td>Java reflection, <code>Proxy.newProxyInstance()</code></td><td>Bytecode generation (subclassing)</td></tr>
+            <tr><td>Default in Spring Boot</td><td>Spring 4 and earlier</td><td><span class="pill pill-green">Spring Boot (proxyTargetClass=true)</span></td></tr>
+            <tr><td>Limitation</td><td>Only proxies interface methods</td><td>Cannot proxy <code>final</code> methods or classes</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body"><strong>AOP Proxy Gotcha:</strong> If you call a <code>@Transactional</code> method <em>from another method in the same class</em>, the proxy is bypassed — the transaction advice won't run. Always call transactional methods from a different bean, or inject self-reference.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="aop-pointcut">
+    <div class="section-header">
+      <h3>📍 Pointcut, Advice, Aspect — Key Concepts</h3>
+    </div>
+
+    <div class="card">
+      <h4>Terminology Explained</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Term</th><th>What It Is</th><th>Analogy</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Join Point</strong></td><td>A point in program execution where advice can be applied (method call, field access)</td><td>Any intersection on a road</td></tr>
+            <tr><td><strong>Pointcut</strong></td><td>An expression that selects which join points to intercept</td><td>A specific traffic light</td></tr>
+            <tr><td><strong>Advice</strong></td><td>The code that runs at the selected join points</td><td>What the cop does at the traffic light</td></tr>
+            <tr><td><strong>Aspect</strong></td><td>Module combining a Pointcut + one or more Advices</td><td>The traffic enforcement unit</td></tr>
+            <tr><td><strong>Weaving</strong></td><td>Process of applying aspects to target objects</td><td>Deploying the cop to the intersection</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Advice Types</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">All advice types with examples</span></div>
+        <pre><code><span class="kw2">@Aspect</span>
+<span class="kw2">@Component</span>
+<span class="kw">public class</span> <span class="type">LoggingAspect</span> {
+
+    <span class="cmt">// ── @Before ── runs BEFORE the method ──────────────────────</span>
+    <span class="kw2">@Before</span>(<span class="str">"execution(* com.app.service.*.*(..))"</span>)
+    <span class="kw">public void</span> <span class="fn">logBefore</span>(<span class="type">JoinPoint</span> jp) {
+        System.out.<span class="fn">println</span>(<span class="str">"Calling: "</span> + jp.<span class="fn">getSignature</span>().<span class="fn">getName</span>());
+    }
+
+    <span class="cmt">// ── @AfterReturning ── runs AFTER successful return ─────────</span>
+    <span class="kw2">@AfterReturning</span>(pointcut = <span class="str">"execution(* com.app.service.*.*(..))"</span>,
+                    returning = <span class="str">"result"</span>)
+    <span class="kw">public void</span> <span class="fn">logAfterReturn</span>(<span class="type">JoinPoint</span> jp, <span class="type">Object</span> result) {
+        System.out.<span class="fn">println</span>(<span class="str">"Returned: "</span> + result);
+    }
+
+    <span class="cmt">// ── @AfterThrowing ── runs if method THROWS ─────────────────</span>
+    <span class="kw2">@AfterThrowing</span>(pointcut = <span class="str">"execution(* com.app.service.*.*(..))"</span>,
+                   throwing = <span class="str">"ex"</span>)
+    <span class="kw">public void</span> <span class="fn">logException</span>(<span class="type">JoinPoint</span> jp, <span class="type">Exception</span> ex) {
+        System.out.<span class="fn">println</span>(<span class="str">"Exception in "</span> + jp.<span class="fn">getSignature</span>() + <span class="str">": "</span> + ex.<span class="fn">getMessage</span>());
+    }
+
+    <span class="cmt">// ── @After ── ALWAYS runs (like finally) ────────────────────</span>
+    <span class="kw2">@After</span>(<span class="str">"execution(* com.app.service.*.*(..))"</span>)
+    <span class="kw">public void</span> <span class="fn">logFinally</span>(<span class="type">JoinPoint</span> jp) {
+        System.out.<span class="fn">println</span>(<span class="str">"Method done: "</span> + jp.<span class="fn">getSignature</span>().<span class="fn">getName</span>());
+    }
+
+    <span class="cmt">// ── @Around ── WRAPS the method — most powerful ─────────────</span>
+    <span class="kw2">@Around</span>(<span class="str">"execution(* com.app.service.*.*(..))"</span>)
+    <span class="kw">public</span> <span class="type">Object</span> <span class="fn">measureTime</span>(<span class="type">ProceedingJoinPoint</span> pjp) <span class="kw">throws</span> <span class="type">Throwable</span> {
+        <span class="kw">long</span> start = <span class="type">System</span>.<span class="fn">currentTimeMillis</span>();
+        <span class="kw">try</span> {
+            <span class="type">Object</span> result = pjp.<span class="fn">proceed</span>(); <span class="cmt">// ← actually call the real method</span>
+            <span class="kw">return</span> result;
+        } <span class="kw">finally</span> {
+            <span class="kw">long</span> elapsed = <span class="type">System</span>.<span class="fn">currentTimeMillis</span>() - start;
+            System.out.<span class="fn">println</span>(<span class="str">"Took: "</span> + elapsed + <span class="str">"ms"</span>);
+        }
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Pointcut Expressions — Wildcards Explained</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Expression</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>execution(* com.app.service.*.*(..))</code></td><td>Any method, any return type, in any class in service package, with any args</td></tr>
+            <tr><td><code>execution(public * *(..))</code></td><td>Any public method anywhere</td></tr>
+            <tr><td><code>execution(* com.app..*.save*(..))</code></td><td>Any method starting with "save" in app package or sub-packages (<code>..</code> = any depth)</td></tr>
+            <tr><td><code>within(com.app.service.*)</code></td><td>Any join point in classes in service package (no subpackages)</td></tr>
+            <tr><td><code>@annotation(com.app.Loggable)</code></td><td>Any method annotated with <code>@Loggable</code></td></tr>
+            <tr><td><code>bean(userService)</code></td><td>Any join point on bean named "userService"</td></tr>
+            <tr><td><code>args(Long,..)</code></td><td>Methods whose first arg is Long</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Wildcard rules:</strong><br>
+          <code>*</code> = any single element (one package, one class name, one return type)<br>
+          <code>..</code> = any number of elements (multiple packages in path, or any args in arg list)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="aop-custom">
+    <div class="section-header">
+      <h3>🛠️ Custom Annotation + Interceptor</h3>
+    </div>
+
+    <div class="card">
+      <h4>Creating a Custom @Auditable Annotation with AOP</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Step 1 — Define the annotation</span></div>
+        <pre><code><span class="kw2">@Target</span>(<span class="type">ElementType</span>.METHOD)            <span class="cmt">// apply to methods only</span>
+<span class="kw2">@Retention</span>(<span class="type">RetentionPolicy</span>.RUNTIME)    <span class="cmt">// visible at runtime (needed for AOP)</span>
+<span class="kw">public @interface</span> <span class="type">Auditable</span> {
+    <span class="type">String</span> <span class="fn">action</span>() <span class="kw">default</span> <span class="str">""</span>;         <span class="cmt">// metadata passed to aspect</span>
+}</code></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Step 2 — Create the Aspect</span></div>
+        <pre><code><span class="kw2">@Aspect</span>
+<span class="kw2">@Component</span>
+<span class="kw">public class</span> <span class="type">AuditAspect</span> {
+
+    <span class="kw">private final</span> <span class="type">AuditLogRepository</span> auditRepo;
+
+    <span class="cmt">// Reusable pointcut definition</span>
+    <span class="kw2">@Pointcut</span>(<span class="str">"@annotation(auditable)"</span>)
+    <span class="kw">public void</span> <span class="fn">auditableMethods</span>(<span class="type">Auditable</span> auditable) {}
+
+    <span class="kw2">@Around</span>(<span class="str">"auditableMethods(auditable)"</span>)
+    <span class="kw">public</span> <span class="type">Object</span> <span class="fn">audit</span>(<span class="type">ProceedingJoinPoint</span> pjp, <span class="type">Auditable</span> auditable)
+            <span class="kw">throws</span> <span class="type">Throwable</span> {
+
+        <span class="type">String</span> user = <span class="type">SecurityContextHolder</span>.<span class="fn">getContext</span>()
+                        .<span class="fn">getAuthentication</span>().<span class="fn">getName</span>();
+        <span class="type">String</span> action = auditable.<span class="fn">action</span>();
+        <span class="type">Instant</span> start = <span class="type">Instant</span>.<span class="fn">now</span>();
+
+        <span class="kw">try</span> {
+            <span class="type">Object</span> result = pjp.<span class="fn">proceed</span>(); <span class="cmt">// run actual method</span>
+            auditRepo.<span class="fn">save</span>(<span class="kw">new</span> <span class="type">AuditLog</span>(user, action, <span class="str">"SUCCESS"</span>, start));
+            <span class="kw">return</span> result;
+        } <span class="kw">catch</span> (<span class="type">Exception</span> ex) {
+            auditRepo.<span class="fn">save</span>(<span class="kw">new</span> <span class="type">AuditLog</span>(user, action, <span class="str">"FAILED: "</span> + ex.<span class="fn">getMessage</span>(), start));
+            <span class="kw">throw</span> ex;
+        }
+    }
+}</code></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Step 3 — Use the annotation</span></div>
+        <pre><code><span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">OrderService</span> {
+
+    <span class="kw2">@Auditable</span>(action = <span class="str">"CREATE_ORDER"</span>)   <span class="cmt">// ← AOP intercepts this</span>
+    <span class="kw">public</span> <span class="type">Order</span> <span class="fn">createOrder</span>(<span class="type">CreateOrderRequest</span> req) {
+        <span class="cmt">// Pure business logic — no audit code here!</span>
+        <span class="kw">return</span> orderRepo.<span class="fn">save</span>(mapper.<span class="fn">toEntity</span>(req));
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Spring MVC HandlerInterceptor vs AOP</h4>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>🌐 HandlerInterceptor</h4>
+          <ul>
+            <li>Web-layer only (HTTP requests)</li>
+            <li><code>preHandle</code> → before controller</li>
+            <li><code>postHandle</code> → after controller, before view</li>
+            <li><code>afterCompletion</code> → after view rendered</li>
+            <li>Has access to <code>HttpServletRequest</code></li>
+            <li>Good for: auth, CORS, request logging</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>🔀 AOP @Around</h4>
+          <ul>
+            <li>Any bean, any layer</li>
+            <li>Works on Service, Repository, etc.</li>
+            <li>No HTTP context available</li>
+            <li>Has method args, return value, exceptions</li>
+            <li>Good for: transactions, audit, metrics, retry</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">HandlerInterceptor registration</span></div>
+        <pre><code><span class="kw2">@Component</span>
+<span class="kw">public class</span> <span class="type">AuthInterceptor</span> <span class="kw">implements</span> <span class="type">HandlerInterceptor</span> {
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">preHandle</span>(<span class="type">HttpServletRequest</span> req,
+                              <span class="type">HttpServletResponse</span> res,
+                              <span class="type">Object</span> handler) <span class="kw">throws</span> <span class="type">Exception</span> {
+        <span class="type">String</span> token = req.<span class="fn">getHeader</span>(<span class="str">"Authorization"</span>);
+        <span class="kw">if</span> (token == <span class="kw">null</span>) {
+            res.<span class="fn">sendError</span>(<span class="num">401</span>, <span class="str">"No token"</span>);
+            <span class="kw">return false</span>;     <span class="cmt">// stops processing</span>
+        }
+        <span class="kw">return true</span>;          <span class="cmt">// continue to controller</span>
+    }
+}
+
+<span class="cmt">// Register in WebMvcConfigurer</span>
+<span class="kw2">@Configuration</span>
+<span class="kw">public class</span> <span class="type">WebConfig</span> <span class="kw">implements</span> <span class="type">WebMvcConfigurer</span> {
+
+    <span class="kw">private final</span> <span class="type">AuthInterceptor</span> authInterceptor;
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">addInterceptors</span>(<span class="type">InterceptorRegistry</span> registry) {
+        registry.<span class="fn">addInterceptor</span>(authInterceptor)
+                .<span class="fn">addPathPatterns</span>(<span class="str">"/api/**"</span>)
+                .<span class="fn">excludePathPatterns</span>(<span class="str">"/api/auth/**"</span>);
+    }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 4 — TRANSACTIONS
+  ══════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">04</div>
+    <div>
+      <h2>Transactions & Concurrency</h2>
+      <p>ACID guarantees, isolation levels, propagation types, and distributed locking strategies.</p>
+    </div>
+  </div>
+
+  <div class="section" id="transactions-intro">
+    <div class="section-header">
+      <h3>💾 Transaction Basics</h3>
+    </div>
+
+    <div class="card">
+      <h4>ACID Properties</h4>
+      <div class="card-grid">
+        <div class="card-mini"><h4>A — Atomicity</h4><p>All operations succeed or all fail. No partial updates. If charge succeeds but inventory update fails → rollback the charge.</p></div>
+        <div class="card-mini"><h4>C — Consistency</h4><p>DB moves from one valid state to another. Business rules always hold (e.g., account balance never goes negative).</p></div>
+        <div class="card-mini"><h4>I — Isolation</h4><p>Concurrent transactions don't see each other's intermediate state. Controlled by isolation level.</p></div>
+        <div class="card-mini"><h4>D — Durability</h4><p>Committed transactions survive crashes. Written to disk, not just memory.</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>@Transactional — Full Syntax</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">@Transactional all attributes</span></div>
+        <pre><code><span class="kw2">@Transactional</span>(
+    propagation  = <span class="type">Propagation</span>.REQUIRED,          <span class="cmt">// default</span>
+    isolation    = <span class="type">Isolation</span>.READ_COMMITTED,        <span class="cmt">// default for most DBs</span>
+    timeout      = <span class="num">30</span>,                               <span class="cmt">// seconds before auto-rollback</span>
+    readOnly     = <span class="kw">false</span>,                            <span class="cmt">// hint for optimization</span>
+    rollbackFor  = { <span class="type">PaymentException</span>.class },      <span class="cmt">// roll back for these</span>
+    noRollbackFor = { <span class="type">AuditException</span>.class }        <span class="cmt">// don't roll back for these</span>
+)
+<span class="kw">public void</span> <span class="fn">processOrder</span>(<span class="type">Order</span> order) { ... }
+
+<span class="cmt">// Default rollback behaviour:
+// ✅ Rolls back on RuntimeException and Error
+// ❌ Does NOT roll back on checked Exception — you must add rollbackFor</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="isolation">
+    <div class="section-header">
+      <h3>🔒 Isolation Levels</h3>
+    </div>
+
+    <div class="card">
+      <h4>Concurrency Problems That Isolation Levels Solve</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Problem</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Dirty Read</strong></td>
+              <td>Read uncommitted data from another transaction</td>
+              <td>T2 reads balance updated by T1, but T1 rolls back. T2 saw wrong data.</td>
+            </tr>
+            <tr>
+              <td><strong>Non-Repeatable Read</strong></td>
+              <td>Same row returns different values in same transaction</td>
+              <td>T1 reads balance=100. T2 updates to 200 and commits. T1 reads again → 200.</td>
+            </tr>
+            <tr>
+              <td><strong>Phantom Read</strong></td>
+              <td>Same query returns different rows in same transaction</td>
+              <td>T1 counts orders=5. T2 inserts new order. T1 counts again → 6.</td>
+            </tr>
+            <tr>
+              <td><strong>Lost Update</strong></td>
+              <td>Two transactions update same row; one overwrites the other</td>
+              <td>T1 and T2 both read balance=100. T1 sets 150. T2 sets 120. T1's update lost.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Isolation Levels — Which Problems They Prevent</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Level</th><th>Dirty Read</th><th>Non-Repeatable</th><th>Phantom</th><th>Performance</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>READ_UNCOMMITTED</strong></td>
+              <td>❌ Possible</td><td>❌</td><td>❌</td>
+              <td><span class="pill pill-green">Fastest</span></td>
+            </tr>
+            <tr>
+              <td><strong>READ_COMMITTED</strong> (default PG/Oracle)</td>
+              <td>✅ Prevented</td><td>❌</td><td>❌</td>
+              <td><span class="pill pill-green">Fast</span></td>
+            </tr>
+            <tr>
+              <td><strong>REPEATABLE_READ</strong> (default MySQL)</td>
+              <td>✅</td><td>✅ Prevented</td><td>❌</td>
+              <td><span class="pill pill-blue">Medium</span></td>
+            </tr>
+            <tr>
+              <td><strong>SERIALIZABLE</strong></td>
+              <td>✅</td><td>✅</td><td>✅ Prevented</td>
+              <td><span class="pill pill-red">Slowest</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Setting isolation level</span></div>
+        <pre><code><span class="cmt">// Use READ_COMMITTED for most service methods (good balance)</span>
+<span class="kw2">@Transactional</span>(isolation = <span class="type">Isolation</span>.READ_COMMITTED)
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Order</span>&gt; <span class="fn">getOrders</span>() { ... }
+
+<span class="cmt">// Use SERIALIZABLE for financial operations where phantom reads matter</span>
+<span class="kw2">@Transactional</span>(isolation = <span class="type">Isolation</span>.SERIALIZABLE)
+<span class="kw">public void</span> <span class="fn">transferFunds</span>(<span class="type">Long</span> from, <span class="type">Long</span> to, <span class="type">BigDecimal</span> amount) { ... }</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="propagation">
+    <div class="section-header">
+      <h3>🔀 Propagation Types</h3>
+    </div>
+
+    <div class="card">
+      <h4>What is Propagation?</h4>
+      <p>When a transactional method calls another transactional method, propagation defines what happens to the transaction context — does the inner method join the outer transaction, or start its own?</p>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Propagation</th><th>Existing Tx?</th><th>No Existing Tx?</th><th>Use Case</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>REQUIRED</strong> (default)</td>
+              <td>Join existing</td>
+              <td>Create new</td>
+              <td><span class="pill pill-green">Standard service methods</span></td>
+            </tr>
+            <tr>
+              <td><strong>REQUIRES_NEW</strong></td>
+              <td>Suspend existing, create new</td>
+              <td>Create new</td>
+              <td><span class="pill pill-blue">Audit logs (must commit even if outer rolls back)</span></td>
+            </tr>
+            <tr>
+              <td><strong>NESTED</strong></td>
+              <td>Create savepoint in existing</td>
+              <td>Create new</td>
+              <td><span class="pill pill-blue">Partial rollback scenarios</span></td>
+            </tr>
+            <tr>
+              <td><strong>SUPPORTS</strong></td>
+              <td>Join existing</td>
+              <td>Run without tx</td>
+              <td><span class="pill pill-orange">Read methods that work with or without tx</span></td>
+            </tr>
+            <tr>
+              <td><strong>NOT_SUPPORTED</strong></td>
+              <td>Suspend existing, run without tx</td>
+              <td>Run without tx</td>
+              <td><span class="pill pill-orange">Operations that must not be in a tx</span></td>
+            </tr>
+            <tr>
+              <td><strong>MANDATORY</strong></td>
+              <td>Join existing</td>
+              <td>Throw exception</td>
+              <td><span class="pill pill-red">Must always be called within a tx</span></td>
+            </tr>
+            <tr>
+              <td><strong>NEVER</strong></td>
+              <td>Throw exception</td>
+              <td>Run without tx</td>
+              <td><span class="pill pill-red">Must never be in a tx</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>REQUIRES_NEW in Practice — Audit Log Example</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Audit must commit even if order fails</span></div>
+        <pre><code><span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">OrderService</span> {
+
+    <span class="kw">private final</span> <span class="type">AuditService</span> auditService;
+
+    <span class="kw2">@Transactional</span>                        <span class="cmt">// Outer transaction TX1</span>
+    <span class="kw">public void</span> <span class="fn">placeOrder</span>(<span class="type">Order</span> order) {
+        orderRepo.<span class="fn">save</span>(order);            <span class="cmt">// In TX1</span>
+        auditService.<span class="fn">log</span>(<span class="str">"ORDER_PLACED"</span>); <span class="cmt">// Starts TX2 (independent)</span>
+        <span class="kw">throw new</span> <span class="type">RuntimeException</span>(<span class="str">"DB error!"</span>);
+        <span class="cmt">// TX1 rolls back (order not saved)
+        // TX2 already committed (audit log IS saved) ✅</span>
+    }
+}
+
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">AuditService</span> {
+
+    <span class="kw2">@Transactional</span>(propagation = <span class="type">Propagation</span>.REQUIRES_NEW)
+    <span class="kw">public void</span> <span class="fn">log</span>(<span class="type">String</span> action) {
+        auditRepo.<span class="fn">save</span>(<span class="kw">new</span> <span class="type">AuditEntry</span>(action));
+        <span class="cmt">// This commits INDEPENDENTLY of the caller's tx</span>
+    }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="tx-manager">
+    <div class="section-header">
+      <h3>🔧 Transaction Manager Hierarchy</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Manager Chain</h4>
+      <div class="diagram">
+<span class="d-blue">PlatformTransactionManager</span>  (interface — the contract)
+    │   getTransaction(), commit(), rollback()
+    ▼
+<span class="d-orange">AbstractPlatformTransactionManager</span>  (abstract class)
+    │   Template method pattern — handles propagation, synchronization
+    │   Subclasses implement: doBegin(), doCommit(), doRollback()
+    │
+    ├──► <span class="d-green">DataSourceTransactionManager</span>     (plain JDBC)
+    ├──► <span class="d-green">JpaTransactionManager</span>             (JPA / Hibernate) ← Spring Boot default
+    ├──► <span class="d-green">HibernateTransactionManager</span>       (native Hibernate)
+    └──► <span class="d-green">JtaTransactionManager</span>             (distributed XA transactions)
+      </div>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">Spring Boot auto-configures <code>JpaTransactionManager</code> when <code>spring-boot-starter-data-jpa</code> is on the classpath. You rarely need to declare it manually.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="tx-declarative">
+    <div class="section-header">
+      <h3>📋 Declarative vs Programmatic Transaction Management</h3>
+    </div>
+
+    <div class="card">
+      <h4>Declarative (Recommended)</h4>
+      <p>Uses <code>@Transactional</code>. Spring AOP wraps the method. No transaction code in business logic.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Declarative — clean business code</span></div>
+        <pre><code><span class="kw2">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">transferMoney</span>(<span class="type">Long</span> fromId, <span class="type">Long</span> toId, <span class="type">BigDecimal</span> amount) {
+    <span class="type">Account</span> from = accountRepo.<span class="fn">findById</span>(fromId).<span class="fn">orElseThrow</span>();
+    <span class="type">Account</span> to   = accountRepo.<span class="fn">findById</span>(toId).<span class="fn">orElseThrow</span>();
+    from.<span class="fn">debit</span>(amount);
+    to.<span class="fn">credit</span>(amount);
+    accountRepo.<span class="fn">saveAll</span>(<span class="type">List</span>.<span class="fn">of</span>(from, to));
+    <span class="cmt">// Spring handles begin/commit/rollback automatically</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Programmatic (When You Need Fine Control)</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Programmatic with TransactionTemplate</span></div>
+        <pre><code><span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">PaymentService</span> {
+
+    <span class="kw">private final</span> <span class="type">TransactionTemplate</span> txTemplate;
+    <span class="kw">private final</span> <span class="type">PlatformTransactionManager</span> txManager;
+
+    <span class="cmt">// ── Option 1: TransactionTemplate (cleaner) ───────────────</span>
+    <span class="kw">public void</span> <span class="fn">processWithTemplate</span>(<span class="type">Payment</span> payment) {
+        txTemplate.<span class="fn">execute</span>(status -&gt; {
+            paymentRepo.<span class="fn">save</span>(payment);
+            <span class="kw">if</span> (payment.<span class="fn">getAmount</span>().<fn>compareTo</fn>(<span class="type">BigDecimal</span>.ZERO) &lt; <span class="num">0</span>) {
+                status.<span class="fn">setRollbackOnly</span>(); <span class="cmt">// explicit rollback signal</span>
+            }
+            <span class="kw">return null</span>;
+        });
+    }
+
+    <span class="cmt">// ── Option 2: Low-level PlatformTransactionManager ────────</span>
+    <span class="kw">public void</span> <span class="fn">processManual</span>(<span class="type">Payment</span> payment) {
+        <span class="type">TransactionDefinition</span> def = <span class="kw">new</span> <span class="type">DefaultTransactionDefinition</span>();
+        <span class="type">TransactionStatus</span> status = txManager.<span class="fn">getTransaction</span>(def);
+        <span class="kw">try</span> {
+            paymentRepo.<span class="fn">save</span>(payment);
+            txManager.<span class="fn">commit</span>(status);
+        } <span class="kw">catch</span> (<span class="type">Exception</span> ex) {
+            txManager.<span class="fn">rollback</span>(status);
+            <span class="kw">throw</span> ex;
+        }
+    }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="concurrency">
+    <div class="section-header">
+      <h3>⚡ Optimistic vs Pessimistic Locking</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Problem: Lost Update</h4>
+      <p>Two users read the same inventory count (10). Both try to place an order for 5. Both check "10 ≥ 5 → proceed". Both save inventory=5. Actual inventory should be 0, but it's 5. A lost update.</p>
+    </div>
+
+    <div class="card">
+      <h4>Optimistic Locking — Version-Based</h4>
+      <p>Assumes conflicts are <em>rare</em>. No DB-level lock. Instead, each row has a version number. On update, check the version still matches — if not, someone else modified it → throw <code>OptimisticLockException</code>.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Optimistic locking with @Version</span></div>
+        <pre><code><span class="kw2">@Entity</span>
+<span class="kw">public class</span> <span class="type">Inventory</span> {
+    <span class="kw2">@Id</span> <span class="kw2">@GeneratedValue</span>
+    <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="kw">private</span> <span class="type">int</span> quantity;
+
+    <span class="kw2">@Version</span>                    <span class="cmt">// JPA manages this — increments on every update</span>
+    <span class="kw">private</span> <span class="type">Long</span> version;
+}
+
+<span class="cmt">// When two threads both try to update:</span>
+<span class="cmt">// Thread 1 reads version=5, updates successfully → version becomes 6</span>
+<span class="cmt">// Thread 2 reads version=5, tries to update with WHERE version=5 → 0 rows updated</span>
+<span class="cmt">// → JPA throws OptimisticLockException → retry or show "please try again"</span>
+
+<span class="cmt">// Retry strategy using Spring Retry:</span>
+<span class="kw2">@Retryable</span>(value = <span class="type">OptimisticLockException</span>.class, maxAttempts = <span class="num">3</span>)
+<span class="kw2">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">decreaseInventory</span>(<span class="type">Long</span> productId, <span class="type">int</span> qty) {
+    <span class="type">Inventory</span> inv = invRepo.<span class="fn">findById</span>(productId).<span class="fn">orElseThrow</span>();
+    inv.<span class="fn">setQuantity</span>(inv.<span class="fn">getQuantity</span>() - qty);
+    invRepo.<span class="fn">save</span>(inv);
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Pessimistic Locking — DB-Level Locks</h4>
+      <p>Assumes conflicts are <em>frequent</em>. Takes a DB lock before reading. Other transactions trying to read the locked row must wait. More overhead, guaranteed safety.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Pessimistic locking in Spring Data JPA</span></div>
+        <pre><code><span class="kw">public interface</span> <span class="type">InventoryRepository</span> <span class="kw">extends</span> <span class="type">JpaRepository</span>&lt;<span class="type">Inventory</span>, <span class="type">Long</span>&gt; {
+
+    <span class="cmt">// SELECT ... FOR UPDATE — exclusive lock</span>
+    <span class="kw2">@Lock</span>(<span class="type">LockModeType</span>.PESSIMISTIC_WRITE)
+    <span class="kw2">@Query</span>(<span class="str">"SELECT i FROM Inventory i WHERE i.id = :id"</span>)
+    <span class="type">Optional</span>&lt;<span class="type">Inventory</span>&gt; <span class="fn">findByIdForUpdate</span>(<span class="kw2">@Param</span>(<span class="str">"id"</span>) <span class="type">Long</span> id);
+
+    <span class="cmt">// SELECT ... FOR SHARE — shared read lock</span>
+    <span class="kw2">@Lock</span>(<span class="type">LockModeType</span>.PESSIMISTIC_READ)
+    <span class="type">Optional</span>&lt;<span class="type">Inventory</span>&gt; <span class="fn">findById</span>(<span class="type">Long</span> id);
+}
+
+<span class="cmt">// Usage in service</span>
+<span class="kw2">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">bookSeats</span>(<span class="type">Long</span> eventId, <span class="type">int</span> seats) {
+    <span class="type">Inventory</span> inv = invRepo.<span class="fn">findByIdForUpdate</span>(eventId).<span class="fn">orElseThrow</span>();
+    <span class="cmt">// Row is now locked — no other tx can modify until this one commits</span>
+    <span class="kw">if</span> (inv.<span class="fn">getQuantity</span>() &lt; seats) <span class="kw">throw new</span> <span class="type">InsufficientSeatsException</span>();
+    inv.<span class="fn">setQuantity</span>(inv.<span class="fn">getQuantity</span>() - seats);
+    <span class="cmt">// Lock released on commit</span>
+}</code></pre>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th></th><th>Optimistic</th><th>Pessimistic</th></tr></thead>
+          <tbody>
+            <tr><td>Conflict assumption</td><td>Rare</td><td>Frequent</td></tr>
+            <tr><td>DB lock</td><td>No</td><td>Yes (SELECT FOR UPDATE)</td></tr>
+            <tr><td>Performance under low conflict</td><td>✅ Better</td><td>❌ Overhead</td></tr>
+            <tr><td>Deadlock risk</td><td>No</td><td>Yes</td></tr>
+            <tr><td>Best for</td><td>REST APIs, read-heavy</td><td>Ticket booking, banking</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 5 — ASYNC
+  ══════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">05</div>
+    <div>
+      <h2>@Async & Thread Management</h2>
+      <p>Non-blocking execution, custom thread pools, and managing transactions in async contexts.</p>
+    </div>
+  </div>
+
+  <div class="section" id="async">
+    <div class="section-header">
+      <h3>⚡ @Async — Internals</h3>
+    </div>
+
+    <div class="card">
+      <h4>How @Async Works</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">@EnableAsync activates AsyncAnnotationBeanPostProcessor</div>
+            <div class="step-desc">Add <code>@EnableAsync</code> to a <code>@Configuration</code> class. This BPP scans for <code>@Async</code> methods and creates proxies.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">CGLIB proxy wraps @Async methods</div>
+            <div class="step-desc">When an <code>@Async</code> method is called from another bean, the proxy intercepts the call.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Task submitted to TaskExecutor</div>
+            <div class="step-desc">The proxy submits the method body as a <code>Runnable</code> to the configured <code>TaskExecutor</code> (default: <code>SimpleAsyncTaskExecutor</code> — no pooling!).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Returns Future/CompletableFuture immediately</div>
+            <div class="step-desc">The caller gets the Future back and continues. The actual work runs on the pool thread.</div>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">@Async with all return types</span></div>
+        <pre><code><span class="kw2">@Configuration</span>
+<span class="kw2">@EnableAsync</span>                             <span class="cmt">// Step 1: enable async processing</span>
+<span class="kw">public class</span> <span class="type">AsyncConfig</span> { }
+
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">EmailService</span> {
+
+    <span class="cmt">// ── void: fire and forget ────────────────────────────────</span>
+    <span class="kw2">@Async</span>
+    <span class="kw">public void</span> <span class="fn">sendWelcomeEmail</span>(<span class="type">String</span> email) {
+        <span class="cmt">// runs on separate thread — caller doesn't wait</span>
+        smtpClient.<span class="fn">send</span>(email, <span class="str">"Welcome!"</span>);
+    }
+
+    <span class="cmt">// ── Future&lt;T&gt;: legacy callable style ────────────────────</span>
+    <span class="kw2">@Async</span>
+    <span class="kw">public</span> <span class="type">Future</span>&lt;<span class="type">String</span>&gt; <span class="fn">getReport</span>(<span class="type">Long</span> userId) {
+        <span class="type">String</span> report = reportService.<span class="fn">generate</span>(userId);
+        <span class="kw">return new</span> <span class="type">AsyncResult</span>&lt;&gt;(report);
+    }
+
+    <span class="cmt">// ── CompletableFuture&lt;T&gt;: modern, chainable ──────────────</span>
+    <span class="kw2">@Async</span>
+    <span class="kw">public</span> <span class="type">CompletableFuture</span>&lt;<span class="type">List</span>&lt;<span class="type">Notification</span>&gt;&gt; <span class="fn">fetchNotifications</span>(<span class="type">Long</span> userId) {
+        <span class="type">List</span>&lt;<span class="type">Notification</span>&gt; notifs = notifRepo.<span class="fn">findByUserId</span>(userId);
+        <span class="kw">return</span> <span class="type">CompletableFuture</span>.<span class="fn">completedFuture</span>(notifs);
+    }
+}
+
+<span class="cmt">// ── Usage with chaining ──────────────────────────────────────</span>
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">DashboardService</span> {
+    <span class="kw">public void</span> <span class="fn">loadDashboard</span>(<span class="type">Long</span> userId) {
+        <span class="type">CompletableFuture</span>&lt;<span class="type">List</span>&lt;<span class="type">Notification</span>&gt;&gt; notifs = emailService.<span class="fn">fetchNotifications</span>(userId);
+        <span class="type">CompletableFuture</span>&lt;<span class="type">String</span>&gt; report = emailService.<span class="fn">getReport</span>(userId);
+
+        <span class="cmt">// Wait for both to complete</span>
+        <span class="type">CompletableFuture</span>.<span class="fn">allOf</span>(notifs, report).<fn>join</fn>();
+
+        System.out.<span class="fn">println</span>(notifs.<fn>get</fn>());
+        System.out.<span class="fn">println</span>(report.<fn>get</fn>());
+    }
+}</code></pre>
+      </div>
+
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong>@Async self-invocation problem:</strong> Calling <code>@Async</code> method from the <em>same class</em> doesn't work (proxy is bypassed). Always call from a different bean. Same rule as <code>@Transactional</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="threadpool">
+    <div class="section-header">
+      <h3>🏊 ThreadPoolTaskExecutor — Custom Thread Pools</h3>
+    </div>
+
+    <div class="card">
+      <h4>Why Configure Your Own Pool</h4>
+      <p>Spring Boot's default <code>SimpleAsyncTaskExecutor</code> creates a <strong>new thread per task</strong> — no pooling! Under load this creates thousands of threads and crashes the JVM. Always define a proper pool.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom ThreadPoolTaskExecutor</span></div>
+        <pre><code><span class="kw2">@Configuration</span>
+<span class="kw2">@EnableAsync</span>
+<span class="kw">public class</span> <span class="type">AsyncConfig</span> <span class="kw">implements</span> <span class="type">AsyncConfigurer</span> {
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">Executor</span> <span class="fn">getAsyncExecutor</span>() {
+        <span class="type">ThreadPoolTaskExecutor</span> executor = <span class="kw">new</span> <span class="type">ThreadPoolTaskExecutor</span>();
+
+        executor.<span class="fn">setCorePoolSize</span>(<span class="num">5</span>);          <span class="cmt">// always-alive threads</span>
+        executor.<span class="fn">setMaxPoolSize</span>(<span class="num">20</span>);           <span class="cmt">// max threads under load</span>
+        executor.<span class="fn">setQueueCapacity</span>(<span class="num">100</span>);        <span class="cmt">// queue before creating new thread</span>
+        executor.<span class="fn">setKeepAliveSeconds</span>(<span class="num">60</span>);      <span class="cmt">// idle thread timeout</span>
+        executor.<span class="fn">setThreadNamePrefix</span>(<span class="str">"async-email-"</span>);
+        executor.<span class="fn">setRejectedExecutionHandler</span>(
+            <span class="kw">new</span> <span class="type">ThreadPoolExecutor</span>.<span class="type">CallerRunsPolicy</span>() <span class="cmt">// run in caller thread if pool full</span>
+        );
+        executor.<span class="fn">initialize</span>();
+        <span class="kw">return</span> executor;
+    }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">AsyncUncaughtExceptionHandler</span> <span class="fn">getAsyncUncaughtExceptionHandler</span>() {
+        <span class="kw">return</span> (ex, method, params) -&gt; {
+            System.err.<span class="fn">println</span>(<span class="str">"Async exception in "</span> + method.<span class="fn">getName</span>() + <span class="str">": "</span> + ex.<span class="fn">getMessage</span>());
+            <span class="cmt">// Send to Sentry, log to DB, etc.</span>
+        };
+    }
+}
+
+<span class="cmt">// Multiple named executors for different tasks</span>
+<span class="kw2">@Bean</span>(<span class="str">"emailExecutor"</span>)
+<span class="kw">public</span> <span class="type">Executor</span> <span class="fn">emailExecutor</span>() {
+    <span class="type">ThreadPoolTaskExecutor</span> e = <span class="kw">new</span> <span class="type">ThreadPoolTaskExecutor</span>();
+    e.<span class="fn">setCorePoolSize</span>(<span class="num">3</span>); e.<span class="fn">setMaxPoolSize</span>(<span class="num">10</span>); e.<span class="fn">initialize</span>();
+    <span class="kw">return</span> e;
+}
+
+<span class="kw2">@Bean</span>(<span class="str">"reportExecutor"</span>)
+<span class="kw">public</span> <span class="type">Executor</span> <span class="fn">reportExecutor</span>() {
+    <span class="type">ThreadPoolTaskExecutor</span> e = <span class="kw">new</span> <span class="type">ThreadPoolTaskExecutor</span>();
+    e.<span class="fn">setCorePoolSize</span>(<span class="num">2</span>); e.<span class="fn">setMaxPoolSize</span>(<span class="num">5</span>); e.<span class="fn">initialize</span>();
+    <span class="kw">return</span> e;
+}
+
+<span class="cmt">// Select executor by name</span>
+<span class="kw2">@Async</span>(<span class="str">"emailExecutor"</span>)
+<span class="kw">public void</span> <span class="fn">sendEmail</span>(...) {}
+
+<span class="kw2">@Async</span>(<span class="str">"reportExecutor"</span>)
+<span class="kw">public</span> <span class="type">CompletableFuture</span>&lt;<span class="type">Report</span>&gt; <span class="fn">generateReport</span>(...) {}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>ThreadPoolExecutor Internals — How Tasks Flow</h4>
+      <div class="diagram">
+New task submitted
+    │
+    ▼
+<span class="d-green">Core pool has free threads?</span>
+    ├─ YES ──► assign to free core thread → execute
+    │
+    ▼ NO
+<span class="d-blue">Queue has space? (queueCapacity)</span>
+    ├─ YES ──► add to queue → wait for free thread
+    │
+    ▼ NO (queue full)
+<span class="d-orange">Thread count &lt; maxPoolSize?</span>
+    ├─ YES ──► create new thread → execute
+    │
+    ▼ NO (maxPoolSize reached AND queue full)
+<span class="d-red">RejectedExecutionHandler</span>
+    ├─ AbortPolicy         → throw RejectedExecutionException
+    ├─ CallerRunsPolicy    → run in calling thread (backpressure)
+    ├─ DiscardPolicy       → silently drop
+    └─ DiscardOldestPolicy → drop oldest queued task, retry
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="async-tx">
+    <div class="section-header">
+      <h3>🔀 @Async + @Transactional</h3>
+    </div>
+
+    <div class="card">
+      <h4>Why @Async and @Transactional Don't Mix Directly</h4>
+      <p>Transactions are <em>thread-bound</em>. The transaction started by the calling thread is NOT available on the async thread. If you add <code>@Transactional</code> to an <code>@Async</code> method, each async invocation gets its own independent transaction.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Correct pattern — transaction inside async</span></div>
+        <pre><code><span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">ReportGeneratorService</span> {
+
+    <span class="cmt">// ✅ @Async + @Transactional on same method = WORKS
+    //    Async thread starts its OWN transaction — independent of caller</span>
+    <span class="kw2">@Async</span>(<span class="str">"reportExecutor"</span>)
+    <span class="kw2">@Transactional</span>
+    <span class="kw">public</span> <span class="type">CompletableFuture</span>&lt;<span class="type">Report</span>&gt; <span class="fn">generateAndSave</span>(<span class="type">Long</span> userId) {
+        <span class="type">Report</span> report = <span class="fn">buildReport</span>(userId);    <span class="cmt">// pure computation</span>
+        reportRepo.<span class="fn">save</span>(report);               <span class="cmt">// in async thread's own tx</span>
+        <span class="kw">return</span> <span class="type">CompletableFuture</span>.<span class="fn">completedFuture</span>(report);
+    }
+}
+
+<span class="cmt">// ── Exception Handling in @Async ─────────────────────────────</span>
+<span class="kw2">@Async</span>
+<span class="kw">public</span> <span class="type">CompletableFuture</span>&lt;<span class="type">String</span>&gt; <span class="fn">riskyOperation</span>() {
+    <span class="kw">try</span> {
+        <span class="cmt">// do work</span>
+        <span class="kw">return</span> <span class="type">CompletableFuture</span>.<span class="fn">completedFuture</span>(<span class="str">"done"</span>);
+    } <span class="kw">catch</span> (<span class="type">Exception</span> ex) {
+        <span class="cmt">// For CompletableFuture, caller sees exception via .get()
+        // or .exceptionally() chain</span>
+        <span class="kw">return</span> <span class="type">CompletableFuture</span>.<span class="fn">failedFuture</span>(ex);
+    }
+}
+
+<span class="cmt">// Caller handles exception</span>
+riskyOperation()
+    .<span class="fn">exceptionally</span>(ex -&gt; { log.<span class="fn">error</span>(<span class="str">"Failed: "</span>, ex); <span class="kw">return null</span>; })
+    .<span class="fn">thenAccept</span>(result -&gt; System.out.<span class="fn">println</span>(result));</code></pre>
+      </div>
+
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>void @Async exception handling:</strong> For <code>void</code> async methods, exceptions are swallowed unless you configure <code>AsyncUncaughtExceptionHandler</code> in your <code>AsyncConfigurer</code>. Always configure this in production.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 6 — JPA
+  ══════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">06</div>
+    <div>
+      <h2>Spring Data JPA</h2>
+      <p>From raw JPA to Spring Data abstractions — entities, relationships, and repository magic.</p>
+    </div>
+  </div>
+
+  <div class="section" id="jpa-vs-springdatajpa">
+    <div class="section-header">
+      <h3>📊 JPA vs Spring Data JPA</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Stack</h4>
+      <div class="diagram">
+<span class="d-blue">Your Repository Interface</span>  (Spring Data JPA)
+    │   extends JpaRepository — you write ZERO implementation
+    ▼
+<span class="d-orange">Spring Data JPA</span>
+    │   generates queries, provides CRUD, handles pagination
+    ▼
+<span class="d-purple">JPA (Jakarta Persistence API)</span>
+    │   standard specification — EntityManager, JPQL, Entity lifecycle
+    ▼
+<span class="d-green">Hibernate</span>  (JPA implementation — the engine)
+    │   actual SQL generation, caching, dirty checking
+    ▼
+<span class="d-db">JDBC / Database</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th></th><th>JPA (raw)</th><th>Spring Data JPA</th></tr></thead>
+          <tbody>
+            <tr><td>Queries</td><td>Manual EntityManager, JPQL</td><td>Method name derivation, <code>@Query</code></td></tr>
+            <tr><td>CRUD</td><td>Write yourself</td><td>Free with <code>JpaRepository</code></td></tr>
+            <tr><td>Pagination</td><td>Manual <code>setFirstResult/setMaxResults</code></td><td><code>Pageable</code> parameter</td></tr>
+            <tr><td>Transactions</td><td>Manual</td><td><code>@Transactional</code> auto-applied</td></tr>
+            <tr><td>Learning curve</td><td>High</td><td>Low (for standard use)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="jpa-annotations">
+    <div class="section-header">
+      <h3>🏷️ JPA Entity Annotations</h3>
+    </div>
+
+    <div class="card">
+      <h4>Rules for Defining a JPA Entity</h4>
+      <div class="callout info">
+        <div class="icon">📋</div>
+        <div class="body">
+          <strong>7 Rules every JPA entity must follow:</strong><br>
+          1. Annotated with <code>@Entity</code><br>
+          2. Has a no-arg constructor (can be protected)<br>
+          3. Has a primary key annotated with <code>@Id</code><br>
+          4. Class must not be final (Hibernate proxies it)<br>
+          5. Fields/properties must not be final<br>
+          6. Should implement <code>Serializable</code> (if used in distributed cache)<br>
+          7. Override <code>equals()</code> and <code>hashCode()</code> based on business key (not DB id)
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Fully annotated Entity</span></div>
+        <pre><code><span class="kw2">@Entity</span>
+<span class="kw2">@Table</span>(name = <span class="str">"orders"</span>,
+       indexes = { <span class="kw2">@Index</span>(name = <span class="str">"idx_customer"</span>, columnList = <span class="str">"customer_id"</span>) },
+       uniqueConstraints = { <span class="kw2">@UniqueConstraint</span>(columnNames = <span class="str">"order_number"</span>) })
+<span class="kw2">@EntityListeners</span>(<span class="type">AuditingEntityListener</span>.class)  <span class="cmt">// for @CreatedDate etc.</span>
+<span class="kw">public class</span> <span class="type">Order</span> {
+
+    <span class="kw2">@Id</span>
+    <span class="kw2">@GeneratedValue</span>(strategy = <span class="type">GenerationType</span>.IDENTITY) <span class="cmt">// DB auto-increment</span>
+    <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="kw2">@Column</span>(name = <span class="str">"order_number"</span>, nullable = <span class="kw">false</span>, length = <span class="num">50</span>)
+    <span class="kw">private</span> <span class="type">String</span> orderNumber;
+
+    <span class="kw2">@Enumerated</span>(<span class="type">EnumType</span>.STRING)          <span class="cmt">// store as "PENDING" not 0</span>
+    <span class="kw">private</span> <span class="type">OrderStatus</span> status;
+
+    <span class="kw2">@Column</span>(precision = <span class="num">10</span>, scale = <span class="num">2</span>)
+    <span class="kw">private</span> <span class="type">BigDecimal</span> total;
+
+    <span class="kw2">@CreatedDate</span>                           <span class="cmt">// auto-set by Spring Data Auditing</span>
+    <span class="kw2">@Column</span>(updatable = <span class="kw">false</span>)
+    <span class="kw">private</span> <span class="type">Instant</span> createdAt;
+
+    <span class="kw2">@LastModifiedDate</span>
+    <span class="kw">private</span> <span class="type">Instant</span> updatedAt;
+
+    <span class="kw2">@Version</span>
+    <span class="kw">private</span> <span class="type">Long</span> version;               <span class="cmt">// optimistic locking</span>
+
+    <span class="kw2">@ManyToOne</span>(fetch = <span class="type">FetchType</span>.LAZY)   <span class="cmt">// ALWAYS lazy for @ManyToOne</span>
+    <span class="kw2">@JoinColumn</span>(name = <span class="str">"customer_id"</span>)
+    <span class="kw">private</span> <span class="type">Customer</span> customer;
+
+    <span class="kw2">@OneToMany</span>(mappedBy = <span class="str">"order"</span>,
+               cascade = <span class="type">CascadeType</span>.ALL,
+               orphanRemoval = <span class="kw">true</span>)
+    <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">OrderItem</span>&gt; items = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+    <span class="cmt">// ── Always use business key for equals/hashCode ──</span>
+    <span class="kw2">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">equals</span>(<span class="type">Object</span> o) {
+        <span class="kw">if</span> (<span class="kw">this</span> == o) <span class="kw">return true</span>;
+        <span class="kw">if</span> (!(o <span class="kw">instanceof</span> <span class="type">Order</span> other)) <span class="kw">return false</span>;
+        <span class="kw">return</span> orderNumber != <span class="kw">null</span> &amp;&amp; orderNumber.<span class="fn">equals</span>(other.orderNumber);
+    }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public int</span> <span class="fn">hashCode</span>() {
+        <span class="kw">return</span> <span class="type">Objects</span>.<span class="fn">hashCode</span>(orderNumber);
+    }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="jpa-mappings">
+    <div class="section-header">
+      <h3>🗺️ Entity Relationships — Order & Product</h3>
+    </div>
+
+    <div class="card">
+      <h4>Order → OrderItem → Product (One-to-Many + Many-to-One)</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Order → OrderItems (parent-child)</span></div>
+        <pre><code><span class="kw2">@Entity</span>
+<span class="kw">public class</span> <span class="type">Order</span> {
+    <span class="kw2">@Id</span> <span class="kw2">@GeneratedValue</span> <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="cmt">// "mappedBy" means Order is the INVERSE side — OrderItem owns the FK</span>
+    <span class="kw2">@OneToMany</span>(
+        mappedBy = <span class="str">"order"</span>,
+        cascade = <span class="type">CascadeType</span>.ALL,      <span class="cmt">// save/delete items with order</span>
+        orphanRemoval = <span class="kw">true</span>             <span class="cmt">// remove item from list → DELETE from DB</span>
+    )
+    <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">OrderItem</span>&gt; items = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+    <span class="cmt">// Helper methods to keep both sides in sync</span>
+    <span class="kw">public void</span> <span class="fn">addItem</span>(<span class="type">OrderItem</span> item) {
+        items.<span class="fn">add</span>(item);
+        item.<span class="fn">setOrder</span>(<span class="kw">this</span>);
+    }
+}
+
+<span class="kw2">@Entity</span>
+<span class="kw">public class</span> <span class="type">OrderItem</span> {
+    <span class="kw2">@Id</span> <span class="kw2">@GeneratedValue</span> <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="kw2">@ManyToOne</span>(fetch = <span class="type">FetchType</span>.LAZY)  <span class="cmt">// FK owner side</span>
+    <span class="kw2">@JoinColumn</span>(name = <span class="str">"order_id"</span>, nullable = <span class="kw">false</span>)
+    <span class="kw">private</span> <span class="type">Order</span> order;
+
+    <span class="kw2">@ManyToOne</span>(fetch = <span class="type">FetchType</span>.LAZY)
+    <span class="kw2">@JoinColumn</span>(name = <span class="str">"product_id"</span>)
+    <span class="kw">private</span> <span class="type">Product</span> product;
+
+    <span class="kw">private</span> <span class="type">int</span> quantity;
+    <span class="kw">private</span> <span class="type">BigDecimal</span> unitPrice;       <span class="cmt">// snapshot — not live product price</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Product → Category (Many-to-Many)</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Product-Category many-to-many with join table</span></div>
+        <pre><code><span class="kw2">@Entity</span>
+<span class="kw">public class</span> <span class="type">Product</span> {
+    <span class="kw2">@Id</span> <span class="kw2">@GeneratedValue</span> <span class="kw">private</span> <span class="type">Long</span> id;
+    <span class="kw">private</span> <span class="type">String</span> name;
+
+    <span class="kw2">@ManyToMany</span>
+    <span class="kw2">@JoinTable</span>(
+        name = <span class="str">"product_category"</span>,
+        joinColumns = <span class="kw2">@JoinColumn</span>(name = <span class="str">"product_id"</span>),
+        inverseJoinColumns = <span class="kw2">@JoinColumn</span>(name = <span class="str">"category_id"</span>)
+    )
+    <span class="kw">private</span> <span class="type">Set</span>&lt;<span class="type">Category</span>&gt; categories = <span class="kw">new</span> <span class="type">HashSet</span>&lt;&gt;();
+}
+
+<span class="kw2">@Entity</span>
+<span class="kw">public class</span> <span class="type">Category</span> {
+    <span class="kw2">@Id</span> <span class="kw2">@GeneratedValue</span> <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="kw2">@ManyToMany</span>(mappedBy = <span class="str">"categories"</span>) <span class="cmt">// inverse side — no join table here</span>
+    <span class="kw">private</span> <span class="type">Set</span>&lt;<span class="type">Product</span>&gt; products = <span class="kw">new</span> <span class="type">HashSet</span>&lt;&gt;();
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>N+1 Problem & How to Solve It</h4>
+      <div class="callout danger">
+        <div class="icon">🔥</div>
+        <div class="body">
+          <strong>N+1 Problem:</strong> Fetching 100 orders fires 1 query for orders + 100 queries for each order's customer. 101 queries total! This tanks performance silently.
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Solutions to N+1</span></div>
+        <pre><code><span class="cmt">// ✅ Solution 1: JOIN FETCH in JPQL</span>
+<span class="kw2">@Query</span>(<span class="str">"SELECT o FROM Order o JOIN FETCH o.customer WHERE o.status = :status"</span>)
+<span class="type">List</span>&lt;<span class="type">Order</span>&gt; <span class="fn">findWithCustomer</span>(<span class="kw2">@Param</span>(<span class="str">"status"</span>) <span class="type">String</span> status);
+
+<span class="cmt">// ✅ Solution 2: @EntityGraph (declarative)</span>
+<span class="kw2">@EntityGraph</span>(attributePaths = { <span class="str">"customer"</span>, <span class="str">"items"</span>, <span class="str">"items.product"</span> })
+<span class="type">List</span>&lt;<span class="type">Order</span>&gt; <span class="fn">findByStatus</span>(<span class="type">String</span> status);
+<span class="cmt">// Generates single SQL with LEFT JOIN for customer, items, and product</span>
+
+<span class="cmt">// ✅ Solution 3: Batch fetching (Hibernate hint)
+// application.properties:</span>
+<span class="cmt">// spring.jpa.properties.hibernate.default_batch_fetch_size=20</span>
+<span class="cmt">// Hibernate fetches 20 children at once with WHERE id IN (...)</span></code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Composite Primary Key</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Composite key using @EmbeddedId</span></div>
+        <pre><code><span class="cmt">// 1. Define the key class</span>
+<span class="kw2">@Embeddable</span>
+<span class="kw">public class</span> <span class="type">OrderItemId</span> <span class="kw">implements</span> <span class="type">Serializable</span> {
+    <span class="kw">private</span> <span class="type">Long</span> orderId;
+    <span class="kw">private</span> <span class="type">Long</span> productId;
+    <span class="cmt">// equals + hashCode required!</span>
+}
+
+<span class="cmt">// 2. Use it in entity</span>
+<span class="kw2">@Entity</span>
+<span class="kw">public class</span> <span class="type">OrderItem</span> {
+    <span class="kw2">@EmbeddedId</span>
+    <span class="kw">private</span> <span class="type">OrderItemId</span> id;
+
+    <span class="kw2">@ManyToOne</span>
+    <span class="kw2">@MapsId</span>(<span class="str">"orderId"</span>)         <span class="cmt">// maps orderId field of key to order FK</span>
+    <span class="kw">private</span> <span class="type">Order</span> order;
+
+    <span class="kw2">@ManyToOne</span>
+    <span class="kw2">@MapsId</span>(<span class="str">"productId"</span>)
+    <span class="kw">private</span> <span class="type">Product</span> product;
+
+    <span class="kw">private</span> <span class="type">int</span> quantity;
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Back to top button ── -->
+  <button id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+</main>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+  // ── Progress bar ──
+  window.addEventListener('scroll', () => {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
+    document.getElementById('progress').style.width = pct + '%';
+  });
+
+  // ── Sidebar toggle ──
+  const hamburger = document.getElementById('hamburger');
+  const sidebar   = document.getElementById('sidebar');
+  const overlay   = document.getElementById('sidebar-overlay');
+
+  hamburger.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('visible');
+    hamburger.classList.toggle('active');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('visible');
+    hamburger.classList.remove('active');
+  });
+
+  // ── Close sidebar on nav link click (mobile) ──
+  document.querySelectorAll('.toc-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        hamburger.classList.remove('active');
+      }
+    });
+  });
+
+  // ── Active nav highlight on scroll ──
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // ── Q&A toggle ──
+  document.querySelectorAll('.qa-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.closest('.qa-item');
+      item.classList.toggle('open');
+    });
+  });
+
+  // ── Back-to-top button ──
+  const topBtn = document.getElementById('top-btn');
+  window.addEventListener('scroll', () => {
+    topBtn.style.opacity = window.scrollY > 400 ? '1' : '0';
+    topBtn.style.pointerEvents = window.scrollY > 400 ? 'auto' : 'none';
+  });
+</script>
+</body>
+</html>

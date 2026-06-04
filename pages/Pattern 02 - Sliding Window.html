@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pattern 02: Sliding Window — The Frame That Moves</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0f1f2e 40%, #0a1a2a 100%);
+    }
+    .window-visual {
+      font-family: 'Courier New', monospace;
+      background: #010409;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    .win-arr {
+      display: flex;
+      gap: 4px;
+      margin: 0.4rem 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .win-cell {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #8b949e;
+      background: #161b22;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .win-cell.inside  { background: #0d2137; border-color: #58a6ff; color: #58a6ff; }
+    .win-cell.left-p  { background: #0d2137; border-color: #3fb950; color: #3fb950; }
+    .win-cell.right-p { background: #0d2137; border-color: #f85149; color: #f85149; }
+    .win-cell.shrink  { background: #1f1209; border-color: #d29922; color: #d29922; }
+    .win-label { font-size: 0.65rem; color: #8b949e; margin-top: 4px; display: flex; gap: 4px; }
+    .win-label span { width: 40px; text-align: center; flex-shrink: 0; }
+    .win-label span.lbl-L { color: #3fb950; font-weight: 700; }
+    .win-label span.lbl-R { color: #f85149; font-weight: 700; }
+    .win-label span.lbl-in { color: #58a6ff; }
+    .step-anim {
+      display: grid;
+      gap: 1rem;
+    }
+    .anim-step {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0.8rem 1rem;
+    }
+    .anim-step .step-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8b949e;
+      margin-bottom: 0.5rem;
+    }
+    .anim-step .step-action {
+      color: #e6edf3;
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+    }
+    .anim-step .step-state {
+      font-size: 0.75rem;
+      color: #58a6ff;
+      font-family: monospace;
+    }
+    .decision-box {
+      background: #0d1117;
+      border: 2px solid #30363d;
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .decision-box .d-question {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #e6edf3;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .decision-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .d-yes { background: #0d2137; border: 1px solid #58a6ff; border-radius: 8px; padding: 0.8rem; }
+    .d-no  { background: #1a1209; border: 1px solid #d29922; border-radius: 8px; padding: 0.8rem; }
+    .d-yes h5, .d-no h5 { margin: 0 0 0.3rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .d-yes h5 { color: #58a6ff; }
+    .d-no h5  { color: #d29922; }
+    .d-yes p, .d-no p { margin: 0; font-size: 0.82rem; color: #8b949e; }
+    .analogy-box {
+      background: linear-gradient(135deg, #161b22, #1a1f2b);
+      border-left: 4px solid #bc8cff;
+      border-radius: 0 8px 8px 0;
+      padding: 1.2rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .analogy-box .analogy-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #bc8cff;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    .analogy-box p { color: #c9d1d9; font-size: 0.9rem; margin: 0; line-height: 1.7; }
+    .freq-map {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 0.5rem 0;
+    }
+    .freq-cell {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 36px;
+    }
+    .freq-cell .fc-char { color: #f778ba; font-weight: 700; }
+    .freq-cell .fc-count { color: #58a6ff; font-size: 0.75rem; }
+    .freq-cell.needed { border-color: #3fb950; }
+    .freq-cell.satisfied { border-color: #d29922; background: #1a2010; }
+    .freq-cell.excess { border-color: #f85149; background: #1f0d0d; }
+    .vs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .vs-table th {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .vs-table th:nth-child(1) { color: #8b949e; background: #161b22; }
+    .vs-table th:nth-child(2) { color: #58a6ff; background: #0d2137; }
+    .vs-table th:nth-child(3) { color: #3fb950; background: #0d2010; }
+    .vs-table td { padding: 0.6rem 1rem; border-top: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+    .vs-table tr:nth-child(even) td { background: #161b22; }
+    .vs-table td:nth-child(2) { color: #c9d1d9; }
+    .vs-table td:nth-child(3) { color: #c9d1d9; }
+    .practice-group { margin-bottom: 2rem; }
+    .practice-group h4 { margin-bottom: 0.8rem; }
+    .problem-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+    .problem-list li {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+    }
+    .problem-list li:hover { border-color: #58a6ff; background: #0d2137; transition: all 0.2s; }
+    .p-num { color: #8b949e; font-family: monospace; font-size: 0.75rem; min-width: 30px; margin-top: 2px; }
+    .p-title { color: #e6edf3; font-weight: 600; flex: 1; }
+    .p-title a { color: #58a6ff; text-decoration: none; }
+    .p-title a:hover { text-decoration: underline; }
+    .p-diff { font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; border: 1px solid; white-space: nowrap; margin-top: 2px; }
+    .p-diff.easy   { color: #3fb950; border-color: #3fb950; }
+    .p-diff.medium { color: #d29922; border-color: #d29922; }
+    .p-diff.hard   { color: #f85149; border-color: #f85149; }
+    .walkthrough-step {
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .wt-head {
+      background: #21262d;
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .wt-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #58a6ff;
+      color: #0d1117;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .wt-title { font-size: 0.9rem; font-weight: 600; color: #e6edf3; }
+    .wt-body { padding: 1rem; background: #161b22; }
+    .wt-body p { margin: 0 0 0.6rem; font-size: 0.85rem; color: #8b949e; }
+    .wt-body p:last-child { margin-bottom: 0; }
+    .trace-row {
+      display: grid;
+      grid-template-columns: 70px 70px 1fr 1fr 1fr;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.78rem;
+      font-family: monospace;
+      align-items: center;
+    }
+    .trace-row.hdr {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6e7681;
+      border-bottom: 2px solid #30363d;
+      padding-bottom: 0.5rem;
+    }
+    .trace-row span { color: #8b949e; }
+    .trace-row .tr-L  { color: #3fb950; font-weight: 700; }
+    .trace-row .tr-R  { color: #f85149; font-weight: 700; }
+    .trace-row .tr-win { color: #58a6ff; }
+    .trace-row .tr-note { color: #d29922; font-size: 0.72rem; }
+    .trace-row .tr-best { color: #3fb950; }
+    .cheat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .cheat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 0.9rem;
+    }
+    .cheat-card .cc-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+      font-weight: 700;
+    }
+    .cheat-card .cc-content {
+      font-size: 0.8rem;
+      color: #e6edf3;
+      font-family: monospace;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     PROGRESS BAR
+═══════════════════════════════════════ -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ═══════════════════════════════════════
+     HAMBURGER
+═══════════════════════════════════════ -->
+<button id="hamburger" aria-label="Toggle navigation">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="3" y1="6"  x2="21" y2="6"/>
+    <line x1="3" y1="12" x2="21" y2="12"/>
+    <line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
+
+<!-- ═══════════════════════════════════════
+     OVERLAY
+═══════════════════════════════════════ -->
+<div id="sidebar-overlay"></div>
+
+<!-- ═══════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🪟</div>
+    <div>
+      <div class="sidebar-title">Sliding Window</div>
+      <div class="sidebar-subtitle">Pattern 02 · DSA Notes</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section-label">Home</div>
+  <a href="../index.html" class="toc-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Back to Home
+  </a>
+
+  <div class="sidebar-section-label">Part 1 · Foundations</div>
+  <a href="#what-is" class="toc-link">What Is Sliding Window?</a>
+  <a href="#fixed-vs-variable" class="toc-link">Fixed vs Variable Window ⚡</a>
+  <a href="#decision-rule" class="toc-link">Decision Rule</a>
+
+  <div class="sidebar-section-label">Part 2 · Templates</div>
+  <a href="#fixed-template" class="toc-link">Fixed Window Template</a>
+  <a href="#variable-template" class="toc-link">Variable Window Template</a>
+  <a href="#when-to-shrink" class="toc-link">When to Shrink</a>
+
+  <div class="sidebar-section-label">Part 3 · Patterns</div>
+  <a href="#hashmap-window" class="toc-link">HashMap + Window</a>
+  <a href="#sw-vs-tp" class="toc-link">Sliding Window vs Two Pointers</a>
+
+  <div class="sidebar-section-label">Part 4 · Walkthrough</div>
+  <a href="#lc76" class="toc-link">LC #76 Min Window Substring</a>
+
+  <div class="sidebar-section-label">Part 5 · Practice</div>
+  <a href="#practice-fixed" class="toc-link">Fixed Window Problems</a>
+  <a href="#practice-variable" class="toc-link">Variable Window Problems</a>
+
+  <div class="sidebar-section-label">Reference</div>
+  <a href="#cheatsheet" class="toc-link">Cheat Sheet</a>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════ -->
+<main id="main">
+
+  <!-- ── HERO ───────────────────────────── -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="tag tag-blue">Pattern 02</span>
+        <span class="tag tag-cyan">Arrays &amp; Strings</span>
+        <span class="tag tag-orange">Medium–Hard</span>
+      </div>
+      <h1>Sliding Window<br><span style="color:#58a6ff">The Frame That Moves</span></h1>
+      <p class="hero-subtitle">
+        A contiguous subarray or substring technique that replaces O(n²) brute-force loops
+        with a single O(n) pass. Master fixed and variable windows — then no substring
+        problem will stop you.
+      </p>
+      <div class="hero-badges">
+        <div class="badge">
+          <span class="badge-icon">📐</span>
+          <div class="badge-label">Time Complexity</div>
+          <div class="badge-value">O(n)</div>
+        </div>
+        <div class="badge">
+          <span class="badge-icon">🧠</span>
+          <div class="badge-label">Space Complexity</div>
+          <div class="badge-value">O(1) to O(k)</div>
+        </div>
+        <div class="badge">
+          <span class="badge-icon">🎯</span>
+          <div class="badge-label">Window Types</div>
+          <div class="badge-value">Fixed &amp; Variable</div>
+        </div>
+        <div class="badge">
+          <span class="badge-icon">🔑</span>
+          <div class="badge-label">Core Keyword</div>
+          <div class="badge-value">Contiguous</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       PART 1 — FOUNDATIONS
+  ════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>Foundations</h2>
+      <p>What sliding window is, why it works, and the critical Fixed vs Variable distinction.</p>
+    </div>
+  </div>
+
+  <!-- What Is Sliding Window -->
+  <div class="section" id="what-is">
+    <div class="section-header">
+      <h3>🪟 What Is the Sliding Window Pattern?</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Imagine a physical frame placed over an array. The frame has a <strong>left edge</strong>
+        and a <strong>right edge</strong>. Everything inside the frame is your <em>current window</em>.
+        Instead of recomputing the window from scratch each time you move it, you
+        <strong>add the new element entering on the right</strong> and
+        <strong>remove the old element leaving on the left</strong>.
+        One slide forward costs O(1) — not O(k).
+      </p>
+      <p>
+        This converts the classic nested-loop O(n × k) approach into a single O(n) scan.
+      </p>
+    </div>
+
+    <div class="window-visual">
+      <p style="color:#6e7681;font-size:0.78rem;margin:0 0 0.8rem;">Array: [2, 1, 5, 1, 3, 2] — find max sum of 3 consecutive elements</p>
+
+      <p style="color:#6e7681;font-size:0.72rem;margin:0 0 0.3rem;">Step 1 — initial window (sum = 8)</p>
+      <div class="win-arr">
+        <div class="win-cell left-p">2</div>
+        <div class="win-cell inside">1</div>
+        <div class="win-cell right-p">5</div>
+        <div class="win-cell">1</div>
+        <div class="win-cell">3</div>
+        <div class="win-cell">2</div>
+      </div>
+      <div class="win-label">
+        <span class="lbl-L">L</span><span class="lbl-in">·</span><span class="lbl-R">R</span>
+        <span></span><span></span><span></span>
+      </div>
+
+      <p style="color:#6e7681;font-size:0.72rem;margin:0.8rem 0 0.3rem;">Step 2 — slide right: remove arr[0]=2, add arr[3]=1  (sum = 7)</p>
+      <div class="win-arr">
+        <div class="win-cell">2</div>
+        <div class="win-cell left-p">1</div>
+        <div class="win-cell inside">5</div>
+        <div class="win-cell right-p">1</div>
+        <div class="win-cell">3</div>
+        <div class="win-cell">2</div>
+      </div>
+      <div class="win-label">
+        <span></span><span class="lbl-L">L</span><span class="lbl-in">·</span><span class="lbl-R">R</span>
+        <span></span><span></span>
+      </div>
+
+      <p style="color:#6e7681;font-size:0.72rem;margin:0.8rem 0 0.3rem;">Step 3 — slide right: remove arr[1]=1, add arr[4]=3  (sum = 9 ✓ max)</p>
+      <div class="win-arr">
+        <div class="win-cell">2</div>
+        <div class="win-cell">1</div>
+        <div class="win-cell left-p">5</div>
+        <div class="win-cell inside">1</div>
+        <div class="win-cell right-p">3</div>
+        <div class="win-cell">2</div>
+      </div>
+      <div class="win-label">
+        <span></span><span></span>
+        <span class="lbl-L">L</span><span class="lbl-in">·</span><span class="lbl-R">R</span>
+        <span></span>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>The key insight</strong>
+        <p>
+          <code>new_sum = old_sum − arr[left−1] + arr[right]</code> — we never loop through
+          the window again. Each element is touched <em>at most twice</em>: once when
+          the right pointer adds it, once when the left pointer removes it. Total work = O(2n) = O(n).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fixed vs Variable -->
+  <div class="section" id="fixed-vs-variable">
+    <div class="section-header">
+      <h3>⚡ Fixed Window vs Variable Window — The #1 Confusion</h3>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>This is the most common source of bugs in sliding window solutions.</strong>
+        <p>
+          Choosing the wrong variant leads to either missing valid windows or checking
+          too many. Read the decision rule carefully before writing a single line of code.
+        </p>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4 style="color:#3fb950">✅ Fixed Window</h4>
+        <p>The window <strong>size never changes</strong>. Left and right pointers always move
+        together — right expands by 1, left shrinks by 1, maintaining constant gap.</p>
+        <br>
+        <p><strong>Signature:</strong> problem gives you a number <code>k</code> or <code>size</code>.</p>
+        <br>
+        <p><em>Examples:</em></p>
+        <ul>
+          <li>Max sum of k consecutive elements</li>
+          <li>First negative in every window of k</li>
+          <li>Find all anagrams of length k</li>
+        </ul>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:#d29922">🔄 Variable Window</h4>
+        <p>The window <strong>grows and shrinks</strong> based on a condition. Right always
+        moves forward; left moves only when the window becomes invalid.</p>
+        <br>
+        <p><strong>Signature:</strong> problem asks for <em>longest/shortest/minimum/maximum</em> window <em>satisfying a condition</em>.</p>
+        <br>
+        <p><em>Examples:</em></p>
+        <ul>
+          <li>Longest substring without repeating characters</li>
+          <li>Minimum window containing all chars of T</li>
+          <li>Longest subarray with sum ≤ target</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>Visual difference</h4>
+    <div class="window-visual">
+      <p style="color:#3fb950;font-size:0.78rem;margin:0 0 0.5rem;">FIXED — window size = 3, always stays the same width</p>
+      <div class="win-arr">
+        <div class="win-cell left-p">a</div><div class="win-cell inside">b</div><div class="win-cell right-p">c</div>
+        <div class="win-cell">d</div><div class="win-cell">e</div><div class="win-cell">f</div>
+        <span style="color:#3fb950;margin-left:8px;font-size:0.8rem;">→ both pointers advance together</span>
+      </div>
+      <div style="height:1px;background:#30363d;margin:1rem 0;"></div>
+      <p style="color:#d29922;font-size:0.78rem;margin:0 0 0.5rem;">VARIABLE — right expands freely, left shrinks only when condition violated</p>
+      <div class="win-arr">
+        <div class="win-cell left-p" style="border-color:#d29922;color:#d29922">a</div>
+        <div class="win-cell inside" style="border-color:#d29922;color:#d29922">b</div>
+        <div class="win-cell inside" style="border-color:#d29922;color:#d29922">c</div>
+        <div class="win-cell inside" style="border-color:#d29922;color:#d29922">d</div>
+        <div class="win-cell right-p" style="border-color:#f85149;color:#f85149">e</div>
+        <div class="win-cell">f</div>
+        <span style="color:#d29922;margin-left:8px;font-size:0.8rem;">→ window grew to 5 before shrinking</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decision Rule -->
+  <div class="section" id="decision-rule">
+    <div class="section-header">
+      <h3>🎯 The Decision Rule</h3>
+    </div>
+
+    <div class="decision-box">
+      <div class="d-question">❓ Is the window size fixed by the problem?</div>
+      <div class="decision-row">
+        <div class="d-yes">
+          <h5>YES → Fixed Window</h5>
+          <p>Problem says "of size k", "consecutive k elements", "every window of length k".</p>
+          <p style="margin-top:0.5rem;color:#3fb950">Use the <strong>fixed template</strong> — slide left+right together.</p>
+        </div>
+        <div class="d-no">
+          <h5>NO → Variable Window</h5>
+          <p>Problem says "longest", "shortest", "minimum", "maximum", "at most k", "exactly k distinct".</p>
+          <p style="margin-top:0.5rem;color:#d29922">Use the <strong>variable template</strong> — right always moves, left conditionally shrinks.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎙️</div>
+      <div class="body">
+        <strong>Interview tip — say this out loud</strong>
+        <p>
+          "The problem asks for the <em>longest</em> window satisfying X, so this is a
+          variable sliding window. I'll expand right freely and shrink from left whenever
+          the window becomes invalid." — Saying this before coding signals pattern mastery.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       PART 2 — TEMPLATES
+  ════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">02</div>
+    <div>
+      <h2>Core Templates</h2>
+      <p>Production-ready templates — memorise these, adapt to any problem.</p>
+    </div>
+  </div>
+
+  <!-- Fixed Template -->
+  <div class="section" id="fixed-template">
+    <div class="section-header">
+      <h3>📏 Fixed Window Template</h3>
+    </div>
+
+    <div class="card">
+      <p>Use this whenever the problem gives you an explicit window size <code>k</code>.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Fixed Window — Max Sum of K Elements</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">maxSumFixedWindow</span>(<span class="type">int</span>[] arr, <span class="type">int</span> k) {
+    <span class="type">int</span> n = arr.length;
+
+    <span class="cmt">// ── GUARD: not enough elements ────────────────────────</span>
+    <span class="kw">if</span> (n &lt; k) <span class="kw">return</span> -<span class="num">1</span>;
+
+    <span class="cmt">// ── PHASE 1: build the initial window of size k ────────</span>
+    <span class="type">int</span> windowSum = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; k; i++) {
+        windowSum += arr[i];          <span class="cmt">// load first k elements</span>
+    }
+    <span class="type">int</span> maxSum = windowSum;
+
+    <span class="cmt">// ── PHASE 2: slide the window across the rest ──────────</span>
+    <span class="kw">for</span> (<span class="type">int</span> right = k; right &lt; n; right++) {
+        windowSum += arr[right];      <span class="cmt">// add new element entering on RIGHT</span>
+        windowSum -= arr[right - k];  <span class="cmt">// remove old element leaving on LEFT</span>
+        <span class="cmt">// left pointer is implicitly (right - k + 1)</span>
+        maxSum = <span class="type">Math</span>.<span class="fn">max</span>(maxSum, windowSum);
+    }
+
+    <span class="kw">return</span> maxSum;
+}</code></pre>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>Fixed Window Mental Model</h4>
+      <p>Think of it as a conveyor belt of width <code>k</code>. The belt moves one slot right each iteration:
+      one item <em>drops off the back</em>, one item <em>climbs on the front</em>.
+      You never rebuild the belt from scratch.</p>
+    </div>
+  </div>
+
+  <!-- Variable Template -->
+  <div class="section" id="variable-template">
+    <div class="section-header">
+      <h3>🔄 Variable Window Template — Fully Annotated</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">ℹ️</div>
+      <div class="body">
+        <strong>This is the heart of the pattern.</strong>
+        <p>Every variable sliding window problem is a specialisation of this template.
+        The only things that change are: (1) the <em>validity condition</em>, (2) what state you track, (3) whether you want max or min window.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Variable Window — Universal Template (annotated)</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">variableWindow</span>(<span class="type">int</span>[] arr) {
+    <span class="type">int</span> left = <span class="num">0</span>;        <span class="cmt">// ① LEFT pointer — marks window start, moves inward to shrink</span>
+    <span class="type">int</span> best = <span class="num">0</span>;        <span class="cmt">// ② ANSWER accumulator (could be 0, INT_MAX, etc.)</span>
+    <span class="type">int</span> state = <span class="num">0</span>;      <span class="cmt">// ③ WINDOW STATE — tracks sum / count / freq map, etc.</span>
+
+    <span class="kw">for</span> (<span class="type">int</span> right = <span class="num">0</span>; right &lt; arr.length; right++) {
+
+        <span class="cmt">// ④ EXPAND — right pointer moves forward every iteration (always)</span>
+        state = <span class="fn">update</span>(state, arr[right]);
+
+        <span class="cmt">// ⑤ SHRINK LOOP — contract from left while window is INVALID</span>
+        <span class="cmt">//    "invalid" = violates the problem's condition</span>
+        <span class="cmt">//    The while loop (not if!) handles cases where multiple</span>
+        <span class="cmt">//    left advances are needed to restore validity.</span>
+        <span class="kw">while</span> (<span class="fn">isInvalid</span>(state)) {       <span class="cmt">// e.g. sum &gt; target, distinct &gt; k</span>
+            state = <span class="fn">remove</span>(state, arr[left]);
+            left++;                        <span class="cmt">// shrink from LEFT</span>
+        }
+
+        <span class="cmt">// ⑥ RECORD — window [left..right] is now valid; check if it's the best</span>
+        <span class="cmt">//    For LONGEST: best = max(best, right - left + 1)</span>
+        <span class="cmt">//    For SHORTEST: if valid, best = min(best, right - left + 1)</span>
+        best = <span class="type">Math</span>.<span class="fn">max</span>(best, right - left + <span class="num">1</span>);
+    }
+
+    <span class="kw">return</span> best;
+}</code></pre>
+    </div>
+
+    <h4>Annotated step-by-step on a real example</h4>
+    <p style="color:#8b949e;font-size:0.85rem;">Problem: longest subarray with sum ≤ 5, array = [1, 2, 3, 1, 1]</p>
+
+    <div class="step-anim">
+      <div class="anim-step">
+        <div class="step-label">right = 0 (arr[0] = 1)</div>
+        <div class="step-action">Expand: state = 0 + 1 = 1. Is 1 &gt; 5? No → skip shrink.</div>
+        <div class="step-state">Window [0..0] = {1}, sum=1, best=1</div>
+      </div>
+      <div class="anim-step">
+        <div class="step-label">right = 1 (arr[1] = 2)</div>
+        <div class="step-action">Expand: state = 1 + 2 = 3. Is 3 &gt; 5? No → skip shrink.</div>
+        <div class="step-state">Window [0..1] = {1,2}, sum=3, best=2</div>
+      </div>
+      <div class="anim-step">
+        <div class="step-label">right = 2 (arr[2] = 3)</div>
+        <div class="step-action">Expand: state = 3 + 3 = 6. Is 6 &gt; 5? YES → shrink: remove arr[0]=1, left=1. Now sum=5 ≤ 5. Stop while.</div>
+        <div class="step-state">Window [1..2] = {2,3}, sum=5, best=2</div>
+      </div>
+      <div class="anim-step">
+        <div class="step-label">right = 3 (arr[3] = 1)</div>
+        <div class="step-action">Expand: state = 5 + 1 = 6. Is 6 &gt; 5? YES → shrink: remove arr[1]=2, left=2. Now sum=4 ≤ 5. Stop.</div>
+        <div class="step-state">Window [2..3] = {3,1}, sum=4, best=2</div>
+      </div>
+      <div class="anim-step">
+        <div class="step-label">right = 4 (arr[4] = 1)</div>
+        <div class="step-action">Expand: state = 4 + 1 = 5. Is 5 &gt; 5? No → skip shrink.</div>
+        <div class="step-state">Window [2..4] = {3,1,1}, sum=5, <strong style="color:#3fb950">best=3 ← answer</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- When to Shrink -->
+  <div class="section" id="when-to-shrink">
+    <div class="section-header">
+      <h3>🤔 When to Shrink the Window — The Intuition</h3>
+    </div>
+
+    <div class="analogy-box">
+      <div class="analogy-title">🛋️ The Studio Apartment Analogy</div>
+      <p>
+        Imagine you're packing furniture into a studio apartment (the window).
+        You keep bringing in new furniture from the front door (right pointer expands).
+        The apartment has a rule: you can only have items worth &lt; $500 total.
+        The moment a new item pushes you over $500, you start carrying older items
+        out the back door (left pointer shrinks) — one by one — until you're back under $500.
+        You <strong>never stop bringing in new furniture from the front</strong>.
+        You only evict from the back when forced to.
+        The <strong>largest arrangement you had that fit</strong> is your answer.
+      </p>
+    </div>
+
+    <div class="card">
+      <h4>The while vs if question</h4>
+      <p>
+        Use <code>while (isInvalid)</code> — not <code>if</code> — because removing
+        one element might not be enough to restore validity. For example, if your
+        window has sum 50 and target is 10, you might need to evict many elements from
+        the left before the sum drops below 10.
+      </p>
+      <p>
+        The <code>while</code> loop automatically handles this: it keeps evicting until
+        the window is valid again, then <strong>stops immediately</strong>.
+      </p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4 style="color:#3fb950">Shrink condition for LONGEST</h4>
+        <p>Shrink when window becomes <strong>invalid</strong>. Record window size <em>after</em> shrinking (when valid again).</p>
+        <div class="code-block" style="margin-top:0.5rem">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="kw">while</span> (invalid) {
+    remove(arr[left]);
+    left++;
+}
+best = max(best, right-left+<span class="num">1</span>);</code></pre>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:#d29922">Shrink condition for SHORTEST</h4>
+        <p>Shrink as long as window <strong>stays valid</strong>. Record window size <em>before</em> shrinking breaks validity.</p>
+        <div class="code-block" style="margin-top:0.5rem">
+          <div class="code-header"><span class="code-lang">Java</span></div>
+          <pre><code><span class="kw">while</span> (valid) {
+    best = min(best, right-left+<span class="num">1</span>);
+    remove(arr[left]);
+    left++;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       PART 3 — PATTERNS
+  ════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">03</div>
+    <div>
+      <h2>Advanced Patterns</h2>
+      <p>HashMap frequency tracking and the Sliding Window vs Two Pointers clarification.</p>
+    </div>
+  </div>
+
+  <!-- HashMap + Sliding Window -->
+  <div class="section" id="hashmap-window">
+    <div class="section-header">
+      <h3>🗺️ HashMap + Sliding Window — Character Frequency Tracking</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        <strong>40% of sliding window problems involve tracking character/element frequencies.</strong>
+        The pattern: maintain a <code>HashMap&lt;Character, Integer&gt;</code> representing
+        the current window's frequency table. Expand right by incrementing the count,
+        shrink left by decrementing (and removing the key when count hits 0).
+      </p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Longest Substring Without Repeating Characters — LC #3</span>
+      </div>
+      <pre><code><span class="kw">public int</span> <span class="fn">lengthOfLongestSubstring</span>(<span class="type">String</span> s) {
+    <span class="type">Map</span>&lt;<span class="type">Character</span>, <span class="type">Integer</span>&gt; freq = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+    <span class="type">int</span> left = <span class="num">0</span>, best = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="type">int</span> right = <span class="num">0</span>; right &lt; s.<span class="fn">length</span>(); right++) {
+        <span class="type">char</span> c = s.<span class="fn">charAt</span>(right);
+
+        <span class="cmt">// ① ADD incoming character to frequency map</span>
+        freq.<span class="fn">put</span>(c, freq.<span class="fn">getOrDefault</span>(c, <span class="num">0</span>) + <span class="num">1</span>);
+
+        <span class="cmt">// ② SHRINK while a duplicate exists in the window</span>
+        <span class="kw">while</span> (freq.<span class="fn">get</span>(c) &gt; <span class="num">1</span>) {   <span class="cmt">// only c can cause a duplicate</span>
+            <span class="type">char</span> leftChar = s.<span class="fn">charAt</span>(left);
+            freq.<span class="fn">put</span>(leftChar, freq.<span class="fn">get</span>(leftChar) - <span class="num">1</span>);
+            <span class="kw">if</span> (freq.<span class="fn">get</span>(leftChar) == <span class="num">0</span>) freq.<span class="fn">remove</span>(leftChar); <span class="cmt">// cleanup</span>
+            left++;
+        }
+
+        <span class="cmt">// ③ RECORD window size — no duplicate in [left..right]</span>
+        best = <span class="type">Math</span>.<span class="fn">max</span>(best, right - left + <span class="num">1</span>);
+    }
+    <span class="kw">return</span> best;
+}</code></pre>
+    </div>
+
+    <h4>Frequency map visualised</h4>
+    <div class="window-visual">
+      <p style="color:#6e7681;font-size:0.78rem;margin:0 0 0.6rem;">String: "abcabcbb" — tracking window "abc" at position [0..2]</p>
+      <div class="freq-map">
+        <div class="freq-cell needed"><span class="fc-char">a</span><span class="fc-count">1</span></div>
+        <div class="freq-cell needed"><span class="fc-char">b</span><span class="fc-count">1</span></div>
+        <div class="freq-cell needed"><span class="fc-char">c</span><span class="fc-count">1</span></div>
+      </div>
+      <p style="color:#6e7681;font-size:0.72rem;margin:0.6rem 0 0.3rem;">After right=3 adds 'a' → count[a]=2 → INVALID — shrink until count[a]=1:</p>
+      <div class="freq-map">
+        <div class="freq-cell excess"><span class="fc-char">a</span><span class="fc-count">2</span></div>
+        <div class="freq-cell needed"><span class="fc-char">b</span><span class="fc-count">1</span></div>
+        <div class="freq-cell needed"><span class="fc-char">c</span><span class="fc-count">1</span></div>
+        <span style="color:#f85149;font-size:0.8rem;margin-left:8px;align-self:center;">← violation! shrink left</span>
+      </div>
+      <p style="color:#6e7681;font-size:0.72rem;margin:0.6rem 0 0.3rem;">Remove arr[left]='a', left=1 → count[a]=1 → VALID again:</p>
+      <div class="freq-map">
+        <div class="freq-cell satisfied"><span class="fc-char">a</span><span class="fc-count">1</span></div>
+        <div class="freq-cell needed"><span class="fc-char">b</span><span class="fc-count">1</span></div>
+        <div class="freq-cell needed"><span class="fc-char">c</span><span class="fc-count">1</span></div>
+        <span style="color:#3fb950;font-size:0.8rem;margin-left:8px;align-self:center;">← valid, window = "bca"</span>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Optimisation tip</strong>
+        <p>
+          For ASCII strings, replace <code>HashMap</code> with <code>int[128]</code> (or <code>int[256]</code>).
+          Array access is O(1) with zero hashing overhead. For Unicode use the map.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SW vs Two Pointers -->
+  <div class="section" id="sw-vs-tp">
+    <div class="section-header">
+      <h3>🆚 Sliding Window vs Two Pointers — The Clear Distinction</h3>
+    </div>
+
+    <div class="card">
+      <p>These two patterns share the same two-pointer mechanics but serve completely different purposes.
+      Confusing them leads to applying the wrong mental model.</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="vs-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>🪟 Sliding Window</th>
+            <th>👉 Two Pointers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Core idea</strong></td>
+            <td>Maintain a <em>contiguous subarray/substring</em> window; everything <strong>between</strong> the pointers matters</td>
+            <td>Navigate from two sides of an array; the space <strong>between</strong> pointers is usually discarded</td>
+          </tr>
+          <tr>
+            <td><strong>Pointer movement</strong></td>
+            <td>Right always advances; left only advances to shrink</td>
+            <td>Both pointers converge (or one chases the other) based on comparison logic</td>
+          </tr>
+          <tr>
+            <td><strong>What you process</strong></td>
+            <td>The <em>interior</em> of the window — the contiguous block</td>
+            <td>The <em>pair</em> pointed to by left and right</td>
+          </tr>
+          <tr>
+            <td><strong>Data structure</strong></td>
+            <td>Often needs auxiliary state (HashMap, running sum, counter)</td>
+            <td>Usually just the two index values — no auxiliary needed</td>
+          </tr>
+          <tr>
+            <td><strong>Works on</strong></td>
+            <td>Unsorted or sorted arrays/strings</td>
+            <td>Usually requires sorted input</td>
+          </tr>
+          <tr>
+            <td><strong>Classic problems</strong></td>
+            <td>Longest substring without repeat, min window substring, max sum subarray</td>
+            <td>Two Sum (sorted), Container With Most Water, 3Sum, Palindrome check</td>
+          </tr>
+          <tr>
+            <td><strong>Keyword in problem</strong></td>
+            <td>"Subarray", "substring", "contiguous", "window"</td>
+            <td>"Pair", "complement", "sorted array", "palindrome", "remove duplicates"</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>🪟 Sliding Window thinking</h4>
+        <p style="color:#8b949e;font-size:0.85rem;margin-bottom:0.7rem;">"I care about the entire contents of my window."</p>
+        <ul>
+          <li>Tracking a <em>sum</em> of all elements inside</li>
+          <li>Checking if window contains <em>all chars</em> of T</li>
+          <li>Finding the <em>longest valid stretch</em></li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h4>👉 Two Pointers thinking</h4>
+        <p style="color:#8b949e;font-size:0.85rem;margin-bottom:0.7rem;">"I only care about the values <em>at</em> the two pointers."</p>
+        <ul>
+          <li>Does <code>arr[L] + arr[R] == target</code>?</li>
+          <li>Is <code>arr[L] == arr[R]</code> a palindrome match?</li>
+          <li>Move L right or R left based on comparison</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🧠</span>
+      <p>
+        <strong>One-line test:</strong> Do you need to know what's <em>inside</em> the window?
+        → Sliding Window. Do you only care about what's <em>at</em> the two endpoints?
+        → Two Pointers.
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       PART 4 — WALKTHROUGH
+  ════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">04</div>
+    <div>
+      <h2>Deep Walkthrough</h2>
+      <p>LC #76 — the hardest commonly asked sliding window problem. Master this, master the pattern.</p>
+    </div>
+  </div>
+
+  <div class="section" id="lc76">
+    <div class="section-header">
+      <h3>🔬 LC #76 — Minimum Window Substring</h3>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🔥</div>
+      <div class="body">
+        <strong>This is the boss-level sliding window problem.</strong>
+        <p>
+          If you can solve this confidently in an interview, you have genuinely mastered
+          variable sliding windows. It combines HashMap frequency tracking, a validity
+          counter trick, and shortest-window logic all at once.
+        </p>
+      </div>
+    </div>
+
+    <div class="walkthrough-step">
+      <div class="wt-head"><div class="wt-num">1</div><div class="wt-title">Understand the Problem</div></div>
+      <div class="wt-body">
+        <p>Given strings <code>s</code> and <code>t</code>, return the minimum window substring of <code>s</code>
+        such that every character in <code>t</code> (including duplicates) is included.
+        Return <code>""</code> if no such window exists.</p>
+        <p>Example: <code>s = "ADOBECODEBANC"</code>, <code>t = "ABC"</code> → answer = <code>"BANC"</code></p>
+        <p><strong>Key constraint:</strong> duplicates in <code>t</code> must all be satisfied.
+        If <code>t = "AAB"</code>, the window must contain at least 2 A's and 1 B.</p>
+      </div>
+    </div>
+
+    <div class="walkthrough-step">
+      <div class="wt-head"><div class="wt-num">2</div><div class="wt-title">The Validity Counter Trick</div></div>
+      <div class="wt-body">
+        <p>Naively checking if all chars of T are in the window requires iterating the entire freq map
+        every step — that's O(∣Σ∣) per step, not O(1).</p>
+        <p><strong>Instead</strong>: maintain an integer <code>have</code> (characters fully satisfied)
+        and <code>need</code> (total distinct characters required). A character is "satisfied" when its
+        window count reaches its required count in T.</p>
+        <p>Window is valid when <code>have == need</code>. Checking validity is now O(1).</p>
+      </div>
+    </div>
+
+    <div class="walkthrough-step">
+      <div class="wt-head"><div class="wt-num">3</div><div class="wt-title">Complete Annotated Solution</div></div>
+      <div class="wt-body">
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">LC #76 — Minimum Window Substring</span>
+      </div>
+      <pre><code><span class="kw">public</span> <span class="type">String</span> <span class="fn">minWindow</span>(<span class="type">String</span> s, <span class="type">String</span> t) {
+
+    <span class="cmt">// ① Build the requirement map from T</span>
+    <span class="type">Map</span>&lt;<span class="type">Character</span>, <span class="type">Integer</span>&gt; need = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="type">char</span> c : t.<span class="fn">toCharArray</span>())
+        need.<span class="fn">put</span>(c, need.<span class="fn">getOrDefault</span>(c, <span class="num">0</span>) + <span class="num">1</span>);
+
+    <span class="type">Map</span>&lt;<span class="type">Character</span>, <span class="type">Integer</span>&gt; window = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+    <span class="type">int</span> have = <span class="num">0</span>;                    <span class="cmt">// chars FULLY satisfied in current window</span>
+    <span class="type">int</span> required = need.<span class="fn">size</span>();       <span class="cmt">// distinct chars we need to satisfy</span>
+
+    <span class="type">int</span> left = <span class="num">0</span>;
+    <span class="type">int</span>[] best = {-<span class="num">1</span>, <span class="num">0</span>, <span class="num">0</span>};          <span class="cmt">// [window length, left, right]</span>
+
+    <span class="kw">for</span> (<span class="type">int</span> right = <span class="num">0</span>; right &lt; s.<span class="fn">length</span>(); right++) {
+        <span class="type">char</span> c = s.<span class="fn">charAt</span>(right);
+
+        <span class="cmt">// ② EXPAND — add right char to window</span>
+        window.<span class="fn">put</span>(c, window.<span class="fn">getOrDefault</span>(c, <span class="num">0</span>) + <span class="num">1</span>);
+
+        <span class="cmt">// ③ Check if this char's requirement is NOW satisfied</span>
+        <span class="kw">if</span> (need.<span class="fn">containsKey</span>(c) &amp;&amp;
+            window.<span class="fn">get</span>(c).<span class="fn">intValue</span>() == need.<span class="fn">get</span>(c).<span class="fn">intValue</span>()) {
+            have++;                    <span class="cmt">// one more char type fully covered</span>
+        }
+
+        <span class="cmt">// ④ SHRINK LOOP — only when window is valid (have == required)</span>
+        <span class="kw">while</span> (have == required) {
+
+            <span class="cmt">// ⑤ RECORD minimum window found so far</span>
+            <span class="type">int</span> len = right - left + <span class="num">1</span>;
+            <span class="kw">if</span> (best[<span class="num">0</span>] == -<span class="num">1</span> || len &lt; best[<span class="num">0</span>]) {
+                best[<span class="num">0</span>] = len;
+                best[<span class="num">1</span>] = left;
+                best[<span class="num">2</span>] = right;
+            }
+
+            <span class="cmt">// ⑥ SHRINK from left — remove leftmost char</span>
+            <span class="type">char</span> leftChar = s.<span class="fn">charAt</span>(left);
+            window.<span class="fn">put</span>(leftChar, window.<span class="fn">get</span>(leftChar) - <span class="num">1</span>);
+
+            <span class="cmt">// Did shrinking break a satisfied requirement?</span>
+            <span class="kw">if</span> (need.<span class="fn">containsKey</span>(leftChar) &amp;&amp;
+                window.<span class="fn">get</span>(leftChar) &lt; need.<span class="fn">get</span>(leftChar)) {
+                have--;                <span class="cmt">// one char type no longer fully covered</span>
+            }
+            left++;
+        }
+    }
+
+    <span class="kw">return</span> best[<span class="num">0</span>] == -<span class="num">1</span> ? <span class="str">""</span>
+         : s.<span class="fn">substring</span>(best[<span class="num">1</span>], best[<span class="num">2</span>] + <span class="num">1</span>);
+}</code></pre>
+    </div>
+
+      </div>
+    </div>
+
+    <div class="walkthrough-step">
+      <div class="wt-head"><div class="wt-num">4</div><div class="wt-title">Execution Trace — s="ADOBECODEBANC", t="ABC"</div></div>
+      <div class="wt-body">
+        <p>need = {A:1, B:1, C:1}, required=3</p>
+        <div class="trace-row hdr">
+          <span>right</span><span>char</span><span>window (relevant)</span><span>have/req</span><span>action / best</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">0</span><span>A</span><span class="tr-win">A:1</span><span>1/3</span><span>have++ (A satisfied)</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">1–3</span><span>D,O,B</span><span class="tr-win">A:1,B:1</span><span>2/3</span><span>have++ on B</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">4</span><span>E</span><span class="tr-win">…,E:1</span><span>2/3</span><span>expand</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">5</span><span>C</span><span class="tr-win">A:1,B:1,C:1</span><span>3/3</span><span class="tr-note">VALID! shrink loop starts</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-L">L=0</span><span>rm A</span><span class="tr-win">A:0,B:1,C:1</span><span>2/3</span><span class="tr-best">best="ADOBEC" len=6; have-- (A removed)</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">6–9</span><span>O,D,E,B</span><span class="tr-win">B:2,C:1</span><span>2/3</span><span>expand (B:2 but A missing)</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">10</span><span>A</span><span class="tr-win">A:1,B:2,C:1</span><span>3/3</span><span class="tr-note">VALID again! shrink loop</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-L">L=1</span><span>rm D</span><span class="tr-win">same</span><span>3/3</span><span class="tr-best">best="DOBECODEBA" → continues shrinking</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-L">L=5</span><span>rm C</span><span class="tr-win">A:1,B:2,C:0</span><span>2/3</span><span class="tr-best">best="CODEBA" len=6; shrink breaks validity</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">11</span><span>N</span><span class="tr-win">N:1</span><span>2/3</span><span>expand</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-R">12</span><span>C</span><span class="tr-win">A:1,B:2,C:1</span><span>3/3</span><span class="tr-note">VALID! shrink loop</span>
+        </div>
+        <div class="trace-row">
+          <span class="tr-L">L=9</span><span>rm B</span><span class="tr-win">A:1,B:1,C:1</span><span>3/3</span><span class="tr-best">best="BANC" len=4 ✓ Final answer!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="walkthrough-step">
+      <div class="wt-head"><div class="wt-num">5</div><div class="wt-title">Complexity Analysis</div></div>
+      <div class="wt-body">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Dimension</th><th>Complexity</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td>Time</td><td><span class="pill pill-green">O(∣s∣ + ∣t∣)</span></td><td>Each char of s added once, removed at most once. Need map built in O(∣t∣).</td></tr>
+              <tr><td>Space</td><td><span class="pill pill-blue">O(∣Σ∣)</span></td><td>Two maps capped at alphabet size (26 for lowercase, 128 for ASCII).</td></tr>
+              <tr><td>Brute force</td><td><span class="pill pill-red">O(∣s∣² × ∣t∣)</span></td><td>Every substring × check if all t chars present.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════
+       PART 5 — PRACTICE
+  ════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">05</div>
+    <div>
+      <h2>Practice Problems</h2>
+      <p>Separated by window type. Solve them in order — difficulty increases within each group.</p>
+    </div>
+  </div>
+
+  <div class="section" id="practice-fixed">
+    <div class="section-header">
+      <h3>📏 Fixed Window Problems</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">📌</div>
+      <div class="body">
+        <strong>How to approach fixed window problems</strong>
+        <p>The window size <code>k</code> is always given. Build the initial window in Phase 1,
+        then slide in Phase 2. These are typically easier and good for building the muscle memory.</p>
+      </div>
+    </div>
+
+    <ul class="problem-list">
+      <li>
+        <span class="p-num">#643</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/maximum-average-subarray-i/" target="_blank">Maximum Average Subarray I</a><br><small style="color:#6e7681;font-weight:400">Classic fixed window — find subarray of length k with max average</small></span>
+        <span class="p-diff easy">Easy</span>
+      </li>
+      <li>
+        <span class="p-num">#1343</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/number-of-sub-arrays-of-size-k-and-average-greater-than-or-equal-to-threshold/" target="_blank">Sub-arrays of Size K ≥ Threshold</a><br><small style="color:#6e7681;font-weight:400">Count windows with average ≥ threshold — good for counting pattern</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#567</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/permutation-in-string/" target="_blank">Permutation in String</a><br><small style="color:#6e7681;font-weight:400">Fixed window = length of p2. Check if window is anagram of p1 (freq map comparison)</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#438</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/find-all-anagrams-in-a-string/" target="_blank">Find All Anagrams in a String</a><br><small style="color:#6e7681;font-weight:400">Extension of #567 — collect all valid starting indices</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#1456</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length/" target="_blank">Maximum Vowels in Substring of Length K</a><br><small style="color:#6e7681;font-weight:400">Fixed window with simple element type check</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section" id="practice-variable">
+    <div class="section-header">
+      <h3>🔄 Variable Window Problems</h3>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Variable windows require more thought</strong>
+        <p>Before coding, always identify: (1) What is the validity condition?
+        (2) What state do I need to track? (3) Am I looking for max or min window?
+        Writing these 3 answers on paper before typing saves 80% of debugging time.</p>
+      </div>
+    </div>
+
+    <ul class="problem-list">
+      <li>
+        <span class="p-num">#121</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock/" target="_blank">Best Time to Buy and Sell Stock</a><br><small style="color:#6e7681;font-weight:400">Warm-up — track running minimum (degenerate window)</small></span>
+        <span class="p-diff easy">Easy</span>
+      </li>
+      <li>
+        <span class="p-num">#3</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/longest-substring-without-repeating-characters/" target="_blank">Longest Substring Without Repeating Characters</a><br><small style="color:#6e7681;font-weight:400">The canonical variable window + HashMap problem. Must know this cold.</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#209</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/minimum-size-subarray-sum/" target="_blank">Minimum Size Subarray Sum</a><br><small style="color:#6e7681;font-weight:400">Shortest window with sum ≥ target — shrink when valid (inverse pattern)</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#1004</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/max-consecutive-ones-iii/" target="_blank">Max Consecutive Ones III</a><br><small style="color:#6e7681;font-weight:400">Longest subarray with at most k zeros. Shrink when zeros > k.</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#424</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/longest-repeating-character-replacement/" target="_blank">Longest Repeating Character Replacement</a><br><small style="color:#6e7681;font-weight:400">Track max frequency in window. Shrink when (window size - maxFreq) > k</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#1838</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/frequency-of-the-most-frequent-element/" target="_blank">Frequency of Most Frequent Element</a><br><small style="color:#6e7681;font-weight:400">Sort + variable window. Challenging validity condition involving total ops.</small></span>
+        <span class="p-diff medium">Medium</span>
+      </li>
+      <li>
+        <span class="p-num">#76</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/minimum-window-substring/" target="_blank">Minimum Window Substring</a><br><small style="color:#6e7681;font-weight:400">The boss — full walktrough above. Solve this last.</small></span>
+        <span class="p-diff hard">Hard</span>
+      </li>
+      <li>
+        <span class="p-num">#30</span>
+        <span class="p-title"><a href="https://leetcode.com/problems/substring-with-concatenation-of-all-words/" target="_blank">Substring with Concatenation of All Words</a><br><small style="color:#6e7681;font-weight:400">Sliding window where each unit is a word (not a char). Multiple starting offsets.</small></span>
+        <span class="p-diff hard">Hard</span>
+      </li>
+    </ul>
+
+    <div class="banner banner-green">
+      <h4>Recommended Study Order</h4>
+      <p>
+        LC#643 → LC#3 → LC#209 → LC#567 → LC#438 → LC#1004 → LC#424 → LC#76.
+        After #76 everything else is a variation you already know how to handle.
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       CHEAT SHEET
+  ════════════════════════════════════ -->
+  <div class="section" id="cheatsheet">
+    <div class="section-header">
+      <h3>📋 Quick Reference Cheat Sheet</h3>
+    </div>
+
+    <div class="cheat-grid">
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#58a6ff">Window Size</div>
+        <div class="cc-content">
+          Fixed → k given in problem<br>
+          Variable → "longest/shortest"<br>
+          keyword
+        </div>
+      </div>
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#3fb950">Window Length</div>
+        <div class="cc-content">
+          right - left + 1<br>
+          (both inclusive)
+        </div>
+      </div>
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#d29922">When to Shrink</div>
+        <div class="cc-content">
+          Longest: shrink when INVALID<br>
+          Shortest: shrink while VALID
+        </div>
+      </div>
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#f85149">Shrink loop</div>
+        <div class="cc-content">
+          Always while() not if()<br>
+          Multiple steps may be needed
+        </div>
+      </div>
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#bc8cff">Freq Map</div>
+        <div class="cc-content">
+          Add on right expand<br>
+          Decrement on left shrink<br>
+          Remove key when count = 0
+        </div>
+      </div>
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#39d5d3">Validity Trick</div>
+        <div class="cc-content">
+          have / need counter<br>
+          O(1) validity check<br>
+          Used in LC #76, #567
+        </div>
+      </div>
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#e3b341">Complexity</div>
+        <div class="cc-content">
+          Time:  O(n)<br>
+          Space: O(1) or O(Σ)<br>
+          Each element: add once, remove once
+        </div>
+      </div>
+      <div class="cheat-card">
+        <div class="cc-label" style="color:#f778ba">vs Two Pointers</div>
+        <div class="cc-content">
+          SW: care about interior<br>
+          TP: care about endpoints only<br>
+          SW: unsorted OK / TP: sorted
+        </div>
+      </div>
+    </div>
+
+    <h4>Pattern Recognition Keywords</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:0.5rem;">
+      <span class="tag tag-blue">subarray</span>
+      <span class="tag tag-blue">substring</span>
+      <span class="tag tag-blue">contiguous</span>
+      <span class="tag tag-green">longest</span>
+      <span class="tag tag-green">maximum subarray</span>
+      <span class="tag tag-orange">shortest</span>
+      <span class="tag tag-orange">minimum window</span>
+      <span class="tag tag-purple">at most k distinct</span>
+      <span class="tag tag-purple">exactly k</span>
+      <span class="tag tag-yellow">window of size k</span>
+      <span class="tag tag-yellow">every k elements</span>
+      <span class="tag tag-red">all chars of t</span>
+      <span class="tag tag-cyan">character frequency</span>
+      <span class="tag tag-cyan">anagram</span>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>3-question pre-code checklist</strong>
+        <p>
+          1. Is this <strong>fixed</strong> or <strong>variable</strong> window?
+          &nbsp;·&nbsp;
+          2. What is my <strong>validity/invalidity condition</strong>?
+          &nbsp;·&nbsp;
+          3. Am I looking for <strong>max</strong> (record after shrink) or <strong>min</strong> (record before shrink)?
+          Answer all three aloud before writing code. Interviewers reward this.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════
+     BACK TO TOP BUTTON
+═══════════════════════════════════════ -->
+<button class="top-btn" id="topBtn" title="Back to top">↑</button>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════ -->
+<script>
+  /* ── Progress bar ── */
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const total    = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width =
+      (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+  });
+
+  // ── Sidebar toggle (standardized) ──
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
+
+  /* ── Active nav link on scroll ── */
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.toc-link');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.toc-link[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  /* ── Smooth scroll for nav links ── */
+  navLinks.forEach(link => {
+    if (link.getAttribute('href').startsWith('#')) {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (window.innerWidth < 768) closeSidebar();
+        }
+      });
+    }
+  });
+
+  /* ── Back to top button ── */
+  const topBtn = document.getElementById('topBtn');
+  window.addEventListener('scroll', () => {
+    topBtn.style.opacity = window.scrollY > 400 ? '1' : '0';
+    topBtn.style.pointerEvents = window.scrollY > 400 ? 'auto' : 'none';
+  });
+  topBtn.addEventListener('click', () =>
+    window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  /* ── Q&A toggle (if present) ── */
+  document.querySelectorAll('.qa-q').forEach(q => {
+    q.addEventListener('click', () =>
+      q.parentElement.classList.toggle('open'));
+  });
+</script>
+
+</body>
+</html>

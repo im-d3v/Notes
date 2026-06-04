@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF #14 — Advanced Graph Algorithms</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css">
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0d1f2d 45%, #0a1628 100%);
+    }
+
+    #dijkstra-canvas {
+      background: #010409;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 600px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .anim-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .anim-btn {
+      padding: 8px 22px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: monospace;
+      transition: background 0.2s, color 0.2s;
+    }
+    .anim-btn:hover { background: var(--accent-blue); color: #000; }
+
+    .anim-step-info {
+      text-align: center;
+      color: var(--accent-cyan);
+      font-size: 13px;
+      margin-top: 10px;
+      min-height: 22px;
+      font-family: monospace;
+    }
+
+    .dist-table-anim {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .dist-node {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 14px;
+      text-align: center;
+      min-width: 58px;
+      transition: all 0.35s;
+    }
+    .dist-node.updated { border-color: var(--accent-green); background: rgba(63,185,80,.12); }
+    .dist-node.current { border-color: var(--accent-blue);  background: rgba(88,166,255,.15); }
+    .dist-node .dn-label { font-size: 11px; color: var(--text-muted); }
+    .dist-node .dn-val   { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+
+    .mst-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) { .mst-compare { grid-template-columns: 1fr; } }
+
+    .algo-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .algo-box.kruskal { border-top: 3px solid var(--accent-blue); }
+    .algo-box.prim    { border-top: 3px solid var(--accent-green); }
+
+    .trap-item {
+      background: var(--bg-card);
+      border-left: 3px solid var(--accent-red);
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+    }
+    .trap-item h5 {
+      color: var(--accent-red) !important;
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      letter-spacing: .08em;
+    }
+    .trap-item p { margin: 0 0 8px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Progress Bar ── -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ── Hamburger ── -->
+<button id="hamburger" aria-label="Toggle menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- ── Sidebar Overlay ── -->
+<div id="sidebar-overlay"></div>
+
+<!-- ══════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">PDF #14</div>
+    <div class="sidebar-subtitle">Advanced Graphs</div>
+  </div>
+
+  <ul class="toc-list">
+    <li><a href="../index.html" class="toc-link">🏠 Home</a></li>
+    <li class="toc-section-label">Contents</li>
+    <li><a href="#selection-guide"  class="toc-link">01 — Selection Guide</a></li>
+    <li><a href="#dijkstra"         class="toc-link">02 — Dijkstra's</a></li>
+    <li><a href="#bellman-ford"     class="toc-link">03 — Bellman-Ford</a></li>
+    <li><a href="#floyd-warshall"   class="toc-link">04 — Floyd-Warshall</a></li>
+    <li><a href="#mst"              class="toc-link">05 — MST (Kruskal + Prim)</a></li>
+    <li><a href="#traps"            class="toc-link">06 — Interview Traps</a></li>
+    <li><a href="#practice"         class="toc-link">07 — Practice Problems</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">PDF #14 · Algorithm Patterns Series</div>
+      <h1>Advanced Graph Algorithms</h1>
+      <p class="hero-subtitle">Shortest Paths &amp; Spanning Trees — the complete interview playbook</p>
+      <div class="hero-badges">
+        <span class="tag tag-blue">Dijkstra</span>
+        <span class="tag tag-orange">Bellman-Ford</span>
+        <span class="tag tag-purple">Floyd-Warshall</span>
+        <span class="tag tag-green">Kruskal · Prim</span>
+        <span class="tag tag-cyan">15 Problems</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 01 — SELECTION GUIDE
+  ════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>The Selection Guide</h2>
+      <p>Before writing a single line of code — pick the right algorithm.</p>
+    </div>
+  </div>
+
+  <div class="section" id="selection-guide">
+    <h3>🗺️ Graph Algorithm Selection Guide</h3>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Mental Model — GPS Modes:</strong>
+        BFS = walking on equal streets.
+        Dijkstra = driving on roads with non-negative tolls.
+        Bellman-Ford = GPS that handles negative toll rebates.
+        Floyd-Warshall = pre-computing a full road atlas for every city pair.
+        Kruskal/Prim = cheapest way to wire a city with power lines.
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Problem Type</th>
+            <th>Algorithm</th>
+            <th>Why This One?</th>
+            <th>Time</th>
+            <th>When to Skip</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Single source, <strong>unweighted</strong></td>
+            <td><span class="pill pill-cyan">BFS</span></td>
+            <td>Each edge = cost 1. BFS explores level by level = distance by distance.</td>
+            <td><code>O(V+E)</code></td>
+            <td>Any edge has a distinct weight</td>
+          </tr>
+          <tr>
+            <td>Single source, weighted, <strong>no negatives</strong></td>
+            <td><span class="pill pill-blue">Dijkstra</span></td>
+            <td>Greedy relaxation is safe when all costs ≥ 0. Once popped, a node's distance is final.</td>
+            <td><code>O((V+E) log V)</code></td>
+            <td>Negative weights exist</td>
+          </tr>
+          <tr>
+            <td>Single source, weighted, <strong>negatives allowed</strong></td>
+            <td><span class="pill pill-orange">Bellman-Ford</span></td>
+            <td>Brute-force relaxes every edge N-1 times. Slower but correct for negatives.</td>
+            <td><code>O(V × E)</code></td>
+            <td>Graph is large (&gt;10⁴ nodes)</td>
+          </tr>
+          <tr>
+            <td><strong>All pairs</strong> shortest path</td>
+            <td><span class="pill pill-purple">Floyd-Warshall</span></td>
+            <td>DP through every intermediate node. One pass builds the full distance matrix.</td>
+            <td><code>O(V³)</code></td>
+            <td>V &gt; 500 (too slow)</td>
+          </tr>
+          <tr>
+            <td>Connect <strong>all nodes</strong> minimum cost</td>
+            <td><span class="pill pill-green">Kruskal / Prim</span></td>
+            <td>MST — minimum weight tree that spans all nodes. Not shortest path — connectivity.</td>
+            <td><code>O(E log E)</code></td>
+            <td>You need point-to-point shortest path</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>The #1 interview mistake:</strong> Reaching for Dijkstra by reflex.
+        Ask two questions before writing code: "Are there negative weights?" and
+        "Do I need one source or all pairs?" Those two questions alone narrow it down completely.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Recognition Signals — What the problem says → What it means</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Problem Says…</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td>"minimum cost / time / delay to reach destination"</td><td>Dijkstra</td></tr>
+            <tr><td>"at most K stops / hops / steps"</td><td>Bellman-Ford (K+1 rounds) or modified Dijkstra with state</td></tr>
+            <tr><td>"city reachable within threshold distance"</td><td>Floyd-Warshall (all pairs)</td></tr>
+            <tr><td>"connect all points / cities with minimum total cost"</td><td>Kruskal or Prim (MST)</td></tr>
+            <tr><td>"currency arbitrage / negative cycle detection"</td><td>Bellman-Ford Nth iteration check</td></tr>
+            <tr><td>"grid, minimum hops, no weights"</td><td>BFS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 02 — DIJKSTRA
+  ════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">02</div>
+    <div>
+      <h2>Dijkstra's Algorithm</h2>
+      <p>Greedy shortest path for non-negative weighted graphs.</p>
+    </div>
+  </div>
+
+  <div class="section" id="dijkstra">
+    <h3>⚡ Dijkstra's Algorithm — Deep Dive</h3>
+
+    <div class="card">
+      <h4>The Mental Model</h4>
+      <p>You're in a city. You start at node <strong>S</strong>. At every step, expand the <em>cheapest unvisited city</em> you know about. Use a <strong>min-heap</strong> so you always extract the minimum cost city first.</p>
+      <p>Once you pop a city from the heap, its distance is <strong>locked forever</strong>. No future path through positive edges can beat it. This is the greedy invariant that makes Dijkstra correct and fast.</p>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🔑</span>
+      <p><strong>Core Invariant:</strong> When a node is popped from the min-heap, its distance is <em>final</em>. All positive-weight future paths can only be longer — so we never revisit a popped node.</p>
+    </div>
+
+    <!-- ── INTERACTIVE DIJKSTRA ANIMATION ── -->
+    <div class="card">
+      <h4>🎬 Live Visualization — Step Through Dijkstra</h4>
+      <canvas id="dijkstra-canvas" width="580" height="310"></canvas>
+      <div class="anim-step-info" id="step-info">Click "Next Step" to begin the walkthrough</div>
+      <div class="dist-table-anim" id="dist-table"></div>
+      <div class="anim-controls">
+        <button class="anim-btn" id="btn-reset">↺ Reset</button>
+        <button class="anim-btn" id="btn-next">Next Step →</button>
+        <button class="anim-btn" id="btn-auto">▶ Auto Play</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Java Template — Dijkstra with Min-Heap</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Dijkstra — Standard Priority Queue Template</span>
+        </div>
+        <pre><code><span class="kw">import</span> java.util.*;
+
+<span class="kw">class</span> <span class="type">Dijkstra</span> {
+
+    <span class="cmt">// graph.get(u) = list of int[]{neighbor, weight}</span>
+    <span class="kw">public static int</span>[] <span class="fn">shortestPaths</span>(
+            <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; graph, <span class="kw">int</span> src, <span class="kw">int</span> n) {
+
+        <span class="kw">int</span>[] dist = <span class="kw">new int</span>[n];
+        <span class="type">Arrays</span>.<span class="fn">fill</span>(dist, <span class="type">Integer</span>.MAX_VALUE);
+        dist[src] = <span class="num">0</span>;
+
+        <span class="cmt">// Min-heap ordered by distance: {distance, node}</span>
+        <span class="type">PriorityQueue</span>&lt;<span class="kw">int</span>[]&gt; pq = <span class="kw">new</span> <span class="type">PriorityQueue</span>&lt;&gt;(
+                (a, b) -&gt; a[<span class="num">0</span>] - b[<span class="num">0</span>]);
+        pq.<span class="fn">offer</span>(<span class="kw">new int</span>[]{<span class="num">0</span>, src});
+
+        <span class="kw">while</span> (!pq.<span class="fn">isEmpty</span>()) {
+            <span class="kw">int</span>[] curr = pq.<span class="fn">poll</span>();
+            <span class="kw">int</span> d = curr[<span class="num">0</span>], u = curr[<span class="num">1</span>];
+
+            <span class="cmt">// ✅ Stale entry check — critical, do not skip</span>
+            <span class="kw">if</span> (d > dist[u]) <span class="kw">continue</span>;
+
+            <span class="kw">for</span> (<span class="kw">int</span>[] edge : graph.<span class="fn">get</span>(u)) {
+                <span class="kw">int</span> v = edge[<span class="num">0</span>], w = edge[<span class="num">1</span>];
+                <span class="kw">if</span> (dist[u] + w &lt; dist[v]) {      <span class="cmt">// relaxation</span>
+                    dist[v] = dist[u] + w;
+                    pq.<span class="fn">offer</span>(<span class="kw">new int</span>[]{dist[v], v});
+                }
+            }
+        }
+        <span class="kw">return</span> dist;   <span class="cmt">// dist[i] == Integer.MAX_VALUE → unreachable</span>
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🚫</div>
+      <div class="body">
+        <strong>Why Dijkstra FAILS with Negative Edges</strong>
+        <p>Suppose A→B = 4, but A→C→B = 3 + (−5) = −2. Dijkstra pops B at cost 4 and locks it. It never reconsiders. The true shortest path −2 is silently ignored. Negative edges break the invariant that "popped = optimal."</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Complexity at a Glance</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Implementation</th><th>Time</th><th>Space</th><th>Interview Use</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Binary min-heap (PriorityQueue)</td>
+              <td><code>O((V+E) log V)</code></td>
+              <td><code>O(V+E)</code></td>
+              <td><span class="pill pill-green">Default choice</span></td>
+            </tr>
+            <tr>
+              <td>Linear array scan</td>
+              <td><code>O(V²)</code></td>
+              <td><code>O(V)</code></td>
+              <td><span class="pill pill-blue">Dense graph (E ≈ V²)</span></td>
+            </tr>
+            <tr>
+              <td>Fibonacci heap</td>
+              <td><code>O(E + V log V)</code></td>
+              <td><code>O(V)</code></td>
+              <td><span class="pill pill-red">Never in interviews</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Acceptable in practice: up to ~10⁵ nodes and ~10⁶ edges with the min-heap version.</p>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Decision Moment — Dijkstra vs BFS:</strong>
+        If all edges have the same weight (or weight = 1), use BFS — it's O(V+E) vs O((V+E) log V).
+        Only upgrade to Dijkstra when edge weights genuinely differ.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Practice Problems — Dijkstra</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Problem</th><th>Diff</th><th>Key Twist</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>P1</td>
+              <td><a href="https://leetcode.com/problems/network-delay-time/" target="_blank">LC #743 — Network Delay Time</a></td>
+              <td>🟡</td>
+              <td>Classic template. Return max(dist[]). If any node = MAX_VALUE → return -1.</td>
+            </tr>
+            <tr>
+              <td>P2</td>
+              <td><a href="https://leetcode.com/problems/cheapest-flights-within-k-stops/" target="_blank">LC #787 — Cheapest Flights Within K Stops</a></td>
+              <td>🟡</td>
+              <td>State = (cost, node, stopsUsed). Don't skip visited nodes — stops matter more than revisiting.</td>
+            </tr>
+            <tr>
+              <td>P3</td>
+              <td><a href="https://leetcode.com/problems/path-with-minimum-effort/" target="_blank">LC #1631 — Path With Minimum Effort</a></td>
+              <td>🟡</td>
+              <td>Grid Dijkstra. Edge weight = |height diff|. Minimize the max effort (not sum).</td>
+            </tr>
+            <tr>
+              <td>P4</td>
+              <td><a href="https://leetcode.com/problems/path-with-maximum-probability/" target="_blank">LC #1514 — Path With Maximum Probability</a></td>
+              <td>🟡</td>
+              <td>Flip to max-heap. Multiply probabilities instead of summing costs.</td>
+            </tr>
+            <tr>
+              <td>P5</td>
+              <td><a href="https://leetcode.com/problems/swim-in-rising-water/" target="_blank">LC #778 — Swim in Rising Water</a></td>
+              <td>🔴</td>
+              <td>Minimize the maximum cell value on the path. dist[i][j] = min-max effort to reach (i,j).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 03 — BELLMAN-FORD
+  ════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">03</div>
+    <div>
+      <h2>Bellman-Ford Algorithm</h2>
+      <p>Slower but universal — handles negatives and detects negative cycles.</p>
+    </div>
+  </div>
+
+  <div class="section" id="bellman-ford">
+    <h3>🌀 Bellman-Ford — Relax ALL Edges, N-1 Times</h3>
+
+    <div class="card">
+      <h4>The Mental Model</h4>
+      <p>Don't trust greedy. Instead, brute-force it: <em>"The shortest path with at most 1 edge? Relax once. With at most 2 edges? Relax twice..."</em></p>
+      <p>A simple path in a graph with V nodes uses at most <strong>V-1 edges</strong>. So relax all edges exactly <strong>N-1 times</strong>. After that, any further improvement signals a <strong>negative cycle</strong> — a loop you can keep traversing to decrease cost infinitely.</p>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🔑</span>
+      <p><strong>Why N-1 iterations?</strong> After <em>i</em> rounds, dist[v] holds the shortest path using <em>at most i edges</em>. A graph with V nodes has paths of at most V-1 edges. So N-1 rounds = complete.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Bellman-Ford — Standard Template + Negative Cycle Detection</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="type">BellmanFord</span> {
+
+    <span class="cmt">// edges[i] = {from, to, weight}</span>
+    <span class="kw">public static int</span>[] <span class="fn">shortestPaths</span>(
+            <span class="kw">int</span>[][] edges, <span class="kw">int</span> n, <span class="kw">int</span> src) {
+
+        <span class="kw">int</span>[] dist = <span class="kw">new int</span>[n];
+        <span class="type">Arrays</span>.<span class="fn">fill</span>(dist, <span class="type">Integer</span>.MAX_VALUE);
+        dist[src] = <span class="num">0</span>;
+
+        <span class="cmt">// N-1 relaxation rounds</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n - <span class="num">1</span>; i++) {
+            <span class="kw">boolean</span> updated = <span class="kw">false</span>;
+            <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+                <span class="kw">int</span> u = e[<span class="num">0</span>], v = e[<span class="num">1</span>], w = e[<span class="num">2</span>];
+                <span class="kw">if</span> (dist[u] != <span class="type">Integer</span>.MAX_VALUE
+                        && dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    updated = <span class="kw">true</span>;
+                }
+            }
+            <span class="kw">if</span> (!updated) <span class="kw">break</span>; <span class="cmt">// early exit — already converged</span>
+        }
+
+        <span class="cmt">// Nth round: if anything still relaxes → negative cycle</span>
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+            <span class="kw">int</span> u = e[<span class="num">0</span>], v = e[<span class="num">1</span>], w = e[<span class="num">2</span>];
+            <span class="kw">if</span> (dist[u] != <span class="type">Integer</span>.MAX_VALUE
+                    && dist[u] + w &lt; dist[v]) {
+                <span class="kw">throw new</span> <span class="type">IllegalStateException</span>(<span class="str">"Negative cycle!"</span>);
+            }
+        }
+
+        <span class="kw">return</span> dist;
+    }
+}</code></pre>
+    </div>
+
+    <div class="card">
+      <h4>LC #787 — The K-Stops Variant (Classic Bellman-Ford Trap)</h4>
+      <p>Run exactly <strong>K+1 relaxation rounds</strong> (K stops = K+1 edges). The critical trap is using a snapshot of the distance array at the start of each round.</p>
+
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong>Without the snapshot:</strong> Within a single round you might "chain" relaxations — using an edge relaxed earlier in the same round. This lets a single iteration take a path of 3+ edges, breaking the "at most K edges" constraint silently.
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">LC #787 — Cheapest Flights Within K Stops</span>
+        </div>
+        <pre><code><span class="kw">public int</span> <span class="fn">findCheapestPrice</span>(
+        <span class="kw">int</span> n, <span class="kw">int</span>[][] flights, <span class="kw">int</span> src, <span class="kw">int</span> dst, <span class="kw">int</span> k) {
+
+    <span class="kw">int</span>[] dist = <span class="kw">new int</span>[n];
+    <span class="type">Arrays</span>.<span class="fn">fill</span>(dist, <span class="type">Integer</span>.MAX_VALUE);
+    dist[src] = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt;= k; i++) {               <span class="cmt">// K+1 rounds</span>
+        <span class="kw">int</span>[] snap = <span class="type">Arrays</span>.<span class="fn">copyOf</span>(dist, n);         <span class="cmt">// ✅ SNAPSHOT</span>
+        <span class="kw">for</span> (<span class="kw">int</span>[] f : flights) {
+            <span class="kw">int</span> u = f[<span class="num">0</span>], v = f[<span class="num">1</span>], w = f[<span class="num">2</span>];
+            <span class="kw">if</span> (dist[u] != <span class="type">Integer</span>.MAX_VALUE
+                    && dist[u] + w &lt; snap[v]) {
+                snap[v] = dist[u] + w;
+            }
+        }
+        dist = snap;
+    }
+
+    <span class="kw">return</span> dist[dst] == <span class="type">Integer</span>.MAX_VALUE ? -<span class="num">1</span> : dist[dst];
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Bellman-Ford vs Dijkstra — Decision Table</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Condition</th><th>Winner</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>All weights ≥ 0, no hop limit</td><td><span class="pill pill-blue">Dijkstra</span></td><td>Faster: O((V+E) log V)</td></tr>
+            <tr><td>Any negative weight possible</td><td><span class="pill pill-orange">Bellman-Ford</span></td><td>Greedy invariant breaks with negatives</td></tr>
+            <tr><td>"At most K hops" constraint</td><td><span class="pill pill-orange">Bellman-Ford</span></td><td>Run K+1 rounds with snapshot</td></tr>
+            <tr><td>Need to detect negative cycle</td><td><span class="pill pill-orange">Bellman-Ford</span></td><td>Run Nth round, check for any update</td></tr>
+            <tr><td>Graph &gt; 10⁴ nodes</td><td><span class="pill pill-blue">Dijkstra</span></td><td>Bellman-Ford too slow at scale</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Practice Problems — Bellman-Ford</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Problem</th><th>Diff</th><th>Key Twist</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>P6</td>
+              <td><a href="https://leetcode.com/problems/cheapest-flights-within-k-stops/" target="_blank">LC #787 — Cheapest Flights Within K Stops</a></td>
+              <td>🟡</td>
+              <td>K+1 rounds with array snapshot. The canonical B-F interview problem.</td>
+            </tr>
+            <tr>
+              <td>P7</td>
+              <td><a href="https://leetcode.com/problems/network-delay-time/" target="_blank">LC #743 — Network Delay Time</a></td>
+              <td>🟡</td>
+              <td>Solve with Bellman-Ford too — great for comparing both approaches.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 04 — FLOYD-WARSHALL
+  ════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">04</div>
+    <div>
+      <h2>Floyd-Warshall Algorithm</h2>
+      <p>All-pairs shortest paths — when you need every-to-every distance at once.</p>
+    </div>
+  </div>
+
+  <div class="section" id="floyd-warshall">
+    <h3>🔷 Floyd-Warshall — Try Every Node as an Intermediate</h3>
+
+    <div class="card">
+      <h4>The Mental Model</h4>
+      <p>Ask this for every pair (i, j): <em>"Is it shorter to go i→j directly, or i→k→j through some intermediate node k?"</em></p>
+      <p>Iterate over every possible intermediate node k from 0 to N-1. After all N iterations, <code>dist[i][j]</code> holds the true shortest path. It's DP where you gradually allow more intermediates.</p>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🚫</div>
+      <div class="body">
+        <strong>Loop Order is Sacred — the most common Floyd-Warshall bug:</strong>
+        <p>The outer loop MUST be <code>k</code> (the intermediate node). If you put k in the inner loop, you'll compute dist[i][j] through k before dist[i][k] is fully optimized, giving wrong answers. Always: <strong>for k → for i → for j</strong>.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Java</span>
+        <span class="code-title">Floyd-Warshall — All Pairs Shortest Path</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="type">FloydWarshall</span> {
+
+    <span class="kw">public static int</span>[][] <span class="fn">allPairs</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] edges) {
+        <span class="kw">final int</span> <span class="const">INF</span> = (<span class="kw">int</span>) <span class="num">1e9</span>;
+        <span class="kw">int</span>[][] dist = <span class="kw">new int</span>[n][n];
+
+        <span class="cmt">// 1. Init — INF everywhere, 0 on diagonal</span>
+        <span class="kw">for</span> (<span class="kw">int</span>[] row : dist) <span class="type">Arrays</span>.<span class="fn">fill</span>(row, <span class="const">INF</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) dist[i][i] = <span class="num">0</span>;
+
+        <span class="cmt">// 2. Load direct edges</span>
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+            dist[e[<span class="num">0</span>]][e[<span class="num">1</span>]] = e[<span class="num">2</span>];
+            dist[e[<span class="num">1</span>]][e[<span class="num">0</span>]] = e[<span class="num">2</span>]; <span class="cmt">// remove for directed graph</span>
+        }
+
+        <span class="cmt">// 3. OUTER = k (intermediate), then i, then j — order is non-negotiable</span>
+        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="num">0</span>; k &lt; n; k++) {
+            <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+                <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n; j++) {
+                    <span class="kw">if</span> (dist[i][k] &lt; <span class="const">INF</span> && dist[k][j] &lt; <span class="const">INF</span>) {
+                        dist[i][j] = <span class="type">Math</span>.<span class="fn">min</span>(
+                            dist[i][j],
+                            dist[i][k] + dist[k][j]
+                        );
+                    }
+                }
+            }
+        }
+
+        <span class="cmt">// Negative cycle: if dist[i][i] &lt; 0 for any i → cycle exists</span>
+        <span class="kw">return</span> dist;
+    }
+}</code></pre>
+    </div>
+
+    <div class="card">
+      <h4>When to Use Floyd-Warshall — Checklist</h4>
+      <ul>
+        <li>✅ You need distances between <strong>every pair</strong> of nodes</li>
+        <li>✅ Graph is small: V ≤ 200 (safe), V ≤ 400 (borderline), V &gt; 500 (TLE)</li>
+        <li>✅ Query asks "how many nodes are reachable from X within threshold?" — needs full matrix</li>
+        <li>❌ You only need shortest path from one source → use Dijkstra</li>
+        <li>❌ Graph is large → run Dijkstra from every node instead (V × Dijkstra)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>Practice Problems — Floyd-Warshall</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Problem</th><th>Diff</th><th>Key Twist</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>P8</td>
+              <td><a href="https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/" target="_blank">LC #1334 — Find City With Smallest Neighbors</a></td>
+              <td>🟡</td>
+              <td>Build full dist matrix, then count dist[i][j] ≤ threshold per city.</td>
+            </tr>
+            <tr>
+              <td>P9</td>
+              <td><a href="https://leetcode.com/problems/evaluate-division/" target="_blank">LC #399 — Evaluate Division</a></td>
+              <td>🟡</td>
+              <td>Edge weight = A/B ratio. Multiply (not add) in relaxation step. Handles transitive queries.</td>
+            </tr>
+            <tr>
+              <td>P10</td>
+              <td><a href="https://leetcode.com/problems/find-the-shortest-path-in-a-weighted-tree/" target="_blank">LC #2642 — Design Graph With Shortest Path</a></td>
+              <td>🔴</td>
+              <td>Dynamic edges added — Floyd-Warshall won't fit. Run Dijkstra per query.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 05 — MST
+  ════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">05</div>
+    <div>
+      <h2>Minimum Spanning Tree</h2>
+      <p>Connect all nodes — minimum total weight, zero cycles.</p>
+    </div>
+  </div>
+
+  <div class="section" id="mst">
+    <h3>🌲 Kruskal's &amp; Prim's Algorithms</h3>
+
+    <div class="card">
+      <h4>What Is a Spanning Tree?</h4>
+      <p>A spanning tree of V nodes: connects all V nodes, has exactly V-1 edges, no cycles.
+      A <strong>Minimum</strong> Spanning Tree (MST) minimizes the total edge weight sum.</p>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>MST ≠ Shortest Path Tree.</strong> The MST gives minimum cost to connect every node. It does NOT give shortest paths between individual pairs. These are fundamentally different goals — don't confuse them.
+        </div>
+      </div>
+    </div>
+
+    <div class="mst-compare">
+      <div class="algo-box kruskal">
+        <h4>🔵 Kruskal's</h4>
+        <p><strong>Strategy:</strong> Sort all edges by weight. Add cheapest edge that doesn't create a cycle. Use Union-Find to detect cycles in near-O(1).</p>
+        <p><strong>Best when:</strong> Sparse graph. Edge list is the natural input format.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body"><div class="step-title">Sort all edges by weight (ascending)</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body"><div class="step-title">For each edge: union(u,v) — if different components, add it</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body"><div class="step-title">Stop when V-1 edges added</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="algo-box prim">
+        <h4>🟢 Prim's</h4>
+        <p><strong>Strategy:</strong> Start from any node. Greedily expand the tree by adding the cheapest edge crossing the cut (tree ↔ non-tree boundary).</p>
+        <p><strong>Best when:</strong> Dense graph. Adjacency list / matrix is the natural input.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body"><div class="step-title">Add node 0 to MST, push its edges to min-heap</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body"><div class="step-title">Pop cheapest edge to unvisited node → add to tree</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body"><div class="step-title">Push new node's edges. Repeat until all V nodes in MST.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Java Template — Kruskal's with Union-Find (DSU)</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Kruskal's MST — DSU with Path Compression + Union by Rank</span>
+        </div>
+        <pre><code><span class="kw">class</span> <span class="type">Kruskal</span> {
+
+    <span class="kw">int</span>[] parent, rank;
+
+    <span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span> x) {
+        <span class="kw">if</span> (parent[x] != x)
+            parent[x] = <span class="fn">find</span>(parent[x]);  <span class="cmt">// path compression</span>
+        <span class="kw">return</span> parent[x];
+    }
+
+    <span class="kw">boolean</span> <span class="fn">union</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+        <span class="kw">int</span> px = <span class="fn">find</span>(x), py = <span class="fn">find</span>(y);
+        <span class="kw">if</span> (px == py) <span class="kw">return false</span>;           <span class="cmt">// same component → cycle!</span>
+        <span class="kw">if</span> (rank[px] &lt; rank[py]) { <span class="kw">int</span> t = px; px = py; py = t; }
+        parent[py] = px;
+        <span class="kw">if</span> (rank[px] == rank[py]) rank[px]++;
+        <span class="kw">return true</span>;
+    }
+
+    <span class="kw">public int</span> <span class="fn">mstCost</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] edges) {
+        parent = <span class="kw">new int</span>[n];
+        rank   = <span class="kw">new int</span>[n];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) parent[i] = i;
+
+        <span class="type">Arrays</span>.<span class="fn">sort</span>(edges, (a, b) -&gt; a[<span class="num">2</span>] - b[<span class="num">2</span>]);  <span class="cmt">// sort by weight</span>
+
+        <span class="kw">int</span> totalCost = <span class="num">0</span>, used = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+            <span class="kw">if</span> (<span class="fn">union</span>(e[<span class="num">0</span>], e[<span class="num">1</span>])) {
+                totalCost += e[<span class="num">2</span>];
+                <span class="kw">if</span> (++used == n - <span class="num">1</span>) <span class="kw">break</span>;   <span class="cmt">// MST complete</span>
+            }
+        }
+        <span class="kw">return</span> used == n - <span class="num">1</span> ? totalCost : -<span class="num">1</span>; <span class="cmt">// -1 → disconnected</span>
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Java Template — Prim's with Min-Heap</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Prim's MST — Priority Queue Template</span>
+        </div>
+        <pre><code><span class="kw">public int</span> <span class="fn">primMST</span>(<span class="kw">int</span> n, <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; graph) {
+    <span class="kw">boolean</span>[] inMST = <span class="kw">new boolean</span>[n];
+    <span class="cmt">// min-heap: {edge_weight, destination_node}</span>
+    <span class="type">PriorityQueue</span>&lt;<span class="kw">int</span>[]&gt; pq = <span class="kw">new</span> <span class="type">PriorityQueue</span>&lt;&gt;(
+            (a, b) -&gt; a[<span class="num">0</span>] - b[<span class="num">0</span>]);
+    pq.<span class="fn">offer</span>(<span class="kw">new int</span>[]{<span class="num">0</span>, <span class="num">0</span>}); <span class="cmt">// start from node 0, cost 0</span>
+
+    <span class="kw">int</span> totalCost = <span class="num">0</span>, added = <span class="num">0</span>;
+
+    <span class="kw">while</span> (!pq.<span class="fn">isEmpty</span>() && added &lt; n) {
+        <span class="kw">int</span>[] curr = pq.<span class="fn">poll</span>();
+        <span class="kw">int</span> cost = curr[<span class="num">0</span>], node = curr[<span class="num">1</span>];
+
+        <span class="kw">if</span> (inMST[node]) <span class="kw">continue</span>;     <span class="cmt">// already in tree</span>
+        inMST[node] = <span class="kw">true</span>;
+        totalCost += cost;
+        added++;
+
+        <span class="kw">for</span> (<span class="kw">int</span>[] nb : graph.<span class="fn">get</span>(node)) {
+            <span class="kw">if</span> (!inMST[nb[<span class="num">0</span>]])
+                pq.<span class="fn">offer</span>(<span class="kw">new int</span>[]{nb[<span class="num">1</span>], nb[<span class="num">0</span>]});
+        }
+    }
+    <span class="kw">return</span> added == n ? totalCost : -<span class="num">1</span>;
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Kruskal vs Prim — When to Pick Which</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Condition</th><th>Winner</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>Sparse graph (E ≈ V)</td><td><span class="pill pill-blue">Kruskal</span></td><td>Sorting E edges is cheap; Union-Find nearly O(1)</td></tr>
+            <tr><td>Dense graph (E ≈ V²)</td><td><span class="pill pill-green">Prim</span></td><td>No need to sort all E² edges; heap approach is faster</td></tr>
+            <tr><td>Input is an edge list</td><td><span class="pill pill-blue">Kruskal</span></td><td>Naturally operates on edge list</td></tr>
+            <tr><td>Input is adjacency list/matrix</td><td><span class="pill pill-green">Prim</span></td><td>Naturally expands from adjacency</td></tr>
+            <tr><td>Need to detect if graph is connected</td><td><span class="pill pill-blue">Kruskal</span></td><td>If edges used &lt; V-1, graph is disconnected</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Practice Problems — MST</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Problem</th><th>Diff</th><th>Key Twist</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>P11</td>
+              <td><a href="https://leetcode.com/problems/connecting-cities-with-minimum-cost/" target="_blank">LC #1135 — Connecting Cities With Minimum Cost</a></td>
+              <td>🟡</td>
+              <td>Classic Kruskal. If edges used &lt; N-1, return -1 (disconnected).</td>
+            </tr>
+            <tr>
+              <td>P12</td>
+              <td><a href="https://leetcode.com/problems/min-cost-to-connect-all-points/" target="_blank">LC #1584 — Min Cost to Connect All Points</a></td>
+              <td>🟡</td>
+              <td>Dense complete graph (Manhattan distance). Prim's is more efficient here.</td>
+            </tr>
+            <tr>
+              <td>P13</td>
+              <td><a href="https://leetcode.com/problems/redundant-connection/" target="_blank">LC #684 — Redundant Connection</a></td>
+              <td>🟡</td>
+              <td>Build MST — the first edge where union() returns false is the answer.</td>
+            </tr>
+            <tr>
+              <td>P14</td>
+              <td><a href="https://leetcode.com/problems/find-critical-and-pseudo-critical-edges-in-minimum-spanning-tree/" target="_blank">LC #1489 — Critical &amp; Pseudo-Critical MST Edges</a></td>
+              <td>🔴</td>
+              <td>Run MST multiple times: once excluding edge, once forcing it. Deep Kruskal mastery.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 06 — INTERVIEW TRAPS
+  ════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">06</div>
+    <div>
+      <h2>Common Interview Traps</h2>
+      <p>The mistakes that separate "solved it" from "thought you solved it."</p>
+    </div>
+  </div>
+
+  <div class="section" id="traps">
+    <h3>🕳️ Graph Algorithm — The 5 Traps That Kill Interviews</h3>
+
+    <div class="trap-item">
+      <h5>TRAP 1 — DIRECTED VS UNDIRECTED CYCLE DETECTION</h5>
+      <p>In an <strong>undirected</strong> graph, the edge A-B means you can traverse both A→B and B→A. DFS will see the parent as a "visited" neighbor — that is NOT a cycle. You must track and skip the parent node.</p>
+      <p>In a <strong>directed</strong> graph, you need a separate <em>in-stack</em> boolean array — only a back-edge to a node currently on the DFS call stack is a true cycle. "Visited" alone is insufficient.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Undirected vs Directed Cycle Detection</span></div>
+        <pre><code><span class="cmt">// Undirected: skip the node we came from (parent), not all visited</span>
+<span class="kw">boolean</span> <span class="fn">hasCycleUndirected</span>(<span class="kw">int</span> node, <span class="kw">int</span> parent, <span class="kw">boolean</span>[] vis) {
+    vis[node] = <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> nei : graph[node]) {
+        <span class="kw">if</span> (!vis[nei]) {
+            <span class="kw">if</span> (<span class="fn">hasCycleUndirected</span>(nei, node, vis)) <span class="kw">return true</span>;
+        } <span class="kw">else if</span> (nei != parent) <span class="kw">return true</span>; <span class="cmt">// back edge = cycle</span>
+    }
+    <span class="kw">return false</span>;
+}
+
+<span class="cmt">// Directed: track which nodes are on the CURRENT dfs path</span>
+<span class="kw">boolean</span> <span class="fn">hasCycleDirected</span>(<span class="kw">int</span> node, <span class="kw">boolean</span>[] vis, <span class="kw">boolean</span>[] inStack) {
+    vis[node] = inStack[node] = <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> nei : graph[node]) {
+        <span class="kw">if</span> (!vis[nei] && <span class="fn">hasCycleDirected</span>(nei, vis, inStack)) <span class="kw">return true</span>;
+        <span class="kw">if</span> (inStack[nei]) <span class="kw">return true</span>; <span class="cmt">// back edge to current path</span>
+    }
+    inStack[node] = <span class="kw">false</span>; <span class="cmt">// remove from path on way back</span>
+    <span class="kw">return false</span>;
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <h5>TRAP 2 — DISCONNECTED GRAPH HANDLING</h5>
+      <p>Dijkstra/BFS from a single source will NOT visit disconnected components. If the problem asks "can every node be reached?" or "return the max distance," you need to check for unreachable nodes after the algorithm.</p>
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong>Never return Integer.MAX_VALUE as a distance.</strong>
+          Always convert: <code>if (dist[target] == Integer.MAX_VALUE) return -1;</code>
+        </div>
+      </div>
+      <p>For undirected graphs, if you need to visit all components, loop through all unvisited nodes and start a new BFS/DFS from each one.</p>
+    </div>
+
+    <div class="trap-item">
+      <h5>TRAP 3 — OVERFLOW WHEN CHECKING DIST[U] + W</h5>
+      <p>If <code>dist[u] = Integer.MAX_VALUE</code> (unreachable node), then <code>dist[u] + w</code> overflows to a large negative number, causing spurious relaxations that corrupt the entire distance array.</p>
+      <p><strong>Fix:</strong> Always guard: <code>if (dist[u] != Integer.MAX_VALUE && dist[u] + w &lt; dist[v])</code></p>
+    </div>
+
+    <div class="trap-item">
+      <h5>TRAP 4 — WRONG GRAPH REPRESENTATION FOR THE ALGORITHM</h5>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Algorithm</th><th>Natural Representation</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>BFS / DFS</td><td>Adjacency list</td><td>Iterate neighbors efficiently</td></tr>
+            <tr><td>Dijkstra</td><td>Adjacency list + PQ</td><td>Need neighbor list per node</td></tr>
+            <tr><td>Bellman-Ford</td><td>Edge list <code>int[][]</code></td><td>Iterates ALL edges each round</td></tr>
+            <tr><td>Floyd-Warshall</td><td>2D matrix <code>dist[V][V]</code></td><td>Random access to any pair</td></tr>
+            <tr><td>Kruskal</td><td>Edge list (sorted)</td><td>Sort-then-union pattern</td></tr>
+            <tr><td>Prim</td><td>Adjacency list</td><td>Expand from current node outward</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="trap-item">
+      <h5>TRAP 5 — MST vs SHORTEST PATH CONFUSION</h5>
+      <p>Students confuse LC #1584 (MST — connect all points cheaply) with LC #743 (Dijkstra — shortest delay to all nodes). The MST minimizes total cable cost across all connections. Dijkstra minimizes path length from a specific source. They solve completely different problems and produce different trees.</p>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>✅ MST</h4>
+          <ul>
+            <li>No specific source node</li>
+            <li>Connects ALL nodes with minimum total weight</li>
+            <li>Result: a tree with V-1 edges</li>
+            <li>Example: laying fiber optic cable</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>📍 Shortest Path</h4>
+          <ul>
+            <li>Has a specific source node</li>
+            <li>Minimum distance from source to each node</li>
+            <li>Result: shortest path tree (may use more edges)</li>
+            <li>Example: GPS navigation from your location</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       PART 07 — PRACTICE
+  ════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">07</div>
+    <div>
+      <h2>Practice Problem Bank</h2>
+      <p>15 curated problems across all algorithms — study order included.</p>
+    </div>
+  </div>
+
+  <div class="section" id="practice">
+    <h3>📋 All 15 Problems</h3>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Problem</th>
+            <th>Algorithm</th>
+            <th>Diff</th>
+            <th>Key Insight to Unlock It</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><a href="https://leetcode.com/problems/network-delay-time/" target="_blank">LC #743 — Network Delay Time</a></td>
+            <td><span class="pill pill-blue">Dijkstra</span></td>
+            <td>🟡</td>
+            <td>Single source. Return max(dist[]). If any = MAX_VALUE → -1.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><a href="https://leetcode.com/problems/path-with-minimum-effort/" target="_blank">LC #1631 — Path With Minimum Effort</a></td>
+            <td><span class="pill pill-blue">Dijkstra</span></td>
+            <td>🟡</td>
+            <td>Grid Dijkstra. dist[r][c] = min-max absolute height diff on path.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><a href="https://leetcode.com/problems/path-with-maximum-probability/" target="_blank">LC #1514 — Max Probability Path</a></td>
+            <td><span class="pill pill-blue">Dijkstra</span></td>
+            <td>🟡</td>
+            <td>Max-heap. Multiply probabilities. Negate to use min-heap.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><a href="https://leetcode.com/problems/swim-in-rising-water/" target="_blank">LC #778 — Swim in Rising Water</a></td>
+            <td><span class="pill pill-blue">Dijkstra</span></td>
+            <td>🔴</td>
+            <td>Minimize max cell value on path. Dijkstra on grid with max-cost state.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><a href="https://leetcode.com/problems/cheapest-flights-within-k-stops/" target="_blank">LC #787 — Cheapest Flights K Stops</a></td>
+            <td><span class="pill pill-orange">Bellman-Ford</span></td>
+            <td>🟡</td>
+            <td>K+1 rounds. Array snapshot per round is mandatory.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><a href="https://leetcode.com/problems/network-delay-time/" target="_blank">LC #743 — Network Delay Time (B-F)</a></td>
+            <td><span class="pill pill-orange">Bellman-Ford</span></td>
+            <td>🟡</td>
+            <td>Solve with Bellman-Ford and compare to Dijkstra approach.</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><a href="https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/" target="_blank">LC #1334 — Find City Smallest Neighbors</a></td>
+            <td><span class="pill pill-purple">Floyd-Warshall</span></td>
+            <td>🟡</td>
+            <td>Build full all-pairs matrix. Count reachable ≤ threshold per city.</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><a href="https://leetcode.com/problems/evaluate-division/" target="_blank">LC #399 — Evaluate Division</a></td>
+            <td><span class="pill pill-purple">Floyd-Warshall</span></td>
+            <td>🟡</td>
+            <td>Edge weight = ratio A/B. Multiply in relaxation. Map string → int index.</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><a href="https://leetcode.com/problems/connecting-cities-with-minimum-cost/" target="_blank">LC #1135 — Connecting Cities Min Cost</a></td>
+            <td><span class="pill pill-green">Kruskal</span></td>
+            <td>🟡</td>
+            <td>Classic MST. Return total if N-1 edges used, else -1.</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><a href="https://leetcode.com/problems/min-cost-to-connect-all-points/" target="_blank">LC #1584 — Min Cost Connect Points</a></td>
+            <td><span class="pill pill-green">Prim</span></td>
+            <td>🟡</td>
+            <td>Complete graph (N² edges). Prim with PQ avoids sorting all edges.</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><a href="https://leetcode.com/problems/redundant-connection/" target="_blank">LC #684 — Redundant Connection</a></td>
+            <td><span class="pill pill-green">DSU / Kruskal</span></td>
+            <td>🟡</td>
+            <td>Build MST. First edge where union() returns false = redundant.</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><a href="https://leetcode.com/problems/find-critical-and-pseudo-critical-edges-in-minimum-spanning-tree/" target="_blank">LC #1489 — Critical MST Edges</a></td>
+            <td><span class="pill pill-green">Kruskal</span></td>
+            <td>🔴</td>
+            <td>Run MST excluding edge → critical if cost increases. Force edge → pseudo if cost same.</td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td><a href="https://leetcode.com/problems/course-schedule/" target="_blank">LC #207 — Course Schedule</a></td>
+            <td><span class="pill pill-cyan">Directed Cycle</span></td>
+            <td>🟡</td>
+            <td>Directed cycle detection with in-stack boolean. If cycle → impossible.</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><a href="https://leetcode.com/problems/word-ladder/" target="_blank">LC #127 — Word Ladder</a></td>
+            <td><span class="pill pill-cyan">BFS</span></td>
+            <td>🔴</td>
+            <td>Unweighted shortest path on implicit graph. BFS on word transformation.</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><a href="https://leetcode.com/problems/alien-dictionary/" target="_blank">LC #269 — Alien Dictionary</a></td>
+            <td><span class="pill pill-cyan">Topo Sort</span></td>
+            <td>🔴</td>
+            <td>Build directed graph from char ordering. Cycle → invalid. BFS topo sort.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>📌 Recommended Study Order</h4>
+      <p><strong>Week 1:</strong> P1 (Dijkstra baseline) → P2 (grid Dijkstra) → P5 (Bellman-Ford baseline) → P7 (Floyd-Warshall) → P9 (Kruskal) → P10 (Prim).
+      That's 6 problems covering all 5 algorithms with one problem each.</p>
+      <p><strong>Week 2:</strong> P3, P4 (Dijkstra variations) → P11, P13 (DSU/cycles) → P14, P15 (Hard BFS/Topo).
+      Then tackle P12 (Hard MST) last — it requires solid Kruskal internals.</p>
+    </div>
+
+    <div class="card">
+      <h4>Quick Pattern Summary — One Line Each</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Algorithm</th><th>One-Line Summary</th><th>The Gotcha</th></tr></thead>
+          <tbody>
+            <tr><td>BFS</td><td>Level-order = distance for unweighted graphs</td><td>Doesn't work with weights</td></tr>
+            <tr><td>Dijkstra</td><td>Min-heap + stale-entry check + relax neighbors</td><td>Fails with negative edges</td></tr>
+            <tr><td>Bellman-Ford</td><td>Relax all edges N-1 times; Nth = negative cycle</td><td>Array snapshot for K-hops variant</td></tr>
+            <tr><td>Floyd-Warshall</td><td>DP: try every k as intermediate, outer loop = k</td><td>O(V³) — only for V ≤ 300</td></tr>
+            <tr><td>Kruskal</td><td>Sort edges, union-find, add if different components</td><td>Return -1 if used &lt; V-1</td></tr>
+            <tr><td>Prim</td><td>Min-heap: grow tree edge by edge from any start</td><td>Skip inMST nodes — don't process twice</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+// ── Progress bar ────────────────────────────────────
+const fill = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  fill.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+});
+
+// ── Hamburger / Sidebar ──────────────────────────────
+const ham     = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('sidebar-overlay');
+
+function openSidebar()  { sidebar.classList.add('open');    overlay.classList.add('show');    ham.classList.add('active'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); ham.classList.remove('active'); }
+
+ham.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+overlay.addEventListener('click', closeSidebar);
+
+// ── Back to top ──────────────────────────────────────
+const topBtn = document.getElementById('topBtn');
+topBtn.style.opacity = '0';
+topBtn.style.transition = 'opacity .3s';
+window.addEventListener('scroll', () => {
+  topBtn.style.opacity = window.scrollY > 400 ? '1' : '0';
+});
+
+// ── Active TOC on scroll ─────────────────────────────
+const sections = document.querySelectorAll('.section[id]');
+const tocLinks = document.querySelectorAll('.toc-link');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      tocLinks.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.toc-link[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { threshold: 0.25 });
+sections.forEach(s => io.observe(s));
+
+// ════════════════════════════════════════════════════
+//  DIJKSTRA CANVAS ANIMATION
+// ════════════════════════════════════════════════════
+
+const canvas = document.getElementById('dijkstra-canvas');
+const ctx    = canvas.getContext('2d');
+const INF    = Infinity;
+
+const NODES = [
+  { id: 0, label: 'S', x: 80,  y: 155 },
+  { id: 1, label: 'A', x: 220, y: 60  },
+  { id: 2, label: 'B', x: 220, y: 250 },
+  { id: 3, label: 'C', x: 370, y: 60  },
+  { id: 4, label: 'D', x: 370, y: 250 },
+  { id: 5, label: 'E', x: 500, y: 155 },
+];
+
+// {u, v, w} — directed
+const EDGES = [
+  { u:0, v:1, w:4  },
+  { u:0, v:2, w:2  },
+  { u:1, v:2, w:1  },
+  { u:1, v:3, w:5  },
+  { u:2, v:4, w:8  },
+  { u:2, v:1, w:1  },
+  { u:3, v:5, w:2  },
+  { u:4, v:3, w:2  },
+  { u:4, v:5, w:6  },
+];
+
+// Pre-computed steps: visited[], current node, dist[], active edge indices, info
+const STEPS = [
+  { vis:[], cur:-1, dist:[0,INF,INF,INF,INF,INF], ae:[],     info:'Initialize — dist[S]=0, all others = ∞' },
+  { vis:[0], cur:0, dist:[0,4,2,INF,INF,INF],      ae:[0,1], info:'Pop S (cost=0). Relax S→A=4, S→B=2' },
+  { vis:[0,2], cur:2, dist:[0,3,2,INF,10,INF],     ae:[5,4], info:'Pop B (cost=2). Relax B→A: 2+1=3 ✅ improved! B→D=10' },
+  { vis:[0,2,1], cur:1, dist:[0,3,2,8,10,INF],     ae:[3],   info:'Pop A (cost=3). Relax A→C: 3+5=8' },
+  { vis:[0,2,1,3], cur:3, dist:[0,3,2,8,10,10],    ae:[6],   info:'Pop C (cost=8). Relax C→E: 8+2=10' },
+  { vis:[0,2,1,3,4], cur:4, dist:[0,3,2,8,10,10],  ae:[7,8], info:'Pop D (cost=10). D→C: 10+2=12 ❌ no improvement. D→E: 16 ❌' },
+  { vis:[0,2,1,3,4,5], cur:5, dist:[0,3,2,8,10,10],ae:[],    info:'✅ Complete! S=0  A=3  B=2  C=8  D=10  E=10' },
+];
+
+let stepIdx = 0, autoTimer = null;
+
+/* ── Drawing helpers ── */
+function arrow(fx, fy, tx, ty, color, lw) {
+  const angle = Math.atan2(ty - fy, tx - fx);
+  const nr = 22; // node radius
+  const ex = tx - nr * Math.cos(angle);
+  const ey = ty - nr * Math.sin(angle);
+
+  ctx.beginPath();
+  ctx.moveTo(fx + nr * Math.cos(angle), fy + nr * Math.sin(angle));
+  ctx.lineTo(ex, ey);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+
+  // arrowhead
+  const as = 9;
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - as * Math.cos(angle - 0.42), ey - as * Math.sin(angle - 0.42));
+  ctx.lineTo(ex - as * Math.cos(angle + 0.42), ey - as * Math.sin(angle + 0.42));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawStep(si) {
+  const s = STEPS[si];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Edges
+  EDGES.forEach((e, i) => {
+    const f = NODES[e.u], t = NODES[e.v];
+    const active = s.ae.includes(i);
+    arrow(f.x, f.y, t.x, t.y,
+          active ? '#3fb950' : '#2d333b',
+          active ? 2.5 : 1.5);
+
+    // Weight label
+    const mx = (f.x + t.x) / 2, my = (f.y + t.y) / 2;
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = active ? '#3fb950' : '#6e7681';
+    ctx.fillText(e.w, mx + 8, my - 8);
+  });
+
+  // Nodes
+  NODES.forEach((n, i) => {
+    const isVis = s.vis.includes(i);
+    const isCur = s.cur === i;
+    const r = 22;
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle   = isCur ? '#162d50' : isVis ? '#122a1c' : '#1c2128';
+    ctx.strokeStyle = isCur ? '#58a6ff' : isVis ? '#3fb950' : '#444c56';
+    ctx.lineWidth   = isCur ? 2.5 : isVis ? 2 : 1.5;
+    ctx.fill(); ctx.stroke();
+
+    // Node letter
+    ctx.font = 'bold 15px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = isCur ? '#58a6ff' : isVis ? '#3fb950' : '#8b949e';
+    ctx.fillText(n.label, n.x, n.y);
+
+    // Distance above node
+    const d = s.dist[i];
+    ctx.font = '11px monospace';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = d === INF ? '#6e7681' : '#e6edf3';
+    ctx.fillText(d === INF ? '∞' : d, n.x, n.y - 30);
+  });
+}
+
+function updateDistTable(si) {
+  const s = STEPS[si];
+  document.getElementById('dist-table').innerHTML = NODES.map((n, i) => {
+    const d = s.dist[i] === INF ? '∞' : s.dist[i];
+    const cls = s.cur === i ? 'current' : s.vis.includes(i) ? 'updated' : '';
+    return `<div class="dist-node ${cls}">
+      <div class="dn-label">${n.label}</div>
+      <div class="dn-val">${d}</div>
+    </div>`;
+  }).join('');
+}
+
+function render(si) {
+  drawStep(si);
+  updateDistTable(si);
+  document.getElementById('step-info').textContent =
+    `Step ${si}/${STEPS.length - 1}: ${STEPS[si].info}`;
+}
+
+render(0);
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (stepIdx < STEPS.length - 1) render(++stepIdx);
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  clearInterval(autoTimer); autoTimer = null;
+  document.getElementById('btn-auto').textContent = '▶ Auto Play';
+  render(stepIdx = 0);
+});
+
+document.getElementById('btn-auto').addEventListener('click', function () {
+  if (autoTimer) {
+    clearInterval(autoTimer); autoTimer = null;
+    this.textContent = '▶ Auto Play';
+  } else {
+    this.textContent = '⏸ Pause';
+    autoTimer = setInterval(() => {
+      if (stepIdx < STEPS.length - 1) {
+        render(++stepIdx);
+      } else {
+        clearInterval(autoTimer); autoTimer = null;
+        document.getElementById('btn-auto').textContent = '▶ Auto Play';
+      }
+    }, 1800);
+  }
+});
+</script>
+
+</body>
+</html>
