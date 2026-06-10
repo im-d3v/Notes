@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF #05 — Message Queues | System Design Notes</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #1a1400 40%, #2a1a0022 100%); }
+    .mq-flow-canvas { width: 100%; height: 120px; display: block; }
+    .kafka-canvas    { width: 100%; height: 220px; display: block; }
+    .fanout-canvas   { width: 100%; height: 180px; display: block; }
+    .delivery-toggle { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .dtoggle-btn {
+      padding:6px 16px; border-radius:20px; border:1px solid var(--border-color);
+      background:var(--bg-card); color:var(--text-secondary); cursor:pointer;
+      font-size:13px; transition:all .2s;
+    }
+    .dtoggle-btn.active { color:#fff; }
+    .dtoggle-btn.at-most.active  { background:#f8514930; border-color:#f85149; color:#f85149; }
+    .dtoggle-btn.at-least.active { background:#d2992230; border-color:#d29922; color:#d29922; }
+    .dtoggle-btn.exactly.active  { background:#3fb95030; border-color:#3fb950; color:#3fb950; }
+    .delivery-panel { display:none; }
+    .delivery-panel.visible { display:block; }
+    .checklist-item {
+      display:flex; align-items:flex-start; gap:10px;
+      padding:10px 14px; border-radius:8px; margin-bottom:8px;
+      background:var(--bg-card); border:1px solid var(--border-color);
+      cursor:pointer; transition:all .25s; user-select:none;
+    }
+    .checklist-item:hover { border-color:var(--accent-green); }
+    .checklist-item .ci-box {
+      width:20px; height:20px; border-radius:4px; border:2px solid var(--accent-blue);
+      flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center;
+      font-size:13px; transition:all .2s;
+    }
+    .checklist-item.checked .ci-box { background:var(--accent-green); border-color:var(--accent-green); }
+    .checklist-item.checked .ci-label { color:var(--accent-green); }
+    .ci-label { color:var(--text-secondary); font-size:14px; line-height:1.5; }
+    .checklist-item.checked .ci-label { text-decoration: line-through; opacity:.7; }
+    #mq-verdict { margin-top:12px; padding:14px; border-radius:8px; display:none;
+      background:#3fb95015; border:1px solid var(--accent-green); color:var(--accent-green);
+      font-size:14px; font-weight:500; }
+    .pattern-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+    .ptab { padding:6px 14px; border-radius:6px; border:1px solid var(--border-color);
+      background:var(--bg-card); color:var(--text-secondary); cursor:pointer;
+      font-size:13px; transition:all .2s; }
+    .ptab.active { background:var(--accent-blue); color:#fff; border-color:var(--accent-blue); }
+    .ptab-panel { display:none; }
+    .ptab-panel.visible { display:block; }
+  </style>
+</head>
+<body>
+
+<!-- ── Progress Bar ─────────────────────────────────────────────── -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ── Hamburger ─────────────────────────────────────────────────── -->
+<button id="hamburger" aria-label="Toggle menu">
+  <span></span><span></span><span></span>
+</button>
+<div id="sidebar-overlay"></div>
+
+<!-- ── Sidebar ───────────────────────────────────────────────────── -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div class="sidebar-title">System Design</div>
+      <div class="sidebar-subtitle">PDF #05 · Message Queues</div>
+    </div>
+  </div>
+  <ul class="toc-list">
+    <li class="toc-section-label">Navigation</li>
+    <li><a class="toc-link" href="../index.html">🏠 Home</a></li>
+
+    <li class="toc-section-label">Contents</li>
+    <li><a class="toc-link" href="#sync-problem">01 · The Synchronous Problem</a></li>
+    <li><a class="toc-link" href="#what-is-mq">02 · What Is a Message Queue?</a></li>
+    <li><a class="toc-link" href="#four-benefits">03 · The 4 Benefits</a></li>
+    <li><a class="toc-link" href="#comparison">04 · Kafka vs RabbitMQ vs SQS</a></li>
+    <li><a class="toc-link" href="#delivery-guarantees">05 · Delivery Guarantees</a></li>
+    <li><a class="toc-link" href="#kafka-deep">06 · Kafka Deep Dive</a></li>
+    <li><a class="toc-link" href="#patterns">07 · Common Patterns</a></li>
+    <li><a class="toc-link" href="#when-to-use">08 · When to Use a Queue</a></li>
+    <li><a class="toc-link" href="#playbook">09 · Interview Playbook</a></li>
+  </ul>
+</nav>
+
+<!-- ── Main ──────────────────────────────────────────────────────── -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">PDF #05 · System Design Series</div>
+    <h1>Message Queues</h1>
+    <p class="hero-subtitle">
+      Decoupling Systems for Reliability and Scale — how top companies survive traffic spikes, prevent cascade failures, and process millions of events per second
+    </p>
+    <div class="hero-badges">
+      <span class="tag tag-orange">Kafka</span>
+      <span class="tag tag-blue">RabbitMQ</span>
+      <span class="tag tag-cyan">AWS SQS</span>
+      <span class="tag tag-purple">Event Streaming</span>
+      <span class="tag tag-green">Async Processing</span>
+      <span class="tag tag-yellow">Interview Favorite</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- PART 1 -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">01</div>
+    <div>
+      <h2>The Problem</h2>
+      <p>Why synchronous architectures collapse at scale — and why that matters to you in the interview room.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 1: Synchronous Problem ────────────────────────── -->
+  <div class="section" id="sync-problem">
+    <div class="section-header">
+      <h3>🔥 The Synchronous Problem</h3>
+      <p>Before you understand why message queues exist, you need to feel the pain of living without them.</p>
+    </div>
+
+    <div class="card">
+      <h4>The Real-World Scenario</h4>
+      <p>You're at Instagram. A user uploads a photo. Your service does this, all synchronously:</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Save original image to S3</div>
+            <div class="step-desc">~200ms</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Resize image to 5 different dimensions</div>
+            <div class="step-desc">~1,200ms — this is the bottleneck</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Run AI content moderation</div>
+            <div class="step-desc">~800ms</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Send push notifications to followers</div>
+            <div class="step-desc">~500ms per 1,000 followers</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">User finally sees "Upload successful"</div>
+            <div class="step-desc">After all of the above. 3+ seconds minimum. User already left.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">💥</div>
+      <div class="body">
+        <strong>What breaks without message queues</strong>
+        <p>If the notification service is slow → the upload is slow. If the resize service crashes → the entire upload fails and the user loses their photo. If a celebrity posts and 10 million people react simultaneously → every single dependent service gets hammered at the same instant.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Three Failure Modes of Synchronous Calls</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>💀 Cascading Failure</h4>
+          <p>Service B slows down → Service A backs up → Service A's memory fills → Service A dies. One slow service kills your entire stack.</p>
+        </div>
+        <div class="card-mini">
+          <h4>⏰ Latency Coupling</h4>
+          <p>The caller is only as fast as the slowest dependency. If sending an email takes 500ms, every request that triggers an email now takes 500ms longer.</p>
+        </div>
+        <div class="card-mini">
+          <h4>🌊 Traffic Coupling</h4>
+          <p>A spike in uploads spikes the resize service, the notification service, the moderation service — all simultaneously. Every downstream service must handle peak load at the same moment.</p>
+        </div>
+        <div class="card-mini">
+          <h4>🔗 Availability Coupling</h4>
+          <p>If Service B has 99.9% uptime and you depend on it synchronously, your Service A can never have better than 99.9% uptime — even if A itself is perfect.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANIMATED FLOW: Sync vs Async -->
+    <div class="card">
+      <h4>🎬 Synchronous vs Asynchronous — Live Comparison</h4>
+      <p>Watch what happens when a traffic spike hits. The left side shows synchronous calls blocking. The right side shows a queue absorbing the burst.</p>
+      <canvas class="mq-flow-canvas" id="syncVsAsyncCanvas"></canvas>
+      <p style="text-align:center; font-size:12px; color:var(--text-muted); margin-top:4px;">Messages accumulate in the queue and are drained at a steady rate — no downstream service gets overwhelmed.</p>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">🍔</div>
+      <div class="body">
+        <strong>The Fast Food Analogy — You Will Never Forget This</strong>
+        <p>Imagine a drive-through with ONE window. The cashier takes your order AND waits while the kitchen cooks your burger before taking the next car's order. One slow burger jams the entire queue.</p>
+        <p>Now imagine TWO windows: one takes orders (producer), stamps a ticket (message), drops it in a bin (queue). The second window fulfills orders from the bin (consumer) at its own pace. The order-taker never waits for cooking to finish. That bin is your message queue.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- PART 2 -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">02</div>
+    <div>
+      <h2>Core Concepts</h2>
+      <p>What message queues are, why they exist, and the three primitives every system uses.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: What Is a MQ ───────────────────────────────── -->
+  <div class="section" id="what-is-mq">
+    <div class="section-header">
+      <h3>📬 What Is a Message Queue?</h3>
+    </div>
+
+    <div class="card">
+      <h4>Plain English Definition</h4>
+      <p>A message queue is a <strong>durable, in-between holding area</strong> for data that one service wants to hand off to another. The sender drops the message in, walks away immediately, and goes back to serving users. The receiver picks up messages at its own pace.</p>
+      <p>The core guarantee: <em>"I will process this eventually, even if I'm busy right now — and if I crash before processing it, the message won't disappear."</em></p>
+    </div>
+
+    <div class="card">
+      <h4>The Three Actors — Always Draw This in Interviews</h4>
+      <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   <span class="d-green">┌──────────┐</span>     publish      <span class="d-blue">┌──────────────┐</span>    consume   <span class="d-purple">┌──────────┐</span>  │
+│   <span class="d-green">│ PRODUCER │</span> ──────────────► <span class="d-blue">│    QUEUE     │</span> ──────────► <span class="d-purple">│ CONSUMER │</span>  │
+│   <span class="d-green">│          │</span>                 <span class="d-blue">│  (messages)  │</span>            <span class="d-purple">│          │</span>  │
+│   <span class="d-green">└──────────┘</span>                 <span class="d-blue">└──────────────┘</span>            <span class="d-purple">└──────────┘</span>  │
+│   "I have work                  "I hold the                    │
+│    for someone"                  work safely"   "I do the work"│
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+      </div>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4><span style="color:var(--accent-green)">Producer</span></h4>
+          <p>Creates messages and publishes them to the queue. Never blocked by consumer speed. Returns immediately after publish.</p>
+          <p><strong>Examples:</strong> web server publishing an "order placed" event, a mobile app uploading a photo.</p>
+        </div>
+        <div class="card-mini">
+          <h4><span style="color:var(--accent-blue)">Queue / Broker</span></h4>
+          <p>Durably stores messages. Handles delivery retries. Provides ordering (sometimes). Scales independently.</p>
+          <p><strong>Products:</strong> Kafka, RabbitMQ, AWS SQS, Google Pub/Sub.</p>
+        </div>
+        <div class="card-mini">
+          <h4><span style="color:var(--accent-purple)">Consumer</span></h4>
+          <p>Pulls (or receives pushed) messages from the queue. Processes them at its own pace. Sends an acknowledgment when done.</p>
+          <p><strong>Examples:</strong> email service, image resize worker, fraud detection engine.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip: Always name all three actors</strong>
+        <p>When you introduce a queue in your design, always say: "The <em>[X service]</em> will act as the producer, publishing an event to the queue. The <em>[Y service]</em> will consume from that queue." Interviewers want to see you think through both ends.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: Four Benefits ──────────────────────────────── -->
+  <div class="section" id="four-benefits">
+    <div class="section-header">
+      <h3>✅ The 4 Benefits — Why Message Queues Exist</h3>
+      <p>Don't memorize these. Understand them deeply enough to derive them yourself.</p>
+    </div>
+
+    <div class="highlight-grid">
+
+      <div class="highlight-card" style="border-color:var(--accent-blue)">
+        <div style="font-size:28px; margin-bottom:8px;">🔗</div>
+        <h4 style="color:var(--accent-blue)">1 · Decoupling</h4>
+        <p>The producer doesn't know who the consumer is. It doesn't care if there are 1 or 50 consumers. You can swap, replace, or add consumers without touching the producer at all.</p>
+        <p><strong>Real example:</strong> When Uber creates a trip, it publishes one "trip_created" event. Ten different services (driver notifications, surge pricing, analytics, fraud, ETA prediction) each consume it — none of them need Uber's trip service to call them individually.</p>
+      </div>
+
+      <div class="highlight-card" style="border-color:var(--accent-orange)">
+        <div style="font-size:28px; margin-bottom:8px;">🛡️</div>
+        <h4 style="color:var(--accent-orange)">2 · Buffering</h4>
+        <p>Queues absorb traffic spikes. When 100,000 users submit forms at once, the queue fills up and consumers process at a steady rate. No service gets overwhelmed.</p>
+        <p><strong>Real example:</strong> Black Friday at Amazon. Order submissions spike 20x. The order queue fills up, but the fulfillment workers drain it steadily over the next few minutes. No crashes, no lost orders.</p>
+      </div>
+
+      <div class="highlight-card" style="border-color:var(--accent-green)">
+        <div style="font-size:28px; margin-bottom:8px;">🔄</div>
+        <h4 style="color:var(--accent-green)">3 · Reliability / Durability</h4>
+        <p>If the consumer crashes while processing, the message is NOT lost. It either stays in the queue (unacknowledged) or goes to a Dead Letter Queue for retry. Messages are persisted to disk.</p>
+        <p><strong>Without this:</strong> a payment service crash at 3am means every charge that was in-flight is silently lost. With a queue: they retry automatically when the service comes back up.</p>
+      </div>
+
+      <div class="highlight-card" style="border-color:var(--accent-purple)">
+        <div style="font-size:28px; margin-bottom:8px;">⚡</div>
+        <h4 style="color:var(--accent-purple)">4 · Async Processing</h4>
+        <p>Don't make users wait for slow operations. Return 200 OK immediately, then process in the background.</p>
+        <p><strong>Real example:</strong> When you send a tweet, Twitter immediately shows it to you. Notifying your 2 million followers happens asynchronously over the next few seconds via a queue — you didn't wait for all 2 million push notifications to be sent before your screen updated.</p>
+      </div>
+
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>The Interview Sentence</strong>
+        <p>"I'd add a message queue here to <strong>decouple</strong> the upload service from the processing pipeline. This gives us <strong>buffering</strong> during traffic spikes, <strong>retry capability</strong> if processing fails, and allows us to <strong>return immediately</strong> to the user without waiting for processing to complete."</p>
+        <p>That one sentence covers all 4 benefits. Say it naturally and the interviewer will nod.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- PART 3 -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">03</div>
+    <div>
+      <h2>Tools & Guarantees</h2>
+      <p>The three systems every interview mentions, and the delivery semantics that separate junior from senior answers.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 4: Kafka vs RabbitMQ vs SQS ───────────────────── -->
+  <div class="section" id="comparison">
+    <div class="section-header">
+      <h3>⚔️ Kafka vs RabbitMQ vs SQS</h3>
+      <p>These three come up in almost every system design interview. Know the mental model for each — not just the feature list.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>🗞️ Kafka — "The Distributed Journal"</h4>
+        <p>Think of Kafka as a massive, distributed, append-only log. Like a newspaper printing press — every edition is recorded and kept. Consumers can read today's paper, yesterday's paper, or any edition from the last 7 days.</p>
+        <p>Messages are <strong>not deleted after consumption</strong>. They're retained for a configured time period (default 7 days). Multiple consumer groups can read the same message independently.</p>
+        <p><strong>Built by:</strong> LinkedIn (2011) to handle 1 trillion messages per day. Now used by Uber, Netflix, Airbnb, Twitter.</p>
+      </div>
+      <div class="card-mini">
+        <h4>📮 RabbitMQ — "The Post Office"</h4>
+        <p>Think of RabbitMQ as a traditional post office. A letter arrives, gets sorted, delivered to the right mailbox. Once you pick it up, it's gone.</p>
+        <p>Messages <strong>are deleted after consumption</strong>. It has rich routing rules (exchanges, bindings) that let you send messages to different queues based on content.</p>
+        <p><strong>Great for:</strong> task queues, work distribution, RPC-style request/reply patterns where you want traditional message broker behavior.</p>
+      </div>
+      <div class="card-mini">
+        <h4>☁️ AWS SQS — "The Serverless Queue"</h4>
+        <p>Think of SQS as a hosted, managed, zero-ops queue. You pay per message, Amazon handles everything else. No servers to manage, no cluster to configure.</p>
+        <p>Two types: <strong>Standard</strong> (best-effort ordering, at-least-once) and <strong>FIFO</strong> (strict ordering, exactly-once, up to 3,000 msg/sec).</p>
+        <p><strong>Best for:</strong> AWS-native architectures where operational simplicity matters more than raw throughput.</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Kafka</th>
+            <th>RabbitMQ</th>
+            <th>AWS SQS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Mental Model</strong></td>
+            <td>Distributed append-only log</td>
+            <td>Post office / message broker</td>
+            <td>Managed cloud queue</td>
+          </tr>
+          <tr>
+            <td><strong>Message Retention</strong></td>
+            <td><span class="pill pill-green">Retained (7 days default)</span></td>
+            <td><span class="pill pill-orange">Deleted on consume</span></td>
+            <td><span class="pill pill-orange">Deleted after ack (max 14 days)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Message Replay</strong></td>
+            <td>✅ Yes — consumers can rewind</td>
+            <td>❌ No</td>
+            <td>❌ No</td>
+          </tr>
+          <tr>
+            <td><strong>Throughput</strong></td>
+            <td><span class="pill pill-green">Millions/sec</span></td>
+            <td><span class="pill pill-blue">~20-50K/sec per queue</span></td>
+            <td><span class="pill pill-blue">~3K/sec (FIFO), unlimited (Standard)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Ordering</strong></td>
+            <td>Per partition</td>
+            <td>Per queue</td>
+            <td>FIFO mode only</td>
+          </tr>
+          <tr>
+            <td><strong>Delivery</strong></td>
+            <td>At-least-once (exactly-once possible)</td>
+            <td>At-least-once / exactly-once</td>
+            <td>At-least-once / exactly-once (FIFO)</td>
+          </tr>
+          <tr>
+            <td><strong>Ops Complexity</strong></td>
+            <td><span class="pill pill-orange">High — needs ZooKeeper/KRaft</span></td>
+            <td><span class="pill pill-blue">Medium</span></td>
+            <td><span class="pill pill-green">Zero — fully managed</span></td>
+          </tr>
+          <tr>
+            <td><strong>Primary Use Case</strong></td>
+            <td>Event streaming, analytics, logs</td>
+            <td>Task queues, microservice messaging</td>
+            <td>Simple decoupling on AWS</td>
+          </tr>
+          <tr>
+            <td><strong>Real Users</strong></td>
+            <td>LinkedIn, Uber, Netflix, Airbnb</td>
+            <td>Instagram, Reddit, VMware</td>
+            <td>Most AWS-native startups</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>The One-Line Decision Rule for Interviews</strong>
+        <ul>
+          <li><strong>Need replay / event streaming / very high throughput?</strong> → Kafka</li>
+          <li><strong>Need flexible routing / traditional task queue?</strong> → RabbitMQ</li>
+          <li><strong>On AWS and want zero ops?</strong> → SQS</li>
+          <li><strong>Building on Google Cloud?</strong> → Pub/Sub (same mental model as Kafka)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 5: Delivery Guarantees ───────────────────────── -->
+  <div class="section" id="delivery-guarantees">
+    <div class="section-header">
+      <h3>📦 Message Delivery Guarantees</h3>
+      <p>This is one of the most asked concepts in system design. Get the intuition right and the interview answer writes itself.</p>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Common Mistake: Confusing "delivery" with "processing"</strong>
+        <p>These guarantees are about whether the consumer <em>receives</em> the message, not whether it <em>successfully processes</em> it. A consumer can receive a message exactly once and still fail to process it correctly — that's a separate problem (handled by idempotency + DLQ).</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Interactive: Explore Each Delivery Semantic</h4>
+      <div class="delivery-toggle">
+        <button class="dtoggle-btn at-most" data-target="at-most-panel">At-Most-Once</button>
+        <button class="dtoggle-btn at-least" data-target="at-least-panel">At-Least-Once</button>
+        <button class="dtoggle-btn exactly" data-target="exactly-panel">Exactly-Once</button>
+      </div>
+
+      <div id="at-most-panel" class="delivery-panel">
+        <div class="callout danger">
+          <div class="icon">1️⃣</div>
+          <div class="body">
+            <strong>At-Most-Once — "Fire and Forget"</strong>
+            <p>The message is sent once. If the consumer crashes before processing it, the message is <strong>permanently lost</strong>. The producer does not retry. No acknowledgment required.</p>
+            <p><strong>When to use:</strong> Metrics, logs, telemetry — where losing occasional data points is acceptable and speed is paramount. UDP is the networking equivalent.</p>
+            <p><strong>What you gain:</strong> Lowest latency. Zero overhead. Simplest implementation.</p>
+            <p><strong>What you give up:</strong> Reliability. You will lose messages. Period.</p>
+            <p><strong>Real example:</strong> Clicking analytics events on a webpage. If 0.1% of clicks don't get counted, no one cares.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="at-least-panel" class="delivery-panel">
+        <div class="callout warn">
+          <div class="icon">2️⃣</div>
+          <div class="body">
+            <strong>At-Least-Once — "The Default"</strong>
+            <p>The message is retried until the consumer sends an acknowledgment. The consumer <strong>may receive the same message multiple times</strong> (especially after a crash/restart). No message is ever lost.</p>
+            <p><strong>This is the most common choice.</strong> It's the default in Kafka, the default in SQS Standard queues.</p>
+            <p><strong>The catch:</strong> Your consumer MUST be <strong>idempotent</strong> — processing the same message twice must produce the same result as processing it once.</p>
+            <p><strong>Idempotency example:</strong> Instead of <code>balance += $10</code>, use <code>SET balance = $110 WHERE transaction_id = 'xyz' NOT EXISTS</code>. Processing the same transaction twice doesn't double-charge.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="exactly-panel" class="delivery-panel">
+        <div class="callout success">
+          <div class="icon">3️⃣</div>
+          <div class="body">
+            <strong>Exactly-Once — "The Holy Grail"</strong>
+            <p>Every message is delivered and processed exactly one time, even with failures. The hardest guarantee to achieve. Requires coordination between producer, broker, and consumer.</p>
+            <p><strong>When to use:</strong> Financial transactions, payment processing, inventory deduction — anywhere duplicate processing causes real harm.</p>
+            <p><strong>The cost:</strong> Significant overhead. Kafka supports exactly-once semantics (EOS) via idempotent producers + transactions, but it reduces throughput. SQS FIFO queues provide exactly-once but cap at 3,000 msg/sec.</p>
+            <p><strong>Senior Engineer take:</strong> In practice, many "exactly-once" systems are actually "at-least-once + idempotent consumers" — which is equivalent but cheaper to implement. Know this distinction.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>📊 Numbers to Remember</h4>
+      <p>
+        <strong>At-most-once:</strong> 0-1 deliveries. Fastest. Lossy.<br/>
+        <strong>At-least-once:</strong> 1-N deliveries. Standard choice. Requires idempotency.<br/>
+        <strong>Exactly-once:</strong> Always 1. Most expensive. Use for money/inventory only.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- PART 4 -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">04</div>
+    <div>
+      <h2>Kafka Deep Dive</h2>
+      <p>The internals that explain why Kafka can handle millions of messages per second — and why interviewers love asking about it.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 6: Kafka Deep Dive ───────────────────────────── -->
+  <div class="section" id="kafka-deep">
+    <div class="section-header">
+      <h3>🔬 Kafka Deep Dive — Interview Favorite</h3>
+      <p>You don't need to know every Kafka config option. But you MUST understand topics, partitions, and consumer groups — they come up in almost every senior-level design discussion.</p>
+    </div>
+
+    <div class="card">
+      <h4>The Core Building Blocks</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>📁 Topic</h4>
+          <p>A named category for messages. Like a table in a database, or a TV channel. Producers publish to a topic, consumers subscribe to one.</p>
+          <p>Example: <code>order-events</code>, <code>user-clicks</code>, <code>payment-completed</code></p>
+        </div>
+        <div class="card-mini">
+          <h4>🗂️ Partition</h4>
+          <p>A topic is split into partitions. Each partition is an ordered, immutable log. This is how Kafka achieves parallelism — different consumers read different partitions simultaneously.</p>
+          <p>Think of a highway: one lane = one partition. More lanes = more cars at once.</p>
+        </div>
+        <div class="card-mini">
+          <h4>👥 Consumer Group</h4>
+          <p>A set of consumers that together consume all partitions of a topic. Each partition is assigned to exactly one consumer in the group at a time — this prevents duplicate processing within the same group.</p>
+        </div>
+        <div class="card-mini">
+          <h4>📍 Offset</h4>
+          <p>Every message in a partition has a sequential number (offset: 0, 1, 2, 3...). Consumers track which offset they've read up to. This allows <strong>replay</strong>: reset the offset to 0 and re-process all messages.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🎬 Animated: Producer → Partitioned Topic → Consumer Group</h4>
+      <canvas class="kafka-canvas" id="kafkaCanvas"></canvas>
+      <p style="text-align:center; font-size:12px; color:var(--text-muted); margin-top:4px;">
+        3 partitions → 3 consumers. Each consumer reads one partition in parallel. Adding more partitions allows more consumers and higher throughput.
+      </p>
+    </div>
+
+    <div class="card">
+      <h4>Why Partitions = Parallelism</h4>
+      <p>This is the key insight that explains Kafka's throughput. A single-partition topic can only be consumed by one consumer at a time (within a group). But a 100-partition topic can be consumed by up to 100 consumers simultaneously.</p>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>The Partition Ceiling</strong>
+          <p>If you have 10 partitions and 15 consumers in a group, 5 consumers will sit idle. You can never have more active consumers than partitions. This is a critical design constraint — always provision more partitions than you think you need.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Message Retention — What Makes Kafka Different</h4>
+      <p>In RabbitMQ and SQS, messages are deleted after a consumer processes them. In Kafka, messages are retained for a configured period (default: 7 days) regardless of whether they've been consumed.</p>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>✅ What retention enables</h4>
+          <ul>
+            <li>Replay: reprocess all events if a consumer had a bug</li>
+            <li>New consumers: a new service can read all historical events from day 1</li>
+            <li>Multiple independent groups: analytics AND fraud detection can both read the same event stream independently</li>
+            <li>Time-travel debugging: reproduce a production issue by replaying events</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>⚠️ What retention costs</h4>
+          <ul>
+            <li>Disk space: storing 7 days of events for a high-throughput topic requires terabytes of storage</li>
+            <li>Compaction complexity: you need log compaction strategies for very long-lived topics</li>
+            <li>Not a database: don't treat it as one — it's not queryable by key, it's a sequential log</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>How to Talk About Kafka in an Interview</strong>
+        <p>"I'd use Kafka here because we need multiple downstream services to process the same events independently — Kafka's consumer group model lets each service maintain its own offset and process at its own pace. The retention also gives us the ability to replay events if we need to rebuild a service's state."</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- PART 5 -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">05</div>
+    <div>
+      <h2>Patterns & Decisions</h2>
+      <p>The recurring patterns you'll design in every system, and how to decide when a queue is the right answer.</p>
+    </div>
+  </div>
+
+  <!-- ── SECTION 7: Common Patterns ────────────────────────────── -->
+  <div class="section" id="patterns">
+    <div class="section-header">
+      <h3>🏗️ Common Patterns Using Message Queues</h3>
+      <p>These four patterns cover 90% of what you'll design in interviews. Know each one cold.</p>
+    </div>
+
+    <div class="card">
+      <div class="pattern-tabs">
+        <button class="ptab active" data-ptarget="fanout-panel">📢 Fan-Out</button>
+        <button class="ptab" data-ptarget="workqueue-panel">⚙️ Work Queue</button>
+        <button class="ptab" data-ptarget="dlq-panel">💀 Dead Letter Queue</button>
+        <button class="ptab" data-ptarget="eventsource-panel">📜 Event Sourcing</button>
+      </div>
+
+      <!-- Fan-Out -->
+      <div id="fanout-panel" class="ptab-panel visible">
+        <h4>Fan-Out: One Message → Many Consumers</h4>
+        <p>One event is published once, but multiple independent services each get a copy and process it independently. This is the "shout in a room" model — you say it once, everyone hears it.</p>
+        <canvas class="fanout-canvas" id="fanoutCanvas"></canvas>
+        <div class="callout info">
+          <div class="icon">💡</div>
+          <div class="body">
+            <strong>Real Example: Twitter / Instagram Post</strong>
+            <p>When you post a tweet: one "tweet_created" event fans out to → Feed service (update followers' feeds) → Notification service (send push notifications) → Search index service (make it searchable) → Analytics service (track engagement). None of these services need to know about each other.</p>
+          </div>
+        </div>
+        <p><strong>How to implement it:</strong> In Kafka, multiple consumer groups read the same topic — each group is one service. In RabbitMQ, use a "fanout exchange" which broadcasts to all bound queues. In SNS+SQS, publish to an SNS topic which fans out to multiple SQS queues.</p>
+      </div>
+
+      <!-- Work Queue -->
+      <div id="workqueue-panel" class="ptab-panel">
+        <h4>Work Queue: Distribute Tasks Across Workers</h4>
+        <p>Multiple consumers in the SAME consumer group divide the work. Message goes to exactly one consumer. Used when a task is expensive and you want parallelism.</p>
+        <div class="diagram">
+┌─────────┐     ┌──────────────┐     ┌───────────────┐
+│  Image  │────►│  Resize      │────►│  Worker  1    │  (processes partition 0)
+│ Upload  │     │  Queue       │────►│  Worker  2    │  (processes partition 1)
+│ Service │     │ (10 partitions│────►│  Worker  3    │  (processes partition 2)
+└─────────┘     └──────────────┘    └───────────────┘
+                     ONE consumer group — work divided, not duplicated
+        </div>
+        <div class="callout info">
+          <div class="icon">💡</div>
+          <div class="body">
+            <strong>Real Example: Video Transcoding</strong>
+            <p>YouTube receives a 4K video upload. It queues a "transcode_video" task. 10 worker processes pick up different videos from the queue and transcode them in parallel — 10x faster than a single worker. Adding more workers increases throughput linearly.</p>
+          </div>
+        </div>
+        <p><strong>Fan-Out vs Work Queue — the key difference:</strong> Fan-Out = every service gets a copy of every message. Work Queue = each message goes to exactly one worker (divided, not duplicated).</p>
+      </div>
+
+      <!-- DLQ -->
+      <div id="dlq-panel" class="ptab-panel">
+        <h4>Dead Letter Queue (DLQ): Graceful Failure Handling</h4>
+        <p>When a message fails processing after N retries (default is usually 3-5), instead of dropping it or infinitely retrying, it's moved to a special "dead letter queue." Engineers can inspect it, fix the bug, and replay it.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Consumer receives message, processing fails</div>
+              <div class="step-desc">Exception thrown, NACKed (negative acknowledged)</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Queue retries with exponential backoff</div>
+              <div class="step-desc">Retry 1 after 10s, retry 2 after 20s, retry 3 after 40s</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Max retries exceeded → message moved to DLQ</div>
+              <div class="step-desc">Message is preserved, not lost</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">Engineers get alerted, inspect the DLQ</div>
+              <div class="step-desc">Fix the bug, replay messages from DLQ back to main queue</div>
+            </div>
+          </div>
+        </div>
+        <div class="callout success">
+          <div class="icon">✅</div>
+          <div class="body">
+            <strong>Always mention DLQs in your design</strong>
+            <p>Saying "I'd add a DLQ for failed messages with an alerting mechanism so we can catch processing bugs before they cause data loss" immediately signals production experience to an interviewer. It's a small detail that makes a big impression.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event Sourcing -->
+      <div id="eventsource-panel" class="ptab-panel">
+        <h4>Event Sourcing: The Queue as Source of Truth</h4>
+        <p>Instead of storing just the current state of data, you store every event that led to that state. Your database is derived from the event log — not the other way around.</p>
+        <div class="diagram">
+Traditional:     User submits order → DB: { status: "shipped" }
+                 (you lose the history of how it got there)
+
+Event Sourcing:  DB = replay of events:
+  [order_placed] → [payment_confirmed] → [item_picked] → [shipped]
+  Current state = apply all events in sequence
+        </div>
+        <div class="callout warn">
+          <div class="icon">⚠️</div>
+          <div class="body">
+            <strong>This is Advanced — Plant the Seed</strong>
+            <p>Event sourcing is a legitimate architectural pattern but adds significant complexity. In interviews, mention it if you're asked "how would you handle auditing or time-travel queries?" — it's a signal of architectural maturity. Don't default to it for every problem.</p>
+          </div>
+        </div>
+        <p><strong>Real world:</strong> Banking ledgers are naturally event-sourced (every transaction is recorded, balance is calculated from all transactions). Kafka is the most popular backing store for event-sourced systems due to its log nature and retention capability.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 8: When to Use a Queue ────────────────────────── -->
+  <div class="section" id="when-to-use">
+    <div class="section-header">
+      <h3>🤔 When to Use a Message Queue</h3>
+      <p>A decision checklist. Click each question to check it off. If you check any box — a queue is worth considering.</p>
+    </div>
+
+    <div class="card">
+      <h4>The Decision Checklist</h4>
+      <div id="mq-checklist">
+        <div class="checklist-item" data-index="0">
+          <div class="ci-box">✓</div>
+          <div class="ci-label">Does the operation take longer than the user should wait? <br/><em style="color:var(--text-muted); font-size:12px;">Examples: sending email, resizing images, generating reports, charging a payment, running AI inference</em></div>
+        </div>
+        <div class="checklist-item" data-index="1">
+          <div class="ci-box">✓</div>
+          <div class="ci-label">Do multiple services need to react to the same event? <br/><em style="color:var(--text-muted); font-size:12px;">Examples: user registration → send welcome email + create profile + award signup bonus + track analytics</em></div>
+        </div>
+        <div class="checklist-item" data-index="2">
+          <div class="ci-box">✓</div>
+          <div class="ci-label">Can traffic spike unpredictably and overwhelm downstream services? <br/><em style="color:var(--text-muted); font-size:12px;">Examples: flash sales, viral content, sports events, news breaking</em></div>
+        </div>
+        <div class="checklist-item" data-index="3">
+          <div class="ci-box">✓</div>
+          <div class="ci-label">Do you need retry logic if processing fails? <br/><em style="color:var(--text-muted); font-size:12px;">Examples: payment webhooks, third-party API calls, database writes that might time out</em></div>
+        </div>
+        <div class="checklist-item" data-index="4">
+          <div class="ci-box">✓</div>
+          <div class="ci-label">Do you want to decouple two services so they can be developed, deployed, or scaled independently? <br/><em style="color:var(--text-muted); font-size:12px;">Classic microservices pattern</em></div>
+        </div>
+        <div class="checklist-item" data-index="5">
+          <div class="ci-box">✓</div>
+          <div class="ci-label">Is the processing inherently batchable or parallelizable? <br/><em style="color:var(--text-muted); font-size:12px;">Examples: processing 10,000 CSV rows, running nightly jobs, sending bulk notifications</em></div>
+        </div>
+      </div>
+      <div id="mq-verdict">🚀 Based on your answers — yes, a message queue would genuinely help here. Time to choose between Kafka, RabbitMQ, and SQS based on your throughput and retention needs.</div>
+    </div>
+
+    <div class="card">
+      <h4>When NOT to Use a Message Queue</h4>
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong>Don't add queues just to look "scalable"</strong>
+          <ul>
+            <li><strong>Synchronous read/write is fine:</strong> Fetching a user's profile doesn't need a queue — just query the database.</li>
+            <li><strong>Simple apps:</strong> A CRUD app with 1,000 users/day gains nothing from a Kafka cluster. You've added operational complexity for zero benefit.</li>
+            <li><strong>When ordering is critical and complex:</strong> Queues make ordering guarantees harder. If you need global ordering across millions of messages, you've chosen a hard path.</li>
+            <li><strong>When you need immediate consistency:</strong> If the user must see the result of their action right now (e.g., checking their bank balance after a transfer), async processing isn't the right choice for that operation.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 9: Interview Playbook ─────────────────────────── -->
+  <div class="section" id="playbook">
+    <div class="section-header">
+      <h3>🎯 Interview Playbook — Exact Phrases and Frameworks</h3>
+      <p>This is where you turn knowledge into interview performance. These are the actual sentences that make interviewers say "this candidate thinks at the senior level."</p>
+    </div>
+
+    <div class="card">
+      <h4>Where to Add Message Queues in Your Design</h4>
+      <p>During your system design, scan for these trigger points:</p>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="ti-title">After "user submits X"</div>
+          <div class="ti-body">Any time a user action triggers work that takes more than ~100ms, consider a queue. "The user submits the order. We immediately return a 200 with an order_id. We publish an order_placed event to the queue. The payment service, inventory service, and notification service all consume this event asynchronously."</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-title">Any "and then we also..." sentence</div>
+          <div class="ti-body">If you find yourself saying "and then we also need to update X, and also notify Y, and also log to Z" — all those secondary actions are queue candidates. Don't chain them synchronously.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-title">When two services communicate</div>
+          <div class="ti-body">Ask yourself: "Does Service A need an immediate response from Service B?" If the answer is no, a queue is usually better than a direct HTTP call.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-title">When the interviewer mentions "high traffic" or "scale"</div>
+          <div class="ti-body">Traffic spikes → buffer with a queue. This is the textbook answer and it's usually correct.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>💬 Magic Phrases — Say These Verbatim</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>Introducing a Queue</h4>
+          <p style="font-style:italic; color:var(--accent-cyan);">"To decouple the [upload service] from the [processing pipeline], I'd introduce a message queue here. This means the user gets an immediate response, and processing happens asynchronously. If the processing service goes down, messages just accumulate in the queue and drain when it recovers."</p>
+        </div>
+        <div class="card-mini">
+          <h4>Choosing Kafka</h4>
+          <p style="font-style:italic; color:var(--accent-cyan);">"I'd use Kafka here because multiple downstream services need to consume the same events independently. With Kafka's consumer group model, each service maintains its own offset and processes at its own pace. The 7-day retention also gives us replay capability if we need to rebuild state."</p>
+        </div>
+        <div class="card-mini">
+          <h4>Addressing Delivery</h4>
+          <p style="font-style:italic; color:var(--accent-cyan);">"I'd design consumers to be idempotent and use at-least-once delivery — it's simpler and cheaper than exactly-once. Each message includes a unique event_id, and the consumer checks if it's already been processed before writing to the database."</p>
+        </div>
+        <div class="card-mini">
+          <h4>Handling Failures</h4>
+          <p style="font-style:italic; color:var(--accent-cyan);">"I'd add a dead letter queue for messages that fail after 3 retries with exponential backoff. We'd alert on DLQ depth so engineers can investigate processing failures before they cause data loss."</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>📊 Numbers to Drop in the Interview (Order of Magnitude)</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>System</th><th>Throughput</th><th>Latency</th><th>Use This Number When...</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Kafka (single cluster)</td>
+              <td><span class="pill pill-green">1-2 million msg/sec</span></td>
+              <td>~5-10ms p99</td>
+              <td>Justifying Kafka for high-scale event streaming</td>
+            </tr>
+            <tr>
+              <td>RabbitMQ (single node)</td>
+              <td><span class="pill pill-blue">~50K msg/sec</span></td>
+              <td>~1ms</td>
+              <td>Showing RabbitMQ is more than enough for task queues</td>
+            </tr>
+            <tr>
+              <td>SQS Standard</td>
+              <td><span class="pill pill-blue">Effectively unlimited</span></td>
+              <td>~10-50ms</td>
+              <td>AWS-native designs — "no capacity planning needed"</td>
+            </tr>
+            <tr>
+              <td>SQS FIFO</td>
+              <td><span class="pill pill-orange">3,000 msg/sec</span></td>
+              <td>~10-50ms</td>
+              <td>Ordering constraint + exactly-once on AWS</td>
+            </tr>
+            <tr>
+              <td>Typical Kafka partition</td>
+              <td><span class="pill pill-blue">~10MB/sec write</span></td>
+              <td>—</td>
+              <td>"I'd provision 30 partitions to support 300MB/sec throughput"</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🔥 Senior Engineer Perspective — What Juniors Miss</h4>
+      <div class="callout purple">
+        <div class="icon">🔥</div>
+        <div class="body">
+          <strong>The Queue Is Not Free</strong>
+          <p>Every queue you add is a moving part that can fail, lag, or fill up. Senior engineers ask: "What happens when the queue is full? What's the backpressure strategy? What happens if consumers can't keep up for 6 hours?" Always have an answer for queue depth monitoring and consumer lag alerting.</p>
+        </div>
+      </div>
+      <div class="callout purple">
+        <div class="icon">🔥</div>
+        <div class="body">
+          <strong>Ordering Is Subtle</strong>
+          <p>Partitions give you ordering within a partition, not globally. If you need all events for a given user to be processed in order, you must route them to the same partition using the user_id as the partition key. Interviewers rarely ask about this directly, but mentioning it unprompted signals deep understanding.</p>
+        </div>
+      </div>
+      <div class="callout purple">
+        <div class="icon">🔥</div>
+        <div class="body">
+          <strong>Schema Evolution Is Real</strong>
+          <p>In production, message schemas change over time. Consumers deployed this week might receive messages published last month with a different schema. Use a schema registry (like Confluent Schema Registry with Avro) or at least design messages to be backwards compatible. This is a real operational problem that textbooks skip.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner banner-green">
+      <h4>✅ Your Message Queue Interview Checklist</h4>
+      <p>
+        □ Identified WHERE in the system a queue adds value<br/>
+        □ Named the producer, queue, and consumer explicitly<br/>
+        □ Chose Kafka/RabbitMQ/SQS with a reason<br/>
+        □ Stated delivery guarantee needed and why (usually at-least-once)<br/>
+        □ Mentioned idempotent consumers<br/>
+        □ Added a Dead Letter Queue with alerting<br/>
+        □ Discussed consumer parallelism (partitions/workers)<br/>
+        □ Mentioned monitoring: consumer lag, queue depth<br/>
+      </p>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p><strong>The meta-lesson:</strong> Adding a message queue in a design is never about the technology — it's about acknowledging that two parts of your system should be able to fail, scale, and evolve independently. That's the senior engineering insight. Lead with that, then back it into Kafka or SQS.</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── JavaScript ─────────────────────────────────────────────────── -->
+<script>
+// ── Progress bar ────────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docH = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = docH > 0 ? (scrollTop / docH) * 100 : 0;
+  document.getElementById('progress').style.width = pct + '%';
+});
+
+// ── Sidebar toggle ──────────────────────────────────────────────────────
+function toggleSidebar() {
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    document.body.classList.toggle('sidebar-open');
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('sidebarCollapsed',
+      document.body.classList.contains('sidebar-collapsed'));
+  }
+}
+if (localStorage.getItem('sidebarCollapsed') === 'true') {
+  document.body.classList.add('sidebar-collapsed');
+}
+document.getElementById('hamburger').onclick = toggleSidebar;
+document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+  });
+});
+
+// ── Active nav link on scroll ────────────────────────────────────────
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// ── Smooth scroll ────────────────────────────────────────────────────
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior:'smooth', block:'start' }); closeSidebar(); }
+  });
+});
+
+// ── Delivery toggle buttons ─────────────────────────────────────────
+document.querySelectorAll('.dtoggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dtoggle-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.delivery-panel').forEach(p => p.classList.remove('visible'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.target).classList.add('visible');
+  });
+});
+
+// ── Pattern tabs ─────────────────────────────────────────────────────
+document.querySelectorAll('.ptab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ptab-panel').forEach(p => p.classList.remove('visible'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.ptarget).classList.add('visible');
+    if (tab.dataset.ptarget === 'fanout-panel') { setTimeout(drawFanout, 50); }
+  });
+});
+
+// ── Checklist ────────────────────────────────────────────────────────
+document.querySelectorAll('.checklist-item').forEach(item => {
+  item.addEventListener('click', () => {
+    item.classList.toggle('checked');
+    const checkedCount = document.querySelectorAll('.checklist-item.checked').length;
+    const verdict = document.getElementById('mq-verdict');
+    verdict.style.display = checkedCount > 0 ? 'block' : 'none';
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// CANVAS ANIMATIONS
+// ════════════════════════════════════════════════════════════════════
+
+// ── Helper: get CSS variable ────────────────────────────────────────
+const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+// ── 1. Sync vs Async flow canvas ────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('syncVsAsyncCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let frame = 0;
+  const messages = [];
+  const queueMsgs = [];
+  let spawnTimer = 0;
+
+  function resize() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = 120;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function drawBox(x, y, w, h, color, label, ctx) {
+    ctx.fillStyle = color + '33';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = color; ctx.font = '11px monospace';
+    ctx.textAlign = 'center'; ctx.fillText(label, x + w/2, y + h/2 + 4);
+  }
+
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const half = W / 2 - 10;
+
+    // ── Left side: SYNCHRONOUS ─────────────────────────────────────
+    ctx.fillStyle = '#f8514920'; ctx.strokeStyle = '#f85149'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(4, 4, half-8, H-8, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f85149'; ctx.font = 'bold 10px monospace'; ctx.textAlign='center';
+    ctx.fillText('SYNCHRONOUS — caller blocks', half/2, 18);
+
+    drawBox(12, 30, 70, 30, '#58a6ff', 'Service A', ctx);
+    drawBox(half - 82, 30, 70, 30, '#f85149', 'Service B', ctx);
+
+    // Animate a "blocking" call
+    const bounce = Math.sin(frame / 20) * 4;
+    ctx.fillStyle = '#f85149'; ctx.beginPath();
+    ctx.arc(half/2, 45 + bounce, 5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#f8514988'; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(82, 45); ctx.lineTo(half - 82, 45); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f85149aa'; ctx.font = '10px monospace'; ctx.textAlign='center';
+    ctx.fillText('waiting...', half/2, 80);
+    ctx.fillText('A is blocked', half/2, 96);
+
+    // ── Right side: ASYNC with queue ──────────────────────────────
+    const rx = W/2 + 5;
+    ctx.fillStyle = '#3fb95020'; ctx.strokeStyle = '#3fb950'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(rx, 4, half-8, H-8, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#3fb950'; ctx.font = 'bold 10px monospace'; ctx.textAlign='center';
+    ctx.fillText('ASYNC — producer returns immediately', rx + (half-8)/2, 18);
+
+    drawBox(rx+8, 30, 60, 30, '#58a6ff', 'Producer', ctx);
+    const qx = rx + (half-8)/2 - 25, qw = 50;
+    drawBox(qx, 30, qw, 30, '#d29922', 'Queue', ctx);
+    drawBox(rx + half - 76, 30, 60, 30, '#3fb950', 'Consumer', ctx);
+
+    // arrows
+    ctx.strokeStyle = '#58a6ff99'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(rx+68, 45); ctx.lineTo(qx, 45); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(qx+qw, 45); ctx.lineTo(rx+half-76, 45); ctx.stroke();
+
+    // arrow heads
+    [[qx,45],[rx+half-76,45]].forEach(([ax,ay]) => {
+      ctx.fillStyle = '#d29922';
+      ctx.beginPath(); ctx.moveTo(ax,ay-4); ctx.lineTo(ax+8,ay); ctx.lineTo(ax,ay+4); ctx.fill();
+    });
+
+    // small dots flowing through queue
+    spawnTimer++;
+    if (spawnTimer % 30 === 0 && queueMsgs.length < 6) {
+      queueMsgs.push({ x: qx + 5, progress: 0 });
+    }
+    queueMsgs.forEach((m, i) => {
+      m.progress = Math.min(1, m.progress + 0.008);
+      const dx = qx + 5 + (qw-10) * m.progress;
+      ctx.fillStyle = '#d29922';
+      ctx.beginPath(); ctx.arc(dx, 38 + i*4, 3, 0, Math.PI*2); ctx.fill();
+    });
+    // remove completed
+    for (let i = queueMsgs.length-1; i >= 0; i--) {
+      if (queueMsgs[i].progress >= 1) queueMsgs.splice(i, 1);
+    }
+
+    ctx.fillStyle = '#3fb950aa'; ctx.font = '10px monospace'; ctx.textAlign='center';
+    ctx.fillText('returns 200 instantly ✓', rx + (half-8)/2, 80);
+
+    frame++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── 2. Kafka partition canvas ────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('kafkaCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let frame = 0;
+  const particles = [[], [], []];
+  const colors = ['#58a6ff', '#3fb950', '#bc8cff'];
+  const consumerColors = ['#58a6ff', '#3fb950', '#bc8cff'];
+
+  function resize() { canvas.width = canvas.offsetWidth; canvas.height = 220; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function roundRect(x,y,w,h,r,fill,stroke) {
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth=1.5; ctx.stroke(); }
+  }
+
+  function draw() {
+    const W = canvas.width;
+    ctx.clearRect(0, 0, W, 220);
+
+    // Producer box
+    const prodX = 20, prodY = 85, prodW = 80, prodH = 50;
+    roundRect(prodX, prodY, prodW, prodH, 6, '#58a6ff22', '#58a6ff');
+    ctx.fillStyle = '#58a6ff'; ctx.font = 'bold 11px monospace'; ctx.textAlign='center';
+    ctx.fillText('PRODUCER', prodX + prodW/2, prodY + 22);
+    ctx.font = '10px monospace'; ctx.fillText('publishes events', prodX + prodW/2, prodY + 38);
+
+    // Topic box
+    const topicX = W/2 - 90, topicW = 180, topicH = 160;
+    roundRect(topicX, 20, topicW, topicH, 8, '#d2992215', '#d29922');
+    ctx.fillStyle = '#d29922'; ctx.font = 'bold 11px monospace'; ctx.textAlign='center';
+    ctx.fillText('TOPIC: order-events', topicX + topicW/2, 38);
+
+    // 3 Partitions inside topic
+    const pColors = ['#58a6ff', '#3fb950', '#bc8cff'];
+    const pLabels = ['Partition 0', 'Partition 1', 'Partition 2'];
+    const pY = [50, 90, 130];
+    pY.forEach((py, i) => {
+      roundRect(topicX + 10, py, topicW - 20, 28, 4, pColors[i]+'22', pColors[i]);
+      ctx.fillStyle = pColors[i]; ctx.font = '10px monospace'; ctx.textAlign='center';
+      ctx.fillText(pLabels[i], topicX + topicW/2, py + 17);
+    });
+
+    // Consumers
+    const consX = W - 120, consW = 80, consH = 38;
+    const consY = [50, 95, 140];
+    const consLabels = ['Consumer 1', 'Consumer 2', 'Consumer 3'];
+    consY.forEach((cy, i) => {
+      roundRect(consX, cy, consW, consH, 6, pColors[i]+'22', pColors[i]);
+      ctx.fillStyle = pColors[i]; ctx.font = '10px monospace'; ctx.textAlign='center';
+      ctx.fillText(consLabels[i], consX + consW/2, cy + 14);
+      ctx.font = '9px monospace'; ctx.fillStyle = pColors[i]+'cc';
+      ctx.fillText(`reads P${i}`, consX + consW/2, cy + 28);
+    });
+
+    // Arrows: producer → partitions
+    pY.forEach((py, i) => {
+      ctx.strokeStyle = pColors[i]+'66'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(prodX+prodW, prodY+25); ctx.lineTo(topicX+10, py+14); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    // Arrows: partitions → consumers
+    consY.forEach((cy, i) => {
+      ctx.strokeStyle = pColors[i]; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(topicX+topicW, pY[i]+14); ctx.lineTo(consX, cy+consH/2); ctx.stroke();
+      // arrowhead
+      ctx.fillStyle = pColors[i];
+      ctx.beginPath(); ctx.moveTo(consX,cy+consH/2-4); ctx.lineTo(consX+8,cy+consH/2); ctx.lineTo(consX,cy+consH/2+4); ctx.fill();
+    });
+
+    // Animate particles along partition → consumer arrows
+    if (frame % 40 === 0) {
+      const pi = Math.floor(Math.random() * 3);
+      particles[pi].push({ progress: 0 });
+    }
+    particles.forEach((parts, i) => {
+      parts.forEach(p => {
+        p.progress = Math.min(1, p.progress + 0.012);
+        const sx = topicX + topicW, sy = pY[i] + 14;
+        const ex = consX, ey = consY[i] + consH/2;
+        const x = sx + (ex-sx)*p.progress, y = sy + (ey-sy)*p.progress;
+        ctx.fillStyle = pColors[i];
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+      });
+      // cleanup
+      for (let j = particles[i].length-1; j >= 0; j--) {
+        if (particles[i][j].progress >= 1) particles[i].splice(j, 1);
+      }
+    });
+
+    // Consumer group label
+    ctx.fillStyle = '#8b949e'; ctx.font = '10px monospace'; ctx.textAlign='center';
+    ctx.fillText('CONSUMER GROUP', consX + consW/2, 195);
+    ctx.fillText('(analytics-service)', consX + consW/2, 208);
+
+    frame++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── 3. Fanout canvas ─────────────────────────────────────────────────
+function drawFanout() {
+  const canvas = document.getElementById('fanoutCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let frame = 0;
+  const parts = [];
+
+  function resize() { canvas.width = canvas.offsetWidth; canvas.height = 180; }
+  resize();
+
+  function step() {
+    const W = canvas.width;
+    ctx.clearRect(0, 0, W, 180);
+
+    // Source event
+    const sx = 60, sy = 80;
+    ctx.fillStyle = '#d2992233'; ctx.strokeStyle='#d29922'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(sx-40, sy-22, 80, 44, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#d29922'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+    ctx.fillText('tweet_created', sx, sy-4);
+    ctx.font='9px monospace'; ctx.fillText('event', sx, sy+10);
+
+    // Consumers
+    const consumers = [
+      { y: 25,  label: 'Feed Service',    color:'#58a6ff' },
+      { y: 75,  label: 'Notif Service',   color:'#3fb950' },
+      { y: 125, label: 'Search Index',    color:'#bc8cff' },
+      { y: 155, label: 'Analytics',       color:'#d29922' },
+    ];
+    const cx = W - 110;
+    consumers.forEach(c => {
+      ctx.fillStyle = c.color+'22'; ctx.strokeStyle=c.color; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.roundRect(cx, c.y, 100, 26, 5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=c.color; ctx.font='10px monospace'; ctx.textAlign='center';
+      ctx.fillText(c.label, cx+50, c.y+17);
+      // static arrow line
+      ctx.strokeStyle=c.color+'55'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(sx+40, sy); ctx.lineTo(cx, c.y+13); ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    // Particles fan out
+    if (frame % 80 === 0) {
+      consumers.forEach((c, i) => {
+        parts.push({ ci: i, progress: 0, color: c.color,
+          tx: cx, ty: c.y+13 });
+      });
+    }
+    parts.forEach(p => {
+      p.progress = Math.min(1, p.progress + 0.015);
+      const x = (sx+40) + (p.tx - (sx+40)) * p.progress;
+      const y = sy + (p.ty - sy) * p.progress;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    });
+    for (let i = parts.length-1; i >= 0; i--) {
+      if (parts[i].progress >= 1) parts.splice(i, 1);
+    }
+
+    frame++;
+    requestAnimationFrame(step);
+  }
+  step();
+}
+drawFanout();
+
+</script>
+</body>
+</html>

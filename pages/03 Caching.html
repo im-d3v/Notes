@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF #03 — Caching: The Art of Remembering What You Already Know</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #1a1200 40%, #2a1a0022 100%);
+    }
+    /* Cache hit/miss animation */
+    .cache-demo-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 24px;
+      margin: 16px 0;
+    }
+    .cache-demo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 16px 0;
+    }
+    .cache-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .cache-box-inner {
+      width: 90px;
+      height: 70px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      text-align: center;
+      padding: 4px;
+    }
+    .cache-box-inner.box-request  { background: #1c2a3a; border-color: #58a6ff; color: #58a6ff; }
+    .cache-box-inner.box-cache    { background: #1a2a1a; border-color: #3fb950; color: #3fb950; }
+    .cache-box-inner.box-db       { background: #2a1a1a; border-color: #f85149; color: #f85149; }
+    .cache-box-inner.box-response { background: #2a2a1a; border-color: #e3b341; color: #e3b341; }
+    .cache-box-label { font-size: 11px; color: var(--text-muted); text-align: center; }
+    .cache-arrow {
+      font-size: 20px;
+      color: var(--text-muted);
+      transition: color 0.3s ease;
+    }
+    .cache-arrow.active { color: #58a6ff; }
+    .cache-result-badge {
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 10px auto;
+      display: inline-block;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .cache-result-badge.show { opacity: 1; }
+    .cache-result-badge.hit  { background: #1a3a1a; color: #3fb950; border: 1px solid #3fb950; }
+    .cache-result-badge.miss { background: #3a1a1a; color: #f85149; border: 1px solid #f85149; }
+    .demo-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+    .demo-btn {
+      padding: 8px 20px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .demo-btn.btn-hit  { background: #1a3a1a; color: #3fb950; border: 1px solid #3fb950; }
+    .demo-btn.btn-miss { background: #3a1a1a; color: #f85149; border: 1px solid #f85149; }
+    .demo-btn:hover { transform: translateY(-1px); filter: brightness(1.2); }
+    .hit-count-row { display: flex; gap: 24px; justify-content: center; margin-top: 12px; }
+    .hit-counter { text-align: center; }
+    .hit-counter .count-num { font-size: 28px; font-weight: 700; }
+    .hit-counter .count-label { font-size: 11px; color: var(--text-muted); }
+    .hit-counter.green .count-num { color: #3fb950; }
+    .hit-counter.red .count-num   { color: #f85149; }
+
+    /* Eviction policy vis */
+    .eviction-demo {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    .cache-slots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    .cache-slot {
+      width: 70px;
+      height: 56px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.4s ease;
+      border: 2px solid transparent;
+      gap: 2px;
+    }
+    .cache-slot.empty { background: #161b22; border-color: #30363d; color: #6e7681; }
+    .cache-slot.filled { background: #1c2a3a; border-color: #58a6ff; color: #e6edf3; }
+    .cache-slot.evicted { background: #3a1a1a; border-color: #f85149; color: #f85149; animation: flash-red 0.5s ease; }
+    .cache-slot.new-entry { background: #1a3a1a; border-color: #3fb950; color: #3fb950; animation: flash-green 0.5s ease; }
+    .cache-slot .slot-key { font-size: 13px; }
+    .cache-slot .slot-meta { font-size: 10px; color: var(--text-muted); }
+    @keyframes flash-red   { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); background:#5a1a1a; } }
+    @keyframes flash-green { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); background:#1a5a1a; } }
+    .eviction-log {
+      background: #010409;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      min-height: 48px;
+      color: #8b949e;
+      margin-top: 10px;
+    }
+    .eviction-log .log-hit  { color: #3fb950; }
+    .eviction-log .log-miss { color: #f85149; }
+    .eviction-log .log-evict { color: #d29922; }
+    .policy-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .policy-tab {
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      transition: all 0.2s;
+    }
+    .policy-tab.active { background: #1c2a3a; border-color: #58a6ff; color: #58a6ff; }
+
+    /* Invalidation flow */
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .flow-step:last-child { border-bottom: none; }
+    .flow-step-num {
+      min-width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .flow-step-num.blue   { background: #1c2a3a; color: #58a6ff; border: 2px solid #58a6ff; }
+    .flow-step-num.green  { background: #1a3a1a; color: #3fb950; border: 2px solid #3fb950; }
+    .flow-step-num.orange { background: #2a2010; color: #d29922; border: 2px solid #d29922; }
+    .flow-step-body { flex: 1; }
+    .flow-step-title { font-weight: 600; color: var(--text-primary); font-size: 14px; margin-bottom: 4px; }
+    .flow-step-desc  { font-size: 13px; color: var(--text-secondary); }
+
+    /* Redis structures */
+    .redis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .redis-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: default;
+    }
+    .redis-card:hover { border-color: #58a6ff; transform: translateY(-2px); }
+    .redis-card-icon { font-size: 24px; margin-bottom: 8px; }
+    .redis-card-type { font-size: 13px; font-weight: 700; color: #58a6ff; margin-bottom: 4px; }
+    .redis-card-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .redis-card-usecase { font-size: 11px; color: #3fb950; font-style: italic; }
+
+    /* Layer hierarchy */
+    .layer-hierarchy {
+      position: relative;
+      padding: 16px;
+    }
+    .layer-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 8px 0;
+      border: 1px solid var(--border-color);
+      cursor: default;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .layer-item:hover { transform: translateX(4px); }
+    .layer-num { font-size: 20px; font-weight: 800; min-width: 40px; text-align: center; }
+    .layer-info { flex: 1; }
+    .layer-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+    .layer-desc { font-size: 12px; color: var(--text-secondary); }
+    .layer-latency {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .layer-l1 { background: linear-gradient(90deg,#1a1e2a,#0d1117); border-color: #58a6ff; }
+    .layer-l1 .layer-num  { color: #58a6ff; }
+    .layer-l1 .layer-name { color: #58a6ff; }
+    .layer-l1 .layer-latency { background: #1c2a3a; color: #58a6ff; }
+    .layer-l2 { background: linear-gradient(90deg,#1a2a1e,#0d1117); border-color: #3fb950; }
+    .layer-l2 .layer-num  { color: #3fb950; }
+    .layer-l2 .layer-name { color: #3fb950; }
+    .layer-l2 .layer-latency { background: #1a3a1a; color: #3fb950; }
+    .layer-l3 { background: linear-gradient(90deg,#2a2010,#0d1117); border-color: #d29922; }
+    .layer-l3 .layer-num  { color: #d29922; }
+    .layer-l3 .layer-name { color: #d29922; }
+    .layer-l3 .layer-latency { background: #2a2010; color: #d29922; }
+    .layer-l4 { background: linear-gradient(90deg,#2a1a2a,#0d1117); border-color: #bc8cff; }
+    .layer-l4 .layer-num  { color: #bc8cff; }
+    .layer-l4 .layer-name { color: #bc8cff; }
+    .layer-l4 .layer-latency { background: #2a1a3a; color: #bc8cff; }
+    .layer-l5 { background: linear-gradient(90deg,#2a1a1a,#0d1117); border-color: #f85149; }
+    .layer-l5 .layer-num  { color: #f85149; }
+    .layer-l5 .layer-name { color: #f85149; }
+    .layer-l5 .layer-latency { background: #3a1a1a; color: #f85149; }
+
+    /* Failure scenario pulse */
+    .failure-box {
+      background: var(--bg-card);
+      border: 1px solid #f85149;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    .failure-box h5 { color: #f85149 !important; }
+    .failure-vis {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .req-bubble {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      border: 2px solid;
+    }
+    .req-bubble.normal  { background: #1c2a3a; border-color: #58a6ff; color: #58a6ff; }
+    .req-bubble.danger  { background: #3a1a1a; border-color: #f85149; color: #f85149; animation: pulse-danger 1s infinite; }
+    @keyframes pulse-danger { 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+    .req-bubble.warning { background: #2a2010; border-color: #d29922; color: #d29922; }
+
+    /* Playbook section */
+    .playbook-step {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border-left: 4px solid #58a6ff;
+      margin: 10px 0;
+    }
+    .playbook-num {
+      font-size: 24px;
+      font-weight: 800;
+      color: #58a6ff;
+      min-width: 32px;
+    }
+    .playbook-body h5 {
+      color: #58a6ff !important;
+      font-size: 14px !important;
+      margin-bottom: 6px;
+    }
+    .playbook-body p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    .phrase-box {
+      background: #010409;
+      border-left: 3px solid #3fb950;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      font-family: 'JetBrains Mono','Fira Code',monospace;
+      font-size: 12px;
+      color: #3fb950;
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- Hamburger -->
+<button id="hamburger" aria-label="Toggle menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Sidebar overlay -->
+<div id="sidebar-overlay"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">📦</div>
+    <div>
+      <div style="font-weight:700;font-size:14px;color:var(--text-primary)">PDF #03</div>
+      <div style="font-size:11px;color:var(--text-muted)">Caching Deep Dive</div>
+    </div>
+  </div>
+
+  <div style="padding:0 12px 8px;">
+    <a href="../index.html" class="toc-link" style="display:flex;align-items:center;gap:8px;background:var(--bg-tertiary);border-radius:6px;padding:8px 12px;margin-bottom:8px;color:var(--text-secondary);text-decoration:none;font-size:13px;border:1px solid var(--border-color);">
+      ← Home
+    </a>
+  </div>
+
+  <div style="padding:0 12px 6px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Contents</div>
+
+  <a href="#why-caching"       class="toc-link">§1 · Why Caching Exists</a>
+  <a href="#cache-layers"      class="toc-link">§2 · The 5 Cache Layers</a>
+  <a href="#eviction-policies" class="toc-link">§3 · Eviction Policies</a>
+  <a href="#cache-invalidation"class="toc-link">§4 · Cache Invalidation</a>
+  <a href="#cache-problems"    class="toc-link">§5 · The 3 Failure Modes</a>
+  <a href="#redis-deep"        class="toc-link">§6 · Redis — The Full Picture</a>
+  <a href="#cache-sizing"      class="toc-link">§7 · Sizing &amp; TTL Strategy</a>
+  <a href="#interview-playbook"class="toc-link">§8 · Interview Playbook</a>
+</nav>
+
+<!-- Main Content -->
+<main id="main">
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <div class="hero">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <span style="background:#2a2010;border:1px solid #d29922;color:#d29922;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;">PDF #03</span>
+      <span style="background:#1a3a1a;border:1px solid #3fb950;color:#3fb950;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;">System Design Series</span>
+    </div>
+    <h1>Caching</h1>
+    <p class="hero-subtitle">The Art of Remembering What You Already Know</p>
+    <p style="color:var(--text-secondary);max-width:580px;font-size:15px;line-height:1.7;margin-top:12px;">
+      Every company you'd want to work for uses caching aggressively. 
+      Without it, their databases would collapse under the load. 
+      After this PDF, you'll know exactly where to put it, how to size it, 
+      and what breaks when it goes wrong — which is exactly what the interviewer wants to hear.
+    </p>
+    <div class="hero-badges">
+      <span class="tag tag-yellow">Cache Invalidation</span>
+      <span class="tag tag-green">Redis</span>
+      <span class="tag tag-blue">Distributed Cache</span>
+      <span class="tag tag-orange">Eviction Policies</span>
+      <span class="tag tag-red">Failure Modes</span>
+      <span class="tag tag-purple">Interview Ready</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PART 1 ═══════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">01</div>
+    <div>
+      <h2>Foundations — Why, Where &amp; What Gets Evicted</h2>
+      <p>Build the mental model before you memorize any terms.</p>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 1: WHY CACHING EXISTS ───── -->
+  <div class="section" id="why-caching">
+    <div class="section-header">
+      <h3>⚡ §1 — Why Caching Exists</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">🧠</div>
+      <div class="body">
+        <strong>The Mental Model — Your Desk vs. Your Filing Cabinet</strong>
+        <p>Your filing cabinet (the database) holds everything — but you have to walk over to it, flip through folders, and find what you need. That takes time. Your desk (the cache) holds the things you grabbed most recently. They're right there, instantly accessible. Caching is just: <em>keep the things you use most in the place that's fastest to reach.</em></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Four Problems Caching Solves</h4>
+      <p>Each of these is a reason an interviewer might ask you "why did you add a cache here?" — and you should be able to answer for all four.</p>
+
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4 style="color:#f85149;">🔴 Database Overload</h4>
+          <p>A single MySQL instance handles roughly <strong>~10K QPS</strong> (queries per second) for simple reads. Twitter at peak serves <strong>>300K tweets/second</strong>. Without caching, that database dies. The cache absorbs the reads so the DB only handles writes and cache misses.</p>
+        </div>
+        <div class="card-mini">
+          <h4 style="color:#58a6ff;">⚡ Response Latency</h4>
+          <p>A DB query across the network: <strong>~1–10ms</strong>. A Redis lookup in RAM: <strong>~0.1–0.5ms</strong>. That's 10–100× faster. When you're building a product page that fires 20 DB queries, those milliseconds add up to a noticeably slow product.</p>
+        </div>
+        <div class="card-mini">
+          <h4 style="color:#3fb950;">💰 Compute Savings</h4>
+          <p>Imagine calculating a user's recommendation feed: 200ms of ML computation. Now imagine 50,000 users opening the app simultaneously. Cache the result for 5 minutes — you run that computation once, not 50,000 times. This is pure cost reduction.</p>
+        </div>
+        <div class="card-mini">
+          <h4 style="color:#d29922;">☁️ Infrastructure Cost</h4>
+          <p>Cloud databases bill per read/write. Fewer DB calls = lower cost. Companies like Pinterest reported <strong>80–90% reduction in DB load</strong> after adding Redis. Redis RAM costs money too — but it's far cheaper than equivalent DB compute.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Cache Hit/Miss Demo -->
+    <div class="cache-demo-container">
+      <h4 style="color:var(--accent-yellow);margin-bottom:4px;">🎮 Interactive: Cache Hit vs. Cache Miss</h4>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">See what actually happens at the request level. Click the buttons to simulate requests.</p>
+
+      <div class="cache-demo-row">
+        <div class="cache-box">
+          <div class="cache-box-inner box-request" id="demo-req">📱 Request<br/><span style="font-size:10px">user:42</span></div>
+          <div class="cache-box-label">Client</div>
+        </div>
+        <div class="cache-arrow" id="arr1">→</div>
+        <div class="cache-box">
+          <div class="cache-box-inner box-cache" id="demo-cache">🗄 Cache<br/><span id="cache-state" style="font-size:10px">EMPTY</span></div>
+          <div class="cache-box-label">Redis</div>
+        </div>
+        <div class="cache-arrow" id="arr2" style="opacity:0.3;">→</div>
+        <div class="cache-box">
+          <div class="cache-box-inner box-db" id="demo-db">🗃 Database<br/><span style="font-size:10px">MySQL</span></div>
+          <div class="cache-box-label">Slow (~5ms)</div>
+        </div>
+        <div class="cache-arrow" id="arr3">←</div>
+        <div class="cache-box">
+          <div class="cache-box-inner box-response" id="demo-resp">📦 Response<br/><span style="font-size:10px">data</span></div>
+          <div class="cache-box-label">To Client</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <div class="cache-result-badge" id="result-badge">HIT</div>
+      </div>
+
+      <div class="demo-controls">
+        <button class="demo-btn btn-miss" onclick="simulateMiss()">Simulate Cache MISS (First Request)</button>
+        <button class="demo-btn btn-hit"  onclick="simulateHit()">Simulate Cache HIT (Subsequent)</button>
+      </div>
+
+      <div class="hit-count-row">
+        <div class="hit-counter green"><div class="count-num" id="hit-count">0</div><div class="count-label">Cache Hits</div></div>
+        <div class="hit-counter red">  <div class="count-num" id="miss-count">0</div><div class="count-label">Cache Misses</div></div>
+      </div>
+      <div class="eviction-log" id="demo-log">Waiting for requests...</div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">📊</div>
+      <div class="body">
+        <strong>Numbers to Remember</strong>
+        <p>L1 CPU cache: ~1ns · L2 CPU cache: ~4ns · RAM (Redis): ~100ns · SSD DB: ~100µs · HDD DB: ~10ms · Network DB: ~1–10ms. Caching moves you from milliseconds to microseconds — a 1,000× improvement that users actually feel.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 2: 5 CACHE LAYERS ───── -->
+  <div class="section" id="cache-layers">
+    <div class="section-header">
+      <h3>🏗 §2 — Where to Cache: The 5 Layers</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Caching Hierarchy</h4>
+      <p>Every request passes through multiple potential caching layers. The higher in the stack you cache something, the faster the response — but the fewer users share that cache. Understand each layer so you can place caches intelligently in a design.</p>
+
+      <div class="layer-hierarchy">
+        <div class="layer-item layer-l1">
+          <div class="layer-num">1</div>
+          <div class="layer-info">
+            <div class="layer-name">Client-Side Cache</div>
+            <div class="layer-desc">Browser HTTP cache (Cache-Control, ETag), mobile app local cache, service worker cache. Lives on the user's device. Zero network cost for a hit.</div>
+          </div>
+          <div class="layer-latency">~0ms</div>
+        </div>
+        <div class="layer-item layer-l2">
+          <div class="layer-num">2</div>
+          <div class="layer-info">
+            <div class="layer-name">CDN Cache</div>
+            <div class="layer-desc">Cloudflare, Akamai, AWS CloudFront. Caches static assets (images, JS, CSS) and increasingly API responses at edge nodes close to users. Perfect for read-heavy global content.</div>
+          </div>
+          <div class="layer-latency">~5–20ms</div>
+        </div>
+        <div class="layer-item layer-l3">
+          <div class="layer-num">3</div>
+          <div class="layer-info">
+            <div class="layer-name">Load Balancer Cache</div>
+            <div class="layer-desc">Some LBs (e.g., NGINX, HAProxy) support basic response caching. Uncommon in modern architectures — but exists. Handles identical repeated requests before they hit app servers.</div>
+          </div>
+          <div class="layer-latency">~1–5ms</div>
+        </div>
+        <div class="layer-item layer-l4">
+          <div class="layer-num">4</div>
+          <div class="layer-info">
+            <div class="layer-name">Application Cache (In-Process)</div>
+            <div class="layer-desc">A dictionary/HashMap in your app server's memory. Guava Cache (Java), functools.lru_cache (Python). Zero network hop — but not shared across instances. Good for static config data, lookup tables.</div>
+          </div>
+          <div class="layer-latency">~0.01ms</div>
+        </div>
+        <div class="layer-item layer-l5">
+          <div class="layer-num">5</div>
+          <div class="layer-info">
+            <div class="layer-name">Distributed Cache</div>
+            <div class="layer-desc">Redis, Memcached. Shared across all app server instances. Network hop required but still ~10–100× faster than a database. This is what people mean 99% of the time when they say "add a cache."</div>
+          </div>
+          <div class="layer-latency">~0.5–2ms</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>When to use CDN cache</h4>
+        <p>Static assets (always). API responses that are the same for all users (leaderboards, trending content, home feed skeleton). <strong>Not</strong> for personalized data.</p>
+        <p style="margin-top:8px;font-size:12px;color:#3fb950;">Netflix: ~95% of traffic served from CDN edge. Zero origin server load for those requests.</p>
+      </div>
+      <div class="card-mini">
+        <h4>When to use in-process cache</h4>
+        <p>Configuration that changes rarely (feature flags, DB connection metadata, country codes). Fastest possible access. <strong>Problem:</strong> each server has its own copy — if one server updates, others don't know.</p>
+        <p style="margin-top:8px;font-size:12px;color:#d29922;">Watch out for stale state when deploying updates to config.</p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Don't Cache Everything</strong>
+        <p>Every cache adds complexity: stale data risk, invalidation logic, extra infrastructure. Only cache data that is: (1) read far more often than it's written, (2) expensive to compute or retrieve, and (3) acceptable to be slightly stale. Real-time stock prices? Don't cache. User profile data? Cache aggressively.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 3: EVICTION POLICIES ───── -->
+  <div class="section" id="eviction-policies">
+    <div class="section-header">
+      <h3>🗑 §3 — Cache Eviction Policies</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Fundamental Problem: Cache is Finite</h4>
+      <p>RAM is expensive. Your cache can hold 10GB worth of data but your dataset is 10TB. So when the cache is full and a new item arrives, something has to go. <em>Which item?</em> That's the eviction policy.</p>
+      <p>The right policy depends on your access patterns. Getting this wrong means you're evicting the wrong things — and your cache hit rate tanks.</p>
+    </div>
+
+    <!-- Interactive Eviction Demo -->
+    <div class="eviction-demo">
+      <h4 style="color:var(--accent-yellow);">🎮 Interactive: Eviction Policy Simulator</h4>
+      <p style="font-size:13px;color:var(--text-secondary);">Cache has 4 slots. Access keys A→B→C→D→E to see what gets evicted under each policy.</p>
+
+      <div class="policy-tabs" id="policy-tabs">
+        <div class="policy-tab active" onclick="setPolicy('lru',this)">LRU</div>
+        <div class="policy-tab" onclick="setPolicy('lfu',this)">LFU</div>
+        <div class="policy-tab" onclick="setPolicy('fifo',this)">FIFO</div>
+      </div>
+
+      <div class="cache-slots" id="eviction-slots">
+        <div class="cache-slot empty"><span class="slot-key">—</span><span class="slot-meta">empty</span></div>
+        <div class="cache-slot empty"><span class="slot-key">—</span><span class="slot-meta">empty</span></div>
+        <div class="cache-slot empty"><span class="slot-key">—</span><span class="slot-meta">empty</span></div>
+        <div class="cache-slot empty"><span class="slot-key">—</span><span class="slot-meta">empty</span></div>
+      </div>
+
+      <div class="demo-controls" style="flex-wrap:wrap;">
+        <button class="demo-btn btn-hit" onclick="accessKey('A')">Access A</button>
+        <button class="demo-btn btn-hit" onclick="accessKey('B')">Access B</button>
+        <button class="demo-btn btn-hit" onclick="accessKey('C')">Access C</button>
+        <button class="demo-btn btn-hit" onclick="accessKey('D')">Access D</button>
+        <button class="demo-btn btn-miss" onclick="accessKey('E')">Access E (force eviction)</button>
+        <button class="demo-btn" style="background:#1c1c1c;color:#8b949e;border:1px solid #30363d;" onclick="resetEviction()">Reset</button>
+      </div>
+
+      <div class="eviction-log" id="eviction-log">Select a policy and start accessing keys...</div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>🕐 LRU — Least Recently Used</h4>
+        <p><strong>Analogy:</strong> Your browser tabs — you close the one you haven't clicked in 3 days. It might still be useful, but recency is your proxy for "needed."</p>
+        <p><strong>Evicts:</strong> The key that was accessed least recently.</p>
+        <p><strong>Use when:</strong> Access patterns are temporal — recently used data is likely to be used again. This is the <em>correct default</em> for most workloads.</p>
+        <p><strong>Real-world:</strong> Redis default eviction. Used by virtually every production cache.</p>
+      </div>
+      <div class="card-mini">
+        <h4>📊 LFU — Least Frequently Used</h4>
+        <p><strong>Analogy:</strong> You keep books you've read 10 times, but donate the one you picked up once years ago. Frequency beats recency.</p>
+        <p><strong>Evicts:</strong> The key with the lowest access count.</p>
+        <p><strong>Use when:</strong> Access patterns are stable — some items are always popular (product catalog's top 100 items) and you want to keep them regardless of when they were last accessed.</p>
+        <p><strong>Problem:</strong> A brand new viral item starts with frequency=1 and gets immediately evicted. Needs aging mechanisms.</p>
+      </div>
+      <div class="card-mini">
+        <h4>📬 FIFO — First In, First Out</h4>
+        <p><strong>Analogy:</strong> A grocery store shelf — oldest stock goes first, regardless of what's popular.</p>
+        <p><strong>Evicts:</strong> The oldest entry by insertion time.</p>
+        <p><strong>Use when:</strong> You have a natural time-based data lifecycle. Rare in application caching. More common in buffers and queues.</p>
+        <p><strong>Problem:</strong> Ignores both recency and frequency. A key accessed every second could get evicted just because it was inserted first.</p>
+      </div>
+      <div class="card-mini">
+        <h4>⏱ TTL — Time To Live</h4>
+        <p><strong>Analogy:</strong> Milk with an expiry date. After the date, throw it out regardless of whether you drink it daily or haven't touched it.</p>
+        <p><strong>Evicts:</strong> Entries automatically after a set duration (e.g., 5 minutes).</p>
+        <p><strong>Use when:</strong> Data has a known staleness window. Session tokens, OTP codes, weather data, pricing data.</p>
+        <p><strong>Key insight:</strong> TTL is not a replacement for LRU/LFU — it works alongside them. Redis supports both simultaneously.</p>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Default: Always Start with LRU + TTL</strong>
+        <p>If asked which eviction policy you'd use, say: "I'd use LRU as the primary policy combined with TTL per key type. LRU handles memory pressure, TTL handles data freshness. I'd only move to LFU if I had evidence that my top items were getting evicted due to a recency skew in access patterns."</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PART 2 ═══════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">02</div>
+    <div>
+      <h2>The Hard Parts — Invalidation, Failures &amp; Redis</h2>
+      <p>This is where most engineers get it wrong. This is also what interviewers test hardest.</p>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 4: CACHE INVALIDATION ───── -->
+  <div class="section" id="cache-invalidation">
+    <div class="section-header">
+      <h3>🔄 §4 — Cache Invalidation: The Hardest Problem</h3>
+    </div>
+
+    <div class="banner banner-red">
+      <h4>"There are only two hard things in computer science: cache invalidation and naming things." — Phil Karlton</h4>
+      <p>This isn't a joke. Every production system eventually has a cache invalidation bug. Understanding the three strategies — and their trade-offs — is table stakes for any system design interview.</p>
+    </div>
+
+    <div class="card">
+      <h4>Why Is It Hard?</h4>
+      <p>The fundamental tension: your cache has a <em>copy</em> of data that lives in the database. When the database changes, your cache has stale data. The question is: <strong>when do you update the cache, and who is responsible for doing it?</strong></p>
+      <p>There's no perfect answer. Every strategy trades off something — write latency, consistency, complexity, or durability. Your job as a designer is to pick the trade-off that fits your use case.</p>
+    </div>
+
+    <!-- Strategy A: Write-Through -->
+    <div class="card">
+      <h4>Strategy A: Write-Through</h4>
+      <p><strong>Analogy:</strong> Carbon copy paper — every time you write something, a copy goes to the filing cabinet simultaneously. Your desk and the cabinet always agree.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">App receives a write request</div>
+            <div class="step-desc">User updates their profile picture URL.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Write to cache AND database simultaneously</div>
+            <div class="step-desc">Both are updated as part of the same write operation. Some implementations write DB first, then cache. Some write cache first.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Acknowledge success to client</div>
+            <div class="step-desc">Only after both writes succeed. This means write latency = max(cache write time, DB write time).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare">
+        <div class="compare-card">
+          <h4>✅ What you gain</h4>
+          <ul>
+            <li>Cache is always consistent with DB</li>
+            <li>Read-after-write always hits cache</li>
+            <li>No stale data window</li>
+            <li>Simple mental model</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>❌ What you give up</h4>
+          <ul>
+            <li>Higher write latency (two writes per operation)</li>
+            <li>Cache gets polluted with data that's never read again</li>
+            <li>What if cache write succeeds but DB write fails? Rollback complexity.</li>
+            <li>Two failure points per write</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:12px;font-size:13px;"><strong>Best for:</strong> Systems where reads immediately follow writes (user profiles, settings, financial dashboards).</p>
+    </div>
+
+    <!-- Strategy B: Write-Back -->
+    <div class="card">
+      <h4>Strategy B: Write-Back (Write-Behind)</h4>
+      <p><strong>Analogy:</strong> A whiteboard in a meeting. You jot notes on the whiteboard immediately (fast), and someone transfers them to the official document later (async). The whiteboard is always current; the document lags.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">App receives a write request</div>
+            <div class="step-desc">User updates their profile picture URL.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Write to cache ONLY — return success immediately</div>
+            <div class="step-desc">Ultra-fast write. Client gets acknowledgement in sub-millisecond time.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Background process writes to DB asynchronously</div>
+            <div class="step-desc">A worker drains the "dirty" cache keys and flushes them to DB. Could be 100ms later, could be 10 seconds later.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout danger">
+        <div class="icon">💀</div>
+        <div class="body">
+          <strong>The Scary Part: Data Loss Window</strong>
+          <p>If your cache server crashes between step 2 and step 3, those writes are gone. Forever. That's why write-back is mostly used for <strong>non-critical data</strong> where eventual persistence is acceptable: analytics counters, view counts, "recently viewed" lists. Never for financial transactions or order data.</p>
+        </div>
+      </div>
+      <p style="font-size:13px;"><strong>Best for:</strong> High-write workloads where throughput > durability (gaming leaderboards, real-time analytics, social media like/view counters).</p>
+    </div>
+
+    <!-- Strategy C: Cache-Aside -->
+    <div class="card">
+      <h4>Strategy C: Cache-Aside (Lazy Loading) ⭐ Most Common</h4>
+      <p><strong>Analogy:</strong> You only put things on your desk when you need them. You don't pre-populate your desk with every file in the cabinet — you grab things as you reach for them. Lazy, but space-efficient.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">App receives a read request for user:42</div>
+            <div class="step-desc">Check the cache first.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="background:#3a1a1a;border-color:#f85149;color:#f85149;">✗</div>
+          <div class="step-body">
+            <div class="step-title">Cache MISS — key not found</div>
+            <div class="step-desc">Go to the database and fetch the data.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Store result in cache with TTL</div>
+            <div class="step-desc">e.g., SET user:42 {data} EX 300 (expires in 5 minutes). Now future reads are fast.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="background:#1a3a1a;border-color:#3fb950;color:#3fb950;">✓</div>
+          <div class="step-body">
+            <div class="step-title">Cache HIT on all subsequent reads (within TTL)</div>
+            <div class="step-desc">Sub-millisecond response. DB not touched.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare">
+        <div class="compare-card">
+          <h4>✅ What you gain</h4>
+          <ul>
+            <li>Simple to implement — app logic controls everything</li>
+            <li>Cache only fills with data that's actually requested</li>
+            <li>Cache node failure is recoverable (warm up on restart)</li>
+            <li>Works with any database</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>❌ What you give up</h4>
+          <ul>
+            <li>First request always slow (cache miss)</li>
+            <li>Thundering herd when cache is cold (see §5)</li>
+            <li>Stale data until TTL expires after a write</li>
+            <li>App code must handle miss logic everywhere</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Answer: Why Cache-Aside is the Default</strong>
+        <p>Cache-Aside is the most common pattern because it gives you <strong>flexibility</strong>. The cache is managed by the application layer — you can add it incrementally, it degrades gracefully if Redis is down (you just hit the DB), and it doesn't require special cache infrastructure. In most interviews, start here and only deviate if you have a specific reason (ultra-low write latency → Write-Back; strict consistency → Write-Through).</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Strategy</th><th>Write Latency</th><th>Read Latency (after first)</th><th>Consistency</th><th>Data Loss Risk</th><th>Best For</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Write-Through</strong></td>
+            <td>High (2 writes)</td>
+            <td>Fast</td>
+            <td><span class="pill pill-green">Strong</span></td>
+            <td><span class="pill pill-green">None</span></td>
+            <td>Profiles, settings</td>
+          </tr>
+          <tr>
+            <td><strong>Write-Back</strong></td>
+            <td>Very Low</td>
+            <td>Fast</td>
+            <td><span class="pill pill-orange">Eventual</span></td>
+            <td><span class="pill pill-red">High</span></td>
+            <td>Counters, analytics</td>
+          </tr>
+          <tr>
+            <td><strong>Cache-Aside</strong></td>
+            <td>Normal (DB only)</td>
+            <td>Fast (after first)</td>
+            <td><span class="pill pill-orange">Eventual (TTL)</span></td>
+            <td><span class="pill pill-green">None</span></td>
+            <td>⭐ General purpose</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 5: CACHE PROBLEMS ───── -->
+  <div class="section" id="cache-problems">
+    <div class="section-header">
+      <h3>💥 §5 — The 3 Cache Failure Modes You Will Be Asked About</h3>
+    </div>
+
+    <div class="card">
+      <h4>Why These Matter</h4>
+      <p>Any senior engineer who's run a production cache has seen these. Interviewers at Google and Meta specifically probe for these because they reveal whether you've thought about failure modes — not just the happy path.</p>
+    </div>
+
+    <!-- Cache Stampede -->
+    <div class="failure-box">
+      <h5>⚡ Failure Mode A: Cache Stampede / Thundering Herd</h5>
+
+      <div class="card" style="border-color:#30363d;margin-top:12px;">
+        <p><strong>What happens:</strong> A heavily-accessed cache key expires. At that exact moment, 1,000 concurrent requests all check the cache, all get a miss, and all simultaneously fire a database query for the same data. Your DB — which was handling 100 QPS gracefully — suddenly gets 1,000 concurrent queries. It falls over.</p>
+        <p><strong>Real world:</strong> This killed several production systems at Reddit during AMAs, when a cached post expired and thousands of users were on the page.</p>
+      </div>
+
+      <div class="failure-vis" id="stampede-vis">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="demo-controls">
+        <button class="demo-btn btn-miss" onclick="animateStampede()">▶ Simulate Stampede</button>
+      </div>
+
+      <div class="card" style="border-color:#3fb950;margin-top:12px;">
+        <h5 style="color:#3fb950 !important;">Solutions</h5>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Mutex / Lock (Thundering Herd Prevention)</div>
+              <div class="step-desc">When a cache miss occurs, acquire a distributed lock before querying the DB. Only one request goes to the DB; all others wait. When the DB returns, the result is cached, all waiters get the cached result. Redis <code>SET NX</code> (set if not exists) is perfect for this.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Probabilistic Early Expiration (PER)</div>
+              <div class="step-desc">Before a key actually expires, a small probability triggers a background refresh. If key TTL = 5min and we're at 4:50, there's a 10% chance any request will proactively refresh it. This smooths out the expiry cliff.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Background Refresh Thread</div>
+              <div class="step-desc">A dedicated worker monitors key TTLs and refreshes them before they expire. The user-facing code never sees a cache miss. Used heavily at Facebook and Twitter for high-traffic keys.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache Penetration -->
+    <div class="failure-box" style="margin-top:24px;">
+      <h5>👻 Failure Mode B: Cache Penetration</h5>
+
+      <div class="card" style="border-color:#30363d;margin-top:12px;">
+        <p><strong>What happens:</strong> Requests come in for data that <em>doesn't exist</em> in your database. Example: a malicious actor (or just a bug) sends requests for user IDs 99999999, 88888888, 77777777 — none of which exist. These always result in a cache miss → DB query → empty result. The cache never helps because there's nothing to cache. Your DB takes the full load.</p>
+        <p><strong>Real world:</strong> Common in DDoS attacks and web scraping attacks. Also happens innocently with typos or invalid IDs from client bugs.</p>
+      </div>
+
+      <div class="card" style="border-color:#3fb950;margin-top:12px;">
+        <h5 style="color:#3fb950 !important;">Solutions</h5>
+        <div class="compare">
+          <div class="compare-card">
+            <h4>Solution 1: Cache Null Results</h4>
+            <p>When a DB query returns empty, cache the null/empty result with a short TTL (e.g., 30 seconds).</p>
+            <p style="font-size:12px;color:#d29922;margin-top:8px;"><strong>Trade-off:</strong> Cache gets filled with useless null entries. If the data is later created legitimately, it serves null until TTL expires.</p>
+          </div>
+          <div class="compare-card">
+            <h4>Solution 2: Bloom Filter ⭐</h4>
+            <p>A probabilistic data structure that sits in front of the cache. Before any DB query, check: "does this key possibly exist?" If the Bloom filter says NO — definitely no — skip DB entirely.</p>
+            <p style="font-size:12px;color:#3fb950;margin-top:8px;"><strong>False positives possible</strong> (it says "maybe yes" for non-existent keys) but <strong>never false negatives</strong>. Perfect for this use case. ~10MB of RAM can index billions of keys.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache Avalanche -->
+    <div class="failure-box" style="margin-top:24px;">
+      <h5>❄️ Failure Mode C: Cache Avalanche</h5>
+
+      <div class="card" style="border-color:#30363d;margin-top:12px;">
+        <p><strong>What happens:</strong> Many cache keys all expire at the same time — causing a tsunami of simultaneous DB requests. This is different from stampede: stampede is <em>one popular key</em> expiring; avalanche is <em>many keys</em> expiring simultaneously.</p>
+        <p><strong>Common cause:</strong> System restart after a cache failure. All keys were set with TTL=300s during cache warm-up at t=0. At t=300s, they all expire at once. Boom.</p>
+        <p><strong>Also caused by:</strong> A Redis node failure. All traffic that was hitting the dead node suddenly hits the DB.</p>
+      </div>
+
+      <div class="card" style="border-color:#3fb950;margin-top:12px;">
+        <h5 style="color:#3fb950 !important;">Solutions</h5>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Randomize TTL Values</div>
+              <div class="step-desc">Instead of SET key TTL=300, use SET key TTL=(300 + random(0,60)). This spreads expirations across a 60-second window instead of a single second. Simple, effective, always do this.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Cache Warm-Up on Restart</div>
+              <div class="step-desc">After a Redis restart, proactively pre-populate the cache with the most critical keys before opening traffic. Use a startup job that loads top N users, top N products, etc.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Circuit Breaker on DB</div>
+              <div class="step-desc">If the DB is getting hammered, trip a circuit breaker that returns a degraded response instead of crashing. Better to show "temporarily unavailable" than to take down the entire service.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">Redis Clustering / Replication</div>
+              <div class="step-desc">Prevent single-node failure from triggering avalanche. Redis Sentinel for HA, Redis Cluster for horizontal scaling. A single node failure only impacts a fraction of keyspace.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip: Name All Three Unprompted</strong>
+        <p>When an interviewer asks "what problems can arise with your caching strategy?" — name all three: "I'd watch out for cache penetration (fake IDs — mitigated with Bloom filters), cache stampede (popular key expiry — mitigated with mutex), and cache avalanche (mass expiration — mitigated with randomized TTL)." This signals you've run real production systems.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PART 3 ═══════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">03</div>
+    <div>
+      <h2>Redis, Sizing &amp; Interview Mastery</h2>
+      <p>The tool you'll actually use, the numbers you need to know, and exactly what to say.</p>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 6: REDIS DEEP DIVE ───── -->
+  <div class="section" id="redis-deep">
+    <div class="section-header">
+      <h3>🔴 §6 — Redis: What It Actually Is</h3>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Common Mistake: "Redis = Cache"</strong>
+        <p>Redis is a <em>multi-model in-memory data store</em>. It can be a cache, yes — but also a message queue, a leaderboard engine, a session store, a pub/sub broker, a rate limiter, and a distributed lock manager. Calling Redis "just a cache" in an interview is a junior-level answer. Knowing its data structures and when to use each one is the senior answer.</p>
+      </div>
+    </div>
+
+    <div class="redis-grid" id="redis-grid">
+      <div class="redis-card">
+        <div class="redis-card-icon">📝</div>
+        <div class="redis-card-type">String</div>
+        <div class="redis-card-desc">Simple key → value. Supports atomic increment (INCR). Values up to 512MB. The building block everything else extends.</div>
+        <div class="redis-card-usecase">Rate limiting (INCR + EXPIRE), simple cache, feature flags, OTP codes, session tokens</div>
+      </div>
+      <div class="redis-card">
+        <div class="redis-card-icon">🗂</div>
+        <div class="redis-card-type">Hash</div>
+        <div class="redis-card-desc">A map of field → value under one key. Like a mini-object. Efficient for partial updates — change one field without reserializing the whole object.</div>
+        <div class="redis-card-usecase">User profiles, session data, product metadata. user:42 → {name:"Alice", email:"...", plan:"pro"}</div>
+      </div>
+      <div class="redis-card">
+        <div class="redis-card-icon">📋</div>
+        <div class="redis-card-type">List</div>
+        <div class="redis-card-desc">Doubly-linked list. O(1) push/pop from both ends. Ordered by insertion. Supports blocking pop (BLPOP) — a key queue primitive.</div>
+        <div class="redis-card-usecase">Activity feed (recent 50 items), job queue, message queue, "recent searches" list</div>
+      </div>
+      <div class="redis-card">
+        <div class="redis-card-icon">🎯</div>
+        <div class="redis-card-type">Set</div>
+        <div class="redis-card-desc">Unordered collection of unique strings. O(1) add/remove/check. Supports union, intersection, difference operations across sets.</div>
+        <div class="redis-card-usecase">Unique visitors per day, user tags, friend lists, "users who liked post X", mutual connections</div>
+      </div>
+      <div class="redis-card">
+        <div class="redis-card-icon">🏆</div>
+        <div class="redis-card-type">Sorted Set (ZSet)</div>
+        <div class="redis-card-desc">Each member has a floating-point score. Members sorted by score. Range queries by score or rank. O(log N) operations.</div>
+        <div class="redis-card-usecase">Leaderboards, priority queues, time-series (score = timestamp), range queries on scores</div>
+      </div>
+      <div class="redis-card">
+        <div class="redis-card-icon">📡</div>
+        <div class="redis-card-type">Pub/Sub</div>
+        <div class="redis-card-desc">Publish messages to channels; subscribers receive in real-time. Fire-and-forget: if subscriber is offline, message is lost. Not a persistent queue.</div>
+        <div class="redis-card-usecase">Real-time notifications, live chat, cache invalidation broadcast, collaborative editing</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🏆 Deep Dive: Sorted Set Leaderboard</h4>
+      <p>This is the most commonly asked Redis data structure in system design interviews. Here's exactly how you'd build a real-time leaderboard:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Redis Sorted Set — Leaderboard Implementation</span>
+        </div>
+        <pre><code><span class="cmt">// Add/update a player's score — O(log N)</span>
+<span class="cmt">// ZADD game:leaderboard 15000 "alice"</span>
+jedis.<span class="fn">zadd</span>(<span class="str">"game:leaderboard"</span>, <span class="num">15000</span>, <span class="str">"alice"</span>);
+jedis.<span class="fn">zadd</span>(<span class="str">"game:leaderboard"</span>, <span class="num">12500</span>, <span class="str">"bob"</span>);
+jedis.<span class="fn">zadd</span>(<span class="str">"game:leaderboard"</span>, <span class="num">18200</span>, <span class="str">"charlie"</span>);
+
+<span class="cmt">// Get top 10 players, highest score first — O(log N + K)</span>
+<span class="cmt">// ZREVRANGE game:leaderboard 0 9 WITHSCORES</span>
+<span class="type">Set</span>&lt;<span class="type">Tuple</span>&gt; top10 = jedis.<span class="fn">zrevrangeWithScores</span>(<span class="str">"game:leaderboard"</span>, <span class="num">0</span>, <span class="num">9</span>);
+
+<span class="cmt">// Get a player's rank (0-indexed from top) — O(log N)</span>
+<span class="cmt">// ZREVRANK game:leaderboard "alice" → returns 1 (2nd place)</span>
+<span class="type">Long</span> rank = jedis.<span class="fn">zrevrank</span>(<span class="str">"game:leaderboard"</span>, <span class="str">"alice"</span>);
+
+<span class="cmt">// Increment score atomically — O(log N)</span>
+<span class="cmt">// ZINCRBY game:leaderboard 500 "alice"</span>
+jedis.<span class="fn">zincrby</span>(<span class="str">"game:leaderboard"</span>, <span class="num">500</span>, <span class="str">"alice"</span>);
+
+<span class="cmt">// Get players in a score range — range queries are O(log N + K)</span>
+<span class="cmt">// ZRANGEBYSCORE game:leaderboard 10000 20000</span>
+<span class="type">Set</span>&lt;<span class="type">String</span>&gt; midTier = jedis.<span class="fn">zrangeByScore</span>(<span class="str">"game:leaderboard"</span>, <span class="num">10000</span>, <span class="num">20000</span>);</code></pre>
+      </div>
+
+      <div class="callout success">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Why Sorted Set is perfect for leaderboards</strong>
+          <p>A SQL query for <code>SELECT user, score FROM scores ORDER BY score DESC LIMIT 10</code> requires a full sort at query time — O(N log N). Redis Sorted Set maintains the sorted order on every write, making reads O(log N + K). For 10M users, that's the difference between 260ms and 0.2ms.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🔒 Redis as a Distributed Lock (Redlock)</h4>
+      <p>This comes up in interviews when you need exactly-once processing or mutual exclusion. The simplest form:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Java</span>
+          <span class="code-title">Redis Distributed Lock — SET NX EX pattern</span>
+        </div>
+        <pre><code><span class="cmt">// Acquire lock — SET key value NX EX 30</span>
+<span class="cmt">// NX = only set if key does not exist (atomic compare-and-set)</span>
+<span class="cmt">// EX 30 = auto-expire in 30 seconds (prevents deadlock if process crashes)</span>
+<span class="type">String</span> lockKey   = <span class="str">"lock:payment:order_123"</span>;
+<span class="type">String</span> lockValue = <span class="type">UUID</span>.<span class="fn">randomUUID</span>().<span class="fn">toString</span>(); <span class="cmt">// unique per holder</span>
+
+<span class="type">SetParams</span> params = <span class="type">SetParams</span>.<span class="fn">setParams</span>().<span class="fn">nx</span>().<span class="fn">ex</span>(<span class="num">30</span>);
+<span class="type">String</span> result = jedis.<span class="fn">set</span>(lockKey, lockValue, params);
+
+<span class="kw">if</span> (<span class="str">"OK"</span>.<span class="fn">equals</span>(result)) {
+    <span class="kw">try</span> {
+        <span class="fn">processPayment</span>(); <span class="cmt">// critical section — only one process at a time</span>
+    } <span class="kw">finally</span> {
+        <span class="cmt">// Release lock ONLY if we still own it (check value matches)</span>
+        <span class="cmt">// Use Lua script for atomic check-and-delete</span>
+        <span class="type">String</span> luaScript = <span class="str">"if redis.call('get',KEYS[1])==ARGV[1] then "</span> +
+                           <span class="str">"return redis.call('del',KEYS[1]) else return 0 end"</span>;
+        jedis.<span class="fn">eval</span>(luaScript, <span class="num">1</span>, lockKey, lockValue);
+    }
+} <span class="kw">else</span> {
+    <span class="cmt">// Lock held by another process — retry or fail fast</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">📊</div>
+      <div class="body">
+        <strong>Redis Numbers to Know for Interviews</strong>
+        <p>Single Redis instance: <strong>~100K–1M ops/second</strong> (depending on operation complexity) · Typical latency: <strong>0.1–0.5ms</strong> · Max memory per instance: typically <strong>~50–100GB RAM</strong> in production · Redis Cluster supports horizontal scaling with automatic sharding across nodes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 7: SIZING & TTL ───── -->
+  <div class="section" id="cache-sizing">
+    <div class="section-header">
+      <h3>📐 §7 — Cache Sizing &amp; TTL Strategy</h3>
+    </div>
+
+    <div class="card">
+      <h4>The 80/20 Rule of Caching</h4>
+      <p>In most production systems, 20% of the data is responsible for 80% of the reads. You don't need to cache everything — you need to cache the <em>right</em> things. That 20% is your target.</p>
+      <p>Start by identifying your <strong>hot data</strong>: what are your most-read DB tables? What queries run thousands of times per second? Those are your cache candidates.</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Data Type</th><th>Cache?</th><th>TTL Guidance</th><th>Invalidation</th><th>Real Example</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>User profile</strong></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>5–15 min</td>
+            <td>On write</td>
+            <td>Twitter user object</td>
+          </tr>
+          <tr>
+            <td><strong>Product catalog</strong></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>1–24 hr</td>
+            <td>On update</td>
+            <td>Amazon product page</td>
+          </tr>
+          <tr>
+            <td><strong>Home feed / timeline</strong></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>30s – 2 min</td>
+            <td>On new post</td>
+            <td>Instagram home tab</td>
+          </tr>
+          <tr>
+            <td><strong>Leaderboard</strong></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>10s – 1 min</td>
+            <td>On score update</td>
+            <td>Gaming apps</td>
+          </tr>
+          <tr>
+            <td><strong>Config / feature flags</strong></td>
+            <td><span class="pill pill-green">Yes</span></td>
+            <td>5 min + local</td>
+            <td>On change</td>
+            <td>LaunchDarkly flags</td>
+          </tr>
+          <tr>
+            <td><strong>Real-time stock prices</strong></td>
+            <td><span class="pill pill-orange">Short TTL only</span></td>
+            <td>&lt; 1s</td>
+            <td>Continuous</td>
+            <td>Trading platforms</td>
+          </tr>
+          <tr>
+            <td><strong>Financial transactions</strong></td>
+            <td><span class="pill pill-red">Avoid</span></td>
+            <td>N/A</td>
+            <td>N/A</td>
+            <td>Bank balance, orders</td>
+          </tr>
+          <tr>
+            <td><strong>Personalized recs</strong></td>
+            <td><span class="pill pill-blue">Yes (keyed)</span></td>
+            <td>1–6 hr</td>
+            <td>On model refresh</td>
+            <td>Netflix suggestions</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>How to Estimate Cache Size</h4>
+        <p>Start with: <strong>What is my working set?</strong></p>
+        <p>Working set = data that's accessed in a given time window. For most apps, the "hot" data in any 1-hour window fits in 10–50GB of RAM.</p>
+        <p>Formula: <code>avg_object_size × hot_key_count × safety_factor(1.5)</code></p>
+        <p style="font-size:12px;color:#d29922;margin-top:8px;">Example: 1M active users × 1KB profile = 1GB. Add 1.5× safety = 1.5GB. A tiny Redis instance handles this.</p>
+      </div>
+      <div class="card-mini">
+        <h4>How to Set TTL Values</h4>
+        <p>Ask yourself: <em>"How stale can this data be before a user notices or before it causes a bug?"</em></p>
+        <ul style="font-size:12px;color:var(--text-secondary);margin:8px 0 0 0;padding-left:16px;">
+          <li>User profile: 5 minutes is fine (changes rarely)</li>
+          <li>Post like count: 30s is fine (approximate is ok)</li>
+          <li>Auth token: matches token expiry (e.g., 1 hour)</li>
+          <li>Static content: hours to days</li>
+        </ul>
+        <p style="font-size:12px;color:#3fb950;margin-top:8px;">Always add ±10–20% jitter to prevent avalanche.</p>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Key Insight: Cache Hit Rate is Your North Star Metric</strong>
+        <p>Target cache hit rate: <strong>&gt;95%</strong> for a well-tuned production cache. Below 90% means you're either caching the wrong things, your TTLs are too short, or your cache is too small. Monitor this metric. If hit rate drops, your DB will feel it immediately.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SECTION 8: INTERVIEW PLAYBOOK ───── -->
+  <div class="section" id="interview-playbook">
+    <div class="section-header">
+      <h3>🎯 §8 — Interview Playbook</h3>
+    </div>
+
+    <div class="banner banner-purple">
+      <h4>How to Talk About Caching in Any System Design Interview</h4>
+      <p>You don't wait for the interviewer to ask about caching. You proactively bring it up when you've identified a read-heavy bottleneck. Here's the exact framework.</p>
+    </div>
+
+    <div class="card">
+      <h4>The Standard Places to Add Cache in Any Design</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>1. User/Session Data</h4>
+          <p>Every request that requires authentication checks who the user is. Cache the session → user mapping. Without this, your auth service or DB takes every API request's auth check hit.</p>
+          <p style="font-size:12px;color:#58a6ff;">Key: <code>session:{token}</code> → user object. TTL = session lifetime.</p>
+        </div>
+        <div class="card-mini">
+          <h4>2. Aggregated/Computed Results</h4>
+          <p>Anything that requires a complex query or computation: leaderboards, feed rankings, recommendation lists, search facets. Compute once, cache the result.</p>
+          <p style="font-size:12px;color:#58a6ff;">Key: <code>feed:{userId}</code> → array of post IDs. TTL = 30s–2min.</p>
+        </div>
+        <div class="card-mini">
+          <h4>3. Frequently Read, Rarely Written</h4>
+          <p>Product catalog, user profiles, config data, geo/location data. High read-to-write ratio makes caching extremely effective with simple cache-aside + TTL.</p>
+          <p style="font-size:12px;color:#58a6ff;">Key: <code>product:{id}</code> → product object. TTL = 1–24 hr.</p>
+        </div>
+        <div class="card-mini">
+          <h4>4. Rate Limiting Counters</h4>
+          <p>Track API usage per user per minute using Redis String + INCR + EXPIRE. Atomic operations make this consistent. Can't do this reliably in a stateless DB.</p>
+          <p style="font-size:12px;color:#58a6ff;">Key: <code>ratelimit:{userId}:{minute}</code> → count. TTL = 60s.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Exact Phrases That Signal Senior-Level Thinking</h4>
+
+      <div class="playbook-step">
+        <div class="playbook-num">1</div>
+        <div class="playbook-body">
+          <h5>When introducing cache</h5>
+          <div class="phrase-box">"I'd add a Redis cache in front of the user service here. User profile reads are happening on every API request — that's easily 100K QPS at scale — and profiles change rarely, so a 5-minute TTL gives us a high hit rate with acceptable staleness."</div>
+        </div>
+      </div>
+
+      <div class="playbook-step">
+        <div class="playbook-num">2</div>
+        <div class="playbook-body">
+          <h5>When explaining invalidation</h5>
+          <div class="phrase-box">"I'd use cache-aside with TTL-based expiration. When a user updates their profile, I'd proactively delete the cache key rather than wait for TTL to expire — this keeps it fresh while keeping the architecture simple. I'd avoid write-through here because the extra write latency isn't worth it for profile updates."</div>
+        </div>
+      </div>
+
+      <div class="playbook-step">
+        <div class="playbook-num">3</div>
+        <div class="playbook-body">
+          <h5>When discussing failure modes</h5>
+          <div class="phrase-box">"Two failure modes I'd design against: cache stampede on popular keys — I'd use a mutex lock or probabilistic early refresh — and cache avalanche on restart, which I'd handle by randomizing TTLs by ±20% and pre-warming critical keys before opening traffic."</div>
+        </div>
+      </div>
+
+      <div class="playbook-step">
+        <div class="playbook-num">4</div>
+        <div class="playbook-body">
+          <h5>When discussing Redis specifically</h5>
+          <div class="phrase-box">"For the leaderboard I'd use Redis Sorted Set — members are automatically kept sorted by score, top-N queries are O(log N), and score increments are atomic. That's a better fit than re-sorting the DB on every read. Single Redis instance handles ~100K ops/sec, so this scales well into the mid-tiers."</div>
+        </div>
+      </div>
+
+      <div class="playbook-step">
+        <div class="playbook-num">5</div>
+        <div class="playbook-body">
+          <h5>When discussing trade-offs (always score points here)</h5>
+          <div class="phrase-box">"The trade-off with caching is complexity: we now have two sources of truth. We accept that reads might be up to 5 minutes stale — that's fine for profiles but not for inventory counts. For anything that needs strong consistency like payment status or stock levels, I wouldn't cache or I'd use a very short TTL with explicit invalidation on write."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Questions the Interviewer Will Ask — and What They Want to Hear</h4>
+
+      <div class="qa-container">
+        <div class="qa-item">
+          <div class="qa-q">How do you handle cache invalidation when data changes?</div>
+          <div class="qa-a">
+            <p>They want to see that you know it's hard and have a strategy. Say: <em>"It depends on consistency requirements. For most data I use TTL + proactive delete on write (cache-aside pattern). For strictly consistent data like inventory, I use write-through or skip caching entirely. The key insight is that there's no perfect solution — it's always a trade-off between freshness, complexity, and performance."</em></p>
+          </div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q">What happens if your Redis cache goes down?</div>
+          <div class="qa-a">
+            <p>They want to see graceful degradation. Say: <em>"All traffic falls through to the database — it's degraded performance, not an outage. The DB handles the load at increased latency. I'd handle this with: (1) Redis Sentinel for auto-failover to a replica, (2) a circuit breaker that detects Redis failure and temporarily bypasses cache instead of hammering a dead Redis, (3) rate limiting on the DB to prevent it from being overwhelmed during the cache-cold period."</em></p>
+          </div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q">How do you prevent one user's data from being served to another user?</div>
+          <div class="qa-a">
+            <p>Key namespacing. Say: <em>"Always prefix cache keys with the entity type and ID: <code>user:42:profile</code>, not just <code>profile</code>. For sensitive data, never use shared keys. I'd also ensure the application layer validates that the cached data belongs to the requesting user before returning it — defense in depth."</em></p>
+          </div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q">Would you use Redis or Memcached? Why?</div>
+          <div class="qa-a">
+            <p>Say: <em>"Redis in almost all cases. Memcached is slightly faster for simple string k-v operations because it's a simpler system, but Redis gives you persistence options, rich data structures (sorted sets, hashes, pub/sub), atomic operations, and Lua scripting. Unless you're doing pure string caching at extreme scale and every nanosecond matters, Redis's feature richness wins."</em></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">🔥</div>
+      <div class="body">
+        <strong>Senior Engineer Perspective: The Real Goal of Caching</strong>
+        <p>After years of production systems, here's what I want you to internalize: caching is not about making your system faster. It's about making your database <em>survivable</em> at scale. Without caching, every user request reaches the DB, and at 100K users the DB becomes your single point of failure. Caching is the thing that makes your system resilient. Get this right and your system scales. Get it wrong and you're up at 3am with an exploding database.</p>
+      </div>
+    </div>
+
+    <div class="banner banner-blue" style="margin-top:24px;">
+      <h4>📋 Quick Reference: Caching Decision Checklist</h4>
+      <div class="checklist" style="margin-top:12px;">
+        <ul style="list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <li>✅ Identified high-read, low-write data</li>
+          <li>✅ Chosen cache-aside as default strategy</li>
+          <li>✅ Set TTL with ±20% jitter (avalanche prevention)</li>
+          <li>✅ Namespaced all cache keys (user:42:profile)</li>
+          <li>✅ Addressed stampede (mutex or background refresh)</li>
+          <li>✅ Addressed penetration (Bloom filter or cache-null)</li>
+          <li>✅ Defined graceful degradation if Redis goes down</li>
+          <li>✅ Identified data that should NEVER be cached</li>
+          <li>✅ Planned cache warm-up for cold start</li>
+          <li>✅ Discussed hit rate monitoring (&gt;95% target)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:32px 0 16px;border-top:1px solid var(--border-color);margin-top:40px;">
+      <p style="color:var(--text-muted);font-size:13px;">PDF #03 · System Design Series · Caching</p>
+      <p style="color:var(--text-muted);font-size:12px;margin-top:4px;">Next up: PDF #04 — Databases at Scale: Sharding, Replication &amp; When SQL Dies</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+        <a href="../index.html" style="padding:8px 20px;border-radius:6px;background:var(--bg-tertiary);color:var(--text-secondary);text-decoration:none;font-size:13px;border:1px solid var(--border-color);">← Back to Index</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  /* ─── Progress bar ─── */
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('progress');
+    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+    el.style.width = pct + '%';
+  });
+
+  // ── Sidebar toggle ──────────────────────────────────────────────────────
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed',
+        document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
+
+  /* ─── Active nav link on scroll ─── */
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.toc-link[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.toc-link[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  /* ─── Cache hit/miss demo ─── */
+  let hitCount = 0, missCount = 0;
+  let cachePopulated = false;
+
+  function addLog(msg, cls) {
+    const log = document.getElementById('demo-log');
+    const line = `<span class="${cls}">[${new Date().toLocaleTimeString()}] ${msg}</span>`;
+    log.innerHTML = line + '<br/>' + log.innerHTML.split('<br/>').slice(0,4).join('<br/>');
+  }
+
+  function simulateMiss() {
+    cachePopulated = false;
+    document.getElementById('cache-state').textContent = 'MISS';
+    const badge = document.getElementById('result-badge');
+    badge.className = 'cache-result-badge miss show';
+    badge.textContent = '❌ CACHE MISS — hit database (slow ~5ms)';
+    document.getElementById('arr2').style.opacity = '1';
+    document.getElementById('arr2').classList.add('active');
+    setTimeout(() => {
+      document.getElementById('cache-state').textContent = 'FILLED';
+      cachePopulated = true;
+      addLog('Cache MISS for user:42 → queried DB (5ms) → stored in cache TTL=300s', 'log-miss');
+    }, 300);
+    missCount++;
+    document.getElementById('miss-count').textContent = missCount;
+    badge.style.opacity = '0';
+    setTimeout(() => { badge.style.opacity = '1'; }, 50);
+  }
+
+  function simulateHit() {
+    if (!cachePopulated) {
+      addLog('Cache is empty — run a MISS first to populate the cache', 'log-evict');
+      return;
+    }
+    document.getElementById('cache-state').textContent = 'HIT ✓';
+    const badge = document.getElementById('result-badge');
+    badge.className = 'cache-result-badge hit show';
+    badge.textContent = '✅ CACHE HIT — served from Redis (~0.3ms)';
+    document.getElementById('arr2').style.opacity = '0.2';
+    document.getElementById('arr2').classList.remove('active');
+    addLog('Cache HIT for user:42 → served from Redis (0.3ms) — DB not touched', 'log-hit');
+    hitCount++;
+    document.getElementById('hit-count').textContent = hitCount;
+    badge.style.opacity = '0';
+    setTimeout(() => { badge.style.opacity = '1'; }, 50);
+  }
+
+  /* ─── Eviction Policy Simulator ─── */
+  let currentPolicy = 'lru';
+  // Each slot: { key, freq, insertOrder, lastUsed }
+  let cacheState = [null, null, null, null];
+  let accessOrder = 0;
+  let insertOrder = 0;
+
+  function setPolicy(policy, tab) {
+    currentPolicy = policy;
+    document.querySelectorAll('.policy-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    resetEviction();
+    document.getElementById('eviction-log').innerHTML = `<span class="log-hit">Policy set to <strong>${policy.toUpperCase()}</strong>. Cache cleared. Start accessing keys.</span>`;
+  }
+
+  function resetEviction() {
+    cacheState = [null, null, null, null];
+    accessOrder = 0;
+    insertOrder = 0;
+    renderSlots();
+  }
+
+  function renderSlots() {
+    const container = document.getElementById('eviction-slots');
+    container.innerHTML = '';
+    cacheState.forEach((slot, i) => {
+      const el = document.createElement('div');
+      el.className = 'cache-slot ' + (slot ? (slot.flash || 'filled') : 'empty');
+      if (slot) {
+        let meta = '';
+        if (currentPolicy === 'lru')  meta = `last:${slot.lastUsed}`;
+        if (currentPolicy === 'lfu')  meta = `freq:${slot.freq}`;
+        if (currentPolicy === 'fifo') meta = `ins:${slot.insertOrder}`;
+        el.innerHTML = `<span class="slot-key">${slot.key}</span><span class="slot-meta">${meta}</span>`;
+      } else {
+        el.innerHTML = `<span class="slot-key">—</span><span class="slot-meta">empty</span>`;
+      }
+      container.appendChild(el);
+    });
+  }
+
+  function accessKey(key) {
+    const log = document.getElementById('eviction-log');
+    accessOrder++;
+
+    // Check if key already in cache
+    const existingIdx = cacheState.findIndex(s => s && s.key === key);
+    if (existingIdx !== -1) {
+      // HIT
+      cacheState[existingIdx].lastUsed = accessOrder;
+      cacheState[existingIdx].freq++;
+      cacheState[existingIdx].flash = 'new-entry';
+      renderSlots();
+      setTimeout(() => {
+        if (cacheState[existingIdx]) cacheState[existingIdx].flash = null;
+        renderSlots();
+      }, 600);
+      log.innerHTML = `<span class="log-hit">HIT: "${key}" found in cache. freq=${cacheState[existingIdx].freq}</span>`;
+      return;
+    }
+
+    // MISS — need to insert
+    const emptyIdx = cacheState.findIndex(s => s === null);
+    if (emptyIdx !== -1) {
+      // Space available
+      insertOrder++;
+      cacheState[emptyIdx] = { key, freq: 1, insertOrder, lastUsed: accessOrder, flash: 'new-entry' };
+      renderSlots();
+      setTimeout(() => { if(cacheState[emptyIdx]) cacheState[emptyIdx].flash = null; renderSlots(); }, 600);
+      log.innerHTML = `<span class="log-miss">MISS: "${key}" not in cache. Inserted into slot ${emptyIdx + 1}.</span>`;
+    } else {
+      // Cache full — evict
+      let evictIdx = 0;
+      if (currentPolicy === 'lru') {
+        // Evict slot with smallest lastUsed
+        let minVal = Infinity;
+        cacheState.forEach((s, i) => { if (s && s.lastUsed < minVal) { minVal = s.lastUsed; evictIdx = i; } });
+      } else if (currentPolicy === 'lfu') {
+        // Evict slot with smallest freq (tie-break: smallest lastUsed)
+        let minFreq = Infinity, minUsed = Infinity;
+        cacheState.forEach((s, i) => {
+          if (s && (s.freq < minFreq || (s.freq === minFreq && s.lastUsed < minUsed))) {
+            minFreq = s.freq; minUsed = s.lastUsed; evictIdx = i;
+          }
+        });
+      } else if (currentPolicy === 'fifo') {
+        // Evict slot with smallest insertOrder
+        let minIns = Infinity;
+        cacheState.forEach((s, i) => { if (s && s.insertOrder < minIns) { minIns = s.insertOrder; evictIdx = i; } });
+      }
+
+      const evictedKey = cacheState[evictIdx].key;
+      cacheState[evictIdx].flash = 'evicted';
+      renderSlots();
+
+      setTimeout(() => {
+        insertOrder++;
+        log.innerHTML = `<span class="log-evict">EVICT: "${evictedKey}" removed (${currentPolicy.toUpperCase()}). </span><span class="log-miss">INSERT: "${key}" added.</span>`;
+        cacheState[evictIdx] = { key, freq: 1, insertOrder, lastUsed: accessOrder, flash: 'new-entry' };
+        renderSlots();
+        setTimeout(() => { if(cacheState[evictIdx]) cacheState[evictIdx].flash = null; renderSlots(); }, 600);
+      }, 500);
+    }
+  }
+
+  /* ─── Stampede animation ─── */
+  function animateStampede() {
+    const vis = document.getElementById('stampede-vis');
+    vis.innerHTML = '';
+
+    // Phase 1: normal requests
+    const dbBox = document.createElement('div');
+    dbBox.style.cssText = 'display:flex;align-items:center;gap:6px;width:100%;justify-content:center;flex-wrap:wrap;';
+    const label = document.createElement('div');
+    label.style.cssText = 'width:100%;text-align:center;font-size:12px;color:#d29922;margin-bottom:8px;';
+    label.textContent = '⏱ Cache key expires... all requests hit DB simultaneously';
+    vis.appendChild(label);
+    vis.appendChild(dbBox);
+
+    for (let i = 0; i < 16; i++) {
+      const b = document.createElement('div');
+      b.className = 'req-bubble normal';
+      b.textContent = `R${i+1}`;
+      b.style.opacity = '0';
+      b.style.transform = 'scale(0)';
+      b.style.transition = `all 0.3s ease ${i * 50}ms`;
+      dbBox.appendChild(b);
+      setTimeout(() => {
+        b.style.opacity = '1';
+        b.style.transform = 'scale(1)';
+        b.className = 'req-bubble danger';
+      }, i * 60 + 100);
+    }
+
+    setTimeout(() => {
+      label.textContent = '💥 16 simultaneous DB queries! DB at 1600% load → collapses';
+      label.style.color = '#f85149';
+    }, 1200);
+
+    setTimeout(() => {
+      label.textContent = '✅ With mutex: only 1 request reaches DB. Others wait and share the result.';
+      label.style.color = '#3fb950';
+      dbBox.querySelectorAll('.req-bubble').forEach((b, i) => {
+        setTimeout(() => {
+          b.className = 'req-bubble ' + (i === 0 ? 'warning' : 'normal');
+          b.textContent = i === 0 ? 'DB' : '⏳';
+        }, i * 30);
+      });
+    }, 2500);
+  }
+
+  /* ─── Smooth scroll for nav links ─── */
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (window.innerWidth < 768) closeSidebar();
+    });
+  });
+
+  /* ─── Init ─── */
+  window.addEventListener('DOMContentLoaded', () => {
+    renderSlots();
+    // Populate stampede vis with placeholder
+    const vis = document.getElementById('stampede-vis');
+    vis.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px;text-align:center;">Click the button above to see the stampede in action →</div>';
+  });
+</script>
+</body>
+</html>

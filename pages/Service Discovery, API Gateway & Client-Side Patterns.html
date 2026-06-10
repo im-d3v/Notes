@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF #17 — Service Discovery, API Gateway & Client-Side Patterns</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css" />
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0d1f2d 40%, #0a1a2a 100%);
+    }
+    /* Animated registry pulse */
+    .registry-pulse {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      background: #010409;
+      border-radius: 10px;
+      border: 1px solid #21262d;
+      flex-wrap: wrap;
+    }
+    .reg-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .reg-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      position: relative;
+    }
+    .reg-circle.service-a { background: rgba(88,166,255,0.15); border: 2px solid #58a6ff; color: #58a6ff; }
+    .reg-circle.registry  { background: rgba(63,185,80,0.15);  border: 2px solid #3fb950; color: #3fb950; width: 80px; height: 80px; font-size: 12px; }
+    .reg-circle.service-b { background: rgba(188,140,255,0.15); border: 2px solid #bc8cff; color: #bc8cff; }
+    .reg-circle.registry::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid #3fb950;
+      animation: registryPulse 2s ease-out infinite;
+    }
+    @keyframes registryPulse {
+      0%   { transform: scale(1);   opacity: 0.8; }
+      100% { transform: scale(1.6); opacity: 0;   }
+    }
+    .reg-arrow {
+      font-size: 20px;
+      color: #8b949e;
+      animation: arrowFade 2s ease-in-out infinite alternate;
+    }
+    @keyframes arrowFade {
+      from { opacity: 0.3; } to { opacity: 1; }
+    }
+    .reg-label { font-size: 11px; color: #8b949e; }
+
+    /* Heartbeat bar */
+    .heartbeat-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.3);
+      border-radius: 8px;
+      margin: 8px 0;
+    }
+    .hb-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #f85149;
+      animation: hbPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes hbPulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.3; transform: scale(0.7); }
+    }
+    .hb-text { font-size: 13px; color: #8b949e; }
+
+    /* Traffic flow animation */
+    .traffic-flow {
+      background: #010409;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      flex-wrap: nowrap;
+    }
+    .flow-box {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .fb-client   { background: rgba(88,166,255,0.15);  border: 1px solid #58a6ff;  color: #58a6ff; }
+    .fb-gateway  { background: rgba(248,81,73,0.15);   border: 1px solid #f85149;  color: #f85149; }
+    .fb-svc      { background: rgba(63,185,80,0.15);   border: 1px solid #3fb950;  color: #3fb950; }
+    .fb-registry { background: rgba(188,140,255,0.15); border: 1px solid #bc8cff;  color: #bc8cff; }
+    .fb-lb       { background: rgba(210,153,34,0.15);  border: 1px solid #d29922;  color: #d29922; }
+    .flow-arrow  { color: #8b949e; font-size: 16px; }
+    .flow-num    { background: #21262d; color: #58a6ff; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+
+    /* Discovery toggle */
+    .discovery-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .disc-btn {
+      padding: 8px 20px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: #1c2128;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .disc-btn.active {
+      background: rgba(88,166,255,0.15);
+      border-color: #58a6ff;
+      color: #58a6ff;
+    }
+    .disc-panel { display: none; }
+    .disc-panel.active { display: block; }
+
+    /* Eureka lifecycle */
+    .lifecycle-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .lifecycle-steps::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 20px;
+      bottom: 20px;
+      width: 2px;
+      background: linear-gradient(to bottom, #58a6ff, #3fb950, #d29922, #f85149);
+    }
+    .lc-step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 12px 0;
+      position: relative;
+    }
+    .lc-num {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .lc-num.n1 { background: rgba(88,166,255,0.2);  border: 2px solid #58a6ff; color: #58a6ff; }
+    .lc-num.n2 { background: rgba(63,185,80,0.2);   border: 2px solid #3fb950; color: #3fb950; }
+    .lc-num.n3 { background: rgba(210,153,34,0.2);  border: 2px solid #d29922; color: #d29922; }
+    .lc-num.n4 { background: rgba(248,81,73,0.2);   border: 2px solid #f85149; color: #f85149; }
+    .lc-body { flex: 1; padding-top: 8px; }
+    .lc-title { color: #e6edf3; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .lc-desc  { color: #8b949e; font-size: 13px; line-height: 1.6; }
+
+    /* Ribbon rules cards */
+    .ribbon-rules {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .rr-card {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: default;
+    }
+    .rr-card:hover { border-color: #58a6ff; transform: translateY(-2px); }
+    .rr-icon  { font-size: 22px; margin-bottom: 8px; }
+    .rr-name  { font-size: 13px; font-weight: 700; color: #58a6ff; margin-bottom: 4px; }
+    .rr-desc  { font-size: 12px; color: #8b949e; line-height: 1.5; }
+
+    /* Gateway features grid */
+    .gw-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .gw-feat {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+    .gw-feat:hover { border-color: #3fb950; }
+    .gw-feat-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .gw-feat-text { font-size: 12px; }
+    .gw-feat-name { color: #e6edf3; font-weight: 600; margin-bottom: 2px; }
+    .gw-feat-desc { color: #8b949e; }
+
+    /* Feign chain */
+    .feign-chain {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      overflow-x: auto;
+      padding: 16px 0;
+    }
+    .fc-box {
+      min-width: 120px;
+      padding: 12px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .fc-arrow {
+      display: flex;
+      align-items: center;
+      color: #8b949e;
+      font-size: 20px;
+      padding: 0 4px;
+    }
+    .fc-interface { background: rgba(88,166,255,0.1);  border: 1px solid #58a6ff;  border-radius: 8px; color: #58a6ff; }
+    .fc-proxy     { background: rgba(188,140,255,0.1); border: 1px solid #bc8cff;  border-radius: 8px; color: #bc8cff; }
+    .fc-ribbon    { background: rgba(210,153,34,0.1);  border: 1px solid #d29922;  border-radius: 8px; color: #d29922; }
+    .fc-eureka    { background: rgba(63,185,80,0.1);   border: 1px solid #3fb950;  border-radius: 8px; color: #3fb950; }
+    .fc-http      { background: rgba(248,81,73,0.1);   border: 1px solid #f85149;  border-radius: 8px; color: #f85149; }
+
+    /* Mesh comparison */
+    .mesh-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .mesh-compare { grid-template-columns: 1fr; } }
+
+    /* Interview card */
+    .interview-card {
+      background: rgba(188,140,255,0.05);
+      border: 1px solid rgba(188,140,255,0.3);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 12px 0;
+    }
+    .ic-q { color: #bc8cff; font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+    .ic-a { color: #8b949e; font-size: 13px; line-height: 1.7; }
+    .ic-tag { display: inline-block; background: rgba(188,140,255,0.15); color: #bc8cff; border-radius: 4px; padding: 2px 8px; font-size: 11px; margin-right: 4px; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- Hamburger -->
+<button id="hamburger" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Sidebar Overlay -->
+<div id="sidebar-overlay"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-logo">☁️</span>
+    <span class="sidebar-title">PDF #17</span>
+  </div>
+  <ul class="toc-list">
+    <li><a href="../index.html" class="toc-link" style="color:#d29922;">🏠 Home</a></li>
+    <li class="toc-section-label">Contents</li>
+    <li><a href="#discovery-problem"  class="toc-link">§1 Discovery Problem</a></li>
+    <li><a href="#discovery-types"    class="toc-link">§2 Client vs Server Discovery</a></li>
+    <li><a href="#eureka"             class="toc-link">§3 Eureka Deep Dive</a></li>
+    <li><a href="#ribbon"             class="toc-link">§4 Ribbon Load Balancing</a></li>
+    <li><a href="#api-gateway"        class="toc-link">§5 API Gateway Deep Dive</a></li>
+    <li><a href="#feign"              class="toc-link">§6 Feign Client</a></li>
+    <li><a href="#service-mesh"       class="toc-link">§7 Sidecar & Service Mesh</a></li>
+    <li><a href="#interview-playbook" class="toc-link">§8 Interview Playbook</a></li>
+  </ul>
+</nav>
+
+<!-- Main -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">PDF #17 · Microservices Infrastructure</div>
+      <h1>Service Discovery, API Gateway<br>&amp; Client-Side Patterns</h1>
+      <p class="hero-sub">The glue that holds microservices together — how services find each other, how traffic enters the system, and how services call each other reliably.</p>
+      <div class="hero-badges">
+        <span class="tag tag-blue">Eureka</span>
+        <span class="tag tag-green">Spring Cloud Gateway</span>
+        <span class="tag tag-orange">Ribbon</span>
+        <span class="tag tag-purple">Feign Client</span>
+        <span class="tag tag-cyan">Service Mesh</span>
+        <span class="tag tag-yellow">Istio</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>The Problem Space</h2>
+      <p>Why static URLs break in a dynamic microservices world — and the two fundamental solutions.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 1: THE DISCOVERY PROBLEM -->
+  <div class="section" id="discovery-problem">
+    <div class="section-header">
+      <h3>§1 — The Service Discovery Problem</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Monolith World vs The Microservices World</h4>
+      <p>In a monolith, all code runs in one process. <code>orderService.placeOrder()</code> is a direct method call — no network, no address, no configuration. You always know where everything is.</p>
+      <p>In microservices on Docker/Kubernetes, <strong>every service is an independent process</strong> running on some machine somewhere. And here's the problem:</p>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">💥</div>
+      <div class="body">
+        <strong>IP addresses in Kubernetes are ephemeral</strong>
+        <p>Every time a pod restarts, scales up, crashes, or gets rescheduled — it gets a <strong>new IP address</strong>. If you hardcode <code>http://192.168.1.42:8080</code>, you're already wrong by the time your code ships.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Mental Model — A Self-Updating Phone Directory</h4>
+      <p>Imagine a hotel with 100 rooms. Guests (services) check in and out constantly. You don't know which room your friend is in — you call the front desk (service registry), they tell you the current room number.</p>
+      <p>If your friend moves to a different room, the front desk updates their record. You never need to memorize room numbers — <strong>you always ask fresh</strong>.</p>
+    </div>
+
+    <div class="registry-pulse">
+      <div class="reg-node">
+        <div class="reg-circle service-a">Service A</div>
+        <div class="reg-label">Caller</div>
+      </div>
+      <div class="reg-arrow">⇄</div>
+      <div class="reg-node">
+        <div class="reg-circle registry">Service Registry</div>
+        <div class="reg-label">Phone Directory</div>
+      </div>
+      <div class="reg-arrow">⇄</div>
+      <div class="reg-node">
+        <div class="reg-circle service-b">Service B</div>
+        <div class="reg-label">Target</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h4>The Two Actors</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>Service Registry</h4>
+          <p>A database that maps service names to IP:port. Services register themselves on startup and deregister on shutdown. Examples: <span class="tag tag-green">Eureka</span> <span class="tag tag-blue">Consul</span> <span class="tag tag-yellow">Zookeeper</span></p>
+        </div>
+        <div class="card-mini">
+          <h4>Service Discovery</h4>
+          <p>The act of <em>looking up</em> a service's address before calling it. The key question: <strong>who does the lookup</strong> — the client or an intermediary? That's what the next section is about.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: CLIENT vs SERVER DISCOVERY -->
+  <div class="section" id="discovery-types">
+    <div class="section-header">
+      <h3>§2 — Client-Side vs Server-Side Discovery</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Core Question</h4>
+      <p>When Service A needs to call Service B, <strong>who is responsible for finding Service B's current address?</strong> There are exactly two answers, and they lead to fundamentally different architectures.</p>
+    </div>
+
+    <div class="discovery-toggle">
+      <button class="disc-btn active" onclick="showDisc('client', this)">📱 Client-Side</button>
+      <button class="disc-btn" onclick="showDisc('server', this)">🖥️ Server-Side</button>
+    </div>
+
+    <div id="disc-client" class="disc-panel active">
+      <div class="card">
+        <h4>Client-Side Discovery — "You do your own homework"</h4>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Service A asks the Registry</div>
+              <div class="step-desc">Service A calls Eureka: <em>"Give me all instances of SERVICE-B"</em>. Gets back a list of IPs and ports.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Service A picks an instance</div>
+              <div class="step-desc">Using its own load balancing logic (Ribbon / Spring Cloud LB), it selects one instance — e.g., round robin.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Service A calls Service B directly</div>
+              <div class="step-desc">No intermediary. Direct network call from A → B. Fast. One network hop.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="disc-server" class="disc-panel">
+      <div class="card">
+        <h4>Server-Side Discovery — "Delegate to the router"</h4>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Service A calls the Load Balancer</div>
+              <div class="step-desc">Service A doesn't know anything about Service B's location. It just calls <code>http://load-balancer/service-b/...</code></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">LB consults the Registry</div>
+              <div class="step-desc">The Load Balancer queries the service registry, gets the instance list, picks one.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">LB routes to Service B</div>
+              <div class="step-desc">Service A is completely unaware. Extra hop but zero client complexity.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper" style="margin-top:16px;">
+      <table>
+        <thead>
+          <tr><th>Dimension</th><th>Client-Side Discovery</th><th>Server-Side Discovery</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Who finds the instance?</strong></td>
+            <td>The calling service (client)</td>
+            <td>The load balancer / router</td>
+          </tr>
+          <tr>
+            <td><strong>Network hops</strong></td>
+            <td><span class="pill pill-green">1 hop (direct)</span></td>
+            <td><span class="pill pill-orange">2 hops (via LB)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Client complexity</strong></td>
+            <td><span class="pill pill-orange">High — needs discovery lib</span></td>
+            <td><span class="pill pill-green">Low — just HTTP call</span></td>
+          </tr>
+          <tr>
+            <td><strong>Language agnostic</strong></td>
+            <td>❌ Each language needs a registry client</td>
+            <td>✅ Any HTTP client works</td>
+          </tr>
+          <tr>
+            <td><strong>LB single point of failure</strong></td>
+            <td>✅ No central LB bottleneck</td>
+            <td>⚠️ LB must be HA</td>
+          </tr>
+          <tr>
+            <td><strong>Routing intelligence</strong></td>
+            <td>Client controls routing rules fully</td>
+            <td>Routing logic centralized in LB</td>
+          </tr>
+          <tr>
+            <td><strong>Example tools</strong></td>
+            <td>Eureka + Ribbon, Spring Cloud LB</td>
+            <td>AWS ALB, K8s Service + kube-proxy</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Kubernetes is Server-Side by default</strong>
+        <p>A Kubernetes <code>Service</code> resource with <code>kube-proxy</code> IS server-side discovery. You call <code>http://order-service:8080</code>, Kubernetes figures out which pod to send it to. Most K8s users never write a line of service discovery code.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">02</div>
+    <div>
+      <h2>The Netflix Stack</h2>
+      <p>Eureka for registration, Ribbon for load balancing — the original Spring Cloud pattern.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3: EUREKA -->
+  <div class="section" id="eureka">
+    <div class="section-header">
+      <h3>§3 — Eureka: Netflix Service Registry Deep Dive</h3>
+    </div>
+
+    <div class="card">
+      <h4>What Eureka Actually Is</h4>
+      <p>A REST-based service registry developed by Netflix. Services register themselves, send heartbeats to prove they're alive, and Eureka keeps an up-to-date map of every service → its IP:port(s).</p>
+      <p>Architecture: one or more <strong>Eureka Server</strong> nodes (clustered for HA) + <strong>Eureka Client</strong> embedded in every application service.</p>
+    </div>
+
+    <div class="heartbeat-bar">
+      <div class="hb-dot"></div>
+      <span class="hb-text">Heartbeat every <strong style="color:#e6edf3;">30 seconds</strong> → no heartbeat for <strong style="color:#f85149;">90 seconds</strong> → service deregistered</span>
+    </div>
+
+    <div class="card">
+      <h4>Eureka Client Lifecycle — Step by Step</h4>
+      <div class="lifecycle-steps">
+        <div class="lc-step">
+          <div class="lc-num n1">1</div>
+          <div class="lc-body">
+            <div class="lc-title">Register on Startup</div>
+            <div class="lc-desc"><code>POST /eureka/apps/{appName}</code> — sends hostname, IP, port, health URL, metadata. Eureka stores it.</div>
+          </div>
+        </div>
+        <div class="lc-step">
+          <div class="lc-num n2">2</div>
+          <div class="lc-body">
+            <div class="lc-title">Send Heartbeat Every 30s</div>
+            <div class="lc-desc"><code>PUT /eureka/apps/{appName}/{instanceId}</code> — "I'm still alive." Resets the 90s eviction timer.</div>
+          </div>
+        </div>
+        <div class="lc-step">
+          <div class="lc-num n3">3</div>
+          <div class="lc-body">
+            <div class="lc-title">Cache the Registry Locally</div>
+            <div class="lc-desc">The Eureka client fetches the full registry and caches it locally (refresh every 30s). <strong>This is critical</strong> — your service doesn't call Eureka for every outgoing request. It uses the local cache. Eureka failure doesn't instantly break your calls.</div>
+          </div>
+        </div>
+        <div class="lc-step">
+          <div class="lc-num n4">4</div>
+          <div class="lc-body">
+            <div class="lc-title">Deregister on Graceful Shutdown</div>
+            <div class="lc-desc"><code>DELETE /eureka/apps/{appName}/{instanceId}</code> — tells Eureka "I'm going down." Eureka removes it immediately, not after 90s timeout.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Eureka Server Configuration</span></div>
+      <pre><code><span class="cmt">// Eureka Server — pom.xml dependency</span>
+<span class="cmt">// spring-cloud-starter-netflix-eureka-server</span>
+
+<span class="kw2">@SpringBootApplication</span>
+<span class="kw2">@EnableEurekaServer</span>   <span class="cmt">// This one annotation turns it into a registry</span>
+<span class="kw">public class</span> <span class="type">DiscoveryServerApp</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+        <span class="type">SpringApplication</span>.<span class="fn">run</span>(<span class="type">DiscoveryServerApp</span>.<span class="kw">class</span>, args);
+    }
+}
+
+<span class="cmt">// application.yml for Eureka Server</span>
+<span class="cmt">// server.port: 8761</span>
+<span class="cmt">// eureka.client.register-with-eureka: false  ← don't self-register</span>
+<span class="cmt">// eureka.client.fetch-registry: false         ← no need to fetch own registry</span></code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Eureka Client — Service Registration</span></div>
+      <pre><code><span class="cmt">// Eureka Client — pom.xml dependency</span>
+<span class="cmt">// spring-cloud-starter-netflix-eureka-client</span>
+
+<span class="kw2">@SpringBootApplication</span>
+<span class="kw2">@EnableDiscoveryClient</span>  <span class="cmt">// registers this service with Eureka on startup</span>
+<span class="kw">public class</span> <span class="type">OrderServiceApp</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+        <span class="type">SpringApplication</span>.<span class="fn">run</span>(<span class="type">OrderServiceApp</span>.<span class="kw">class</span>, args);
+    }
+}
+
+<span class="cmt">// application.yml — minimal config</span>
+<span class="cmt">// spring.application.name: ORDER-SERVICE   ← name in registry</span>
+<span class="cmt">// eureka.client.service-url.defaultZone:   ← where is the server?</span>
+<span class="cmt">//   http://localhost:8761/eureka/</span>
+<span class="cmt">// eureka.instance.prefer-ip-address: true  ← register with IP not hostname</span></code></pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Self-Preservation Mode — The Most Misunderstood Eureka Behavior</strong>
+        <p>If Eureka stops receiving heartbeats from a large percentage of services simultaneously, it assumes there's a <strong>network partition</strong> (not mass service failure). It enters self-preservation mode: it <em>stops evicting</em> service registrations, even stale ones.</p>
+        <p>This is an <strong>AP choice</strong> (Availability over Consistency from CAP theorem). The logic: it's better to return a possibly-stale address than to return nothing at all. But it means callers may occasionally get a dead instance — your retry logic must handle this.</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Tool</th><th>Type</th><th>CAP</th><th>Health Checks</th><th>Best For</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Eureka</strong></td>
+            <td>REST-based</td>
+            <td><span class="pill pill-blue">AP</span></td>
+            <td>Heartbeat (self-reported)</td>
+            <td>Spring Cloud ecosystem</td>
+          </tr>
+          <tr>
+            <td><strong>Consul</strong></td>
+            <td>REST + DNS</td>
+            <td><span class="pill pill-green">CP</span></td>
+            <td>Active health checks (TCP, HTTP, script)</td>
+            <td>Multi-language, production-grade</td>
+          </tr>
+          <tr>
+            <td><strong>Zookeeper</strong></td>
+            <td>ZAB protocol</td>
+            <td><span class="pill pill-green">CP</span></td>
+            <td>Ephemeral nodes expire</td>
+            <td>Legacy Kafka, HDFS</td>
+          </tr>
+          <tr>
+            <td><strong>K8s DNS</strong></td>
+            <td>CoreDNS</td>
+            <td><span class="pill pill-blue">AP</span></td>
+            <td>Liveness/Readiness probes</td>
+            <td>Kubernetes-native workloads</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">🔍</div>
+      <div class="body">
+        <strong>When to pick Consul over Eureka</strong>
+        <p>1. You need strong consistency (CP) — Consul uses Raft consensus. 2. You need active health checks (Eureka relies on passive heartbeats). 3. You have polyglot services (Go, Python, Node) — Consul has native clients for everything. 4. You need secret management alongside service discovery (Consul KV + Vault integration).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: RIBBON -->
+  <div class="section" id="ribbon">
+    <div class="section-header">
+      <h3>§4 — Ribbon: Client-Side Load Balancing</h3>
+    </div>
+
+    <div class="card">
+      <h4>Eureka gives you a list. Ribbon picks one.</h4>
+      <p>Eureka tells you: "SERVICE-B is running at <code>[192.168.1.10:8080, 192.168.1.11:8080, 192.168.1.12:8080]</code>". Now what? You need a rule to decide which one to call. That's Ribbon.</p>
+      <p>Ribbon is a <strong>client-side IPC (inter-process communication) library</strong>. It sits <em>inside</em> your service. For every outgoing request to SERVICE-B, it applies a load balancing rule to select one instance from the list Eureka provided.</p>
+    </div>
+
+    <div class="ribbon-rules">
+      <div class="rr-card">
+        <div class="rr-icon">🔄</div>
+        <div class="rr-name">Round Robin Rule</div>
+        <div class="rr-desc">Default. Cycles through instances in order. Request 1 → instance A, Request 2 → instance B, etc. Simple and fair.</div>
+      </div>
+      <div class="rr-card">
+        <div class="rr-icon">🚦</div>
+        <div class="rr-name">Availability Filtering Rule</div>
+        <div class="rr-desc">Skips instances where the circuit breaker is open, or that have too many concurrent connections (configurable threshold).</div>
+      </div>
+      <div class="rr-card">
+        <div class="rr-icon">⚡</div>
+        <div class="rr-name">Weighted Response Time</div>
+        <div class="rr-desc">Slower instances get fewer requests. Calculates a weight inversely proportional to average response time. Best for heterogeneous hardware.</div>
+      </div>
+      <div class="rr-card">
+        <div class="rr-icon">🌍</div>
+        <div class="rr-name">Zone Affinity Rule</div>
+        <div class="rr-desc">Prefers instances in the same availability zone. Reduces cross-AZ latency and data transfer costs in cloud environments.</div>
+      </div>
+    </div>
+
+    <div class="code-block" style="margin-top:16px;">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">RestTemplate with Ribbon (Classic Pattern)</span></div>
+      <pre><code><span class="kw2">@Configuration</span>
+<span class="kw">public class</span> <span class="type">AppConfig</span> {
+
+    <span class="kw2">@Bean</span>
+    <span class="kw2">@LoadBalanced</span>  <span class="cmt">// ← This single annotation enables Ribbon!</span>
+    <span class="kw">public</span> <span class="type">RestTemplate</span> <span class="fn">restTemplate</span>() {
+        <span class="kw">return new</span> <span class="type">RestTemplate</span>();
+    }
+}
+
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">OrderService</span> {
+
+    <span class="kw2">@Autowired</span>
+    <span class="kw">private</span> <span class="type">RestTemplate</span> restTemplate;
+
+    <span class="kw">public</span> <span class="type">User</span> <span class="fn">getUserById</span>(<span class="type">Long</span> id) {
+        <span class="cmt">// Use SERVICE NAME, not IP:port — Ribbon resolves it</span>
+        <span class="type">String</span> url = <span class="str">"http://USER-SERVICE/users/"</span> + id;
+        <span class="kw">return</span> restTemplate.<span class="fn">getForObject</span>(url, <span class="type">User</span>.<span class="kw">class</span>);
+        <span class="cmt">// Ribbon intercepts this, asks Eureka for USER-SERVICE instances,</span>
+        <span class="cmt">// picks one via round-robin, replaces URL, makes the actual call</span>
+    }
+}</code></pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Ribbon is in maintenance mode — Use Spring Cloud LoadBalancer instead</strong>
+        <p>Spring Cloud deprecated Ribbon in 2020. The modern replacement is <code>spring-cloud-starter-loadbalancer</code>. The <code>@LoadBalanced</code> annotation still works the same way, but it now uses Spring Cloud LoadBalancer under the hood. For new projects, exclude Ribbon explicitly and use the new module.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Spring Cloud LoadBalancer — Custom Rule</span></div>
+      <pre><code><span class="cmt">// Custom Load Balancer configuration (modern approach)</span>
+<span class="kw2">@Configuration</span>
+<span class="kw">public class</span> <span class="type">LoadBalancerConfig</span> {
+
+    <span class="kw2">@Bean</span>
+    <span class="type">ReactorLoadBalancer</span>&lt;<span class="type">ServiceInstance</span>&gt; <span class="fn">randomLoadBalancer</span>(
+            <span class="type">Environment</span> environment,
+            <span class="type">LoadBalancerClientFactory</span> loadBalancerClientFactory) {
+        <span class="type">String</span> name = environment.<span class="fn">getProperty</span>(<span class="type">LoadBalancerClientFactory</span>.<span class="const">PROPERTY_NAME</span>);
+        <span class="cmt">// RandomLoadBalancer instead of default RoundRobinLoadBalancer</span>
+        <span class="kw">return new</span> <span class="type">RandomLoadBalancer</span>(
+            loadBalancerClientFactory.<span class="fn">getLazyProvider</span>(name, <span class="type">ServiceInstanceListSupplier</span>.<span class="kw">class</span>),
+            name
+        );
+    }
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">03</div>
+    <div>
+      <h2>The Front Door &amp; The Caller</h2>
+      <p>API Gateway for inbound traffic, Feign for outbound inter-service calls.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 5: API GATEWAY -->
+  <div class="section" id="api-gateway">
+    <div class="section-header">
+      <h3>§5 — API Gateway Deep Dive</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Mental Model — Airport Security</h4>
+      <p>Every passenger (request) entering the airport (system) goes through one checkpoint. Security checks ID (authentication), customs limits (rate limiting), and routes you to the right terminal (service routing). No one sneaks through a side door.</p>
+      <p>An API Gateway is the <strong>single entry point</strong> for all external client traffic. Clients never know or call individual services directly.</p>
+    </div>
+
+    <div class="traffic-flow">
+      <div class="flow-row">
+        <div class="flow-box fb-client">Client</div>
+        <div class="flow-arrow">──►</div>
+        <div class="flow-box fb-gateway">API Gateway<br><small>(Auth, Rate, Route)</small></div>
+        <div class="flow-arrow">──►</div>
+        <div class="flow-box fb-svc">User Service</div>
+      </div>
+      <div class="flow-row">
+        <div style="width:86px;"></div>
+        <div style="width:24px;"></div>
+        <div class="flow-box fb-gateway" style="opacity:0.3;width:180px;text-align:center;">│</div>
+        <div class="flow-arrow">──►</div>
+        <div class="flow-box fb-svc">Order Service</div>
+      </div>
+      <div class="flow-row">
+        <div style="width:86px;"></div>
+        <div style="width:24px;"></div>
+        <div class="flow-box fb-gateway" style="opacity:0.3;width:180px;text-align:center;">│</div>
+        <div class="flow-arrow">──►</div>
+        <div class="flow-box fb-svc">Product Service</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h4>What an API Gateway Does — Full Feature List</h4>
+      <div class="gw-features">
+        <div class="gw-feat"><div class="gw-feat-icon">🗺️</div><div class="gw-feat-text"><div class="gw-feat-name">Request Routing</div><div class="gw-feat-desc">/users → User Service, /orders → Order Service. Based on path, host, headers, method.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">🔐</div><div class="gw-feat-text"><div class="gw-feat-name">Authentication</div><div class="gw-feat-desc">Validate JWT/OAuth tokens before forwarding. Services trust the gateway.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">🚦</div><div class="gw-feat-text"><div class="gw-feat-name">Rate Limiting</div><div class="gw-feat-desc">100 req/min per API key. Protect downstream services from abuse.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">🔒</div><div class="gw-feat-text"><div class="gw-feat-name">SSL Termination</div><div class="gw-feat-desc">Decrypt HTTPS at the gateway. Internal traffic is plain HTTP — simpler cert management.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">✂️</div><div class="gw-feat-text"><div class="gw-feat-name">Request Transform</div><div class="gw-feat-desc">Rewrite URLs, modify headers, add/remove request params before forwarding.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">🧩</div><div class="gw-feat-text"><div class="gw-feat-name">Aggregation</div><div class="gw-feat-desc">Fan out to multiple services, merge responses. One client call → multiple service calls.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">⚡</div><div class="gw-feat-text"><div class="gw-feat-name">Circuit Breaking</div><div class="gw-feat-desc">Fail fast at the edge if downstream is unhealthy. Return fallback response.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">💾</div><div class="gw-feat-text"><div class="gw-feat-name">Caching</div><div class="gw-feat-desc">Cache GET responses. Reduce load on downstream services for repeated reads.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">📊</div><div class="gw-feat-text"><div class="gw-feat-name">Logging & Metrics</div><div class="gw-feat-desc">Centralized access logs, latency tracking, error rate dashboards.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">🌐</div><div class="gw-feat-text"><div class="gw-feat-name">CORS Handling</div><div class="gw-feat-desc">Manage cross-origin policies in one place, not in every service.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">⚖️</div><div class="gw-feat-text"><div class="gw-feat-name">Load Balancing</div><div class="gw-feat-desc">Distribute across multiple instances of the same service.</div></div></div>
+        <div class="gw-feat"><div class="gw-feat-icon">📦</div><div class="gw-feat-text"><div class="gw-feat-name">Compression</div><div class="gw-feat-desc">GZIP response bodies. Reduce bandwidth for mobile/slow clients.</div></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Zuul vs Spring Cloud Gateway</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Zuul 1</th><th>Zuul 2</th><th>Spring Cloud Gateway</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>I/O model</strong></td><td>Blocking (servlet)</td><td>Non-blocking (Netty)</td><td><span class="pill pill-green">Non-blocking (Reactor)</span></td></tr>
+            <tr><td><strong>Concurrency model</strong></td><td>Thread-per-request</td><td>Async event loop</td><td>Async event loop</td></tr>
+            <tr><td><strong>Spring Boot compat</strong></td><td>✅ Standard MVC</td><td>Limited</td><td><span class="pill pill-green">First-class</span></td></tr>
+            <tr><td><strong>Status</strong></td><td><span class="pill pill-orange">Maintenance</span></td><td><span class="pill pill-orange">Limited support</span></td><td><span class="pill pill-green">Actively developed</span></td></tr>
+            <tr><td><strong>Use today?</strong></td><td>❌ Legacy only</td><td>❌ Limited</td><td>✅ Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Spring Cloud Gateway — Route Configuration Explained Line by Line</h4>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Spring Cloud Gateway — Routes as Java Config</span></div>
+      <pre><code><span class="kw2">@Configuration</span>
+<span class="kw">public class</span> <span class="type">GatewayConfig</span> {
+
+    <span class="kw2">@Bean</span>
+    <span class="kw">public</span> <span class="type">RouteLocator</span> <span class="fn">customRouteLocator</span>(<span class="type">RouteLocatorBuilder</span> builder) {
+        <span class="kw">return</span> builder.<span class="fn">routes</span>()
+
+            .<span class="fn">route</span>(<span class="str">"user-service"</span>, r -> r
+                <span class="cmt">// PREDICATE: only match requests where path starts with /api/users/</span>
+                .<span class="fn">path</span>(<span class="str">"/api/users/**"</span>)
+                .filters(f -> f
+                    <span class="cmt">// StripPrefix=1 removes the first path segment BEFORE forwarding</span>
+                    <span class="cmt">// /api/users/1 → /users/1 when it reaches USER-SERVICE</span>
+                    .<span class="fn">stripPrefix</span>(<span class="num">1</span>)
+                    <span class="cmt">// Add a custom header so services know traffic came via gateway</span>
+                    .<span class="fn">addRequestHeader</span>(<span class="str">"X-Request-Source"</span>, <span class="str">"gateway"</span>)
+                    <span class="cmt">// Circuit breaker: if USER-SERVICE is down, forward to /fallback endpoint</span>
+                    .<span class="fn">circuitBreaker</span>(c -> c
+                        .<span class="fn">setName</span>(<span class="str">"userServiceCB"</span>)
+                        .<span class="fn">setFallbackUri</span>(<span class="str">"forward:/fallback/users"</span>))
+                )
+                <span class="cmt">// URI: lb:// means "use load balancer + service discovery"</span>
+                <span class="cmt">// USER-SERVICE is the name registered in Eureka</span>
+                .<span class="fn">uri</span>(<span class="str">"lb://USER-SERVICE"</span>)
+            )
+
+            .<span class="fn">route</span>(<span class="str">"order-service"</span>, r -> r
+                .<span class="fn">path</span>(<span class="str">"/api/orders/**"</span>)
+                <span class="cmt">// Weight-based routing: send 90% to v2, 10% to v1 (canary deploy)</span>
+                .<span class="fn">weight</span>(<span class="str">"order-group"</span>, <span class="num">90</span>)
+                .filters(f -> f
+                    .<span class="fn">stripPrefix</span>(<span class="num">1</span>)
+                    <span class="cmt">// Rate limiter: 10 requests/sec per user</span>
+                    .<span class="fn">requestRateLimiter</span>(c -> c
+                        .<span class="fn">setRateLimiter</span>(redisRateLimiter())
+                        .<span class="fn">setKeyResolver</span>(userKeyResolver()))
+                )
+                .<span class="fn">uri</span>(<span class="str">"lb://ORDER-SERVICE"</span>)
+            )
+
+            .<span class="fn">build</span>();
+    }
+}</code></pre>
+    </div>
+
+    <div class="card">
+      <h4>Predicates — The "When to Match" Rules</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>Built-in Predicates</h4>
+          <ul>
+            <li><code>Path=/api/users/**</code> — match by URL path</li>
+            <li><code>Method=GET,POST</code> — match HTTP method</li>
+            <li><code>Header=X-Token, \d+</code> — header regex match</li>
+            <li><code>Query=page</code> — query param exists</li>
+            <li><code>Host=*.example.com</code> — match by hostname</li>
+            <li><code>Cookie=session, abc</code> — match cookie value</li>
+            <li><code>After=2024-01-01T00:00:00Z</code> — time-based routing</li>
+            <li><code>Weight=group, 80</code> — weighted routing (canary)</li>
+          </ul>
+        </div>
+        <div class="card-mini">
+          <h4>Built-in Filters (key ones)</h4>
+          <ul>
+            <li><code>StripPrefix=1</code> — remove N path segments</li>
+            <li><code>AddRequestHeader=K, V</code> — inject header</li>
+            <li><code>AddResponseHeader=K, V</code> — add to response</li>
+            <li><code>RewritePath=regex, replace</code> — URL rewrite</li>
+            <li><code>CircuitBreaker</code> — Resilience4j CB</li>
+            <li><code>RequestRateLimiter</code> — Redis-backed rate limit</li>
+            <li><code>Retry</code> — auto-retry on failure</li>
+            <li><code>RequestSize</code> — reject oversized bodies</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip: Gateway vs BFF</strong>
+        <p>An API Gateway is general-purpose routing + cross-cutting concerns. A <strong>Backend for Frontend (BFF)</strong> is a specialized gateway variant: one gateway instance per client type (mobile BFF, web BFF). The mobile BFF returns trimmed payloads optimized for mobile, the web BFF returns richer data. Mention this when discussing API gateway design — it shows depth.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: FEIGN -->
+  <div class="section" id="feign">
+    <div class="section-header">
+      <h3>§6 — Feign Client: Declarative HTTP Calls</h3>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card">
+        <h4>❌ Without Feign — RestTemplate Boilerplate</h4>
+        <ul>
+          <li>Build URL string manually every time</li>
+          <li>Handle serialization/deserialization yourself</li>
+          <li>Write error handling per call</li>
+          <li>Add headers, timeouts, retries manually</li>
+          <li>10–20 lines of code per service method</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h4>✅ With Feign — Just an Interface</h4>
+        <ul>
+          <li>Define an interface — Feign generates the impl</li>
+          <li>Annotations map to HTTP methods</li>
+          <li>Ribbon LB + Eureka discovery automatic</li>
+          <li>Hystrix circuit breaking per method</li>
+          <li>Looks and feels like a local method call</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Feign Client — Complete Example</span></div>
+      <pre><code><span class="cmt">// Step 1: Declare the interface. That's it. Feign creates the implementation.</span>
+<span class="kw2">@FeignClient</span>(
+    name = <span class="str">"USER-SERVICE"</span>,         <span class="cmt">// ← Service name in Eureka registry</span>
+    fallback = <span class="type">UserClientFallback</span>.<span class="kw">class</span>,  <span class="cmt">// ← Hystrix fallback class</span>
+    configuration = <span class="type">UserFeignConfig</span>.<span class="kw">class</span>  <span class="cmt">// ← Custom timeouts, interceptors</span>
+)
+<span class="kw">public interface</span> <span class="type">UserServiceClient</span> {
+
+    <span class="kw2">@GetMapping</span>(<span class="str">"/users/{id}"</span>)
+    <span class="type">UserDto</span> <span class="fn">getUserById</span>(<span class="kw2">@PathVariable</span>(<span class="str">"id"</span>) <span class="type">Long</span> id);
+
+    <span class="kw2">@PostMapping</span>(<span class="str">"/users"</span>)
+    <span class="type">UserDto</span> <span class="fn">createUser</span>(<span class="kw2">@RequestBody</span> <span class="type">CreateUserRequest</span> request);
+
+    <span class="kw2">@GetMapping</span>(<span class="str">"/users"</span>)
+    <span class="type">List</span>&lt;<span class="type">UserDto</span>&gt; <span class="fn">getUsersByIds</span>(<span class="kw2">@RequestParam</span>(<span class="str">"ids"</span>) <span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids);
+}
+
+<span class="cmt">// Step 2: Inject and use it like a local service</span>
+<span class="kw2">@Service</span>
+<span class="kw">public class</span> <span class="type">OrderService</span> {
+
+    <span class="kw2">@Autowired</span>
+    <span class="kw">private</span> <span class="type">UserServiceClient</span> userClient; <span class="cmt">// Feign-generated proxy injected here</span>
+
+    <span class="kw">public</span> <span class="type">OrderDto</span> <span class="fn">getOrderWithUser</span>(<span class="type">Long</span> orderId) {
+        <span class="type">Order</span> order = orderRepository.<span class="fn">findById</span>(orderId).<span class="fn">orElseThrow</span>();
+        <span class="cmt">// Looks like a local call. Under the hood: Eureka lookup → Ribbon LB → HTTP call</span>
+        <span class="type">UserDto</span> user = userClient.<span class="fn">getUserById</span>(order.<span class="fn">getUserId</span>());
+        <span class="kw">return new</span> <span class="type">OrderDto</span>(order, user);
+    }
+}
+
+<span class="cmt">// Step 3: Fallback for Hystrix circuit breaking</span>
+<span class="kw2">@Component</span>
+<span class="kw">public class</span> <span class="type">UserClientFallback</span> <span class="kw">implements</span> <span class="type">UserServiceClient</span> {
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">UserDto</span> <span class="fn">getUserById</span>(<span class="type">Long</span> id) {
+        <span class="cmt">// Circuit is open — return a safe default or throw a custom exception</span>
+        <span class="kw">return new</span> <span class="type">UserDto</span>(id, <span class="str">"Unknown User"</span>, <span class="str">"N/A"</span>);
+    }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">UserDto</span> <span class="fn">createUser</span>(<span class="type">CreateUserRequest</span> request) {
+        <span class="kw">throw new</span> <span class="type">ServiceUnavailableException</span>(<span class="str">"User Service is down"</span>);
+    }
+}</code></pre>
+    </div>
+
+    <div class="card">
+      <h4>Feign Integration Map</h4>
+      <div class="feign-chain">
+        <div class="fc-box fc-interface">Your Interface<br><small>@FeignClient</small></div>
+        <div class="fc-arrow">→</div>
+        <div class="fc-box fc-proxy">Feign Proxy<br><small>(generated)</small></div>
+        <div class="fc-arrow">→</div>
+        <div class="fc-box fc-ribbon">Ribbon / SCL<br><small>(pick instance)</small></div>
+        <div class="fc-arrow">→</div>
+        <div class="fc-box fc-eureka">Eureka<br><small>(resolve name)</small></div>
+        <div class="fc-arrow">→</div>
+        <div class="fc-box fc-http">HTTP Call<br><small>to IP:port</small></div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Custom ErrorDecoder — Map HTTP Errors to Exceptions</span></div>
+      <pre><code><span class="cmt">// FeignException is the default: wraps all HTTP error responses generically.</span>
+<span class="cmt">// ErrorDecoder lets you map specific HTTP status codes to meaningful exceptions.</span>
+
+<span class="kw2">@Component</span>
+<span class="kw">public class</span> <span class="type">UserServiceErrorDecoder</span> <span class="kw">implements</span> <span class="type">ErrorDecoder</span> {
+
+    <span class="kw">private final</span> <span class="type">ErrorDecoder</span> defaultDecoder = <span class="kw">new</span> <span class="type">Default</span>();
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public</span> <span class="type">Exception</span> <span class="fn">decode</span>(<span class="type">String</span> methodKey, <span class="type">Response</span> response) {
+        <span class="kw">switch</span> (response.<span class="fn">status</span>()) {
+            <span class="kw">case</span> <span class="num">404</span>:
+                <span class="cmt">// HTTP 404 from User Service → UserNotFoundException in Order Service</span>
+                <span class="kw">return new</span> <span class="type">UserNotFoundException</span>(<span class="str">"User not found"</span>);
+            <span class="kw">case</span> <span class="num">401</span>:
+                <span class="kw">return new</span> <span class="type">UnauthorizedException</span>(<span class="str">"Invalid token passed to User Service"</span>);
+            <span class="kw">case</span> <span class="num">503</span>:
+                <span class="cmt">// Retryable exception — Feign will retry this if retry is configured</span>
+                <span class="kw">return new</span> <span class="type">RetryableException</span>(
+                    response.<span class="fn">status</span>(), <span class="str">"User service temporarily unavailable"</span>,
+                    <span class="type">Request.HttpMethod.GET</span>, (<span class="type">Long</span>) <span class="kw">null</span>, response.<span class="fn">request</span>()
+                );
+            <span class="kw">default</span>:
+                <span class="kw">return</span> defaultDecoder.<span class="fn">decode</span>(methodKey, response);
+        }
+    }
+}</code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Feign Timeout Configuration</span></div>
+      <pre><code><span class="cmt">// application.yml</span>
+<span class="cmt">// feign:</span>
+<span class="cmt">//   client:</span>
+<span class="cmt">//     config:</span>
+<span class="cmt">//       USER-SERVICE:         ← per-client config (or 'default' for all)</span>
+<span class="cmt">//         connectTimeout: 1000  ← milliseconds to establish TCP connection</span>
+<span class="cmt">//         readTimeout: 3000     ← milliseconds to wait for response AFTER connected</span>
+<span class="cmt">//         loggerLevel: FULL     ← NONE, BASIC, HEADERS, FULL</span>
+
+<span class="cmt">// Java config equivalent:</span>
+<span class="kw2">@Configuration</span>
+<span class="kw">public class</span> <span class="type">UserFeignConfig</span> {
+
+    <span class="kw2">@Bean</span>
+    <span class="kw">public</span> <span class="type">Request.Options</span> <span class="fn">feignOptions</span>() {
+        <span class="kw">return new</span> <span class="type">Request.Options</span>(
+            <span class="num">1000</span>, <span class="type">TimeUnit.MILLISECONDS</span>,  <span class="cmt">// connectTimeout</span>
+            <span class="num">3000</span>, <span class="type">TimeUnit.MILLISECONDS</span>,  <span class="cmt">// readTimeout</span>
+            <span class="kw">true</span>                           <span class="cmt">// followRedirects</span>
+        );
+    }
+
+    <span class="kw2">@Bean</span>
+    <span class="kw">public</span> <span class="type">Retryer</span> <span class="fn">feignRetryer</span>() {
+        <span class="cmt">// Default Retryer: only retries on RetryableException (connection errors)</span>
+        <span class="cmt">// NOT on HTTP 5xx — those go to ErrorDecoder first</span>
+        <span class="kw">return new</span> <span class="type">Retryer.Default</span>(
+            <span class="num">100</span>,    <span class="cmt">// initial retry interval (ms)</span>
+            <span class="num">1000</span>,   <span class="cmt">// max retry interval (ms)</span>
+            <span class="num">3</span>       <span class="cmt">// max attempts</span>
+        );
+    }
+}</code></pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Critical: Feign does NOT retry on HTTP 5xx by default</strong>
+        <p>Feign's default <code>Retryer</code> only triggers on <code>RetryableException</code> — which is thrown for connection-level failures (socket timeout, connection refused). A 500 Internal Server Error from the downstream service goes to <code>ErrorDecoder</code>, not to retry. To retry on 5xx, you must throw <code>RetryableException</code> from your <code>ErrorDecoder</code> explicitly.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="part-header">
+      <div class="part-number" style="background:var(--gradient-purple);">04</div>
+      <div>
+        <h2>Beyond Code — Service Mesh</h2>
+        <p>When you need infrastructure-level concerns without touching application code.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7: SERVICE MESH -->
+  <div class="section" id="service-mesh">
+    <div class="section-header">
+      <h3>§7 — Sidecar Pattern &amp; Service Mesh</h3>
+    </div>
+
+    <div class="card">
+      <h4>The Code Duplication Problem</h4>
+      <p>You've implemented circuit breaking, distributed tracing, retries, mTLS in Service A. Now you need all of it in Service B, C, D... In Java. Then someone joins with a Go microservice. Do it again in Go.</p>
+      <p>After 50 services, you're maintaining infrastructure code in 50 places. And upgrading a tracing library means touching all 50. <strong>This is the problem service mesh solves.</strong></p>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>The Sidecar Pattern — "Attach a motorbike sidecar"</strong>
+        <p>Deploy a proxy container <strong>alongside</strong> every service container in the same pod. This proxy (Envoy) intercepts ALL inbound and outbound network traffic for that service. The service talks to localhost; the sidecar handles everything else. The service doesn't know the sidecar exists.</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+┌─────────────────────────────────┐   ┌─────────────────────────────────┐
+│           Pod A                 │   │           Pod B                 │
+│  ┌──────────┐  ┌─────────────┐  │   │  ┌──────────┐  ┌─────────────┐  │
+│  │<span class="d-blue">  App A   </span>│  │<span class="d-green"> Envoy Proxy</span>│  │   │  │<span class="d-blue">  App B   </span>│  │<span class="d-green"> Envoy Proxy</span>│  │
+│  │          │◄─►│             │  │   │  │          │◄─►│             │  │
+│  │ Port 8080│  │ Port 15001  │  │   │  │ Port 8080│  │ Port 15001  │  │
+│  └──────────┘  └──────┬──────┘  │   │  └──────────┘  └──────┬──────┘  │
+└─────────────────────── │ ───────┘   └─────────────────────── │ ───────┘
+                         │  mTLS encrypted tunnel               │
+                         └─────────────────────────────────────┘
+                                          │
+                              ┌───────────▼───────────┐
+                              │  <span class="d-purple">Istio Control Plane  </span>│
+                              │  (configures all Envoys│
+                              │   centrally via xDS)   │
+                              └───────────────────────┘
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h4>What the Sidecar Proxy Handles (so your app doesn't have to)</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>Traffic Management</h4>
+          <ul>
+            <li>Load balancing (L7 aware)</li>
+            <li>Retries with backoff</li>
+            <li>Circuit breaking</li>
+            <li>Timeout enforcement</li>
+            <li>Traffic splitting (canary)</li>
+          </ul>
+        </div>
+        <div class="card-mini">
+          <h4>Security</h4>
+          <ul>
+            <li>mTLS between all services</li>
+            <li>Certificate rotation (automatic)</li>
+            <li>Authorization policies (RBAC per service)</li>
+            <li>JWT validation</li>
+          </ul>
+        </div>
+        <div class="card-mini">
+          <h4>Observability</h4>
+          <ul>
+            <li>Distributed tracing (auto-inject headers)</li>
+            <li>Metrics: latency, error rate, throughput</li>
+            <li>Access logs for every request</li>
+          </ul>
+        </div>
+        <div class="card-mini">
+          <h4>Resilience (language-agnostic)</h4>
+          <ul>
+            <li>No Resilience4j needed in Go/Python</li>
+            <li>Consistent policy across all languages</li>
+            <li>Centrally configurable via YAML</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Approach</th><th>Where logic lives</th><th>Ops overhead</th><th>Best for</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Code-Level (Resilience4j)</strong></td>
+            <td>Inside app code</td>
+            <td><span class="pill pill-green">Low</span></td>
+            <td>&lt; 20 services, single language</td>
+          </tr>
+          <tr>
+            <td><strong>Service Mesh (Istio + Envoy)</strong></td>
+            <td>Sidecar proxy</td>
+            <td><span class="pill pill-red">High</span></td>
+            <td>50+ services, polyglot, enterprise</td>
+          </tr>
+          <tr>
+            <td><strong>API Gateway only</strong></td>
+            <td>Edge proxy</td>
+            <td><span class="pill pill-blue">Medium</span></td>
+            <td>North-South traffic only</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Don't recommend a service mesh for a 5-service system</strong>
+        <p>Istio adds 300+ Kubernetes objects, a control plane with 4+ pods, and significant CPU/memory overhead per sidecar. For most startups and teams, <strong>Resilience4j + Spring Cloud Gateway is the right answer</strong>. Mention service mesh when the interviewer asks about "very large scale" or "multi-language environments."</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 8: INTERVIEW PLAYBOOK -->
+  <div class="section" id="interview-playbook">
+    <div class="section-header">
+      <h3>§8 — Interview Playbook</h3>
+    </div>
+
+    <div class="banner banner-purple">
+      <h4>The Golden Rule</h4>
+      <p>In interviews, always anchor your answer in a trade-off. Never say "X is better than Y." Say "X is better than Y <em>when</em> [context], because [trade-off]."</p>
+    </div>
+
+    <div class="interview-card">
+      <div class="ic-q">Q: "How do services discover each other in your architecture?"</div>
+      <div class="ic-a">
+        <span class="ic-tag">30-second answer</span>
+        <p>"In our Spring Boot microservices, we used <strong>client-side discovery with Eureka and Spring Cloud LoadBalancer</strong>. Each service registers with Eureka on startup and sends heartbeats every 30 seconds. When Service A needs to call Service B, it resolves the service name via the local Eureka cache and Spring Cloud LB picks an instance using round-robin. We moved away from Ribbon as it's in maintenance mode. The advantage is no extra network hop — but if we were on Kubernetes, I'd use K8s Service DNS instead since that's server-side discovery built in."</p>
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="ic-q">Q: "Client-side vs server-side service discovery — when would you choose each?"</div>
+      <div class="ic-a">
+        <span class="ic-tag">Decision framework</span>
+        <p><strong>Client-side:</strong> Spring Cloud + Eureka ecosystem, single language (Java), need routing intelligence in the client, no existing LB infrastructure.<br><br>
+        <strong>Server-side:</strong> Already on Kubernetes (use K8s Service), polyglot services where you can't embed a registry client in every language, or AWS where ALB handles routing. <strong>K8s is server-side by default</strong> — most modern systems use this without even knowing it.</p>
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="ic-q">Q: "What does an API Gateway do that a load balancer doesn't?"</div>
+      <div class="ic-a">
+        <span class="ic-tag">Common confusion area</span>
+        <p>A <strong>load balancer</strong> operates at L4/L7 and distributes traffic — it routes based on IP/port and maybe URL. It does one thing well.<br><br>
+        An <strong>API Gateway</strong> is application-aware. It does routing PLUS: authentication (JWT validation), rate limiting per client, request/response transformation, circuit breaking, aggregation (fan-out across multiple services), SSL termination, CORS, caching. It's the business logic layer of your network edge.</p>
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="ic-q">Q: "Why use Feign over RestTemplate?"</div>
+      <div class="ic-a">
+        <span class="ic-tag">Practical answer</span>
+        <p>RestTemplate is imperative — you write boilerplate for each call: build URL, handle exceptions, deserialize. With Feign, you write an interface. The proxy handles the rest.<br><br>
+        More importantly: Feign <strong>integrates</strong> with Ribbon, Eureka, Hystrix, and Sleuth automatically. With RestTemplate, you wire each integration manually. The interface-based model also means <strong>the caller reads like a contract</strong> — which endpoint, what params, what return type — which is cleaner for reviews and onboarding.</p>
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="ic-q">Q: "Explain Eureka Self-Preservation Mode"</div>
+      <div class="ic-a">
+        <span class="ic-tag">Shows depth</span>
+        <p>If Eureka suddenly stops receiving heartbeats from <em>many</em> services at once, it could mean either: all those services died, OR there's a network partition and Eureka can't hear them.<br><br>
+        Eureka bets on the second scenario (network partition is more common in distributed systems). It enters self-preservation mode — <strong>it stops evicting stale registrations</strong>. This means callers might get stale addresses and need to retry, but it's far better than Eureka wiping out valid registrations during a temporary network blip.<br><br>
+        This is the <strong>A (Availability) over C (Consistency)</strong> choice from CAP theorem. Eureka is an AP system by design.</p>
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="ic-q">Q: "When would you use a service mesh vs circuit breakers in code?"</div>
+      <div class="ic-a">
+        <span class="ic-tag">Architecture maturity signal</span>
+        <p>For <strong>small to medium scale (&lt;30 services, Java-only)</strong>: Resilience4j in code. Simple, less operational overhead, easy to debug.<br><br>
+        For <strong>large scale (50+ services, polyglot)</strong>: Service mesh (Istio + Envoy sidecar). You don't want to implement retries, circuit breaking, and mTLS in Go, Python, Rust, and Java separately. Centralize it in the mesh, configure via Kubernetes CRDs. But be honest about the tradeoff: service mesh adds significant operational complexity. Don't recommend it for startups or simple systems.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Architecture Decision Quick Reference</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Situation</th><th>Recommended Approach</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Spring Boot microservices, not on K8s</td>
+              <td><span class="pill pill-green">Eureka + Spring Cloud LB + Feign</span></td>
+            </tr>
+            <tr>
+              <td>Running on Kubernetes</td>
+              <td><span class="pill pill-green">K8s Service DNS (server-side, built in)</span></td>
+            </tr>
+            <tr>
+              <td>Polyglot services (Go, Python, Java)</td>
+              <td><span class="pill pill-blue">Consul or K8s DNS</span></td>
+            </tr>
+            <tr>
+              <td>External traffic entry point</td>
+              <td><span class="pill pill-green">Spring Cloud Gateway (replaces Zuul)</span></td>
+            </tr>
+            <tr>
+              <td>Internal HTTP calls in Spring Boot</td>
+              <td><span class="pill pill-green">Feign Client</span></td>
+            </tr>
+            <tr>
+              <td>Internal HTTP calls in Spring WebFlux</td>
+              <td><span class="pill pill-blue">WebClient with LoadBalancedExchangeFilterFunction</span></td>
+            </tr>
+            <tr>
+              <td>Need mTLS + auto-retry across 50+ services</td>
+              <td><span class="pill pill-purple">Istio Service Mesh</span></td>
+            </tr>
+            <tr>
+              <td>Load balancing rule choice</td>
+              <td>Round Robin default → Availability Filtering if CB matters</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🏆</span>
+      <p><strong>The answer interviewers love:</strong> "It depends on our scale and team maturity. For a Spring Boot system &lt;20 services, Eureka + Feign + Spring Cloud Gateway gives 90% of what you need with minimal ops overhead. For Kubernetes, I'd lean on built-in service DNS and use Spring Cloud Gateway as the ingress. Service mesh only enters the picture when infrastructure concerns are duplicated across 50+ services in multiple languages."</p>
+    </div>
+  </div>
+
+  <!-- Back to top -->
+  <button class="top-btn" id="topBtn" title="Back to top">↑</button>
+
+</main>
+
+<script>
+  // ── Progress bar ──────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const el  = document.getElementById('progress');
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (el && max > 0) el.style.width = (window.scrollY / max * 100) + '%';
+
+    const topBtn = document.getElementById('topBtn');
+    if (topBtn) topBtn.classList.toggle('visible', window.scrollY > 400);
+  });
+
+  document.getElementById('topBtn')?.addEventListener('click', () =>
+    window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // ── Sidebar toggle ──────────────────────────────────────────────────────
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed',
+        document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
+
+  // ── Discovery toggle ──────────────────────────────────────
+  function showDisc(type, btn) {
+    document.querySelectorAll('.disc-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.disc-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('disc-' + type)?.classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── Active section highlighting in sidebar ────────────────
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // ── Stagger-in cards on scroll ────────────────────────────
+  const cardObserver = new IntersectionObserver(entries => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.style.opacity    = '1';
+          entry.target.style.transform  = 'translateY(0)';
+        }, i * 60);
+        cardObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.card, .card-mini, .rr-card, .gw-feat, .interview-card').forEach(el => {
+    el.style.opacity   = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+    cardObserver.observe(el);
+  });
+</script>
+</body>
+</html>

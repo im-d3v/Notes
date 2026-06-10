@@ -5146,28 +5146,25 @@ GET    /users/{id}/trips         → User's trip history (paginated)</code></pre
       if (btn) btn.style.opacity = scrollTop > 400 ? '1' : '0';
     });
 
-    // ── Hamburger + sidebar ───────────────────────────────────────
-    const hamburger = document.getElementById('hamburger');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-
-    hamburger.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('active');
-      hamburger.classList.toggle('active');
-    });
-    overlay.addEventListener('click', () => {
-      sidebar.classList.remove('open');
-      overlay.classList.remove('active');
-      hamburger.classList.remove('active');
-    });
-
-    // Close sidebar on link click (mobile)
-    document.querySelectorAll('.toc-link').forEach(link => {
+    // ── Sidebar toggle ──────────────────────────────────────────────────────
+    function toggleSidebar() {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        document.body.classList.toggle('sidebar-open');
+      } else {
+        document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebarCollapsed',
+          document.body.classList.contains('sidebar-collapsed'));
+      }
+    }
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+    document.getElementById('hamburger').onclick = toggleSidebar;
+    document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+    document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
       link.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('active');
-        hamburger.classList.remove('active');
+        if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
       });
     });
 

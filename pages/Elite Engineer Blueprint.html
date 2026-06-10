@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Elite Engineer Blueprint</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #1a1040 40%, #0d1117 100%); }
+    .elite-score { display:flex; gap:1rem; flex-wrap:wrap; margin:1.5rem 0; }
+    .score-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:1rem 1.5rem; text-align:center; flex:1; min-width:120px; }
+    .score-num { font-size:2rem; font-weight:700; color:var(--accent-purple); }
+    .score-label { font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+    .script-block { background:#010409; border:1px solid var(--border); border-left:4px solid var(--accent-purple); border-radius:8px; padding:1.2rem 1.5rem; margin:1rem 0; font-family:'JetBrains Mono','Fira Code',monospace; font-size:0.85rem; line-height:1.8; color:#c9d1d9; }
+    .script-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--accent-purple); font-weight:700; margin-bottom:.5rem; }
+    .vs-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+    .vs-bad { background:#2a0f0f; border:1px solid #3a1a1a; border-radius:8px; padding:1rem; }
+    .vs-good { background:#0f2a1a; border:1px solid #1a3a2a; border-radius:8px; padding:1rem; }
+    .vs-bad h5 { color:var(--accent-red)!important; text-transform:none!important; font-size:.85rem!important; }
+    .vs-good h5 { color:var(--accent-green)!important; text-transform:none!important; font-size:.85rem!important; }
+    .vs-bad p,.vs-good p { font-size:.85rem; margin:.3rem 0; }
+    .framework-pill { display:inline-block; background:var(--bg-tertiary); border:1px solid var(--accent-purple); color:var(--accent-purple); border-radius:4px; padding:.15rem .5rem; font-size:.75rem; font-weight:700; letter-spacing:.05em; margin:.2rem; }
+    .mindset-dial { display:grid; grid-template-columns:1fr auto 1fr; gap:1rem; align-items:center; margin:1rem 0; }
+    .dial-junior { background:#1a1a2a; border:1px solid #2a2a4a; border-radius:8px; padding:1rem; font-size:.82rem; color:var(--text-secondary); }
+    .dial-arrow { text-align:center; color:var(--accent-purple); font-size:1.5rem; }
+    .dial-senior { background:#1a2a1a; border:1px solid #2a4a2a; border-radius:8px; padding:1rem; font-size:.82rem; color:var(--text-secondary); }
+    .dial-junior h5,.dial-senior h5 { font-size:.72rem!important; margin-bottom:.5rem; }
+    .impact-formula { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin:1rem 0; background:var(--bg-card); border-radius:8px; padding:1rem 1.5rem; }
+    .impact-box { background:var(--bg-tertiary); border-radius:6px; padding:.5rem 1rem; font-size:.85rem; color:var(--text-primary); font-weight:600; text-align:center; }
+    .impact-op { color:var(--accent-purple); font-size:1.2rem; font-weight:700; }
+    .trait-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; margin:1rem 0; }
+    .trait-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; }
+    .trait-icon { font-size:1.4rem; }
+    .trait-title { color:var(--accent-blue); font-size:.85rem; font-weight:700; margin:.3rem 0 .2rem; }
+    .trait-desc { font-size:.75rem; color:var(--text-muted); line-height:1.5; }
+    .negotiation-ladder { counter-reset:neg; }
+    .neg-step { display:flex; gap:1rem; align-items:flex-start; margin:.75rem 0; background:var(--bg-card); border-radius:8px; padding:.75rem 1rem; border-left:3px solid var(--accent-orange); }
+    .neg-num { background:var(--accent-orange); color:#000; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; flex-shrink:0; }
+    .neg-body { font-size:.85rem; color:var(--text-secondary); }
+    .neg-body strong { color:var(--text-primary); }
+    @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.3);opacity:.7} }
+    .live-dot { display:inline-block; width:8px; height:8px; background:var(--accent-green); border-radius:50%; margin-right:.4rem; animation:pulse-dot 2s infinite; }
+    .anchor { display:block; position:relative; top:-80px; visibility:hidden; }
+    @media(max-width:768px){ .vs-grid{grid-template-columns:1fr;} .mindset-dial{grid-template-columns:1fr;} .dial-arrow{transform:rotate(90deg);} }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<button id="hamburger" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+<div id="sidebar-overlay"></div>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div style="font-weight:700;color:var(--text-primary);font-size:.9rem;">Elite Engineer Blueprint</div>
+      <div style="font-size:.7rem;color:var(--text-muted);">From Junior → Founder-Level</div>
+    </div>
+  </div>
+
+  <div style="padding:.5rem 1rem .25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); font-weight:700;">Navigation</div>
+  <a href="../index.html" class="toc-link" style="color:var(--accent-orange);">🏠 Home</a>
+
+  <div style="padding:.5rem 1rem .25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); font-weight:700;">Part I — Mindset</div>
+  <a href="#senior-mindset" class="toc-link">🧠 The Senior Mindset</a>
+  <a href="#mental-models" class="toc-link">🔭 Mental Models</a>
+  <a href="#think-in-tradeoffs" class="toc-link">⚖️ Think in Tradeoffs</a>
+
+  <div style="padding:.5rem 1rem .25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); font-weight:700;">Part II — Communication</div>
+  <a href="#communication-os" class="toc-link">📡 The Communication OS</a>
+  <a href="#technical-explanation" class="toc-link">🎯 Technical Explanation</a>
+  <a href="#written-communication" class="toc-link">✍️ Written Communication</a>
+
+  <div style="padding:.5rem 1rem .25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); font-weight:700;">Part III — Interviews</div>
+  <a href="#coding-interview" class="toc-link">💻 Coding Interview Mastery</a>
+  <a href="#system-design" class="toc-link">🏗️ System Design Communication</a>
+  <a href="#behavioral" class="toc-link">🎭 Behavioral Mastery</a>
+
+  <div style="padding:.5rem 1rem .25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); font-weight:700;">Part IV — Presence</div>
+  <a href="#meetings" class="toc-link">🤝 Meeting Mastery</a>
+  <a href="#public-speaking" class="toc-link">🎤 Public Speaking</a>
+  <a href="#negotiation" class="toc-link">💰 Negotiation</a>
+  <a href="#code-reviews" class="toc-link">🔍 Code Review Culture</a>
+
+  <div style="padding:.5rem 1rem .25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); font-weight:700;">Part V — Career</div>
+  <a href="#senior-signals" class="toc-link">📈 Senior Signals</a>
+  <a href="#brand" class="toc-link">🌟 Build Your Brand</a>
+  <a href="#90-day" class="toc-link">🚀 The 90-Day Sprint</a>
+</nav>
+
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Career Transformation Blueprint</div>
+      <h1>The Elite Engineer Playbook</h1>
+      <p class="hero-subtitle">
+        Everything a 20-year veteran knows that they never taught you in school. 
+        Not just what to know — how to <em>think</em>, <em>speak</em>, and <em>carry yourself</em> 
+        so every room you walk into feels your presence.
+      </p>
+      <div class="hero-badges">
+        <span class="tag tag-purple">Mindset</span>
+        <span class="tag tag-blue">Communication</span>
+        <span class="tag tag-green">Interview Mastery</span>
+        <span class="tag tag-orange">Leadership</span>
+        <span class="tag tag-cyan">Career Strategy</span>
+        <span class="tag tag-yellow">Negotiation</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPENING CALLOUT -->
+  <div class="section" style="padding-top:2rem;">
+    <div class="callout purple">
+      <div class="icon">⚡</div>
+      <div class="body">
+        <strong>The Brutal Truth</strong>
+        <p>The gap between a junior and a senior engineer isn't knowledge. It's <strong>judgment</strong>. 
+        It's knowing what question to ask before writing a single line of code. It's how you 
+        make others feel confident when you're in the room. This guide hard-wires that instinct into you.</p>
+      </div>
+    </div>
+
+    <div class="elite-score">
+      <div class="score-card"><div class="score-num">5</div><div class="score-label">Core Mindset Shifts</div></div>
+      <div class="score-card"><div class="score-num">12</div><div class="score-label">Communication Frameworks</div></div>
+      <div class="score-card"><div class="score-num">8</div><div class="score-label">Interview Scripts</div></div>
+      <div class="score-card"><div class="score-num">30+</div><div class="score-label">Real Scripts & Templates</div></div>
+      <div class="score-card"><div class="score-num">∞</div><div class="score-label">Career ROI</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">01</div>
+    <div>
+      <h2>The Senior Mindset</h2>
+      <p>The operating system that runs silently in every elite engineer's head.</p>
+    </div>
+  </div>
+
+  <!-- SENIOR MINDSET -->
+  <div class="section" id="senior-mindset">
+    <span class="anchor" id="senior-mindset-anchor"></span>
+    <div class="section-header">
+      <h3>🧠 The Senior Engineer Operating System</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>The Core Insight</strong>
+        <p>Seniors don't just write better code. They ask better questions before writing any code.
+        They make everyone around them more effective. That multiplier effect is what companies 
+        actually pay senior comp for.</p>
+      </div>
+    </div>
+
+    <h4>Junior vs. Senior: The Mindset Diff</h4>
+    <p>Every interaction, every problem, every meeting — these two engineers experience them completely differently. Here's the exact delta:</p>
+
+    <div class="mindset-dial">
+      <div class="dial-junior">
+        <h5 style="color:var(--accent-red);">❌ Junior Instinct</h5>
+        <p>"I got assigned a ticket. Let me figure out how to implement it."</p>
+        <p>"This code is messy. Let me rewrite it."</p>
+        <p>"I don't know this. I should figure it out myself."</p>
+        <p>"They approved my PR. I'm done."</p>
+        <p>"The bug is fixed. I deployed."</p>
+        <p>"I'm waiting for someone to tell me what to do next."</p>
+      </div>
+      <div class="dial-arrow">→</div>
+      <div class="dial-senior">
+        <h5 style="color:var(--accent-green);">✅ Senior Instinct</h5>
+        <p>"Why does this ticket exist? What's the actual user problem?"</p>
+        <p>"Why is this code messy? What constraint caused this?"</p>
+        <p>"Who's the fastest path to this answer? Who owns this?"</p>
+        <p>"Did this actually solve the user problem? How do I verify?"</p>
+        <p>"What caused this bug? Could it happen elsewhere?"</p>
+        <p>"What is the highest-leverage thing I can work on right now?"</p>
+      </div>
+    </div>
+
+    <h4>The 5 Irreversible Mindset Shifts</h4>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>🔍 Shift 1: Problem First</h4>
+        <p>Before touching code, ask: <strong>"What is the actual problem?"</strong> Not the ticket. Not the feature. The real human pain being solved. Juniors solve tickets. Seniors solve problems.</p>
+      </div>
+      <div class="card-mini">
+        <h4>⚖️ Shift 2: Everything Is a Tradeoff</h4>
+        <p>There is no "best solution." There is only the best solution <strong>given constraints</strong>. Your job is to identify constraints, make tradeoffs explicit, and document why.</p>
+      </div>
+      <div class="card-mini">
+        <h4>📡 Shift 3: Communicate Uncertainty</h4>
+        <p>"I'm not sure" is weak. <strong>"I'm 80% confident it's X, the 20% unknown is Y, and here's how we de-risk it"</strong> is senior. Always quantify your uncertainty.</p>
+      </div>
+      <div class="card-mini">
+        <h4>🎯 Shift 4: Think in Systems</h4>
+        <p>Every change you make affects something else. Seniors ask: what breaks downstream? What are the second-order effects? <strong>Think two moves ahead, always.</strong></p>
+      </div>
+      <div class="card-mini">
+        <h4>👥 Shift 5: Your Output Is Team Output</h4>
+        <p>A senior who ships 50 features but their team ships 5 is less valuable than one who ships 10 but enables the team to ship 50. <strong>Your leverage is through others.</strong></p>
+      </div>
+      <div class="card-mini">
+        <h4>🔁 Shift 6: Default to Simplicity</h4>
+        <p>Juniors show cleverness with complexity. Seniors show mastery through <strong>ruthless simplification</strong>. The simplest solution that solves the problem is always the best first attempt.</p>
+      </div>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🎯</span>
+      <p><strong>The Senior Test:</strong> Before any meeting, ask yourself — "Am I here to execute or to shape?" Seniors always shape. They walk in having already formed an opinion, ready to defend it, and ready to change it with good evidence.</p>
+    </div>
+  </div>
+
+  <!-- MENTAL MODELS -->
+  <div class="section" id="mental-models">
+    <span class="anchor" id="mental-models-anchor"></span>
+    <div class="section-header">
+      <h3>🔭 Mental Models Every Senior Carries</h3>
+    </div>
+
+    <p>Mental models are reusable thinking tools. Seniors have a library of them. When you see a problem, you reach for a model, not a Google search. Here are the ones that matter most in engineering.</p>
+
+    <div class="card">
+      <h4>🧲 First Principles Thinking (Elon Musk / Feynman)</h4>
+      <p>Break down every assumption until you hit bedrock facts. Then reason up from there.</p>
+      <div class="script-block">
+        <div class="script-label">How to apply it in a design discussion</div>
+"Before we go further — let's challenge our assumptions here.
+We're assuming we need a database. Why? What's the actual 
+requirement? Is it persistence? Retrieval speed? Consistency?
+Let's go back to first principles and make sure we're solving
+the right problem with the right tool."
+      </div>
+      <div class="callout success">
+        <div class="icon">✅</div>
+        <div class="body"><strong>When to use it:</strong> When a conversation is going in circles. When "we've always done it this way" appears. When you're being asked to build something and you're not sure why.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>📊 Inversion (Charlie Munger)</h4>
+      <p>Instead of asking "How do we succeed?", ask <strong>"How do we guarantee failure?"</strong> Then avoid all of those things. This is how senior engineers prevent disasters before they happen.</p>
+      <div class="script-block">
+        <div class="script-label">In a technical review</div>
+"Let me invert this for a second — what would have to be true
+for this design to completely fail at scale? What's the 
+bottleneck that kills us at 10x traffic? At 100x?
+If we can answer that, we know exactly where to invest."
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>⭕ The Circle of Competence (Warren Buffett)</h4>
+      <p>Know exactly what you know, what you don't know, and the boundary between them. Elite engineers are famous for saying <em>"That's outside my circle — let me pull in [X]"</em> without ego.</p>
+      <div class="script-block">
+        <div class="script-label">In an interview or discussion</div>
+"I have strong opinions here on the application layer, but 
+network-level optimizations are at the edge of my circle.
+I'd want to pair with someone from infra before committing
+to this direction. That said, here's my thinking on the
+layers I do own..."
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🏋️ The 80/20 Principle (Pareto)</h4>
+      <p>20% of the work produces 80% of the value. Senior engineers obsess over identifying that 20%. Juniors try to do everything perfectly and run out of time.</p>
+      <div class="vs-grid">
+        <div class="vs-bad">
+          <h5>❌ Junior Approach</h5>
+          <p>"I need to handle every edge case before I ship."</p>
+          <p>Spends 3 days on a feature that blocks the team.</p>
+        </div>
+        <div class="vs-good">
+          <h5>✅ Senior Approach</h5>
+          <p>"What's the minimum we need to ship to validate? Ship that. Iterate."</p>
+          <p>Ships in 4 hours. Unblocks team. Iterates next sprint.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🔄 Second-Order Thinking</h4>
+      <p>Ask "And then what?" after every decision. The first consequence is obvious. The second consequence is where senior engineers live.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">First-order effect</div>
+            <div class="step-desc">We add a caching layer → responses are faster ✓</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Second-order effect</div>
+            <div class="step-desc">Cache can serve stale data → users see old information → support tickets spike</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Third-order effect</div>
+            <div class="step-desc">Cache invalidation logic becomes complex → new class of bugs → slower deploys</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THINK IN TRADEOFFS -->
+  <div class="section" id="think-in-tradeoffs">
+    <span class="anchor" id="think-in-tradeoffs-anchor"></span>
+    <div class="section-header">
+      <h3>⚖️ The Tradeoff Vocabulary</h3>
+    </div>
+
+    <p>The most powerful thing a senior engineer says in a design review is <em>"The tradeoff here is..."</em>. This signals mastery. It shows you see the whole problem space, not just the obvious solution.</p>
+
+    <div class="banner banner-purple">
+      <h4>The Golden Rule of Engineering Decisions</h4>
+      <p>There is no objectively correct answer. There is only the answer that best satisfies the constraints. Your job is to <strong>make the constraints explicit</strong>, <strong>name the tradeoffs</strong>, <strong>make a recommendation</strong>, and <strong>document why</strong>.</p>
+    </div>
+
+    <h4>The Tradeoff Table — Burn This Into Your Brain</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>You Gain</th><th>You Pay</th><th>Classic Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Speed (read)</td><td>Consistency + memory</td><td>Cache layer</td></tr>
+          <tr><td>Availability</td><td>Consistency (CAP theorem)</td><td>Eventual consistency DBs</td></tr>
+          <tr><td>Scalability</td><td>Complexity + cost</td><td>Microservices</td></tr>
+          <tr><td>Flexibility</td><td>Performance</td><td>Dynamic typing, reflection</td></tr>
+          <tr><td>Developer speed</td><td>Runtime performance</td><td>ORM vs raw SQL</td></tr>
+          <tr><td>Decoupling</td><td>Observability + latency</td><td>Event-driven / async</td></tr>
+          <tr><td>Strong consistency</td><td>Availability + latency</td><td>2-phase commit</td></tr>
+          <tr><td>Early delivery</td><td>Technical debt</td><td>Cutting corners for deadline</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>How to Speak in Tradeoffs — The Template</h4>
+    <div class="script-block">
+      <div class="script-label">Universal Tradeoff Script — use in any design discussion</div>
+"We have two viable approaches here.
+
+Option A: [describe briefly]. This gives us [concrete benefit].
+The cost is [concrete cost]. It's the right choice when 
+[specific condition].
+
+Option B: [describe briefly]. This gives us [different benefit].
+The cost is [different cost]. It's right when [different condition].
+
+Given our constraint of [most important constraint], I'd 
+recommend Option [X] — but I want to flag that if [risk scenario]
+happens, we may need to revisit this."
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Power Move:</strong>
+        <p>In system design interviews, interviewers don't want the "right answer." They want to see your reasoning. Use the tradeoff script above. Say it out loud. Walk them through it. That's what a Staff Engineer sounds like.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">02</div>
+    <div>
+      <h2>The Communication OS</h2>
+      <p>The single biggest gap between junior and senior. Not code — words.</p>
+    </div>
+  </div>
+
+  <!-- COMMUNICATION OS -->
+  <div class="section" id="communication-os">
+    <span class="anchor" id="communication-os-anchor"></span>
+    <div class="section-header">
+      <h3>📡 Communication Is Your Product</h3>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🔥</div>
+      <div class="body">
+        <strong>Career-Limiting Truth</strong>
+        <p>You can be the best engineer on the team and get passed for promotion because people don't know what you're working on, can't understand your explanations, and don't feel confident in your judgment. Communication IS part of your technical skill. Not soft skills — <strong>core engineering skills</strong>.</p>
+      </div>
+    </div>
+
+    <h4>The 4 Levels of Engineering Communication</h4>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="ti-title">Level 1: Information Transfer <span class="pill pill-red">Junior</span></div>
+        <div class="ti-body">You tell people what you did. "I implemented the cache." No context, no impact, no story. Nobody knows why it matters.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="ti-title">Level 2: Explanation <span class="pill pill-orange">Mid-level</span></div>
+        <div class="ti-body">You explain how it works. "I implemented Redis caching with a 5-minute TTL on user profile endpoints." Better, but still feature-focused.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="ti-title">Level 3: Impact Communication <span class="pill pill-blue">Senior</span></div>
+        <div class="ti-body">"I reduced user profile load time by 340ms by adding Redis caching. This should drop our p99 latency below our 500ms SLA target." Business impact + technical detail.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="ti-title">Level 4: Strategic Framing <span class="pill pill-purple">Staff / Founder</span></div>
+        <div class="ti-body">"We were at risk of breaching our SLA and losing enterprise customers. I identified latency as the bottleneck, implemented targeted caching, and reduced p99 by 40%. This removes the blocker on our Q3 enterprise expansion." Context + problem + solution + business outcome.</div>
+      </div>
+    </div>
+
+    <h4>The BLUF Framework (Bottom Line Up Front)</h4>
+    <p>This is how military leaders, top executives, and elite engineers communicate. Lead with the conclusion. Then the evidence. Never bury the point.</p>
+    <div class="vs-grid">
+      <div class="vs-bad">
+        <h5>❌ Rookie Pattern (Chronological)</h5>
+        <p>"So I started looking at the issue on Monday and I checked the logs and then I noticed the database queries were slow and then I found that we were missing an index and after that I added the index and now it should be faster."</p>
+        <p><em>🥱 They stopped listening at "Monday"</em></p>
+      </div>
+      <div class="vs-good">
+        <h5>✅ BLUF Pattern</h5>
+        <p>"The issue is fixed. Root cause was a missing index on the orders table causing full-table scans. I added the composite index. Query time dropped from 2.3s to 18ms. Here's the full investigation if you want the details."</p>
+        <p><em>💪 They trust you in 10 seconds</em></p>
+      </div>
+    </div>
+
+    <div class="script-block">
+      <div class="script-label">BLUF Formula (memorize this)</div>
+[CONCLUSION/RECOMMENDATION] + [WHY in 1 sentence] + [Impact] + [Optional: Details available if needed]
+
+Example:
+"We should use PostgreSQL here, not DynamoDB.
+Our query patterns are highly relational and our team
+already has PG expertise. Switching to DynamoDB would 
+add 3 weeks of ramp-up and we'd likely hit its query
+limitations within 6 months. I have a full comparison
+doc if you want to go deeper."
+    </div>
+
+    <h4>The Pyramid Principle (McKinsey Framework)</h4>
+    <p>Structure every complex communication like an inverted pyramid. Conclusion at top. Supporting points below. Evidence at the base.</p>
+    <div class="diagram">
+               ▲
+              /  \
+        <span class="d-purple">[ RECOMMENDATION ]</span>
+           /        \
+      <span class="d-blue">[ Point 1 ]  [ Point 2 ]  [ Point 3 ]</span>
+       /    \      /    \      /    \
+<span class="d-green">[data] [data] [data] [data] [data] [data]</span>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>Use Pyramid Principle for:</strong> Design doc introductions · Slack messages explaining decisions · Email to skip-level manager · Status updates · Any time you need buy-in
+      </div>
+    </div>
+
+    <h4>The XYZ Impact Statement Formula</h4>
+    <p>This is how top engineers describe their work in resumes, performance reviews, and interviews. Never describe tasks — always describe outcomes.</p>
+    <div class="impact-formula">
+      <div class="impact-box">Accomplished X</div>
+      <div class="impact-op">by doing</div>
+      <div class="impact-box">Y</div>
+      <div class="impact-op">resulting in</div>
+      <div class="impact-box">Z (measurable)</div>
+    </div>
+    <div class="card">
+      <h4>XYZ in Practice</h4>
+      <div class="vs-grid">
+        <div class="vs-bad">
+          <h5>❌ Task-based (Weak)</h5>
+          <p>"Implemented caching on the API layer"</p>
+          <p>"Refactored authentication service"</p>
+          <p>"Fixed performance issues"</p>
+        </div>
+        <div class="vs-good">
+          <h5>✅ XYZ Impact (Strong)</h5>
+          <p>"Reduced API p99 latency by 340ms by implementing Redis caching, enabling the team to hit our enterprise SLA target"</p>
+          <p>"Reduced auth service error rate by 92% by refactoring token validation logic, eliminating the #1 user complaint"</p>
+          <p>"Improved checkout page load time by 60% by identifying and eliminating N+1 queries, increasing conversion rate by 4%"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECHNICAL EXPLANATION -->
+  <div class="section" id="technical-explanation">
+    <span class="anchor" id="technical-explanation-anchor"></span>
+    <div class="section-header">
+      <h3>🎯 The Art of Technical Explanation</h3>
+    </div>
+
+    <p>The ability to make complex things simple is the highest-paid skill in engineering. It's how you get promoted. It's how you become a tech lead. It's how you pass interviews. Let's master it.</p>
+
+    <div class="card">
+      <h4>The Feynman Technique — Adapted for Engineers</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Explain it like they're 12</div>
+            <div class="step-desc">No jargon. No acronyms. If a smart 12-year-old can't follow it, you don't understand it well enough. <em>"Imagine our database is a giant spreadsheet..."</em></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Find where it breaks down</div>
+            <div class="step-desc">The part where your explanation gets hand-wavy? That's your knowledge gap. Go fill it. Then come back and explain it simply again.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Add the appropriate layer of complexity</div>
+            <div class="step-desc">Now layer in the technical detail for your actual audience. You've already established the mental model. The details will stick.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Use an analogy</div>
+            <div class="step-desc">Every great technical explanation has one analogy. "Circuit breakers work exactly like electrical circuit breakers — when too many errors trip the switch, it cuts off the flow to prevent cascade failure."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h4>The Zoom Model — Calibrate to Your Audience in Real Time</h4>
+    <p>Elite communicators constantly zoom in and out depending on who's in the room. Here's the map:</p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Audience</th><th>Zoom Level</th><th>What They Care About</th><th>Your Opening Line</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CEO / VP</td><td>10,000 ft</td><td>Business impact, risk, cost</td><td>"This will save us $40K/month and removes our biggest reliability risk."</td></tr>
+          <tr><td>Engineering Manager</td><td>5,000 ft</td><td>Timeline, team impact, tradeoffs</td><td>"I can ship this in 2 sprints. Here's the tradeoff vs. the alternative."</td></tr>
+          <tr><td>Tech Lead / Staff</td><td>1,000 ft</td><td>Architecture, scale, correctness</td><td>"Here's the design. The key decision is around consistency vs. latency at this layer..."</td></tr>
+          <tr><td>Fellow Dev</td><td>Ground level</td><td>Implementation, code quality, edge cases</td><td>"Here's the PR. The tricky part is how I handle the race condition in the cache invalidation..."</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">🎯</span>
+      <p><strong>The 30-Second Rule:</strong> You should be able to explain any concept you're working on at EACH zoom level in under 30 seconds. If you can't, you haven't fully understood it. Practice this until it's automatic.</p>
+    </div>
+
+    <h4>Power Phrases That Sound Senior (Steal These)</h4>
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>When you don't know something</h4>
+        <p><em>"That's at the edge of my knowledge here. My instinct says X but let me validate that before we commit."</em></p>
+        <p><em>"I'd want to spike on this for a day before giving you a confident estimate."</em></p>
+      </div>
+      <div class="card-mini">
+        <h4>When you disagree</h4>
+        <p><em>"I see your reasoning, and I want to push back on one assumption — [X]. If that assumption holds, your approach is correct. But if [Y], we'd want to consider..."</em></p>
+      </div>
+      <div class="card-mini">
+        <h4>When you're asked for a timeline</h4>
+        <p><em>"I can give you a rough order-of-magnitude: 3–5 days. To give you a real estimate, I need 2 hours to look at the dependencies. Can I come back to you by EOD?"</em></p>
+      </div>
+      <div class="card-mini">
+        <h4>When asked to take on too much</h4>
+        <p><em>"I can do X by Friday or Y by Friday. Not both, unless we drop Z. Which is the higher priority for the business?"</em></p>
+      </div>
+      <div class="card-mini">
+        <h4>When you find a bug in someone's design</h4>
+        <p><em>"This design works for the happy path. I want to pressure-test the failure scenario — what happens when [edge case]? I think we'd see [consequence]."</em></p>
+      </div>
+      <div class="card-mini">
+        <h4>When you're presenting a decision</h4>
+        <p><em>"I've made a recommendation. The key assumption is [X]. If that's wrong, we should revisit. Does anyone see a problem with that assumption?"</em></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WRITTEN COMMUNICATION -->
+  <div class="section" id="written-communication">
+    <span class="anchor" id="written-communication-anchor"></span>
+    <div class="section-header">
+      <h3>✍️ Written Communication: Slack, PRs, Docs</h3>
+    </div>
+
+    <p>At senior level, your writing is your brand. People who've never met you will form opinions about your technical judgment from your Slack messages and PR descriptions.</p>
+
+    <div class="card">
+      <h4>The Perfect PR Description Template</h4>
+      <div class="script-block">
+        <div class="script-label">PR Template — copy and use forever</div>
+## What does this PR do?
+[1-2 sentences. What problem does it solve? Not what code changed.]
+
+## Why?
+[Context. Why is this change needed? Link to ticket/issue.]
+
+## How?
+[Brief technical approach. What's the key design decision?]
+
+## Testing
+[How did you verify this works? What edge cases did you test?]
+
+## Tradeoffs / Risks
+[What corners were cut? What could go wrong? What should reviewer focus on?]
+
+## Screenshots (if UI change)
+[Before / After]
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Perfect Slack Message When You're Blocked</h4>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body"><strong>Never do this:</strong> "Hey, can you help me with the auth service?" — This is lazy. It forces the other person to ask 5 follow-up questions.</div>
+      </div>
+      <div class="script-block">
+        <div class="script-label">Blocked Message Template — shows you've thought it through</div>
+"Hey [name], quick question on the auth service.
+
+Context: I'm implementing token refresh for the mobile app.
+I've tried: A) checking the docs — couldn't find TTL config B) 
+looking at the existing web implementation — uses a different flow.
+My current understanding: The refresh token is stored in Redis
+with a 7-day TTL, but I'm not sure where that's configured.
+
+Specific question: Is the TTL hardcoded or is it in the env config?
+If it helps, I'm looking at AuthTokenService.java line 47.
+
+No rush — by EOD tomorrow works fine."
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Design Doc Structure (RFCs / Architecture Proposals)</h4>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">TL;DR</div><div class="step-desc">3 sentences max. What problem. What solution. What you need from readers.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Problem Statement</div><div class="step-desc">What breaks if we do nothing? Quantify the pain. Show the data.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Goals & Non-Goals</div><div class="step-desc">Explicit scope control. Non-goals are as important as goals.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Proposed Solution</div><div class="step-desc">Architecture, key decisions, tradeoffs made.</div></div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Alternatives Considered</div><div class="step-desc">Show you thought broadly. Explain why you rejected them. This protects you.</div></div></div>
+        <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-title">Open Questions</div><div class="step-desc">What are you not sure about? Don't hide uncertainty. Invite collaboration.</div></div></div>
+        <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-title">Timeline & Milestones</div><div class="step-desc">Phase breakdown with owners and dates.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">03</div>
+    <div>
+      <h2>Interview Mastery</h2>
+      <p>Turn every interview into a demonstration of how you think, not what you memorize.</p>
+    </div>
+  </div>
+
+  <!-- CODING INTERVIEW -->
+  <div class="section" id="coding-interview">
+    <span class="anchor" id="coding-interview-anchor"></span>
+    <div class="section-header">
+      <h3>💻 Coding Interview: The Senior Approach</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>What Interviewers Actually Evaluate</strong>
+        <p>Problem-solving process (40%) · Communication while coding (30%) · Code quality (20%) · Optimal solution (10%). Most candidates optimize for the last 10% and fail the first 70%.</p>
+      </div>
+    </div>
+
+    <h4>The UMPIRE Framework — Your Interview Protocol</h4>
+    <p>This is your step-by-step script for every single coding problem. Don't deviate. This is what the interviewer is grading you on.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">U</div>
+        <div class="step-body">
+          <div class="step-title">Understand the Problem</div>
+          <div class="step-desc">Restate the problem in your own words. Ask clarifying questions. <strong>Never assume.</strong>
+          <br/><br/>
+          Scripts to use: <em>"Let me make sure I understand — we have [X] and we need to output [Y], right?"</em>
+          <br/><em>"What's the expected behavior if the input is empty / null / very large?"</em>
+          <br/><em>"Are there any constraints on time or space complexity you're targeting?"</em>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">M</div>
+        <div class="step-body">
+          <div class="step-title">Match to a Pattern</div>
+          <div class="step-desc">Silently run through your pattern library. Sliding window? Two pointers? Tree traversal? BFS? DP? Say what you're considering: <em>"This looks like a sliding window problem because we're looking for a contiguous subarray with a constraint..."</em></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">P</div>
+        <div class="step-body">
+          <div class="step-title">Plan (Talk Before You Type)</div>
+          <div class="step-desc">Explain your approach before writing a single character. State time/space complexity upfront. Get a nod from the interviewer. This is a conversation, not a solo exam.
+          <br/><br/>
+          <em>"My plan: I'll use a HashMap to store [X]. For each element I'll [Y]. Time: O(n), Space: O(n). Does that direction make sense before I code it?"</em>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">I</div>
+        <div class="step-body">
+          <div class="step-title">Implement (Narrate as You Code)</div>
+          <div class="step-desc">Talk through your code as you write it. <em>"I'm initializing a pointer at the start... here I'm checking the window condition... now I'm updating the max..."</em>. Silence is your enemy.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">R</div>
+        <div class="step-body">
+          <div class="step-title">Review</div>
+          <div class="step-desc">Walk through your code with a simple example before saying "done." Check edge cases: empty input, single element, all same values, overflow. Say them out loud.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">E</div>
+        <div class="step-body">
+          <div class="step-title">Evaluate Complexity + Optimize</div>
+          <div class="step-desc">State your final time and space complexity. Then say: <em>"I can optimize this further by [X] which would bring it down to [Y]. Want me to implement that?"</em> Show you know the path to optimal even if you don't implement it.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>When You're Stuck — The Unstuck Script</h4>
+      <p>Going silent for 2+ minutes is an automatic negative signal. Use this script instead:</p>
+      <div class="script-block">
+        <div class="script-label">Stuck Script — never go silent</div>
+"Let me think out loud here...
+
+I know the brute force is [X] with O(n²) time. 
+The bottleneck is [specific operation].
+
+If I could avoid [that operation], I could get to O(n).
+A data structure that could help here is... [think]... 
+maybe a HashMap? Because [reason]...
+
+Or alternatively, if I sort first, then [approach] might work.
+
+I'm going to try the HashMap approach first. If it doesn't work
+I'll pivot to the sort-based approach. Does that direction 
+seem reasonable to you?"
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Complexity Analysis — Say it Like a Senior</h4>
+      <div class="vs-grid">
+        <div class="vs-bad">
+          <h5>❌ Weak</h5>
+          <p>"It's O(n) I think."</p>
+          <p>"The space is like... O(n) maybe?"</p>
+        </div>
+        <div class="vs-good">
+          <h5>✅ Senior</h5>
+          <p>"Time complexity is O(n) — single pass through the array, constant work per element."</p>
+          <p>"Space complexity is O(k) where k is the size of the sliding window — in the worst case k = n, so O(n) space."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYSTEM DESIGN -->
+  <div class="section" id="system-design">
+    <span class="anchor" id="system-design-anchor"></span>
+    <div class="section-header">
+      <h3>🏗️ System Design: How to Run the Room</h3>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>The System Design Interview Secret</strong>
+        <p>The interviewer wants to see a Staff Engineer. That means: you drive the conversation, you ask the clarifying questions, you make the scope decisions, you surface the tradeoffs. You are the tech lead in this room. Act like it.</p>
+      </div>
+    </div>
+
+    <h4>The DERSU Framework for System Design</h4>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">D</div>
+        <div class="step-body">
+          <div class="step-title">Define Requirements (5 minutes)</div>
+          <div class="step-desc">
+            Functional: What does the system do? (core features only)<br/>
+            Non-functional: Scale? Latency targets? Consistency? Availability?<br/>
+            <br/>
+            <strong>Ask these every time:</strong>
+            <em>"How many daily active users are we targeting?" · "What's our read/write ratio?" · "Is this globally distributed?" · "What are the latency requirements?" · "How long do we need to store data?"</em>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">E</div>
+        <div class="step-body">
+          <div class="step-title">Estimate Scale (3 minutes)</div>
+          <div class="step-desc">Back-of-envelope calculations. Show your math. This proves you think at scale.<br/><em>"100M DAU, 10 requests/user/day = 1B requests/day = ~12K RPS. Peak ~3x average = 36K RPS. Storage: 100 bytes/request × 1B = 100GB/day..."</em></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">R</div>
+        <div class="step-body">
+          <div class="step-title">High-Level Design (10 minutes)</div>
+          <div class="step-desc">Draw the boxes. Client → API Gateway → Services → Databases. Name the components. Explain data flow. Keep it simple first. Don't optimize prematurely.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">S</div>
+        <div class="step-body">
+          <div class="step-title">Scale & Deep Dive (15 minutes)</div>
+          <div class="step-desc">Identify bottlenecks. Apply caching, sharding, replication, CDN, queues where needed. Discuss tradeoffs for each. Let the interviewer guide which area to go deeper on.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">U</div>
+        <div class="step-body">
+          <div class="step-title">Unresolved Issues & Wrapping Up</div>
+          <div class="step-desc">Proactively name what's left: <em>"I haven't addressed rate limiting, security, or monitoring yet. Given time, which would you like to explore?"</em></div>
+        </div>
+      </div>
+    </div>
+
+    <h4>The 5 Bottlenecks — Know Them Cold</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Bottleneck</th><th>Symptom</th><th>Solution</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Database reads</td><td>High read latency, DB CPU spike</td><td>Read replica + caching (Redis)</td></tr>
+          <tr><td>Database writes</td><td>Write throughput limit, locks</td><td>Write-ahead log, sharding, message queue buffer</td></tr>
+          <tr><td>Single server</td><td>Single point of failure, CPU limit</td><td>Load balancer + horizontal scaling</td></tr>
+          <tr><td>Static assets</td><td>High latency for global users</td><td>CDN (CloudFront, Cloudflare)</td></tr>
+          <tr><td>Synchronous coupling</td><td>Cascade failures, timeouts</td><td>Message queue (Kafka, SQS), async processing</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Power Statements for System Design Interviews</h4>
+    <div class="script-block">
+      <div class="script-label">Scripted transitions that sound like a Staff Engineer</div>
+Opening:
+"Before I start drawing, let me make sure I understand the scope.
+Is this more of a read-heavy or write-heavy system?"
+
+Presenting a decision:
+"For the database layer, we have two options. Option A is a 
+relational DB — this gives us strong consistency and complex 
+query support. Option B is a document store — better for 
+horizontal scaling but we lose ACID guarantees. Given that
+our write volume is X and our queries are Y, I'd go with [choice]."
+
+Surfacing a tradeoff:
+"There's a tension here between consistency and availability.
+If we want strong consistency, we'll pay in latency. Given 
+that this is a social feed — eventual consistency is fine.
+Users don't need to see a post the millisecond it's written."
+
+Handling a gap:
+"That's a great point — I haven't thought through the 
+notification fanout for celebrity users. The naive approach 
+would break at scale. One approach is a hybrid push/pull 
+model. Want me to go deeper on that?"
+    </div>
+  </div>
+
+  <!-- BEHAVIORAL -->
+  <div class="section" id="behavioral">
+    <span class="anchor" id="behavioral-anchor"></span>
+    <div class="section-header">
+      <h3>🎭 Behavioral Interview: The STAR-P Framework</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Why Behavioral Interviews Matter</strong>
+        <p>At Google and Meta, behavioral scores can override a strong technical performance. They're evaluating: leadership, judgment, conflict resolution, bias to action, and learning agility. These aren't "soft" skills — they are what separate ICs from Staff and beyond.</p>
+      </div>
+    </div>
+
+    <h4>STAR-P: The Enhanced Framework</h4>
+    <p>Standard STAR (Situation-Task-Action-Result) is table stakes. The <strong>P</strong> (Principle) is what makes Google/Meta interviewers lean forward.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">S</div><div class="step-body"><div class="step-title">Situation (10%)</div><div class="step-desc">Brief context. Who, what, when. Max 2 sentences. Don't over-explain — set the scene and move on.</div></div></div>
+      <div class="step"><div class="step-num">T</div><div class="step-body"><div class="step-title">Task (10%)</div><div class="step-desc">What was your specific responsibility? Make clear this was YOUR problem to solve, not the team's.</div></div></div>
+      <div class="step"><div class="step-num">A</div><div class="step-body"><div class="step-title">Action (50%)</div><div class="step-desc">This is the interview. Go deep on what <em>you</em> did. The options you considered. Why you chose what you chose. The obstacles you hit and how you navigated them. Use "I" not "we".</div></div></div>
+      <div class="step"><div class="step-num">R</div><div class="step-body"><div class="step-title">Result (20%)</div><div class="step-desc">Quantify everything. If you can't quantify, qualify with evidence. "Before/After" structures work great.</div></div></div>
+      <div class="step"><div class="step-num">P</div><div class="step-body"><div class="step-title">Principle / Reflection (10%)</div><div class="step-desc">What did you learn? What would you do differently? This is what separates the 5/5 answer from the 4/5. Shows growth mindset and self-awareness — two things Google/Meta explicitly hire for.</div></div></div>
+    </div>
+
+    <div class="card">
+      <h4>The 10 Stories Every Engineer Must Have Ready</h4>
+      <p>Before your interview, prepare these 10 scenarios. Each one can answer 3–5 different behavioral questions. This is your inventory.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Story Theme</th><th>Questions It Answers</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>A time you disagreed with your manager/team and you were right</td><td>Conflict · Influence without authority · Dealing with ambiguity</td></tr>
+            <tr><td>2</td><td>A time you disagreed and you were wrong (update your view)</td><td>Learning agility · Humility · Bias-to-learn</td></tr>
+            <tr><td>3</td><td>Your biggest technical failure + what you did about it</td><td>Failure · Ownership · Resilience</td></tr>
+            <tr><td>4</td><td>The most complex technical problem you solved</td><td>Technical depth · Problem-solving · Communication</td></tr>
+            <tr><td>5</td><td>A time you had to influence without authority</td><td>Leadership · Stakeholder management · Communication</td></tr>
+            <tr><td>6</td><td>A time you drastically improved a process or system</td><td>Bias for action · Initiative · Impact</td></tr>
+            <tr><td>7</td><td>A time you had to work with ambiguous requirements</td><td>Ambiguity · Judgment · Prioritization</td></tr>
+            <tr><td>8</td><td>A time you mentored someone and they grew</td><td>Leadership · Communication · Team player</td></tr>
+            <tr><td>9</td><td>A time you had to make a fast decision with incomplete info</td><td>Judgment · Risk tolerance · Action bias</td></tr>
+            <tr><td>10</td><td>A time you delivered something under pressure/constraint</td><td>Delivery · Prioritization · Reliability</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h4>The Opening Pitch — Your 2-Minute Intro That Lands</h4>
+    <p>Every interview starts with "Tell me about yourself." This is not small talk. This is a curated highlight reel. Structure it like this:</p>
+    <div class="script-block">
+      <div class="script-label">The Perfect 2-Minute Intro Script — customize and memorize</div>
+"Sure! I'm a software engineer with [X] years of experience,
+currently at [Company] where I work on [product/domain].
+
+My core area is [Java backend / distributed systems / etc.].
+Most recently, I [biggest recent achievement — XYZ format].
+
+Before that, I was at [Previous company] where I [key achievement].
+
+What I'm particularly excited about in this role is [specific 
+thing about THIS company/team/problem — shows you researched].
+
+My strength is [1 genuine technical strength] combined with
+[1 non-technical strength like: breaking down complex problems
+for cross-functional teams / or: turning ambiguous problems 
+into structured execution plans].
+
+I'm here because [genuine reason]. That's the quick version —
+happy to go deeper on anything that's most relevant to you."
+    </div>
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body"><strong>Never start with</strong> "So I graduated from..." or "I've been passionate about computers since..." — This is 2024. They want impact, not biography. Lead with what you've shipped.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">04</div>
+    <div>
+      <h2>Professional Presence</h2>
+      <p>How you carry yourself in meetings, conversations, and critical moments.</p>
+    </div>
+  </div>
+
+  <!-- MEETINGS -->
+  <div class="section" id="meetings">
+    <span class="anchor" id="meetings-anchor"></span>
+    <div class="section-header">
+      <h3>🤝 Meeting Mastery — The Senior Playbook</h3>
+    </div>
+
+    <p>Juniors attend meetings. Seniors run meetings — even when they're not the host. Here's how.</p>
+
+    <div class="card">
+      <h4>Before Every Meeting (5-minute prep ritual)</h4>
+      <div class="checklist">
+        <ul>
+          <li>Know the desired outcome: What decision needs to be made or what does everyone need to know?</li>
+          <li>Know your position: What do YOU think the answer should be? Have an opinion ready.</li>
+          <li>Know who's in the room: What does each person care about? What do they need to hear?</li>
+          <li>Have 2–3 questions ready: Preparing questions shows you've thought about the topic.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>During Meetings — Power Moves</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>🎯 Clarify the objective early</h4>
+          <p><em>"Before we dive in — are we here to make a decision today or to share information and decide async?"</em></p>
+          <p>Saves 80% of meandering meetings. Everyone loves you for it.</p>
+        </div>
+        <div class="card-mini">
+          <h4>📌 Name the elephant</h4>
+          <p><em>"I want to name something that I think we're dancing around — [the real issue]. Are we actually debating [X] here?"</em></p>
+          <p>Seniors cut to the actual disagreement. Nobody else does this.</p>
+        </div>
+        <div class="card-mini">
+          <h4>⏰ Park and proceed</h4>
+          <p><em>"That's a really important point. I don't want to lose it — can I put it in the parking lot and we return to it after we've resolved [primary issue]?"</em></p>
+        </div>
+        <div class="card-mini">
+          <h4>🔒 Synthesize and close</h4>
+          <p><em>"Let me synthesize what I heard — we agreed on X, Y is still open, Z is owned by [person] by [date]. Does that match everyone's understanding?"</em></p>
+          <p>This is a leadership superpower. Own the summary.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>How to Disagree Without Creating Enemies</h4>
+      <p>The "Yes-And-But" framework. Never lead with "No" or "That's wrong." Here's the sequence:</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Acknowledge the merit</div><div class="step-desc"><em>"That approach makes a lot of sense for [specific reason]."</em> — This is real, not fake. Find something genuine to acknowledge. It disarms defensiveness.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">State your concern as a question or scenario</div><div class="step-desc"><em>"I want to pressure-test one part — what happens when [edge case or risk scenario]?"</em> — You're not saying they're wrong. You're asking a question that reveals the gap.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Offer an alternative</div><div class="step-desc"><em>"One alternative that might address that concern is [X]. The tradeoff is [Y]. I don't know if it's better — wanted to put it on the table."</em> — You're collaborating, not competing.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Commit to the final decision</div><div class="step-desc"><em>"Whatever we decide, I'm fully behind it. I just wanted to make sure we considered this angle."</em> — Disagree and commit. This is a virtue at every company.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUBLIC SPEAKING -->
+  <div class="section" id="public-speaking">
+    <span class="anchor" id="public-speaking-anchor"></span>
+    <div class="section-header">
+      <h3>🎤 Public Speaking & Presence</h3>
+    </div>
+
+    <p>The ability to speak clearly and confidently in front of groups is the highest-leverage career skill that is almost completely ignored in engineering education. One well-delivered all-hands presentation can advance your career by 2 years.</p>
+
+    <div class="banner banner-blue">
+      <h4>The First 30 Seconds Rule</h4>
+      <p>People form a lasting impression in the first 30 seconds of hearing you speak. Your energy, your pace, your confidence — all get judged before you've said anything technical. Walk in as if you own the room. Because the person who owns their ideas owns the room.</p>
+    </div>
+
+    <div class="card">
+      <h4>The Engineer's Public Speaking Framework</h4>
+      <div class="card-grid">
+        <div class="card-mini">
+          <h4>📐 Structure First</h4>
+          <p>Tell them what you'll tell them. Tell them. Tell them what you told them. Every good technical talk has this structure. People can only absorb structured information under pressure.</p>
+        </div>
+        <div class="card-mini">
+          <h4>🐌 Slow Down — Seriously</h4>
+          <p>You speak at your natural pace. Your listeners need 3x longer. Every time you think you're speaking slowly enough, slow down 30% more. Pause after key points. Silence is power, not awkwardness.</p>
+        </div>
+        <div class="card-mini">
+          <h4>👁️ Eye Contact</h4>
+          <p>For small rooms: rotate eye contact every 5–7 seconds. For large rooms: 3 points — left, center, right. Never look at your slides. You know what's on them. Your audience needs to see your face.</p>
+        </div>
+        <div class="card-mini">
+          <h4>❓ The Planted Question</h4>
+          <p>Before any important presentation, brief 1–2 friendly colleagues to ask specific questions you've prepared for. This controls the narrative and prevents hostile tangents.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Handling Questions You Don't Know the Answer To</h4>
+      <div class="script-block">
+        <div class="script-label">The 4 Ways to Handle a Hard Question — Never Say "I Don't Know" Alone</div>
+Option 1 — Partial Knowledge:
+"I know part of the answer with confidence — [X]. 
+I'm less certain about [Y]. I want to verify before I 
+commit to that part. Can I follow up with you on that?"
+
+Option 2 — Redirect to Strength:
+"That's specifically about [area Y] which is adjacent to 
+my area. What I can speak to is [area X] and how it 
+connects. For the specific question, [name] would 
+probably have the most accurate answer."
+
+Option 3 — Think Out Loud:
+"I haven't thought through that specific scenario.
+Let me reason about it out loud... [think through it].
+My instinct is [X] but I'd want to validate that."
+
+Option 4 — Defer Gracefully:
+"That's a really good question — I want to give you 
+a thoughtful answer, not a rushed one. Can I come 
+back to you with a solid response tomorrow?"
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>Presence Habits to Build Starting Today:</strong>
+        <p>Record yourself on Zoom for 30 days. Watch it back (painful but transformative). Notice filler words (um, like, you know). Replace them with silence. Do one internal tech talk per quarter. Volunteer to present in team meetings. These reps compound.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEGOTIATION -->
+  <div class="section" id="negotiation">
+    <span class="anchor" id="negotiation-anchor"></span>
+    <div class="section-header">
+      <h3>💰 Negotiation: How Elite Engineers Get What They're Worth</h3>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🔥</div>
+      <div class="body">
+        <strong>The Most Expensive Mistake Most Engineers Make</strong>
+        <p>Accepting the first offer. Companies expect negotiation. Recruiters have budget flexibility. The average accepted-after-negotiation offer is 10–20% higher than the first offer. On a $200K total comp package, that's $20–40K/year. Over 4 years, that's $80–160K. Negotiate. Always.</p>
+      </div>
+    </div>
+
+    <h4>The Negotiation Ladder — Step by Step</h4>
+    <div class="negotiation-ladder">
+      <div class="neg-step">
+        <div class="neg-num">1</div>
+        <div class="neg-body"><strong>Never give a number first.</strong> When asked about salary expectations, respond: <em>"I'd love to understand the full scope of the role and comp structure before I anchor on a number. What's the band for this level?"</em></div>
+      </div>
+      <div class="neg-step">
+        <div class="neg-num">2</div>
+        <div class="neg-body"><strong>Collect all offers before deciding any.</strong> If you have one offer, always say you're in late-stage discussions elsewhere. This creates urgency and gives you leverage even if the other offer doesn't materialize.</div>
+      </div>
+      <div class="neg-step">
+        <div class="neg-num">3</div>
+        <div class="neg-body"><strong>Express enthusiasm before countering.</strong> <em>"I'm genuinely excited about this offer and this team. I do want to share that based on my research and the other offers I'm evaluating, I was hoping to get to [X]."</em></div>
+      </div>
+      <div class="neg-step">
+        <div class="neg-num">4</div>
+        <div class="neg-body"><strong>Negotiate the whole package.</strong> If base is firm, negotiate signing bonus, equity refresh schedule, PTO, remote flexibility, L+D budget, start date. Everything is negotiable.</div>
+      </div>
+      <div class="neg-step">
+        <div class="neg-num">5</div>
+        <div class="neg-body"><strong>Use silence after making your ask.</strong> Make your counter. Then stop talking. The first person to speak after a salary ask loses. Sit in the silence. They will fill it.</div>
+      </div>
+      <div class="neg-step">
+        <div class="neg-num">6</div>
+        <div class="neg-body"><strong>The final move — The "Help me say yes."</strong> <em>"I want to join this team. Is there anything you can do to help me make this decision easier?"</em> This puts the responsibility on them to find room.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Complete Offer Negotiation Script</h4>
+      <div class="script-block">
+        <div class="script-label">Full negotiation call script</div>
+Recruiter: "We'd like to extend you an offer of [X]."
+
+You: "Thank you so much — I'm genuinely excited about this
+opportunity and the team. I really appreciated [specific 
+thing from interview process]. 
+
+Before I respond to the specifics, can you walk me through 
+the full package breakdown? I want to make sure I'm 
+comparing apples to apples."
+
+[After hearing full package]
+
+You: "I really appreciate this. I've been giving this 
+serious thought. I do have a competing offer in the range 
+of [higher number or close to the number you want].
+I'm more excited about THIS opportunity because [genuine 
+reason], but I want to make sure the comp reflects that 
+value. Is there room to get the base to [X] or to 
+increase the equity component?"
+
+[If they say it's firm]
+
+You: "I appreciate that. If the base is firm at [X], could 
+we explore a signing bonus to bridge the gap? Even 
+[smaller number] would help me make this decision 
+with full confidence."
+
+[Then silence.]
+      </div>
+    </div>
+  </div>
+
+  <!-- CODE REVIEWS -->
+  <div class="section" id="code-reviews">
+    <span class="anchor" id="code-reviews-anchor"></span>
+    <div class="section-header">
+      <h3>🔍 Code Review Culture — How Seniors Review</h3>
+    </div>
+
+    <p>Code reviews are one of the highest-leverage interactions in engineering culture. How you review code reveals your technical judgment, your communication skills, and your values as an engineer.</p>
+
+    <div class="card">
+      <h4>The Code Review Comment Hierarchy</h4>
+      <p>Never leave a comment without signaling its severity. This is how senior engineers prevent "is this a blocker or a suggestion?" ambiguity.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Prefix</th><th>Meaning</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="pill pill-red">BLOCKER</span></td>
+              <td>Must fix before merge. Correctness or security issue.</td>
+              <td>"BLOCKER: This allows SQL injection — user input must be parameterized."</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">MAJOR</span></td>
+              <td>Strong suggestion. Significant issue but PR author decides.</td>
+              <td>"MAJOR: This will have N+1 query issues at scale — suggest eager loading here."</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-blue">MINOR</span></td>
+              <td>Small improvement. Non-blocking.</td>
+              <td>"MINOR: Variable name could be more descriptive — userAuthToken vs token."</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-green">NIT</span></td>
+              <td>Style preference. Author can ignore.</td>
+              <td>"NIT: I'd use a ternary here for brevity — but the current form is fine."</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-purple">QUESTION</span></td>
+              <td>Seeking understanding, not necessarily requesting change.</td>
+              <td>"QUESTION: Is there a reason we're not using the existing AuthHelper here?"</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-cyan">PRAISE</span></td>
+              <td>Acknowledge excellent work explicitly.</td>
+              <td>"PRAISE: Really elegant solution to the race condition — this is exactly right."</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>The PRAISE habit is a senior superpower.</strong>
+        <p>Most engineers only comment on problems. Seniors also call out excellent decisions. This creates psychological safety, reinforces good patterns, and makes people actually enjoy your reviews. People start wanting you to review their code.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">05</div>
+    <div>
+      <h2>Career Architecture</h2>
+      <p>How to engineer your career the same way you engineer systems — with intention.</p>
+    </div>
+  </div>
+
+  <!-- SENIOR SIGNALS -->
+  <div class="section" id="senior-signals">
+    <span class="anchor" id="senior-signals-anchor"></span>
+    <div class="section-header">
+      <h3>📈 Senior Signals — How to Get Promoted</h3>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>The Promotion Paradox</strong>
+        <p>You don't get promoted because you're doing the work of the next level. You get promoted because people with influence <em>already see you</em> as operating at the next level. Visibility and judgment are promoted. Invisible hard work is not.</p>
+      </div>
+    </div>
+
+    <h4>The 5 Things That Get Engineers Promoted (at Real Companies)</h4>
+    <div class="trait-grid">
+      <div class="trait-card">
+        <div class="trait-icon">🎯</div>
+        <div class="trait-title">Impact Ownership</div>
+        <div class="trait-desc">You own outcomes, not tasks. You define the "what" not just execute the "how." You track the metric that proves your work mattered.</div>
+      </div>
+      <div class="trait-card">
+        <div class="trait-icon">📡</div>
+        <div class="trait-title">Upward Communication</div>
+        <div class="trait-desc">Your manager knows what you're working on, what blockers you have, and what your wins are — without having to ask. Weekly self-written updates change careers.</div>
+      </div>
+      <div class="trait-card">
+        <div class="trait-icon">🌐</div>
+        <div class="trait-title">Cross-Team Influence</div>
+        <div class="trait-desc">You have impact beyond your immediate team. You unblock other teams. You contribute to standards. People outside your org know your name.</div>
+      </div>
+      <div class="trait-card">
+        <div class="trait-icon">🔭</div>
+        <div class="trait-title">Technical Judgment</div>
+        <div class="trait-desc">People ask for your opinion before decisions are made. Your voice shapes the outcome of technical discussions. You're the person who sees around corners.</div>
+      </div>
+      <div class="trait-card">
+        <div class="trait-icon">🤝</div>
+        <div class="trait-title">Team Multiplier</div>
+        <div class="trait-desc">People on your team are better engineers because you're here. You review their code thoughtfully. You mentor without being asked. You make the team ship faster.</div>
+      </div>
+      <div class="trait-card">
+        <div class="trait-icon">🛡️</div>
+        <div class="trait-title">Reliability</div>
+        <div class="trait-desc">You ship what you commit to. You communicate early when you're at risk. Your manager never has to worry about whether you'll deliver. Trust compounds.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Weekly Status Update That Actually Gets You Promoted</h4>
+      <p>Send this every Friday. 90% of engineers never do this. Those who do become the most visible engineers in the organization.</p>
+      <div class="script-block">
+        <div class="script-label">Weekly self-update template — Friday 4pm, every week</div>
+Subject: Weekly update — [Your Name] — [Date]
+
+✅ SHIPPED THIS WEEK
+- [What you completed. XYZ format. Impact first.]
+- [e.g. Deployed user profile caching — p99 latency down 340ms]
+
+🔧 IN PROGRESS
+- [What you're working on. What % done. ETA.]
+
+🚧 BLOCKERS / RISKS
+- [What might slow you down. What do you need from manager.]
+
+📋 NEXT WEEK
+- [What you plan to work on next.]
+
+💡 OBSERVATIONS / FLAGS (optional)
+- [Something the team or manager should know about.]
+- [Technical risk you noticed. Process improvement suggestion.]
+      </div>
+    </div>
+  </div>
+
+  <!-- BRAND -->
+  <div class="section" id="brand">
+    <span class="anchor" id="brand-anchor"></span>
+    <div class="section-header">
+      <h3>🌟 Build Your Engineering Brand</h3>
+    </div>
+
+    <p>Your brand is what people say about you when you're not in the room. Seniors deliberately shape this. Juniors leave it to chance.</p>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>📝 Write Internally</h4>
+        <p>Write a post-mortem, a design doc, an architecture explainer, a learning shared with the team. Every piece of writing you publish internally builds your reputation as a thoughtful engineer.</p>
+      </div>
+      <div class="card-mini">
+        <h4>🎤 Present Internally</h4>
+        <p>Volunteer for one internal tech talk per quarter. Present what you learned from a difficult debugging session. Show a performance optimization. Share a book insight. Visibility compounds.</p>
+      </div>
+      <div class="card-mini">
+        <h4>🤲 Help Publicly</h4>
+        <p>Answer questions in Slack channels publicly instead of DM. Review code for people who didn't ask. Help someone debug a problem and share the resolution with the wider channel. You'll be seen.</p>
+      </div>
+      <div class="card-mini">
+        <h4>🌐 Build Externally</h4>
+        <p>Write one technical blog post per quarter. Answer one Stack Overflow question per month. Contribute to open source. These create permanent artifacts of your expertise that compound over time.</p>
+      </div>
+    </div>
+
+    <div class="banner banner-green">
+      <h4>The 1% Habit That Changes Everything</h4>
+      <p>Every week, do one thing that's visible beyond your immediate team. One PR in a shared library. One Slack answer in a public channel. One internal blog post. One talk. Compounded over 2 years, this is the difference between "who?" and "oh, THAT person — they're great."</p>
+    </div>
+  </div>
+
+  <!-- 90 DAY PLAN -->
+  <div class="section" id="90-day">
+    <span class="anchor" id="90-day-anchor"></span>
+    <div class="section-header">
+      <h3>🚀 The 90-Day Sprint — Implementation Plan</h3>
+    </div>
+
+    <p>Knowledge without action is just trivia. Here's your exact execution plan to implement everything in this guide. Start tomorrow.</p>
+
+    <div class="card">
+      <h4>Month 1 — Foundation (Days 1–30)</h4>
+      <div class="checklist">
+        <ul>
+          <li><strong>Day 1:</strong> Identify your 10 behavioral stories. Write them in STAR-P format.</li>
+          <li><strong>Day 2:</strong> Rewrite your last 5 PR descriptions in the template format.</li>
+          <li><strong>Week 1:</strong> Start sending weekly Friday updates to your manager.</li>
+          <li><strong>Week 1:</strong> In every meeting, practice the BLUF pattern at least once.</li>
+          <li><strong>Week 2:</strong> Do a mock system design interview. Record yourself. Watch it.</li>
+          <li><strong>Week 2:</strong> Pick one pattern from the communication OS. Use it daily.</li>
+          <li><strong>Week 3:</strong> Volunteer to present something in your next team meeting.</li>
+          <li><strong>Week 4:</strong> Write your first XYZ impact statement for your biggest recent win.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Month 2 — Skill Building (Days 31–60)</h4>
+      <div class="checklist">
+        <ul>
+          <li>Complete 2 system design practice sessions using the DERSU framework.</li>
+          <li>Complete 10 coding interview sessions using the UMPIRE framework.</li>
+          <li>Write one internal design doc for something you built recently.</li>
+          <li>Give a thoughtful code review using the comment hierarchy system.</li>
+          <li>Have a career conversation with your manager about what Senior means at your company.</li>
+          <li>Record yourself doing a 5-minute technical explanation. Eliminate filler words.</li>
+          <li>Write one external blog post on something you've learned this year.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Month 3 — Habits Locked (Days 61–90)</h4>
+      <div class="checklist">
+        <ul>
+          <li>The BLUF pattern is now automatic in your Slack messages.</li>
+          <li>Weekly updates are on autopilot every Friday.</li>
+          <li>You've done one public internal talk.</li>
+          <li>You have at least 3 engineers outside your immediate team who know your work.</li>
+          <li>You can explain any decision you've made in XYZ impact format instantly.</li>
+          <li>You use the tradeoff vocabulary naturally in technical discussions.</li>
+          <li>You have at least 2 STAR-P stories you can deliver perfectly in under 3 minutes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">⚡</span>
+      <p><strong>The Compounding Principle:</strong> None of these habits change your career in isolation. But 90 days of consistent practice creates the version of you that walks into a Google or Meta interview and feels like they belong there. That feeling is earned. Start today.</p>
+    </div>
+
+    <div class="banner banner-purple">
+      <h4>The Final Word — From a Senior to You</h4>
+      <p>The engineers at the top of this industry are not smarter than you. They are clearer. They communicate what they know with conviction. They know what they don't know with equal clarity. They make everyone around them feel that the hard problem in front of them is solvable. That is the job. Go do that job.</p>
+    </div>
+  </div>
+
+  <!-- FINAL REFERENCE CARD -->
+  <div class="section" style="padding-bottom:4rem;">
+    <div class="section-header">
+      <h3>📋 Quick Reference — The Cheat Sheet</h3>
+    </div>
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4>Frameworks</h4>
+        <p><span class="framework-pill">UMPIRE</span> Coding interviews</p>
+        <p><span class="framework-pill">DERSU</span> System design</p>
+        <p><span class="framework-pill">STAR-P</span> Behavioral interviews</p>
+        <p><span class="framework-pill">BLUF</span> All communication</p>
+        <p><span class="framework-pill">XYZ</span> Impact statements</p>
+        <p><span class="framework-pill">Pyramid</span> Writing structure</p>
+      </div>
+      <div class="card-mini">
+        <h4>Power Habits</h4>
+        <p>🗓️ Weekly Friday updates</p>
+        <p>🎯 Opinion before every meeting</p>
+        <p>📝 BLUF in every Slack message</p>
+        <p>⚖️ Tradeoffs in every design</p>
+        <p>🎤 1 internal talk per quarter</p>
+        <p>✍️ 1 blog post per quarter</p>
+      </div>
+      <div class="card-mini">
+        <h4>Interview Musts</h4>
+        <p>✅ 10 STAR-P stories prepared</p>
+        <p>✅ 2-minute intro memorized</p>
+        <p>✅ UMPIRE for every coding Q</p>
+        <p>✅ DERSU for system design</p>
+        <p>✅ Tradeoff script ready</p>
+        <p>✅ Negotiation script ready</p>
+      </div>
+      <div class="card-mini">
+        <h4>The Senior Mindset</h4>
+        <p>🔍 Problem before solution</p>
+        <p>⚖️ Tradeoffs over "best"</p>
+        <p>📡 Communicate uncertainty</p>
+        <p>🎯 Systems thinking</p>
+        <p>👥 Leverage through others</p>
+        <p>🔁 Simplicity as mastery</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('progress');
+    if (!el) return;
+    const total = document.body.scrollHeight - window.innerHeight;
+    el.style.width = (window.scrollY / total * 100) + '%';
+  });
+
+  // ── Sidebar toggle ──────────────────────────────────────────────────────
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed',
+        document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
+  document.querySelectorAll('.toc-link[href^="#"]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.innerWidth < 900) closeSidebar();
+      }
+    });
+  });
+
+  // Highlight active section on scroll
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + id) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Animate score numbers on scroll
+  const scoreNums = document.querySelectorAll('.score-num');
+  const scoreObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = el.textContent;
+        if (target === '∞') return;
+        const num = parseInt(target.replace('+', ''));
+        if (isNaN(num)) return;
+        let current = 0;
+        const step = num / 30;
+        const timer = setInterval(() => {
+          current += step;
+          if (current >= num) {
+            el.textContent = target;
+            clearInterval(timer);
+          } else {
+            el.textContent = Math.floor(current) + (target.includes('+') ? '+' : '');
+          }
+        }, 30);
+        scoreObserver.unobserve(el);
+      }
+    });
+  });
+  scoreNums.forEach(el => scoreObserver.observe(el));
+
+  // Stagger card-mini animations
+  const cards = document.querySelectorAll('.card-mini, .card, .trait-card');
+  const cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        entry.target.style.transition = `opacity .4s ease ${i * 0.05}s, transform .4s ease ${i * 0.05}s`;
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        cardObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  cards.forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(16px)';
+    cardObserver.observe(card);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF #02 — Databases: Choosing the Right Storage</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0d2010 40%, #0d1a2a 100%);
+    }
+    /* Decision tree flowchart */
+    .flowchart-node {
+      border: 1.5px solid var(--border-color, #30363d);
+      border-radius: 8px;
+      padding: 10px 16px;
+      background: #1c2128;
+      color: #e6edf3;
+      font-size: 13px;
+      text-align: center;
+      cursor: default;
+      transition: box-shadow .25s, border-color .25s;
+      min-width: 140px;
+      display: inline-block;
+    }
+    .flowchart-node.question {
+      border-color: #58a6ff;
+      background: #0d2236;
+      font-weight: 600;
+      border-radius: 24px;
+    }
+    .flowchart-node.result-sql    { border-color: #3fb950; background: #0d2010; }
+    .flowchart-node.result-kv     { border-color: #39d5d3; background: #0a2828; }
+    .flowchart-node.result-doc    { border-color: #d29922; background: #1e1600; }
+    .flowchart-node.result-col    { border-color: #bc8cff; background: #1a0d28; }
+    .flowchart-node.result-graph  { border-color: #f778ba; background: #280d1e; }
+    .flowchart-node:hover         { box-shadow: 0 0 0 3px rgba(88,166,255,.25); }
+    .flowchart-arrow { color: #8b949e; font-size: 18px; margin: 0 6px; user-select: none; }
+    .flowchart-row   { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .flowchart-label { font-size: 11px; color: #8b949e; margin: 0 2px; }
+    .flowchart-container { padding: 16px 8px; }
+    /* Animated shard viz */
+    #shard-canvas { display: block; margin: 0 auto; border-radius: 8px; }
+    /* Highlight on scroll */
+    .section { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; }
+    .section.visible { opacity: 1; transform: none; }
+    /* Replication lag indicator */
+    .lag-bar { height: 12px; border-radius: 6px; background: #21262d; overflow: hidden; margin: 6px 0; }
+    .lag-fill { height: 100%; border-radius: 6px; transition: width 1s ease; }
+    /* Index scan viz */
+    .index-viz { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+    .index-cell { width: 38px; height: 38px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 1.5px solid #30363d; transition: background .3s, border-color .3s; cursor: default; }
+    .index-cell.scanned    { background: #0d2236; border-color: #58a6ff; }
+    .index-cell.matched    { background: #0d2010; border-color: #3fb950; }
+    .index-cell.skipped    { background: #1c2128; border-color: #21262d; color: #6e7681; }
+  </style>
+</head>
+<body>
+
+<!-- ─── PROGRESS BAR ──────────────────────────────────────────── -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ─── HAMBURGER ────────────────────────────────────────────── -->
+<button id="hamburger" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- ─── SIDEBAR OVERLAY ───────────────────────────────────────── -->
+<div id="sidebar-overlay"></div>
+
+<!-- ─── SIDEBAR ──────────────────────────────────────────────── -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🗄️</div>
+    <div>
+      <div class="sidebar-title">PDF #02</div>
+      <div class="sidebar-subtitle">Databases</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section-label">Navigation</div>
+  <a href="../index.html" class="toc-link">🏠 Home</a>
+
+  <div class="sidebar-section-label">Part 1 — Foundations</div>
+  <a href="#why-db-choice" class="toc-link">1 · Why DB Choice Matters</a>
+  <a href="#sql"           class="toc-link">2 · SQL Databases</a>
+
+  <div class="sidebar-section-label">Part 2 — NoSQL World</div>
+  <a href="#nosql-types"   class="toc-link">3 · NoSQL: 4 Types</a>
+
+  <div class="sidebar-section-label">Part 3 — Design Decisions</div>
+  <a href="#db-selection"  class="toc-link">4 · Selection Framework</a>
+  <a href="#indexing"      class="toc-link">5 · Indexing</a>
+
+  <div class="sidebar-section-label">Part 4 — Scaling</div>
+  <a href="#sharding"      class="toc-link">6 · Sharding</a>
+  <a href="#replication"   class="toc-link">7 · Replication</a>
+
+  <div class="sidebar-section-label">Interview Prep</div>
+  <a href="#playbook"      class="toc-link">8 · Interview Playbook</a>
+</nav>
+
+<!-- ─── MAIN ─────────────────────────────────────────────────── -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">System Design Series · PDF #02</div>
+      <h1>Databases</h1>
+      <p class="hero-subtitle">
+        Choosing the Right Storage for the Right Job — and explaining
+        <em>why</em> in a FAANG interview without breaking a sweat.
+      </p>
+      <div class="hero-badges">
+        <span class="tag tag-green">SQL</span>
+        <span class="tag tag-cyan">NoSQL</span>
+        <span class="tag tag-blue">Sharding</span>
+        <span class="tag tag-purple">Replication</span>
+        <span class="tag tag-orange">Indexing</span>
+        <span class="tag tag-yellow">ACID</span>
+      </div>
+      <div class="hero-meta">
+        <span>📄 13–15 pages</span>
+        <span>⏱ ~35 min read</span>
+        <span>🎯 Interview-ready</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PART 1 — FOUNDATIONS                                        -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">01</div>
+    <div>
+      <h2>Foundations</h2>
+      <p>Why database selection is an architectural decision, and the deep dive into SQL.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 1 ── WHY DB CHOICE MATTERS -->
+  <div class="section" id="why-db-choice">
+    <div class="section-header">
+      <h3>🏗️ Why Database Choice Matters More Than Most Think</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Here's the most common mistake junior engineers make in system design interviews:
+        the interviewer describes a system and the candidate immediately says
+        <em>"I'll use PostgreSQL"</em> or <em>"I'll use MongoDB"</em> — and then
+        moves on. The interviewer silently marks them down.
+      </p>
+      <p>
+        Why? Because database choice is <strong>not a detail</strong>. It determines
+        your consistency model, your query patterns, your scaling strategy, your
+        operational complexity, and whether your system can survive 10× growth.
+        Choosing wrong means a rewrite later — and rewrites at scale are terrifying.
+      </p>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Common Mistake</strong>
+        <p>
+          "I'll use Postgres for everything" is not a thoughtful answer.
+          It signals that you see databases as interchangeable utilities instead of
+          design decisions. The interviewer wants to see you <em>reason</em>, not recite.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Mental Model: Databases Are Tools, Not Religions</h4>
+      <p>
+        Think of it like choosing a vehicle. A motorcycle, a truck, and a bus all
+        "get you somewhere" — but you wouldn't haul 20 tonnes of gravel on a motorcycle,
+        and you wouldn't commute across town on an 18-wheeler. The right tool depends
+        entirely on the job.
+      </p>
+      <p>
+        Every database was designed to solve a <em>specific</em> class of problem
+        really well — and to accept trade-offs in other areas. Your job is to match
+        the tool to the problem.
+      </p>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip</strong>
+        <p>
+          When the interviewer describes a system, write down: What does the data look
+          like? How is it accessed? How often is it written vs. read? What breaks if
+          data is slightly stale? Answer those four questions before naming any database.
+        </p>
+      </div>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>The Question That Unlocks Everything</h4>
+      <p>"What are the <strong>access patterns</strong>?" — ask this in every system design interview.
+        The answer tells you almost everything about which database to use.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2 ── SQL -->
+  <div class="section" id="sql">
+    <div class="section-header">
+      <h3>🐘 SQL Databases — When and Why</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Relational databases have been around since the 1970s. They're not "legacy" —
+        they're <em>battle-tested</em>. Companies like Amazon, Airbnb, and GitHub ran
+        on MySQL/PostgreSQL at massive scale. The reason they've survived 50 years is
+        simple: <strong>ACID guarantees</strong>.
+      </p>
+    </div>
+
+    <h4>⚡ ACID Properties — What They Actually Mean</h4>
+    <p>Every textbook defines ACID. Let's talk about what breaks in the real world without each property.</p>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4 style="color:var(--accent-blue)">A — Atomicity</h4>
+        <p><strong>Real-world analogy:</strong> You're transferring $500 from your savings to checking. The database must deduct $500 <em>and</em> add $500 as a single all-or-nothing unit.</p>
+        <p>Without atomicity: the server crashes after the deduction but before the addition. Your money vanishes. Your bank customers riot.</p>
+        <div class="callout success" style="margin-top:8px">
+          <div class="icon">✅</div>
+          <div class="body"><strong>Either everything commits or nothing does.</strong></div>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:var(--accent-green)">C — Consistency</h4>
+        <p><strong>Real-world analogy:</strong> Your database has a rule — every order must link to a valid user. Consistency means that rule can <em>never</em> be violated, even mid-transaction.</p>
+        <p>Without consistency: you delete a user and leave orphaned orders floating with no owner. Your reports break. Your queries return NULL everywhere.</p>
+        <div class="callout success" style="margin-top:8px">
+          <div class="icon">✅</div>
+          <div class="body"><strong>Constraints and foreign keys are enforced at all times.</strong></div>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:var(--accent-orange)">I — Isolation</h4>
+        <p><strong>Real-world analogy:</strong> Two cashiers both check the inventory at the same time — both see 1 widget remaining, both sell it. You've now oversold.</p>
+        <p>Isolation ensures concurrent transactions don't see each other's in-progress state. This is the hardest property to get right — it's why transaction isolation levels exist.</p>
+        <div class="callout success" style="margin-top:8px">
+          <div class="icon">✅</div>
+          <div class="body"><strong>Concurrent transactions behave as if they ran serially.</strong></div>
+        </div>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:var(--accent-purple)">D — Durability</h4>
+        <p><strong>Real-world analogy:</strong> The database confirms your payment. One second later, the server loses power. When it restarts, your payment is still there — because it was written to disk before the confirmation.</p>
+        <p>Durability is achieved through the <strong>Write-Ahead Log (WAL)</strong> — changes are written to a durable log before the actual data pages are modified.</p>
+        <div class="callout success" style="margin-top:8px">
+          <div class="icon">✅</div>
+          <div class="body"><strong>Committed data survives crashes. Always.</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Key Insight</strong>
+        <p>ACID is expensive. Enforcing all four properties requires locking, logging,
+          and coordination overhead. This is why SQL databases are slower at raw writes
+          than NoSQL — they're doing more work to give you stronger guarantees.</p>
+      </div>
+    </div>
+
+    <h4>🎯 When SQL Is the Right Choice</h4>
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Scenario</th><th>Why SQL Wins</th><th>Real Example</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Financial transactions</td>
+              <td>Atomicity is non-negotiable. Money cannot be half-moved.</td>
+              <td>Banking systems, Stripe, PayPal</td>
+            </tr>
+            <tr>
+              <td>E-commerce orders</td>
+              <td>Orders, items, users, payments all relate to each other. JOINs are needed.</td>
+              <td>Amazon order DB, Shopify</td>
+            </tr>
+            <tr>
+              <td>User accounts / auth</td>
+              <td>Unique constraints, foreign keys keep data clean. Rarely need to scale to extreme write volumes.</td>
+              <td>GitHub users, LinkedIn profiles</td>
+            </tr>
+            <tr>
+              <td>Inventory systems</td>
+              <td>Isolation prevents overselling. Constraints prevent negative stock.</td>
+              <td>Ticketmaster, airline seats</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h4>📈 SQL Scaling Challenges — The Real Problems</h4>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Read Replicas: The First Scaling Move</div>
+          <div class="step-desc">
+            Your primary (write) node gets overwhelmed. The solution: spin up replicas
+            that are copies of the primary. All writes go to primary. Read traffic is
+            spread across replicas. A single PostgreSQL primary handles roughly
+            <strong>~5,000–10,000 read QPS</strong>. With 5 replicas, you've got
+            ~50,000 read QPS. <em>What it doesn't solve:</em> write bottleneck.
+            All writes still hit one machine.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Connection Pooling: Why Raw DB Connections Are Expensive</div>
+          <div class="step-desc">
+            Opening a database connection is slow — it involves TCP handshakes,
+            authentication, and memory allocation on the DB side. A PostgreSQL instance
+            can safely handle ~<strong>100–300 concurrent connections</strong> before
+            performance degrades. With 50 app servers each opening 20 connections,
+            you've already hit 1,000. Solution: PgBouncer or HikariCP sits in front of
+            the DB, maintains a small pool of real connections, and queues requests.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">JOINs at Scale: The Hidden Time Bomb</div>
+          <div class="step-desc">
+            JOINs are SQL's superpower — and its Achilles heel. Joining two tables of
+            1M rows each is fine. Joining five tables of 50M rows each with filters?
+            You'll bring down production. At scale, companies denormalize: they
+            duplicate data to avoid JOINs. This trades storage for query speed.
+            Instagram and Twitter eventually moved away from JOIN-heavy schemas for
+            exactly this reason.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Read/Write Splitting: Route Traffic Intentionally</div>
+          <div class="step-desc">
+            Send writes → primary. Send reads → replicas. Sounds simple, but requires
+            your application to be aware of the split. Frameworks like Spring's
+            <code>@Transactional(readOnly = true)</code> can help route automatically.
+            The gotcha: replication lag (covered in Section 7) means reads from replicas
+            might be slightly stale.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">📊</div>
+      <div class="body">
+        <strong>Numbers to Remember</strong>
+        <ul>
+          <li>Single MySQL/PostgreSQL instance: <strong>~5–15K QPS</strong> (reads), <strong>~2–5K QPS</strong> (writes)</li>
+          <li>Max safe concurrent connections (PostgreSQL): <strong>~200–400</strong></li>
+          <li>Replication lag: typically <strong>&lt;1 second</strong>, but can be seconds/minutes under high load</li>
+          <li>A single table with &gt;<strong>100M rows</strong> is where you start thinking seriously about sharding</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PART 2 — NOSQL                                              -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">02</div>
+    <div>
+      <h2>The NoSQL World</h2>
+      <p>"NoSQL" is four completely different tools wearing the same name badge. Let's fix that.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3 ── NOSQL TYPES -->
+  <div class="section" id="nosql-types">
+    <div class="section-header">
+      <h3>🗃️ NoSQL Databases — The 4 Types</h3>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>Stop treating NoSQL as one category.</strong>
+        <p>
+          "Should I use SQL or NoSQL?" is the wrong question. Redis and Cassandra are
+          both NoSQL. They have almost nothing in common. The right question is:
+          <em>what access pattern do I need to optimize for?</em>
+        </p>
+      </div>
+    </div>
+
+    <!-- A) KEY-VALUE -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="tag tag-cyan">Type A</span>
+        <h4 style="margin:0">🔑 Key-Value Stores — Redis, DynamoDB, Memcached</h4>
+      </div>
+      <p>
+        <strong>Mental model:</strong> Imagine a giant hash map. You hand it a key,
+        it gives you a value in microseconds. That's it. No schema. No relationships.
+        No joins. Just get and set.
+      </p>
+      <p>
+        Redis can serve <strong>~100,000–1,000,000 operations per second</strong>
+        on a single instance because everything lives in RAM. The trade-off: data
+        can be lost on restart (unless you configure persistence), and you can only
+        look up by exact key — no "find all users where age &gt; 25."
+      </p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Use Case</th><th>Why Key-Value Fits</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Session storage</td><td>session_id → user data. Exact-key lookup. TTL built-in.</td></tr>
+            <tr><td>Caching</td><td>Cache expensive DB query results. Evict when stale.</td></tr>
+            <tr><td>Rate limiting</td><td>Increment a counter per user per minute. Atomic and fast.</td></tr>
+            <tr><td>Leaderboards</td><td>Redis Sorted Sets: O(log N) insert + rank query.</td></tr>
+            <tr><td>Distributed locks</td><td>Redis SETNX (set if not exists) implements distributed mutex.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>✅ You gain</h4>
+          <ul>
+            <li>Extreme speed (in-memory)</li>
+            <li>Simple mental model</li>
+            <li>Atomic operations</li>
+            <li>Built-in TTL (expiry)</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>❌ You give up</h4>
+          <ul>
+            <li>Complex queries</li>
+            <li>Relationships between data</li>
+            <li>Durability (unless configured)</li>
+            <li>Data size limited by RAM</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- B) DOCUMENT -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="tag tag-orange">Type B</span>
+        <h4 style="margin:0">📄 Document Stores — MongoDB, Firestore, CouchDB</h4>
+      </div>
+      <p>
+        <strong>Mental model:</strong> Imagine a filing cabinet full of folders.
+        Each folder holds a JSON document. Documents in the same collection can
+        have completely different fields. You query by any field — not just a primary key.
+      </p>
+      <p>
+        The killer feature: <strong>flexible schema</strong>. When your product
+        is evolving fast and the data structure changes every sprint, rigid SQL
+        schemas become a bottleneck. Document stores let you add new fields without
+        migrations.
+      </p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Use Case</th><th>Why Document Fits</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Content management (CMS)</td><td>Blog posts, products — every item has different fields.</td></tr>
+            <tr><td>User profiles</td><td>Nested preferences, settings, history in one document.</td></tr>
+            <tr><td>Product catalogs</td><td>A TV and a T-shirt have completely different attributes.</td></tr>
+            <tr><td>Real-time apps</td><td>Firestore syncs changes to connected clients instantly.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>Watch out: the JOIN problem.</strong>
+          <p>MongoDB doesn't do real JOINs. If your data has deep relationships
+            (orders → users → addresses → payment methods), you'll either denormalize
+            (duplicate data) or do multiple round trips. If relationships matter, SQL
+            is probably better.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- C) COLUMN-FAMILY -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="tag tag-purple">Type C</span>
+        <h4 style="margin:0">📊 Column-Family Stores — Cassandra, HBase, ScyllaDB</h4>
+      </div>
+      <p>
+        <strong>Mental model:</strong> Think of a spreadsheet where rows are identified
+        by a partition key, and columns within a row are stored sorted together.
+        Cassandra is designed for one thing above all else: <strong>extreme write
+        throughput at global scale</strong>.
+      </p>
+      <p>
+        Cassandra has no single point of failure, no primary node for writes.
+        Every node accepts writes. Data is replicated to N nodes automatically.
+        A single Cassandra cluster can handle <strong>millions of writes per second</strong>.
+      </p>
+
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">
+          <strong>Why Discord Uses Cassandra for Messages</strong>
+          <p>
+            Discord stores billions of messages. Messages are written once, read
+            occasionally, and almost never updated. The access pattern is:
+            "give me all messages in channel X, sorted by time, paginated."
+            This is <em>exactly</em> what Cassandra excels at — partition by channel_id,
+            cluster by timestamp. No JOINs needed. Write volume is enormous.
+            Cassandra was the obvious choice.
+          </p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Use Case</th><th>Why Column-Family Fits</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Time-series data (IoT, metrics)</td><td>Partition by device, sort by timestamp. Efficient range scans.</td></tr>
+            <tr><td>Chat / messaging history</td><td>Write-heavy, partition by conversation, sort by time.</td></tr>
+            <tr><td>Activity feeds / logs</td><td>Append-only, massive write volume, time-ordered reads.</td></tr>
+            <tr><td>Recommendation scores</td><td>Store pre-computed scores per user, fast reads by user_id.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="compare">
+        <div class="compare-card">
+          <h4>✅ You gain</h4>
+          <ul>
+            <li>Massive write throughput</li>
+            <li>Linear horizontal scalability</li>
+            <li>No single point of failure</li>
+            <li>Tunable consistency</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4>❌ You give up</h4>
+          <ul>
+            <li>No ad-hoc queries (must know access pattern upfront)</li>
+            <li>No multi-row transactions</li>
+            <li>Updates are expensive (tombstones)</li>
+            <li>Steep learning curve for data modeling</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- D) GRAPH -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="tag tag-blue">Type D</span>
+        <h4 style="margin:0">🕸️ Graph Databases — Neo4j, Amazon Neptune, JanusGraph</h4>
+      </div>
+      <p>
+        <strong>Mental model:</strong> Think of a social network diagram.
+        Circles are people (nodes). Lines connecting them are friendships (edges).
+        A graph database stores this structure natively and can traverse millions of
+        edges in milliseconds — something that would require exponentially expensive
+        JOINs in SQL.
+      </p>
+      <p>
+        Graph databases shine when <strong>the relationships ARE the data</strong>.
+        "Who are my second-degree connections?" or "Which users are connected to this
+        fraudulent account within 3 hops?" are queries that would destroy a relational
+        database but are trivial in a graph DB.
+      </p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Use Case</th><th>Real Company</th><th>Why Graph?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Social graph</td><td>Facebook, LinkedIn</td><td>Friends-of-friends, degree of connection queries.</td></tr>
+            <tr><td>Fraud detection</td><td>PayPal, Uber</td><td>"Is this new account connected to known fraud accounts?"</td></tr>
+            <tr><td>Recommendation engine</td><td>Netflix, Amazon</td><td>"Users who like X also connected to Y via 2 hops."</td></tr>
+            <tr><td>Knowledge graphs</td><td>Google Knowledge Graph</td><td>Entity relationships and inference.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">
+          <strong>Graph DBs are specialized tools.</strong>
+          <p>Don't use a graph database unless your core queries require graph traversal.
+            They're operationally complex and don't scale horizontally as easily as
+            Cassandra. Most systems don't need them. When they do — nothing else compares.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PART 3 — DESIGN DECISIONS                                   -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">03</div>
+    <div>
+      <h2>Design Decisions</h2>
+      <p>Frameworks for choosing and optimizing — the skills interviewers actually test.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 4 ── SELECTION FRAMEWORK -->
+  <div class="section" id="db-selection">
+    <div class="section-header">
+      <h3>🧭 The Database Selection Framework</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        The best system designers don't have a favourite database — they have a
+        decision process. Here are the five questions you should ask out loud in
+        every interview before naming a database. The interviewer will love this.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">Q1</div>
+        <div class="step-body">
+          <div class="step-title">Is the schema fixed or flexible?</div>
+          <div class="step-desc">
+            Fixed, well-defined schema with known relationships → lean SQL.
+            Highly variable data where different records have different fields
+            (products, user preferences) → lean Document Store. No schema at all
+            (cache, session) → Key-Value.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">Q2</div>
+        <div class="step-body">
+          <div class="step-title">Are there complex relationships between entities?</div>
+          <div class="step-desc">
+            If you need JOINs between multiple tables regularly → SQL.
+            If relationships form a graph (friends-of-friends, fraud networks) → Graph DB.
+            If data is self-contained per entity (a message, a product) → NoSQL.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">Q3</div>
+        <div class="step-body">
+          <div class="step-title">Read-heavy or write-heavy?</div>
+          <div class="step-desc">
+            Massively write-heavy (millions of events/second) → Cassandra or DynamoDB.
+            Read-heavy with complex queries → SQL with read replicas.
+            Read-heavy with simple key lookups → Redis cache in front of your SQL DB.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">Q4</div>
+        <div class="step-body">
+          <div class="step-title">What are the consistency requirements?</div>
+          <div class="step-desc">
+            Money, inventory, anything that cannot afford to be wrong even for a
+            millisecond → Strong consistency → SQL or DynamoDB with strong reads.
+            Social feeds, view counts, recommendations → Eventual consistency is fine
+            → Cassandra, DynamoDB, or Redis.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">Q5</div>
+        <div class="step-body">
+          <div class="step-title">What is the scale? (QPS and data volume)</div>
+          <div class="step-desc">
+            &lt;10M rows, &lt;10K QPS → a well-tuned SQL database is almost always fine.
+            100M+ rows, 100K+ writes/sec → you need to think about sharding or
+            switching to a database built for horizontal scale (Cassandra, DynamoDB).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h4>Interactive Decision Flowchart</h4>
+    <div class="card flowchart-container" id="db-flowchart">
+      <div class="flowchart-row">
+        <div class="flowchart-node question">What is your data?</div>
+      </div>
+      <div class="flowchart-row">
+        <span class="flowchart-arrow">↙</span>
+        <span class="flowchart-label">Relationships matter?</span>
+        <span class="flowchart-arrow">↓</span>
+        <span class="flowchart-label">Graph traversal?</span>
+        <span class="flowchart-arrow">↘</span>
+      </div>
+      <div class="flowchart-row">
+        <div class="flowchart-node question">Fixed schema + ACID?</div>
+        <span style="width:40px"></span>
+        <div class="flowchart-node question">Write-heavy / time-series?</div>
+        <span style="width:40px"></span>
+        <div class="flowchart-node result-graph">→ Graph DB<br/><small style="color:#8b949e">Neo4j, Neptune</small></div>
+      </div>
+      <div class="flowchart-row">
+        <span class="flowchart-arrow">↙</span>
+        <span class="flowchart-label">Yes</span>
+        <span class="flowchart-arrow">↘</span>
+        <span class="flowchart-label">No</span>
+        <span style="width:60px"></span>
+        <span class="flowchart-arrow">↙</span>
+        <span class="flowchart-label">Yes</span>
+        <span class="flowchart-arrow">↘</span>
+        <span class="flowchart-label">No</span>
+      </div>
+      <div class="flowchart-row" style="gap:16px">
+        <div class="flowchart-node result-sql">→ SQL DB<br/><small style="color:#8b949e">Postgres, MySQL</small></div>
+        <div class="flowchart-node result-doc">→ Document<br/><small style="color:#8b949e">MongoDB, Firestore</small></div>
+        <div class="flowchart-node result-col">→ Column-Family<br/><small style="color:#8b949e">Cassandra, HBase</small></div>
+        <div class="flowchart-node result-kv">→ Key-Value<br/><small style="color:#8b949e">Redis, DynamoDB</small></div>
+      </div>
+      <p style="text-align:center;color:#6e7681;font-size:12px;margin-top:12px">
+        💡 Hover over any node for more detail — this is a simplification; real decisions layer multiple DBs.
+      </p>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip: Polyglot Persistence</strong>
+        <p>
+          Real-world systems use <em>multiple</em> databases. Uber uses MySQL for
+          trips, Redis for rate limiting, Cassandra for location history.
+          In interviews, it's totally valid (and impressive) to say:
+          "For user profiles I'd use PostgreSQL, for the real-time leaderboard
+          I'd use Redis Sorted Sets, and for the activity feed I'd use Cassandra."
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 ── INDEXING -->
+  <div class="section" id="indexing">
+    <div class="section-header">
+      <h3>🔍 Indexing — The Most Important Optimization</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        If you design a great database schema but forget indexes, your queries
+        will crawl. If you add too many indexes, your writes will crawl.
+        Understanding indexes is the difference between a database that handles
+        millions of queries and one that melts under load.
+      </p>
+    </div>
+
+    <h4>What an Index Actually Is</h4>
+    <div class="card">
+      <p>
+        <strong>Analogy:</strong> Imagine a 1,000-page textbook with no index.
+        To find "B-tree", you'd read every single page. That's a
+        <strong>full table scan</strong>. With a book index, you flip to "B"
+        alphabetically and jump directly to the right page. That's an
+        <strong>index scan</strong>.
+      </p>
+      <p>
+        Most SQL databases use a <strong>B-tree</strong> (balanced tree) for indexes.
+        The index is a separate data structure, stored on disk, sorted by the indexed
+        column. Finding a value in a B-tree of 1 million entries takes just
+        <strong>~20 comparisons</strong> (log₂ of 1,000,000 ≈ 20).
+      </p>
+
+      <div class="diagram">
+<span class="d-blue">B-Tree Index (simplified)</span>
+
+              <span class="d-purple">[ 50 ]</span>
+             /        \
+      <span class="d-blue">[ 25 ]</span>          <span class="d-blue">[ 75 ]</span>
+      /    \           /    \
+<span class="d-green">[ 12 ]</span> <span class="d-green">[ 37 ]</span>   <span class="d-green">[ 62 ]</span> <span class="d-green">[ 88 ]</span>
+
+Query: WHERE age = 62
+  → Compare 62 to 50: go right
+  → Compare 62 to 75: go left  
+  → Found: 62 → points to row in table ✓
+  <span class="d-orange">3 comparisons instead of scanning all rows</span>
+      </div>
+    </div>
+
+    <h4>Visualize: Full Scan vs Index Scan</h4>
+    <div class="card">
+      <p style="font-size:13px;color:#8b949e">
+        Query: <code style="color:#58a6ff">SELECT * FROM users WHERE user_id = 7</code> — click to animate:
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <p style="font-size:12px;color:#d29922">❌ Without Index — Full Table Scan</p>
+          <div class="index-viz" id="full-scan-viz"></div>
+          <p style="font-size:11px;color:#8b949e" id="full-scan-label">Scanned: 0 rows</p>
+        </div>
+        <div style="flex:1;min-width:220px">
+          <p style="font-size:12px;color:#3fb950">✅ With Index — Direct Lookup</p>
+          <div class="index-viz" id="index-scan-viz"></div>
+          <p style="font-size:11px;color:#8b949e" id="index-scan-label">Scanned: 0 rows</p>
+        </div>
+      </div>
+      <button id="run-scan-btn" style="margin-top:10px;padding:8px 18px;background:#1c2128;border:1.5px solid #58a6ff;color:#58a6ff;border-radius:6px;cursor:pointer;font-size:13px">
+        ▶ Run Scan Animation
+      </button>
+    </div>
+
+    <h4>Composite Indexes — Column Order Matters</h4>
+    <div class="card">
+      <p>
+        A composite index on <code>(last_name, first_name)</code> can answer:
+      </p>
+      <ul>
+        <li>WHERE last_name = 'Smith' → ✅ uses index</li>
+        <li>WHERE last_name = 'Smith' AND first_name = 'John' → ✅ uses index</li>
+        <li>WHERE first_name = 'John' → ❌ cannot use this index (leftmost prefix rule)</li>
+      </ul>
+      <p>
+        <strong>The leftmost prefix rule:</strong> An index on (A, B, C) can be
+        used for queries filtering on A, A+B, or A+B+C — but not B alone or C alone.
+        This catches junior engineers constantly. Design composite indexes based on
+        your most common query patterns.
+      </p>
+    </div>
+
+    <div class="callout danger">
+      <div class="icon">🚫</div>
+      <div class="body">
+        <strong>When NOT to add indexes</strong>
+        <ul>
+          <li><strong>High write volume tables:</strong> Every INSERT/UPDATE/DELETE must also update all indexes. More indexes = slower writes. A table with 10 indexes on a write-heavy workload can be 5× slower than one with 2 indexes.</li>
+          <li><strong>Small tables (&lt;10K rows):</strong> A full scan of 10K rows is trivially fast. Index overhead isn't worth it.</li>
+          <li><strong>Low-cardinality columns:</strong> An index on a boolean column (true/false) is almost useless — half the table matches. The DB optimizer may ignore it.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>The EXPLAIN Mindset</strong>
+        <p>
+          In production, the first thing any experienced engineer does with a slow query
+          is run <code>EXPLAIN ANALYZE</code> (PostgreSQL) or <code>EXPLAIN</code> (MySQL).
+          It shows whether the DB is doing a full scan or using an index. In an interview,
+          mentioning "I would run EXPLAIN to verify the query plan" signals real-world
+          experience. Interviewers notice this.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PART 4 — SCALING                                            -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">04</div>
+    <div>
+      <h2>Scaling Your Database</h2>
+      <p>When one machine isn't enough — sharding, replication, and the hard problems they create.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 6 ── SHARDING -->
+  <div class="section" id="sharding">
+    <div class="section-header">
+      <h3>✂️ Database Sharding</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        <strong>Problem:</strong> Your users table has 2 billion rows.
+        No single machine can store that much data with acceptable query performance.
+        Indexes that once fit in RAM now don't. Writes back up. Everything slows down.
+      </p>
+      <p>
+        <strong>Solution: Sharding</strong> — split the data horizontally across
+        multiple database machines (shards). Each shard holds a <em>subset</em> of the
+        rows. A shard is just a regular database instance — what makes it special is that
+        together they hold all the data.
+      </p>
+    </div>
+
+    <div class="diagram">
+<span class="d-blue">Before Sharding:</span>
+┌─────────────────────────────────┐
+│  users table: 2 billion rows    │ ← <span class="d-orange">One machine is overwhelmed</span>
+│  All on ONE database server     │
+└─────────────────────────────────┘
+
+<span class="d-green">After Sharding (4 shards):</span>
+┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐
+│  Shard 0   │  │  Shard 1   │  │  Shard 2   │  │  Shard 3   │
+│ 500M rows  │  │ 500M rows  │  │ 500M rows  │  │ 500M rows  │
+│ user 0,4,8 │  │ user 1,5,9 │  │ user 2,6.. │  │ user 3,7.. │
+└────────────┘  └────────────┘  └────────────┘  └────────────┘
+     <span class="d-blue">Shard key: user_id % 4</span>
+    </div>
+
+    <h4>Three Sharding Strategies</h4>
+
+    <div class="card-grid">
+      <div class="card-mini">
+        <h4 style="color:var(--accent-blue)">A — Hash-Based Sharding</h4>
+        <p><strong>How:</strong> <code>shard = hash(user_id) % num_shards</code></p>
+        <p><strong>✅ Pro:</strong> Uniform data distribution. No hotspots.</p>
+        <p><strong>❌ Con:</strong> Range queries are impossible (WHERE user_id BETWEEN 100 AND 200 would hit all shards). Adding shards requires rehashing everything — painful.</p>
+        <p><strong>Used when:</strong> You mostly do single-key lookups.</p>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:var(--accent-green)">B — Range-Based Sharding</h4>
+        <p><strong>How:</strong> Users A–M on Shard 1. Users N–Z on Shard 2.</p>
+        <p><strong>✅ Pro:</strong> Range queries stay on one shard. Easy to reason about.</p>
+        <p><strong>❌ Con:</strong> Uneven distribution. If most users have names starting with A–M, Shard 1 is overloaded. This is called a <strong>hotspot</strong>.</p>
+        <p><strong>Used when:</strong> Data has natural ranges (time-series by date).</p>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:var(--accent-purple)">C — Directory-Based Sharding</h4>
+        <p><strong>How:</strong> A separate lookup service (directory) maps each key to a shard. No algorithm — explicit mapping.</p>
+        <p><strong>✅ Pro:</strong> Maximum flexibility. You can move data between shards without changing the algorithm.</p>
+        <p><strong>❌ Con:</strong> The directory service is a single point of failure. Adds a network hop to every request. More complex to operate.</p>
+        <p><strong>Used when:</strong> You need fine-grained control over data placement.</p>
+      </div>
+      <div class="card-mini">
+        <h4 style="color:var(--accent-orange)">Consistent Hashing</h4>
+        <p>The solution to hash-based sharding's <em>"rehash everything"</em> problem.</p>
+        <p>Nodes and keys are placed on a virtual ring. Adding a new shard only moves a fraction of keys (≈ 1/N). Cassandra and DynamoDB use this natively.</p>
+        <p><strong>In interviews:</strong> Mention consistent hashing when discussing how to add shards without downtime.</p>
+      </div>
+    </div>
+
+    <h4>Problems Sharding Creates</h4>
+
+    <div class="callout danger">
+      <div class="icon">🚫</div>
+      <div class="body">
+        <strong>Cross-Shard Queries: The Nightmare</strong>
+        <p>
+          Once you shard, queries that span multiple shards are expensive or outright
+          impossible. <code>SELECT COUNT(*) FROM users</code> now requires querying all
+          shards and summing the results. JOINs across shards require fetching data into
+          your application layer and joining in memory. This is called a
+          <strong>scatter-gather</strong> query — and it kills performance.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">
+        <strong>The Celebrity / Hotspot Problem</strong>
+        <p>
+          Imagine Instagram shards by user_id. Cristiano Ronaldo has 600 million followers.
+          Every time he posts, millions of read requests hit the <em>same shard</em>.
+          That shard melts. The solution: special handling for "celebrity" accounts —
+          replicate their data across many shards, or cache at a higher layer (CDN/Redis).
+          This is a genuinely hard problem. Twitter and Instagram have war stories about it.
+        </p>
+      </div>
+    </div>
+
+    <h4>Shard Distribution Visualizer</h4>
+    <div class="card" style="text-align:center">
+      <canvas id="shard-canvas" width="480" height="200"></canvas>
+      <div style="margin-top:8px">
+        <button id="shard-hash-btn" style="margin:4px;padding:6px 14px;background:#0d2236;border:1.5px solid #58a6ff;color:#58a6ff;border-radius:6px;cursor:pointer;font-size:12px">Hash Sharding</button>
+        <button id="shard-range-btn" style="margin:4px;padding:6px 14px;background:#0d2010;border:1.5px solid #3fb950;color:#3fb950;border-radius:6px;cursor:pointer;font-size:12px">Range Sharding (hotspot)</button>
+        <button id="shard-consistent-btn" style="margin:4px;padding:6px 14px;background:#1a0d28;border:1.5px solid #bc8cff;color:#bc8cff;border-radius:6px;cursor:pointer;font-size:12px">Consistent Hashing</button>
+      </div>
+      <p style="font-size:11px;color:#6e7681;margin-top:6px">Bar height = rows on that shard. Uniform = good distribution.</p>
+    </div>
+
+    <div class="callout purple">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Interview Tip — When to Mention Sharding</strong>
+        <p>
+          Don't jump to sharding immediately. It's a last resort.
+          The correct escalation in an interview is: single DB → add indexes →
+          add read replicas → introduce caching → <em>then</em> shard if you
+          still need more write throughput. Saying this shows maturity.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7 ── REPLICATION -->
+  <div class="section" id="replication">
+    <div class="section-header">
+      <h3>🔁 Replication — One Database, Multiple Copies</h3>
+    </div>
+
+    <div class="card">
+      <p>
+        Replication solves two problems: <strong>availability</strong>
+        (if the primary dies, a replica takes over) and <strong>read scalability</strong>
+        (spread reads across replicas). It's usually the first scaling technique you
+        reach for — before sharding and before a major architectural overhaul.
+      </p>
+    </div>
+
+    <h4>Primary–Replica (Master–Slave) Replication</h4>
+    <div class="card">
+      <div class="diagram">
+<span class="d-blue">All writes</span>          <span class="d-green">All reads</span>
+     │                        │  │  │
+     ▼                        ▼  ▼  ▼
+┌─────────┐    replication  ┌────┐ ┌────┐ ┌────┐
+│ PRIMARY │ ──────────────► │ R1 │ │ R2 │ │ R3 │
+│ (1 node)│   (async WAL)   └────┘ └────┘ └────┘
+└─────────┘                  <span class="d-orange">Replicas (can be stale!)</span>
+      </div>
+      <p>
+        The primary writes to its Write-Ahead Log (WAL). Replicas stream that log
+        and replay the changes. This is almost always <strong>asynchronous</strong>
+        — meaning replicas apply changes <em>after</em> the primary commits.
+        The gap between primary and replica is called <strong>replication lag</strong>.
+      </p>
+    </div>
+
+    <h4>Replication Lag Visualizer</h4>
+    <div class="card">
+      <p style="font-size:13px;color:#8b949e">Simulate replication lag under different write loads:</p>
+      <div id="lag-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="lag-btn" data-lag="5" style="padding:6px 12px;background:#0d2010;border:1.5px solid #3fb950;color:#3fb950;border-radius:6px;cursor:pointer;font-size:12px">Low Load (5ms lag)</button>
+        <button class="lag-btn" data-lag="300" style="padding:6px 12px;background:#1e1600;border:1.5px solid #d29922;color:#d29922;border-radius:6px;cursor:pointer;font-size:12px">High Load (300ms lag)</button>
+        <button class="lag-btn" data-lag="3000" style="padding:6px 12px;background:#1a0808;border:1.5px solid #f85149;color:#f85149;border-radius:6px;cursor:pointer;font-size:12px">Overloaded (3s lag)</button>
+      </div>
+      <div style="margin:8px 0">
+        <div style="font-size:12px;color:#8b949e;margin-bottom:3px">Primary</div>
+        <div class="lag-bar"><div class="lag-fill" id="lag-primary" style="width:100%;background:var(--accent-green)"></div></div>
+        <div style="font-size:12px;color:#8b949e;margin:6px 0 3px 0">Replica 1</div>
+        <div class="lag-bar"><div class="lag-fill" id="lag-r1" style="width:0%;background:var(--accent-blue)"></div></div>
+        <div style="font-size:12px;color:#8b949e;margin:6px 0 3px 0">Replica 2</div>
+        <div class="lag-bar"><div class="lag-fill" id="lag-r2" style="width:0%;background:var(--accent-purple)"></div></div>
+      </div>
+      <p style="font-size:12px;color:#6e7681" id="lag-desc">Click a button to simulate</p>
+    </div>
+
+    <h4>The Read-Your-Own-Writes Problem</h4>
+    <div class="card">
+      <p>
+        This trips up junior engineers every time. Here's the scenario:
+      </p>
+      <ol>
+        <li>User updates their profile picture → write goes to <strong>primary</strong>. ✅</li>
+        <li>Page refreshes → read goes to <strong>replica</strong>. ❌</li>
+        <li>Replica is 500ms behind. User sees their <em>old</em> profile picture.</li>
+        <li>User thinks the update failed and hits save again. Now you have duplicate writes.</li>
+      </ol>
+      <p>
+        <strong>Solutions:</strong>
+      </p>
+      <ul>
+        <li><strong>Route reads-after-writes to primary</strong> for the same user for a short window.</li>
+        <li><strong>Track a replication timestamp</strong>: client sends the timestamp of their last write; if the replica hasn't caught up to that timestamp, route the read to primary.</li>
+        <li><strong>Sticky sessions</strong>: the same user always reads from the same replica.</li>
+      </ul>
+    </div>
+
+    <h4>Multi-Primary Replication — When and Why (and Why It's Hard)</h4>
+    <div class="card">
+      <p>
+        Sometimes you need writes in multiple data centres simultaneously —
+        for geographic redundancy or to reduce write latency for global users.
+        Multi-primary replication (also called multi-master) lets multiple nodes accept writes.
+      </p>
+      <div class="callout danger">
+        <div class="icon">🚫</div>
+        <div class="body">
+          <strong>Write conflicts are real and hard</strong>
+          <p>
+            Two users update the same row on two different primaries at the same
+            millisecond. Which write wins? There's no universally correct answer.
+            Databases use "last write wins" (based on timestamps — but clocks drift!),
+            application-level conflict resolution, or CRDTs (conflict-free replicated
+            data types). This is <em>genuinely hard</em>. Most teams avoid multi-primary
+            unless they truly need global writes. Prefer routing writes to a single
+            region's primary where possible.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">
+        <strong>Failover: What Happens When Primary Dies</strong>
+        <p>
+          When the primary fails, one replica must be promoted to primary.
+          This involves: detecting the failure (usually a few seconds of timeout),
+          electing the new primary (Raft or Paxos consensus, or external tools like
+          Patroni for PostgreSQL), and redirecting all write traffic.
+          During this window (typically <strong>15–60 seconds</strong>), writes are unavailable.
+          Design systems that can tolerate brief write outages, or use multi-primary for
+          zero-downtime failover.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PART 5 — INTERVIEW PLAYBOOK                                 -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-red);">05</div>
+    <div>
+      <h2>Interview Playbook</h2>
+      <p>Exact phrases, frameworks, and red flags — walk in ready.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 8 ── PLAYBOOK -->
+  <div class="section" id="playbook">
+    <div class="section-header">
+      <h3>🎯 Interview Playbook — Databases</h3>
+    </div>
+
+    <div class="card">
+      <h4>The "I Would Choose X Because..." Template</h4>
+      <p>
+        Never just name a database. Always follow this structure.
+        Interviewers at Google and Meta are specifically trained to probe
+        whether you understand trade-offs — or are just name-dropping.
+      </p>
+    </div>
+
+    <div class="banner banner-blue">
+      <h4>The Template</h4>
+      <p>
+        "For [this component], I would use <strong>[Database]</strong> because
+        the data is <strong>[schema characteristics]</strong>, the access pattern is
+        <strong>[read/write description]</strong>, and the consistency requirement is
+        <strong>[strong/eventual]</strong>. The trade-off is <strong>[what we give up]</strong>,
+        which is acceptable here because <strong>[reason]</strong>."
+      </p>
+    </div>
+
+    <h4>Example Answers — Copy These Patterns</h4>
+
+    <div class="qa-container">
+      <div class="qa-item">
+        <div class="qa-q">Design Twitter's tweet storage. What database?</div>
+        <div class="qa-a">
+          <p>
+            "Tweets are written once and read millions of times. The schema is simple
+            (tweet_id, user_id, text, timestamp). There are no complex JOINs needed
+            for serving tweets. The write volume is high but predictable. The read
+            volume is enormous — a viral tweet can get millions of reads in minutes.
+          </p>
+          <p>
+            I'd use a combination: <strong>Cassandra</strong> for tweet storage
+            (partition by user_id, cluster by timestamp — efficient for timeline reads),
+            and <strong>Redis</strong> as a cache for the home timeline of active users.
+            The trade-off: eventual consistency on reads, but for a social feed that's
+            totally acceptable — nobody cares if they see a tweet 500ms late."
+          </p>
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Design a payment processing system. What database?</div>
+        <div class="qa-a">
+          <p>
+            "For payment transactions, I'd use <strong>PostgreSQL</strong>. Money movement
+            requires ACID guarantees — I need atomicity so funds can't be half-transferred,
+            isolation so concurrent payments on the same account don't cause race conditions,
+            and durability so committed payments survive crashes.
+          </p>
+          <p>
+            The trade-off: SQL doesn't scale writes as horizontally as Cassandra.
+            But payment write volume, even at Stripe scale, is manageable with a
+            well-tuned primary + replicas + connection pooling. I'd rather have
+            correctness than raw throughput for money. I'd never sacrifice ACID for
+            payments — that's how you lose money and customers."
+          </p>
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Your users table has grown to 500M rows. Queries are slow. What do you do?</div>
+        <div class="qa-a">
+          <p>Escalate in this order — don't jump straight to sharding:</p>
+          <ol>
+            <li><strong>Check indexes first.</strong> Run EXPLAIN ANALYZE on slow queries. 90% of performance problems at this stage are missing indexes or bad query plans. Fix those first.</li>
+            <li><strong>Add read replicas</strong> if read load is the problem. Route reads to replicas.</li>
+            <li><strong>Add a caching layer (Redis)</strong> for frequently accessed user data (profile, session, preferences). Cache-hit rate should be 90%+ before touching the DB architecture.</li>
+            <li><strong>Vertical scale the DB instance</strong> (more RAM, faster SSDs). Cheaper and faster than sharding.</li>
+            <li><strong>Shard by user_id</strong> only if writes are the bottleneck and nothing else works. Use consistent hashing to allow adding shards later without full rehashing.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">What's the difference between sharding and replication?</div>
+        <div class="qa-a">
+          <p>
+            "Replication creates <strong>copies</strong> of the same data on multiple
+            machines. It solves availability (if one dies, others take over) and read
+            scalability (spread read load across copies). Every replica holds
+            <em>all</em> the data.
+          </p>
+          <p>
+            Sharding <strong>splits</strong> data across machines. Each shard holds a
+            <em>subset</em> of the data. It solves write scalability and storage limits
+            — no single machine needs to hold everything.
+          </p>
+          <p>
+            In production you typically use both: shard your data for write scalability,
+            and replicate each shard for availability. DynamoDB does this under the hood —
+            every partition is replicated to 3 availability zones."
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h4>🚩 Red Flags — What NOT to Say</h4>
+    <div class="callout danger">
+      <div class="icon">🚫</div>
+      <div class="body">
+        <ul>
+          <li><strong>"I'll use MongoDB because it's flexible"</strong> — Flexibility is a cost, not a benefit. NoSQL flexibility means you're giving up schema enforcement and JOINs. Always justify the trade-off.</li>
+          <li><strong>"I'll add more indexes to fix the slow query"</strong> — Without running EXPLAIN first, this is a guess. Show that you'd diagnose before prescribing.</li>
+          <li><strong>"Let's just shard it"</strong> — Sharding is a last resort. Proposing it before exhausting simpler options signals inexperience.</li>
+          <li><strong>Picking a database and never mentioning trade-offs</strong> — Every choice has costs. If you don't mention them, the interviewer will think you don't know them.</li>
+          <li><strong>"We can handle consistency issues later"</strong> — Red flag for data integrity questions. Say instead: "The consistency requirement here is X, which this database handles by Y."</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>📊 Numbers to Remember in Interviews</h4>
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Database</th><th>Typical Write QPS</th><th>Typical Read QPS</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PostgreSQL / MySQL (single node)</td><td>~2–5K QPS</td><td>~5–15K QPS</td><td>With good indexes + connection pooling</td></tr>
+            <tr><td>PostgreSQL + 5 Read Replicas</td><td>~2–5K QPS</td><td>~50–75K QPS</td><td>Reads spread across replicas</td></tr>
+            <tr><td>Redis (in-memory)</td><td>~500K–1M QPS</td><td>~500K–1M QPS</td><td>Single-threaded but extremely fast</td></tr>
+            <tr><td>Cassandra (cluster)</td><td>Millions/sec</td><td>Hundreds of K/sec</td><td>Scales linearly by adding nodes</td></tr>
+            <tr><td>DynamoDB</td><td>Virtually unlimited</td><td>Virtually unlimited</td><td>AWS manages scaling; you pay per RCU/WCU</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="key-point">
+      <span class="kp-icon">💡</span>
+      <p>
+        <strong>The Single Most Important Sentence in Any Database Discussion:</strong>
+        "The right database depends on the access patterns, consistency requirements,
+        and scale — let me ask a few clarifying questions before choosing."
+        Say this and you've already outperformed 80% of candidates.
+      </p>
+    </div>
+
+    <h4>Quick Reference Card — Print This</h4>
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>If you need...</th><th>Use this</th><th>Avoid this</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ACID transactions / money</td><td><span class="pill pill-green">PostgreSQL / MySQL</span></td><td><span class="pill pill-red">Cassandra, MongoDB</span></td></tr>
+            <tr><td>Extreme write throughput</td><td><span class="pill pill-green">Cassandra / DynamoDB</span></td><td><span class="pill pill-red">Single-node SQL</span></td></tr>
+            <tr><td>Caching / sessions</td><td><span class="pill pill-green">Redis</span></td><td><span class="pill pill-red">SQL (too slow)</span></td></tr>
+            <tr><td>Flexible / nested data</td><td><span class="pill pill-green">MongoDB / Firestore</span></td><td><span class="pill pill-orange">SQL (over-engineered)</span></td></tr>
+            <tr><td>Social graphs / fraud</td><td><span class="pill pill-green">Neo4j / Neptune</span></td><td><span class="pill pill-red">SQL (JOINs explode)</span></td></tr>
+            <tr><td>Time-series / IoT</td><td><span class="pill pill-green">Cassandra / InfluxDB</span></td><td><span class="pill pill-red">Document stores</span></td></tr>
+            <tr><td>Full-text search</td><td><span class="pill pill-blue">Elasticsearch</span></td><td><span class="pill pill-orange">SQL LIKE (doesn't scale)</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="banner banner-green">
+      <h4>You're Now Dangerous 🎉</h4>
+      <p>
+        You understand ACID, the 4 NoSQL categories, indexing trade-offs,
+        sharding strategies, replication lag, and how to talk about all of it
+        confidently in an interview. That puts you ahead of most candidates
+        who just know database names. Next up: Caching — don't design a system
+        without it.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<!-- Back to Top -->
+<button class="top-btn" id="top-btn" title="Back to top">↑</button>
+
+<!-- ─────────────────────────────────── JS ────────────────────────────────── -->
+<script>
+// ── Sidebar toggle ──────────────────────────────────────────────────────
+function toggleSidebar() {
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    document.body.classList.toggle('sidebar-open');
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('sidebarCollapsed',
+      document.body.classList.contains('sidebar-collapsed'));
+  }
+}
+if (localStorage.getItem('sidebarCollapsed') === 'true') {
+  document.body.classList.add('sidebar-collapsed');
+}
+document.getElementById('hamburger').onclick = toggleSidebar;
+document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+  });
+});
+
+// ── Progress bar ──────────────────────────────────────────────────────────
+const progressFill = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  progressFill.style.width = (window.scrollY / total * 100) + '%';
+});
+
+// ── Back to top ──────────────────────────────────────────────────────────
+const topBtn = document.getElementById('top-btn');
+window.addEventListener('scroll', () => {
+  topBtn.classList.toggle('visible', window.scrollY > 400);
+});
+topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+// ── Section entrance animations ──────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.05 });
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+// ── Q&A accordion ────────────────────────────────────────────────────────
+document.querySelectorAll('.qa-item').forEach(item => {
+  const q = item.querySelector('.qa-q');
+  const a = item.querySelector('.qa-a');
+  a.style.display = 'none';
+  q.style.cursor = 'pointer';
+  q.addEventListener('click', () => {
+    const open = a.style.display !== 'none';
+    a.style.display = open ? 'none' : 'block';
+    q.style.borderColor = open ? '' : 'var(--accent-blue)';
+  });
+  // Hint
+  const hint = document.createElement('span');
+  hint.textContent = ' (click to reveal)';
+  hint.style.cssText = 'font-size:11px;color:#6e7681;font-weight:400';
+  q.appendChild(hint);
+});
+
+// ── Index scan animation ─────────────────────────────────────────────────
+function buildScanViz() {
+  const rows = 12;
+  const targetId = 7;
+  ['full-scan-viz','index-scan-viz'].forEach(id => {
+    const cont = document.getElementById(id);
+    cont.innerHTML = '';
+    for (let i = 1; i <= rows; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'index-cell';
+      cell.textContent = i;
+      cell.id = id + '-cell-' + i;
+      cont.appendChild(cell);
+    }
+  });
+}
+buildScanViz();
+
+document.getElementById('run-scan-btn').addEventListener('click', () => {
+  buildScanViz();
+  const targetId = 7;
+  // Full scan: scan every cell one by one
+  let i = 1;
+  const fullInterval = setInterval(() => {
+    const cell = document.getElementById('full-scan-viz-cell-' + i);
+    if (cell) {
+      cell.classList.add('scanned');
+      document.getElementById('full-scan-label').textContent = 'Scanned: ' + i + ' rows';
+      if (i === targetId) cell.classList.add('matched');
+    }
+    i++;
+    if (i > 12) clearInterval(fullInterval);
+  }, 140);
+
+  // Index scan: go straight to target after brief "lookup" delay
+  setTimeout(() => {
+    // Show "looking up index" briefly
+    document.getElementById('index-scan-label').textContent = 'Looking up B-tree...';
+    setTimeout(() => {
+      for (let j = 1; j <= 12; j++) {
+        const cell = document.getElementById('index-scan-viz-cell-' + j);
+        if (j === targetId) {
+          cell.classList.add('matched');
+          document.getElementById('index-scan-label').textContent = 'Scanned: 1 row (direct!)';
+        } else {
+          cell.classList.add('skipped');
+        }
+      }
+    }, 800);
+  }, 300);
+});
+
+// ── Replication lag visualizer ────────────────────────────────────────────
+document.querySelectorAll('.lag-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const lagMs = parseInt(btn.dataset.lag);
+    const primary = document.getElementById('lag-primary');
+    const r1 = document.getElementById('lag-r1');
+    const r2 = document.getElementById('lag-r2');
+    const desc = document.getElementById('lag-desc');
+
+    primary.style.width = '100%';
+    r1.style.width = '0%';
+    r2.style.width = '0%';
+
+    const labels = {5:'✅ Low lag: replicas nearly in sync', 300:'⚠️ Moderate lag: reads could be 300ms stale', 3000:'🚨 High lag: reads could be 3 seconds stale — read-your-own-writes problem is real!'};
+    desc.textContent = labels[lagMs] || '';
+
+    // Animate replicas catching up (slower for higher lag)
+    const delay1 = lagMs;
+    const delay2 = lagMs * 1.4;
+    setTimeout(() => { r1.style.width = '97%'; }, delay1 / 4);
+    setTimeout(() => { r2.style.width = '94%'; }, delay2 / 4);
+    setTimeout(() => { r1.style.width = '100%'; }, delay1);
+    setTimeout(() => { r2.style.width = '100%'; }, delay2);
+  });
+});
+
+// ── Shard distribution canvas ─────────────────────────────────────────────
+const canvas = document.getElementById('shard-canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const SHARDS = 6;
+const colors = ['#58a6ff','#3fb950','#bc8cff','#d29922','#39d5d3','#f85149'];
+
+function drawShards(data, title) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#1c2128';
+  ctx.fillRect(0, 0, W, H);
+
+  const barW = 40;
+  const gap = (W - SHARDS * barW) / (SHARDS + 1);
+  const maxVal = Math.max(...data) || 1;
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, W / 2, 18);
+
+  data.forEach((val, i) => {
+    const x = gap + i * (barW + gap);
+    const barH = ((val / maxVal) * (H - 60));
+    const y = H - 35 - barH;
+
+    // Bar background
+    ctx.fillStyle = '#21262d';
+    ctx.fillRect(x, H - 35 - (H - 60), barW, H - 60);
+
+    // Animated bar
+    ctx.fillStyle = colors[i];
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(x, y, barW, barH);
+    ctx.globalAlpha = 1;
+
+    // Label
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '11px monospace';
+    ctx.fillText('S' + (i + 1), x + barW / 2, H - 15);
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText(val + 'M', x + barW / 2, y - 4);
+  });
+}
+
+function animateShards(targetData, title) {
+  const current = Array(SHARDS).fill(0);
+  let frame = 0;
+  const totalFrames = 30;
+  function step() {
+    frame++;
+    const t = frame / totalFrames;
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    const data = current.map((_, i) => Math.round(targetData[i] * ease));
+    drawShards(data, title);
+    if (frame < totalFrames) requestAnimationFrame(step);
+    else drawShards(targetData, title);
+  }
+  step();
+}
+
+// Default
+animateShards([83, 84, 82, 85, 83, 83], 'Hash Sharding — Uniform Distribution ✅');
+
+document.getElementById('shard-hash-btn').addEventListener('click', () =>
+  animateShards([83, 84, 82, 85, 83, 83], 'Hash Sharding — Uniform Distribution ✅'));
+
+document.getElementById('shard-range-btn').addEventListener('click', () =>
+  animateShards([160, 140, 80, 50, 30, 40], 'Range Sharding — Hotspot on Shards 1 & 2 ⚠️'));
+
+document.getElementById('shard-consistent-btn').addEventListener('click', () => {
+  // Show adding a new shard (balanced)
+  animateShards([70, 72, 68, 71, 70, 49], 'Consistent Hashing — New Shard Added, Only ~1/N Keys Moved ✅');
+});
+
+// ── Active sidebar link highlighting ─────────────────────────────────────
+const sectionEls = document.querySelectorAll('.section[id]');
+const tocLinks   = document.querySelectorAll('.toc-link[href^="#"]');
+
+window.addEventListener('scroll', () => {
+  let active = '';
+  sectionEls.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) active = s.id;
+  });
+  tocLinks.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + active);
+  });
+}, { passive: true });
+</script>
+</body>
+</html>

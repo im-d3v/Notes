@@ -1380,17 +1380,27 @@
     el.style.width = (window.scrollY / full * 100) + '%';
   });
 
-  // Hamburger + sidebar
-  const ham     = document.getElementById('hamburger');
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
+  // ── Sidebar toggle ──────────────────────────────────────────────────────
   function toggleSidebar() {
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('visible');
-    ham.classList.toggle('active');
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed',
+        document.body.classList.contains('sidebar-collapsed'));
+    }
   }
-  ham.addEventListener('click', toggleSidebar);
-  overlay.addEventListener('click', toggleSidebar);
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
 
   // Smooth scroll for sidebar links
   document.querySelectorAll('.toc-link[href^="#"]').forEach(link => {

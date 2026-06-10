@@ -266,319 +266,333 @@
       <p>Click any card to open the full notes page. Each page has a collapsible sidebar for easy navigation.</p>
     </div>
 
-    <div class="section-title">Java Notes</div>
+    <!-- ══════════════════════════════════════════════════════════
+         CORE JAVA
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section-title">Core Java</div>
+    <div class="notes-grid">
 
-    <div class="notes-grid" id="notes-grid">
-
-      <!--
-        ╔══════════════════════════════════════════════════════════╗
-        ║  HOW TO ADD A NEW PAGE                                   ║
-        ║  1. Save your new HTML file inside the pages/ folder.    ║
-        ║  2. Copy one of the <a class="note-card"> blocks below.  ║
-        ║  3. Update href, card-icon, card-title, card-desc, tags  ║
-        ║     and --card-accent colour.                            ║
-        ║  That's it — the card appears on this home screen.       ║
-        ╚══════════════════════════════════════════════════════════╝
-      -->
-
-      <!-- CARD 1 — Spring Security -->
-      <a class="note-card" href="pages/Security.html" style="--card-accent: #f85149;">
-        <span class="card-icon">🔐</span>
-        <div class="card-title">Spring Security</div>
-        <div class="card-desc">Complete engineering notes: JWT, OAuth2, CSRF, filter chain, method security, cryptography &amp; more.</div>
-        <div class="card-tags">
-          <span class="tag red">Security</span>
-          <span class="tag">JWT</span>
-          <span class="tag">OAuth2</span>
-          <span class="tag green">Spring Boot</span>
-        </div>
+      <a class="note-card" href="pages/Java Core.html" style="--card-accent:#bc8cff;">
+        <span class="card-icon">☕</span>
+        <div class="card-title">Java Core</div>
+        <div class="card-desc">JVM internals, ClassLoader, Memory Model, GC, references, OOP deep dive, generics, streams &amp; functional programming.</div>
+        <div class="card-tags"><span class="tag purple">JVM</span><span class="tag purple">OOP</span><span class="tag">Streams</span><span class="tag">Core Java</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- CARD 2 — Spring Cloud -->
-      <a class="note-card" href="pages/Spring Cloud.html" style="--card-accent: #39d5d3;">
-        <span class="card-icon">☁️</span>
-        <div class="card-title">Spring Cloud &amp; Microservices</div>
-        <div class="card-desc">Distributed systems master notes: Eureka, Gateway, Circuit Breaker, Resilience4j, Tracing &amp; more.</div>
-        <div class="card-tags">
-          <span class="tag cyan">Microservices</span>
-          <span class="tag purple">Distributed</span>
-          <span class="tag green">Spring Cloud</span>
-        </div>
-        <span class="card-arrow">→</span>
-      </a>
-
-      <!-- ADD MORE CARDS BELOW THIS LINE ↓ -->
-
-      <!-- CARD 3 — OOPs -->
-      <a class="note-card" href="pages/OOPs.html" style="--card-accent: #bc8cff;">
+      <a class="note-card" href="pages/OOPs.html" style="--card-accent:#bc8cff;">
         <span class="card-icon">🌐</span>
         <div class="card-title">OOPs — 4 Pillars</div>
         <div class="card-desc">Abstraction, Encapsulation, Inheritance, Polymorphism, Static keyword, OOP vs FP — with tricky code snippets.</div>
-        <div class="card-tags">
-          <span class="tag purple">Abstraction</span>
-          <span class="tag purple">Polymorphism</span>
-          <span class="tag">Inheritance</span>
-          <span class="tag">Core Java</span>
-        </div>
+        <div class="card-tags"><span class="tag purple">Polymorphism</span><span class="tag purple">Inheritance</span><span class="tag">Core Java</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- CARD 4 — Collections Framework -->
-      <a class="note-card" href="pages/Collection Framework.html" style="--card-accent: #3fb950;">
+      <a class="note-card" href="pages/Collection Framework.html" style="--card-accent:#3fb950;">
         <span class="card-icon">🔗</span>
         <div class="card-title">Collections Framework</div>
-        <div class="card-desc">ArrayList, LinkedList, HashMap internals, Set/Map types, Queue, Comparable vs Comparator, CME, time complexity & coding problems.</div>
-        <div class="card-tags">
-          <span class="tag green">HashMap</span>
-          <span class="tag green">ArrayList</span>
-          <span class="tag">Internals</span>
-          <span class="tag">Core Java</span>
-        </div>
-        <span class="card-arrow">→</span>
-      </a>
-      
-      <a class="note-card" href="pages/REST.html" style="--card-accent: #9cb93f;">
-        <span class="card-icon">🔗</span>
-        <div class="card-title">RESTful API</div>
-        <div class="card-desc">Complete theory — internals — production patterns — 80+ interview Q&A.</div>
-        <div class="card-tags">
-          <span class="tag green">Protocols & Contracts</span>
-          <span class="tag green">HATEOS</span>
-          <span class="tag">Jackson</span>
-          <span class="tag">OpenAPI 3.0</span>
-        </div>
+        <div class="card-desc">ArrayList, LinkedList, HashMap internals, Set/Map types, Queue, Comparable vs Comparator, CME &amp; time complexity.</div>
+        <div class="card-tags"><span class="tag green">HashMap</span><span class="tag green">ArrayList</span><span class="tag">Internals</span><span class="tag">Core Java</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- CARD 5 — Exception Handling -->
-      <a class="note-card" href="pages/Exception Handling.html" style="--card-accent: #d29922;">
+      <a class="note-card" href="pages/Exception Handling.html" style="--card-accent:#d29922;">
         <span class="card-icon">⚠️</span>
         <div class="card-title">Exception Handling</div>
-        <div class="card-desc">Checked vs Unchecked, try-catch-finally, try-with-resources, custom exceptions, multi-catch, re-throw & edge cases.</div>
-        <div class="card-tags">
-          <span class="tag orange">Checked</span>
-          <span class="tag orange">Unchecked</span>
-          <span class="tag">Custom Exceptions</span>
-          <span class="tag">Core Java</span>
-        </div>
+        <div class="card-desc">Checked vs Unchecked, try-catch-finally, try-with-resources, custom exceptions, multi-catch &amp; edge cases.</div>
+        <div class="card-tags"><span class="tag orange">Checked</span><span class="tag orange">Unchecked</span><span class="tag">Core Java</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- CARD 6 — Multithreading & Concurrency -->
-      <a class="note-card" href="pages/Multithreading & Concurrency.html" style="--card-accent: #58a6ff;">
+      <a class="note-card" href="pages/Multithreading &amp; Concurrency.html" style="--card-accent:#58a6ff;">
         <span class="card-icon">🧵</span>
-        <div class="card-title">Multithreading & Concurrency</div>
-        <div class="card-desc">Thread creation, lifecycle, synchronization, volatile, locks, thread pools, CompletableFuture, deadlock, atomic variables & JMM.</div>
-        <div class="card-tags">
-          <span class="tag">Threads</span>
-          <span class="tag">Synchronization</span>
-          <span class="tag">CompletableFuture</span>
-          <span class="tag">JMM</span>
-        </div>
+        <div class="card-title">Multithreading &amp; Concurrency</div>
+        <div class="card-desc">Thread lifecycle, synchronization, volatile, locks, thread pools, CompletableFuture, deadlock &amp; JMM.</div>
+        <div class="card-tags"><span class="tag">Threads</span><span class="tag">Synchronization</span><span class="tag">JMM</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- CARD 7 — JVM Internals -->
-      <a class="note-card" href="pages/JVM, JRE, JDK & ClassLoader.html" style="--card-accent: #f0883e;">
+      <a class="note-card" href="pages/JVM, JRE, JDK &amp; ClassLoader.html" style="--card-accent:#f0883e;">
         <span class="card-icon">⚙️</span>
-        <div class="card-title">JVM, JRE, JDK & ClassLoader</div>
-        <div class="card-desc">JVM architecture, class loading & delegation model, runtime data areas, heap/stack, execution engine, JIT compiler & bytecode.</div>
-        <div class="card-tags">
-          <span class="tag orange">JVM</span>
-          <span class="tag orange">ClassLoader</span>
-          <span class="tag">JIT</span>
-          <span class="tag">Internals</span>
-        </div>
+        <div class="card-title">JVM, JRE, JDK &amp; ClassLoader</div>
+        <div class="card-desc">JVM architecture, class loading, runtime data areas, heap/stack, execution engine &amp; JIT compiler.</div>
+        <div class="card-tags"><span class="tag orange">JVM</span><span class="tag orange">ClassLoader</span><span class="tag">JIT</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- CARD 8 — Optional & Java 21 -->
-      <a class="note-card" href="pages/Optional Class & Java 21 Features.html" style="--card-accent: #39d5d3;">
-        <span class="card-icon">☕</span>
-        <div class="card-title">Optional & Java 21 Features</div>
-        <div class="card-desc">Optional class, Serialization, Records, Sealed Classes, Java 21 overview, Sequenced Collections & Virtual Threads (Project Loom).</div>
-        <div class="card-tags">
-          <span class="tag cyan">Optional</span>
-          <span class="tag cyan">Records</span>
-          <span class="tag cyan">Sealed Classes</span>
-          <span class="tag cyan">Java 21</span>
-        </div>
+      <a class="note-card" href="pages/Optional Class &amp; Java 21 Features.html" style="--card-accent:#39d5d3;">
+        <span class="card-icon">🆕</span>
+        <div class="card-title">Optional &amp; Java 21 Features</div>
+        <div class="card-desc">Optional class, Records, Sealed Classes, Sequenced Collections, Virtual Threads &amp; Java 21 overview.</div>
+        <div class="card-tags"><span class="tag cyan">Optional</span><span class="tag cyan">Records</span><span class="tag cyan">Java 21</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- CARD 9 — SOLID Principles -->
-      <a class="note-card" href="pages/SOLID Principle.html" style="--card-accent: #bc8cff;">
-        <span class="card-icon">🏛️</span>
-        <div class="card-title">SOLID Principles</div>
-        <div class="card-desc">SRP, OCP, LSP, ISP, DIP with real-world examples, Dependency Injection, IoC, Clean Code rules & summary cheat sheet.</div>
-        <div class="card-tags">
-          <span class="tag purple">SOLID</span>
-          <span class="tag purple">DI & IoC</span>
-          <span class="tag">Clean Code</span>
-          <span class="tag">Architecture</span>
-        </div>
-        <span class="card-arrow">→</span>
-      </a>
+    </div>
 
-      <!-- CARD 10 — Design Patterns -->
-      <a class="note-card" href="pages/Design Patterns.html" style="--card-accent: #f85149;">
-        <span class="card-icon">🏗️</span>
-        <div class="card-title">Design Patterns</div>
-        <div class="card-desc">Singleton, Factory, Strategy, Builder, Decorator, Parking Lot Design, Composition vs Aggregation & Immutable class patterns.</div>
-        <div class="card-tags">
-          <span class="tag red">Singleton</span>
-          <span class="tag red">Factory</span>
-          <span class="tag">Strategy</span>
-          <span class="tag">Architecture</span>
-        </div>
-        <span class="card-arrow">→</span>
-      </a>
+    <!-- ══════════════════════════════════════════════════════════
+         SPRING ECOSYSTEM
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section-title" style="margin-top:48px;">Spring Ecosystem</div>
+    <div class="notes-grid">
 
-      <!-- CARD 11 — Git VCS & CI/CD -->
-      <a class="note-card" href="pages/Git VCS.html" style="--card-accent: #f0883e;">
-        <span class="card-icon">🌿</span>
-        <div class="card-title">Git VCS & CI/CD</div>
-        <div class="card-desc">Git internals, branching strategies, merge/rebase, hooks, GitHub Actions, Jenkins pipelines & complete CI/CD design.</div>
-        <div class="card-tags">
-          <span class="tag orange">Git</span>
-          <span class="tag orange">CI/CD</span>
-          <span class="tag">GitHub Actions</span>
-          <span class="tag">Jenkins</span>
-        </div>
-        <span class="card-arrow">→</span>
-      </a>
-
-      <!-- CARD 12 — Java Core -->
-      <a class="note-card" href="pages/Java Core.html" style="--card-accent: #bc8cff;">
-        <span class="card-icon">☕</span>
-        <div class="card-title">Java Core</div>
-        <div class="card-desc">JVM internals, ClassLoader, Memory Model, GC, references, OOP deep dive, generics, streams, functional programming & more.</div>
-        <div class="card-tags">
-          <span class="tag purple">JVM</span>
-          <span class="tag purple">OOP</span>
-          <span class="tag">Streams</span>
-          <span class="tag">Core Java</span>
-        </div>
-        <span class="card-arrow">→</span>
-      </a>
-
-      <!-- CARD 13 — JPA -->
-      <a class="note-card" href="pages/JPA.html" style="--card-accent: #3fb950;">
-        <span class="card-icon">🗄️</span>
-        <div class="card-title">JPA Deep Dive</div>
-        <div class="card-desc">DAO & DTO, JDBC → ORM, JPA architecture, Spring Data JPA, JPQL, criteria queries, caching, transactions & N+1 problem.</div>
-        <div class="card-tags">
-          <span class="tag green">JPA</span>
-          <span class="tag green">Hibernate</span>
-          <span class="tag">Spring Data</span>
-          <span class="tag">SQL</span>
-        </div>
-        <span class="card-arrow">→</span>
-      </a>
-
-      <!-- CARD 14 — Spring Boot -->
-      <a class="note-card" href="pages/Spring Boot.html" style="--card-accent: #58a6ff;">
+      <a class="note-card" href="pages/Spring Boot.html" style="--card-accent:#58a6ff;">
         <span class="card-icon">🍃</span>
         <div class="card-title">Spring Boot</div>
-        <div class="card-desc">IoC, DI, Bean lifecycle, auto-configuration, starters, REST, validation, AOP, testing with JUnit & Mockito & production-ready features.</div>
-        <div class="card-tags">
-          <span class="tag">Spring Boot</span>
-          <span class="tag">REST</span>
-          <span class="tag">AOP</span>
-          <span class="tag green">Testing</span>
-        </div>
+        <div class="card-desc">IoC, DI, Bean lifecycle, auto-configuration, REST, validation, AOP, testing with JUnit &amp; Mockito.</div>
+        <div class="card-tags"><span class="tag">Spring Boot</span><span class="tag">REST</span><span class="tag">AOP</span><span class="tag green">Testing</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-    </div><!-- /#notes-grid -->
-
-    <!-- ══ DSA PATTERNS SECTION ══ -->
-    <div class="section-title" style="margin-top: 48px;">DSA Patterns</div>
-
-    <div class="notes-grid" id="patterns-grid">
-
-      <!-- PATTERN 01 — Two Pointers -->
-      <a class="note-card" href="pages/Pattern 01 - Two Pointer.html" style="--card-accent: #58a6ff;">
-        <span class="card-icon">👆👆</span>
-        <div class="card-title">Pattern 01 — Two Pointers</div>
-        <div class="card-desc">Coordinated pointer movement to eliminate nested loops. Opposite ends, same direction & partitioning varieties.</div>
-        <div class="card-tags">
-          <span class="tag">Arrays</span>
-          <span class="tag">O(n)</span>
-          <span class="tag cyan">DSA</span>
-        </div>
+      <a class="note-card" href="pages/Spring Cloud.html" style="--card-accent:#39d5d3;">
+        <span class="card-icon">☁️</span>
+        <div class="card-title">Spring Cloud &amp; Microservices</div>
+        <div class="card-desc">Eureka, Gateway, Circuit Breaker, Resilience4j, distributed tracing &amp; microservice patterns.</div>
+        <div class="card-tags"><span class="tag cyan">Microservices</span><span class="tag purple">Distributed</span><span class="tag green">Spring Cloud</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- PATTERN 02 — Sliding Window -->
-      <a class="note-card" href="pages/Pattern 02 - Sliding Window.html" style="--card-accent: #39d5d3;">
-        <span class="card-icon">🪟</span>
-        <div class="card-title">Pattern 02 — Sliding Window</div>
-        <div class="card-desc">Fixed & variable window over contiguous subarrays. Expand/shrink logic, character frequency maps & edge cases.</div>
-        <div class="card-tags">
-          <span class="tag cyan">Arrays</span>
-          <span class="tag cyan">Strings</span>
-          <span class="tag">O(n)</span>
-          <span class="tag">DSA</span>
-        </div>
+      <a class="note-card" href="pages/Security.html" style="--card-accent:#f85149;">
+        <span class="card-icon">🔐</span>
+        <div class="card-title">Spring Security</div>
+        <div class="card-desc">JWT, OAuth2, CSRF, filter chain, method security, cryptography &amp; complete authentication flows.</div>
+        <div class="card-tags"><span class="tag red">Security</span><span class="tag">JWT</span><span class="tag">OAuth2</span><span class="tag green">Spring Boot</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- PATTERN 03 — Binary Search -->
-      <a class="note-card" href="pages/Pattern 03 - Binary Search.html" style="--card-accent: #bc8cff;">
-        <span class="card-icon">🔍</span>
-        <div class="card-title">Pattern 03 — Binary Search</div>
-        <div class="card-desc">Eliminate half the search space every step. Classic, rotated arrays, answer-space search & monotonic predicates.</div>
-        <div class="card-tags">
-          <span class="tag purple">O(log n)</span>
-          <span class="tag purple">Sorted</span>
-          <span class="tag">DSA</span>
-        </div>
+      <a class="note-card" href="pages/JPA.html" style="--card-accent:#3fb950;">
+        <span class="card-icon">🗄️</span>
+        <div class="card-title">JPA Deep Dive</div>
+        <div class="card-desc">DAO &amp; DTO, JDBC → ORM, JPA architecture, Spring Data JPA, JPQL, caching, transactions &amp; N+1 problem.</div>
+        <div class="card-tags"><span class="tag green">JPA</span><span class="tag green">Hibernate</span><span class="tag">Spring Data</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- PATTERN 04 — Prefix Sum -->
-      <a class="note-card" href="pages/Pattern 04 - Prefix Sum.html" style="--card-accent: #f0883e;">
-        <span class="card-icon">➕</span>
-        <div class="card-title">Pattern 04 — Prefix Sum</div>
-        <div class="card-desc">Pre-compute cumulative sums for O(1) range queries. 1D & 2D prefix arrays, running totals & subarray problems.</div>
-        <div class="card-tags">
-          <span class="tag orange">O(1) Query</span>
-          <span class="tag orange">Arrays</span>
-          <span class="tag">DSA</span>
-        </div>
+      <a class="note-card" href="pages/REST.html" style="--card-accent:#9cb93f;">
+        <span class="card-icon">🌐</span>
+        <div class="card-title">RESTful Web Services</div>
+        <div class="card-desc">REST principles, HTTP methods, Spring MVC, request/response, validation, exception handling &amp; best practices.</div>
+        <div class="card-tags"><span class="tag green">REST</span><span class="tag">HTTP</span><span class="tag">Spring MVC</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- PATTERN 05 — Fast & Slow Pointers -->
-      <a class="note-card" href="pages/Pattern 05 - Fast Slow Pointer.html" style="--card-accent: #f85149;">
+      <a class="note-card" href="pages/JUnit.html" style="--card-accent:#3fb950;">
+        <span class="card-icon">🧪</span>
+        <div class="card-title">JUnit 5 &amp; Mockito</div>
+        <div class="card-desc">Complete testing guide: JUnit 5 annotations, assertions, Mockito mocking, integration tests &amp; test-driven development.</div>
+        <div class="card-tags"><span class="tag green">JUnit 5</span><span class="tag green">Mockito</span><span class="tag">TDD</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SYSTEM DESIGN
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section-title" style="margin-top:48px;">System Design</div>
+    <div class="notes-grid">
+
+      <a class="note-card" href="pages/02 Database.html" style="--card-accent:#58a6ff;">
+        <span class="card-icon">🗃️</span>
+        <div class="card-title">Databases</div>
+        <div class="card-desc">SQL vs NoSQL, indexing, transactions, ACID, replication, sharding, CAP theorem &amp; choosing the right storage.</div>
+        <div class="card-tags"><span class="tag">SQL</span><span class="tag">NoSQL</span><span class="tag">Indexing</span><span class="tag">CAP</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/03 Caching.html" style="--card-accent:#f0883e;">
         <span class="card-icon">⚡</span>
-        <div class="card-title">Pattern 05 — Fast & Slow Pointers</div>
-        <div class="card-desc">Floyd's cycle detection rhythm — detect loops, find middle nodes, detect start of cycle in linked lists.</div>
-        <div class="card-tags">
-          <span class="tag red">Linked List</span>
-          <span class="tag red">Cycle</span>
-          <span class="tag">DSA</span>
-        </div>
+        <div class="card-title">Caching</div>
+        <div class="card-desc">Cache strategies, eviction policies, Redis patterns, CDN, write-through vs write-back &amp; cache stampede.</div>
+        <div class="card-tags"><span class="tag orange">Redis</span><span class="tag orange">CDN</span><span class="tag">Eviction</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-      <!-- PATTERN 06 — BFS -->
-      <a class="note-card" href="pages/Pattern 06 - BFS.html" style="--card-accent: #d29922;">
+      <a class="note-card" href="pages/05 Message Queue.html" style="--card-accent:#bc8cff;">
+        <span class="card-icon">📨</span>
+        <div class="card-title">Message Queues</div>
+        <div class="card-desc">Kafka, RabbitMQ, async messaging patterns, pub/sub, event-driven architecture &amp; at-least-once delivery.</div>
+        <div class="card-tags"><span class="tag purple">Kafka</span><span class="tag purple">RabbitMQ</span><span class="tag">Event-Driven</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Service Discovery, API Gateway &amp; Client-Side Patterns.html" style="--card-accent:#39d5d3;">
+        <span class="card-icon">🔀</span>
+        <div class="card-title">Service Discovery &amp; API Gateway</div>
+        <div class="card-desc">Service discovery patterns, API gateway design, client-side load balancing, circuit breaker &amp; sidecar proxy.</div>
+        <div class="card-tags"><span class="tag cyan">API Gateway</span><span class="tag cyan">Service Mesh</span><span class="tag">Patterns</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ARCHITECTURE & DESIGN
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section-title" style="margin-top:48px;">Architecture &amp; Design</div>
+    <div class="notes-grid">
+
+      <a class="note-card" href="pages/SOLID Principle.html" style="--card-accent:#bc8cff;">
+        <span class="card-icon">🏛️</span>
+        <div class="card-title">SOLID Principles</div>
+        <div class="card-desc">SRP, OCP, LSP, ISP, DIP with real-world examples, Dependency Injection, IoC &amp; Clean Code rules.</div>
+        <div class="card-tags"><span class="tag purple">SOLID</span><span class="tag purple">DI &amp; IoC</span><span class="tag">Clean Code</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Design Patterns.html" style="--card-accent:#f85149;">
+        <span class="card-icon">🏗️</span>
+        <div class="card-title">Design Patterns</div>
+        <div class="card-desc">Singleton, Factory, Strategy, Builder, Decorator, Parking Lot Design, Composition vs Aggregation &amp; Immutable class.</div>
+        <div class="card-tags"><span class="tag red">Singleton</span><span class="tag red">Factory</span><span class="tag">Strategy</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/LLD.html" style="--card-accent:#f0883e;">
+        <span class="card-icon">📐</span>
+        <div class="card-title">Low Level Design (LLD)</div>
+        <div class="card-desc">LLD interview guide: class diagrams, object modelling, design problems, UML &amp; step-by-step system design approach.</div>
+        <div class="card-tags"><span class="tag orange">LLD</span><span class="tag orange">UML</span><span class="tag">Interview</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Git VCS.html" style="--card-accent:#f0883e;">
+        <span class="card-icon">🌿</span>
+        <div class="card-title">Git VCS &amp; CI/CD</div>
+        <div class="card-desc">Git internals, branching strategies, merge/rebase, hooks, GitHub Actions, Jenkins pipelines &amp; CI/CD design.</div>
+        <div class="card-tags"><span class="tag orange">Git</span><span class="tag orange">CI/CD</span><span class="tag">GitHub Actions</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         DSA PATTERNS
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section-title" style="margin-top:48px;">DSA Patterns</div>
+    <div class="notes-grid">
+
+      <a class="note-card" href="pages/Pattern 01 - Two Pointer.html" style="--card-accent:#58a6ff;">
+        <span class="card-icon">👆👆</span>
+        <div class="card-title">01 — Two Pointers</div>
+        <div class="card-desc">Coordinated pointer movement to eliminate nested loops. Opposite ends, same direction &amp; partitioning.</div>
+        <div class="card-tags"><span class="tag">Arrays</span><span class="tag">O(n)</span><span class="tag cyan">DSA</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 02 - Sliding Window.html" style="--card-accent:#39d5d3;">
+        <span class="card-icon">🪟</span>
+        <div class="card-title">02 — Sliding Window</div>
+        <div class="card-desc">Fixed &amp; variable window over contiguous subarrays. Expand/shrink logic &amp; character frequency maps.</div>
+        <div class="card-tags"><span class="tag cyan">Arrays</span><span class="tag cyan">Strings</span><span class="tag">O(n)</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 03 - Binary Search.html" style="--card-accent:#bc8cff;">
+        <span class="card-icon">🔍</span>
+        <div class="card-title">03 — Binary Search</div>
+        <div class="card-desc">Eliminate half the search space. Classic, rotated arrays, answer-space search &amp; monotonic predicates.</div>
+        <div class="card-tags"><span class="tag purple">O(log n)</span><span class="tag purple">Sorted</span><span class="tag">DSA</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 04 - Prefix Sum.html" style="--card-accent:#f0883e;">
+        <span class="card-icon">➕</span>
+        <div class="card-title">04 — Prefix Sum</div>
+        <div class="card-desc">Pre-compute cumulative sums for O(1) range queries. 1D &amp; 2D prefix arrays &amp; subarray problems.</div>
+        <div class="card-tags"><span class="tag orange">O(1) Query</span><span class="tag orange">Arrays</span><span class="tag">DSA</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 05 - Fast Slow Pointer.html" style="--card-accent:#f85149;">
+        <span class="card-icon">⚡</span>
+        <div class="card-title">05 — Fast &amp; Slow Pointers</div>
+        <div class="card-desc">Floyd's cycle detection — detect loops, find middle nodes &amp; start of cycle in linked lists.</div>
+        <div class="card-tags"><span class="tag red">Linked List</span><span class="tag red">Cycle</span><span class="tag">DSA</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 06 - BFS.html" style="--card-accent:#d29922;">
         <span class="card-icon">🌊</span>
-        <div class="card-title">Pattern 06 — BFS</div>
-        <div class="card-desc">Level-by-level traversal using queues. Shortest path, graph traversal, level order & multi-source BFS.</div>
-        <div class="card-tags">
-          <span class="tag orange">Graphs</span>
-          <span class="tag orange">Trees</span>
-          <span class="tag">Shortest Path</span>
-          <span class="tag">DSA</span>
-        </div>
+        <div class="card-title">06 — BFS</div>
+        <div class="card-desc">Level-by-level traversal using queues. Shortest path, graph traversal &amp; multi-source BFS.</div>
+        <div class="card-tags"><span class="tag orange">Graphs</span><span class="tag orange">Trees</span><span class="tag">Shortest Path</span></div>
         <span class="card-arrow">→</span>
       </a>
 
-    </div><!-- /#patterns-grid -->
+      <a class="note-card" href="pages/Pattern 07 - DFS.html" style="--card-accent:#bc8cff;">
+        <span class="card-icon">🌲</span>
+        <div class="card-title">07 — DFS</div>
+        <div class="card-desc">Go deep then come back. Tree/graph traversal, path finding, connected components &amp; topological sort.</div>
+        <div class="card-tags"><span class="tag purple">Graphs</span><span class="tag purple">Trees</span><span class="tag">Recursion</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 08 - Backtracking.html" style="--card-accent:#f85149;">
+        <span class="card-icon">↩️</span>
+        <div class="card-title">08 — Backtracking</div>
+        <div class="card-desc">Explore all possibilities and prune invalid paths. Permutations, combinations, subsets &amp; constraint satisfaction.</div>
+        <div class="card-tags"><span class="tag red">Permutations</span><span class="tag red">Subsets</span><span class="tag">DSA</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 12 - Dynamic Programming.html" style="--card-accent:#3fb950;">
+        <span class="card-icon">📈</span>
+        <div class="card-title">12 — Dynamic Programming</div>
+        <div class="card-desc">Memoization, tabulation, state transitions. Knapsack, LCS, LIS, coin change &amp; interval DP.</div>
+        <div class="card-tags"><span class="tag green">DP</span><span class="tag green">Memoization</span><span class="tag">Optimization</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 13 - Advance Patterns.html" style="--card-accent:#39d5d3;">
+        <span class="card-icon">🚀</span>
+        <div class="card-title">13 — Advanced Patterns</div>
+        <div class="card-desc">Monotonic stack/queue, union-find, segment tree, trie, bit manipulation &amp; advanced pattern quick reference.</div>
+        <div class="card-tags"><span class="tag cyan">Monotonic</span><span class="tag cyan">Trie</span><span class="tag">Advanced</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Pattern 14 - Graph.html" style="--card-accent:#58a6ff;">
+        <span class="card-icon">🕸️</span>
+        <div class="card-title">14 — Advanced Graphs</div>
+        <div class="card-desc">Dijkstra, Bellman-Ford, Floyd-Warshall, Kruskal, Prim's MST, SCC &amp; advanced graph algorithms.</div>
+        <div class="card-tags"><span class="tag">Dijkstra</span><span class="tag">MST</span><span class="tag">Advanced</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Cheat Sheet - 28 Pattern.html" style="--card-accent:#d29922;">
+        <span class="card-icon">📋</span>
+        <div class="card-title">All 28 Patterns — Cheat Sheet</div>
+        <div class="card-desc">Quick reference for all 28 AlgoSensei DSA patterns in one page. Pattern recognition signals &amp; templates.</div>
+        <div class="card-tags"><span class="tag orange">Reference</span><span class="tag orange">28 Patterns</span><span class="tag">DSA</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         CAREER & SOFT SKILLS
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section-title" style="margin-top:48px;">Career &amp; Soft Skills</div>
+    <div class="notes-grid">
+
+      <a class="note-card" href="pages/Elite Engineer Blueprint.html" style="--card-accent:#f0883e;">
+        <span class="card-icon">🏆</span>
+        <div class="card-title">Elite Engineer Blueprint</div>
+        <div class="card-desc">Engineering excellence framework: code quality habits, communication, ownership mindset &amp; career acceleration.</div>
+        <div class="card-tags"><span class="tag orange">Career</span><span class="tag orange">Mindset</span><span class="tag">Excellence</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="note-card" href="pages/Socializing.html" style="--card-accent:#bc8cff;">
+        <span class="card-icon">🤝</span>
+        <div class="card-title">Socializing &amp; Presence</div>
+        <div class="card-desc">Presence, power &amp; effortless social mastery — communication frameworks, confidence &amp; networking strategies.</div>
+        <div class="card-tags"><span class="tag purple">Soft Skills</span><span class="tag purple">Communication</span><span class="tag">Presence</span></div>
+        <span class="card-arrow">→</span>
+      </a>
+
+    </div>
 
   </div><!-- /.page-wrapper -->
 

@@ -1212,20 +1212,26 @@ answer: max(dp)²</div>
     document.getElementById('topBtn').style.opacity = top > 400 ? '1' : '0';
   });
 
-  // ── Sidebar Toggle ────────────────────────────────
-  const hamburger = document.getElementById('hamburger');
-  const sidebar   = document.getElementById('sidebar');
-  const overlay   = document.getElementById('sidebar-overlay');
-
-  function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('active'); hamburger.classList.add('active'); }
-  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); hamburger.classList.remove('active'); }
-
-  hamburger.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
-  overlay.addEventListener('click', closeSidebar);
-
-  // Close sidebar on nav link click (mobile)
-  document.querySelectorAll('.toc-link').forEach(link => {
-    link.addEventListener('click', () => { if (window.innerWidth < 900) closeSidebar(); });
+  // ── Sidebar toggle ──────────────────────────────────────────────────────
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed',
+        document.body.classList.contains('sidebar-collapsed'));
+    }
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
   });
 
   // ── Active TOC highlight on scroll ───────────────

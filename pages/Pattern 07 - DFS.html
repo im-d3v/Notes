@@ -1242,27 +1242,27 @@ grid[r][c] = <span class="str">'1'</span>;       <span class="cmt">// UNDO choic
     document.getElementById('topBtn').style.opacity = scroll > 300 ? '1' : '0';
   });
 
-  // Hamburger / sidebar
-  const hamburger = document.getElementById('hamburger');
-  const sidebar   = document.getElementById('sidebar');
-  const overlay   = document.getElementById('sidebar-overlay');
-  const main      = document.getElementById('main');
-
-  function openSidebar() {
-    sidebar.classList.add('open');
-    overlay.classList.add('active');
-    hamburger.classList.add('active');
+  // ── Sidebar toggle ──────────────────────────────────────────────────────
+  function toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.body.classList.toggle('sidebar-open');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed',
+        document.body.classList.contains('sidebar-collapsed'));
+    }
   }
-  function closeSidebar() {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('active');
-    hamburger.classList.remove('active');
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('sidebar-collapsed');
   }
-
-  hamburger.addEventListener('click', () =>
-    sidebar.classList.contains('open') ? closeSidebar() : openSidebar()
-  );
-  overlay.addEventListener('click', closeSidebar);
+  document.getElementById('hamburger').onclick = toggleSidebar;
+  document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+  document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+    });
+  });
 
   // Active nav link on scroll
   const sections = document.querySelectorAll('.section[id]');

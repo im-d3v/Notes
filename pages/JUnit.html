@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JUnit 5 & Mockito — Complete Study Notes</title>
+    <link rel="stylesheet" href="../assets/css/notes-theme.css" />
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #1a1a2e 40%, #16213e 100%);
+        }
+
+        .junit-tree {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: #010409;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px 24px;
+            overflow-x: auto;
+        }
+
+        .junit-tree .t-platform {
+            color: #58a6ff;
+            font-weight: bold;
+        }
+
+        .junit-tree .t-jupiter {
+            color: #3fb950;
+            font-weight: bold;
+        }
+
+        .junit-tree .t-vintage {
+            color: #d29922;
+            font-weight: bold;
+        }
+
+        .junit-tree .t-third {
+            color: #bc8cff;
+            font-weight: bold;
+        }
+
+        .junit-tree .t-dim {
+            color: #6e7681;
+        }
+
+        /* Lifecycle animation */
+        .lifecycle-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 520px;
+            margin: 16px auto;
+        }
+
+        .lf-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 18px;
+            border-radius: 6px;
+            transition: background 0.2s, transform 0.2s;
+            cursor: default;
+        }
+
+        .lf-item:hover {
+            transform: translateX(6px);
+        }
+
+        .lf-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+
+        .lf-ba {
+            background: rgba(188, 140, 255, 0.15);
+            color: #bc8cff;
+            border: 1px solid rgba(188, 140, 255, 0.3);
+        }
+
+        .lf-be {
+            background: rgba(57, 213, 211, 0.12);
+            color: #39d5d3;
+            border: 1px solid rgba(57, 213, 211, 0.3);
+        }
+
+        .lf-t {
+            background: rgba(63, 185, 80, 0.12);
+            color: #3fb950;
+            border: 1px solid rgba(63, 185, 80, 0.3);
+        }
+
+        .lf-ae {
+            background: rgba(57, 213, 211, 0.08);
+            color: #39d5d3;
+            border: 1px solid rgba(57, 213, 211, 0.2);
+        }
+
+        .lf-aa {
+            background: rgba(188, 140, 255, 0.08);
+            color: #bc8cff;
+            border: 1px solid rgba(188, 140, 255, 0.2);
+        }
+
+        .lf-arrow {
+            color: #6e7681;
+            font-size: 18px;
+            text-align: center;
+            line-height: 1;
+            margin-left: 30px;
+        }
+
+        .lf-desc {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Runtime flow */
+        .runtime-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .rf-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 14px 0;
+            border-left: 2px solid #21262d;
+            margin-left: 20px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .rf-step::before {
+            content: attr(data-n);
+            position: absolute;
+            left: -13px;
+            top: 14px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 2px solid #58a6ff;
+            color: #58a6ff;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rf-step:last-child {
+            border-left-color: transparent;
+        }
+
+        .rf-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .rf-sub {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        /* Mock vs spy visual */
+        .mock-spy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .ms-card {
+            border-radius: 8px;
+            padding: 18px;
+        }
+
+        .ms-mock {
+            background: rgba(88, 166, 255, 0.07);
+            border: 1px solid rgba(88, 166, 255, 0.25);
+        }
+
+        .ms-spy {
+            background: rgba(63, 185, 80, 0.07);
+            border: 1px solid rgba(63, 185, 80, 0.25);
+        }
+
+        .ms-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+
+        .ms-mock .ms-title {
+            color: #58a6ff;
+        }
+
+        .ms-spy .ms-title {
+            color: #3fb950;
+        }
+
+        .ms-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            padding: 4px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .ms-row .dot {
+            flex-shrink: 0;
+            margin-top: 5px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .ms-mock .dot {
+            background: #58a6ff;
+        }
+
+        .ms-spy .dot {
+            background: #3fb950;
+        }
+
+        @media(max-width:640px) {
+            .mock-spy-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Captor highlight */
+        .captor-flow {
+            display: flex;
+            gap: 0;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 12px 0;
+        }
+
+        .cf-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .cf-box b {
+            color: var(--text-primary);
+        }
+
+        .cf-arr {
+            color: #58a6ff;
+            font-size: 18px;
+            padding: 0 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <!-- Hamburger -->
+    <button id="hamburger" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+    </button>
+
+    <!-- Overlay -->
+    <div id="sidebar-overlay"></div>
+
+    <!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">☕</div>
+            <div>
+                <div class="sidebar-title">JUnit 5 & Mockito</div>
+                <div class="sidebar-subtitle">Complete Study Notes</div>
+            </div>
+        </div>
+
+        <div class="toc-section-label">Navigation</div>
+        <a href="../index.html" class="toc-link">🏠 Home</a>
+
+        <div class="toc-section-label">Part 1 — JUnit Architecture</div>
+        <a href="#why-junit5" class="toc-link">1. Why JUnit 5 Is Different</a>
+        <a href="#three-modules" class="toc-link">2. The Three Modules</a>
+        <a href="#engine-api" class="toc-link">3. The Test Engine API</a>
+        <a href="#runtime-flow" class="toc-link">4. How It All Connects</a>
+        <a href="#dependencies" class="toc-link">5. Dependencies Explained</a>
+
+        <div class="toc-section-label">Part 2 — Jupiter in Practice</div>
+        <a href="#lifecycle" class="toc-link">6. Test Lifecycle</a>
+        <a href="#annotations" class="toc-link">7. Core Test Annotations</a>
+        <a href="#assertions" class="toc-link">8. Assertions</a>
+        <a href="#parameterized" class="toc-link">9. Parameterized Tests</a>
+        <a href="#extensions" class="toc-link">10. Extensions — @ExtendWith</a>
+
+        <div class="toc-section-label">Part 3 — Mockito</div>
+        <a href="#why-mockito" class="toc-link">11. Why Mockito Exists</a>
+        <a href="#mock-stub-spy" class="toc-link">12. Mock vs Stub vs Spy</a>
+        <a href="#setup-mockito" class="toc-link">13. Setting Up Mockito</a>
+        <a href="#stubbing" class="toc-link">14. Stubbing Behavior</a>
+        <a href="#arg-matchers" class="toc-link">15. Argument Matchers</a>
+        <a href="#verification" class="toc-link">16. Verification</a>
+        <a href="#captor" class="toc-link">17. Argument Captor</a>
+        <a href="#bdd-mockito" class="toc-link">18. BDD Mockito Style</a>
+        <a href="#mistakes" class="toc-link">19. Common Mistakes</a>
+        <a href="#full-example" class="toc-link">20. Putting It Together</a>
+        <a href="#quick-ref" class="toc-link">📋 Quick Reference</a>
+    </nav>
+
+    <!-- ═══════════════════════════ MAIN ═══════════════════════════ -->
+    <main id="main">
+
+        <!-- HERO -->
+        <div class="hero">
+            <div class="hero-content">
+                <div class="hero-eyebrow">Java Testing Ecosystem</div>
+                <h1>JUnit 5 & Mockito</h1>
+                <p class="hero-subtitle">
+                    A senior engineer's guide to writing tests that actually mean something —
+                    from the platform architecture down to the last <code>verify()</code> call.
+                </p>
+                <div class="hero-badges">
+                    <span class="tag tag-blue">JUnit Platform</span>
+                    <span class="tag tag-green">JUnit Jupiter</span>
+                    <span class="tag tag-yellow">JUnit Vintage</span>
+                    <span class="tag tag-purple">Mockito 5</span>
+                    <span class="tag tag-cyan">Java 17+</span>
+                    <span class="tag tag-orange">Interview Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+       PART 1
+  ══════════════════════════════════════════════════════════════ -->
+        <div class="part-header">
+            <div class="part-number" style="background:var(--gradient-blue);">01</div>
+            <div>
+                <h2>The JUnit Architecture</h2>
+                <p>Why JUnit 5 is three separate things — and why that's brilliant.</p>
+            </div>
+        </div>
+
+        <!-- SECTION 1 -->
+        <div class="section" id="why-junit5">
+            <div class="section-header">
+                <h3>🏗️ Why JUnit 5 Is Different From JUnit 4</h3>
+            </div>
+
+            <div class="card">
+                <p>JUnit 4 was a single monolithic JAR. Everything — the API you wrote tests with,
+                    the engine that ran them, and the extension model — was baked into one artifact.
+                    This worked fine until people wanted to run <em>other</em> kinds of tests on the same
+                    platform: Cucumber scenarios, Spock specs, Kotlin tests.</p>
+                <p>There was no hook for that. JUnit 4 either ran your tests, or it didn't.</p>
+                <p>JUnit 5 blew up this assumption. The team separated three distinct concerns
+                    into three separate modules. Understanding this split is understanding why JUnit 5
+                    is so much more powerful.</p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card-mini">
+                    <h4>JUnit 4 Reality</h4>
+                    <ul>
+                        <li>One monolithic JAR</li>
+                        <li>API + engine tightly coupled</li>
+                        <li>Extensions via <code>@RunWith</code> — clunky</li>
+                        <li>Only one runner per test class</li>
+                        <li>No nested test support</li>
+                    </ul>
+                </div>
+                <div class="card-mini">
+                    <h4>JUnit 5 Reality</h4>
+                    <ul>
+                        <li>Three separate modules</li>
+                        <li>Clean separation: API vs engine vs platform</li>
+                        <li>Extensions via <code>@ExtendWith</code> — composable</li>
+                        <li>Multiple engines running simultaneously</li>
+                        <li>First-class nested tests, parameterized, dynamic</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="callout info">
+                <div class="icon">💡</div>
+                <div class="body">
+                    <strong>The Core Insight</strong>
+                    <p>JUnit 4's architecture forced IDE vendors, build tools, and test framework
+                        authors to hard-code JUnit 4 knowledge everywhere. JUnit 5 introduces a
+                        universal <em>test platform</em> that any test engine can plug into — decoupling
+                        the test execution infrastructure from the test programming model.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2 -->
+        <div class="section" id="three-modules">
+            <div class="section-header">
+                <h3>🔬 The Three Modules — The Hierarchy</h3>
+            </div>
+
+            <div class="card">
+                <h4>The Big Picture</h4>
+                <div class="junit-tree">
+                    <pre>
+<span class="t-dim">JUnit 5 = JUnit Platform + JUnit Jupiter + JUnit Vintage</span>
+
+┌──────────────────────────────────────────────────────────────┐
+│                     <span class="t-platform">JUnit Platform</span>                           │
+│  The foundation — launches, discovers, and reports tests     │
+│  Provides: TestEngine API, Launcher API, build tool support  │
+│                                                              │
+│  ┌──────────────────────┐  ┌──────────────────────────────┐  │
+│  │   <span class="t-jupiter">JUnit Jupiter</span>       │  │      <span class="t-vintage">JUnit Vintage</span>          │  │
+│  │                      │  │                              │  │
+│  │  New JUnit 5 API     │  │  Backward compatibility      │  │
+│  │  (what YOU write)    │  │  layer for JUnit 3 & 4 tests │  │
+│  │                      │  │                              │  │
+│  │  • jupiter-api       │  │  • junit-vintage-engine      │  │
+│  │  • jupiter-engine    │  │  • Required only for         │  │
+│  │  • jupiter-params    │  │    migration                 │  │
+│  └──────────────────────┘  └──────────────────────────────┘  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ <span class="t-third">Third-party engines</span>: Spock · Cucumber · TestNG         │  │
+│  │ Any engine that implements the TestEngine interface    │  │
+│  └────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+            </div>
+
+            <h4>JUnit Platform — The Foundation</h4>
+            <div class="card">
+                <p>The Platform is the infrastructure layer. It doesn't know about <code>@Test</code>.
+                    It doesn't know what a "test class" is. Its only job is: <em>find engines on the
+                        classpath, ask each engine to discover its tests, then run them.</em></p>
+                <p>Think of it as an airport. It doesn't care whether you're flying United or Delta.
+                    It provides gates, runways, and the control tower. Each airline (engine) operates
+                    its own flights (tests).</p>
+                <ul>
+                    <li><strong>TestEngine API</strong> — the contract any engine must implement</li>
+                    <li><strong>Launcher API</strong> — how build tools (Maven/Gradle) trigger test runs</li>
+                    <li><strong>Console Launcher</strong> — run tests from the terminal</li>
+                    <li><strong>Build tool integrations</strong> — Maven Surefire, Gradle Test task</li>
+                </ul>
+            </div>
+
+            <h4>JUnit Jupiter — What You Write Every Day</h4>
+            <div class="card">
+                <p>Jupiter is the new programming model for JUnit 5. This is where all the APIs
+                    you use daily live: <code>@Test</code>, <code>@BeforeEach</code>, <code>Assertions</code>,
+                    <code>@ParameterizedTest</code>, etc.
+                </p>
+                <p>Jupiter is itself split into two artifacts:</p>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Artifact</th>
+                                <th>What it contains</th>
+                                <th>Who uses it</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>junit-jupiter-api</code></td>
+                                <td>All annotations, assertions, extension SPI — what your test code imports</td>
+                                <td>Your test source code</td>
+                            </tr>
+                            <tr>
+                                <td><code>junit-jupiter-engine</code></td>
+                                <td>The engine that discovers and runs Jupiter tests on the platform</td>
+                                <td>Runtime only — never imported directly</td>
+                            </tr>
+                            <tr>
+                                <td><code>junit-jupiter-params</code></td>
+                                <td><code>@ParameterizedTest</code>, <code>@ValueSource</code>, <code>@CsvSource</code>,
+                                    etc.</td>
+                                <td>Your test source code</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="callout purple">
+                    <div class="icon">🎯</div>
+                    <div class="body">
+                        <strong>Interview Tip</strong>
+                        <p>If asked "what is JUnit Jupiter?", say: <em>"Jupiter is the new programming model and
+                                extension model introduced in JUnit 5. It consists of the API jar (what developers write
+                                against) and the engine jar (what runs those tests on the JUnit Platform)."</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <h4>JUnit Vintage — The Bridge to the Past</h4>
+            <div class="card">
+                <p>If you have a project with 2,000 JUnit 4 tests, you can't migrate them overnight.
+                    Vintage lets you run those old tests on the new platform unchanged — side by side with
+                    new Jupiter tests in the same build.</p>
+                <p>It's purely a migration tool. If your project is greenfield, you never need it.</p>
+                <div class="callout warn">
+                    <div class="icon">⚠️</div>
+                    <div class="body">
+                        <strong>Don't confuse Vintage with Legacy</strong>
+                        <p>Vintage doesn't mean "JUnit 5 supports running on old JUnit 4 runtime." It means
+                            "JUnit 4 tests can run on JUnit 5 Platform." The direction matters in interviews.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3 -->
+        <div class="section" id="engine-api">
+            <div class="section-header">
+                <h3>⚙️ The Test Engine API</h3>
+            </div>
+
+            <div class="card">
+                <p>A <code>TestEngine</code> is just an interface with two methods. That's it.
+                    Any framework — Spock, Cucumber, your own custom framework — can become a first-class
+                    citizen on the JUnit Platform by implementing this interface.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">TestEngine interface (simplified)</span>
+                    </div>
+                    <pre><code><span class="kw">public interface</span> <span class="type">TestEngine</span> {
+
+    <span class="cmt">// Step 1: Platform asks "what tests do you have?"</span>
+    <span class="type">TestDescriptor</span> <span class="fn">discover</span>(<span class="type">EngineDiscoveryRequest</span> discoveryRequest,
+                                <span class="type">UniqueId</span> uniqueId);
+
+    <span class="cmt">// Step 2: Platform says "run these tests"</span>
+    <span class="kw">void</span> <span class="fn">execute</span>(<span class="type">ExecutionRequest</span> request);
+
+    <span class="cmt">// Optional: unique ID for this engine</span>
+    <span class="kw">default</span> <span class="type">String</span> <span class="fn">getId</span>() { <span class="kw">return</span> <span class="str">"my-custom-engine"</span>; }
+}</code></pre>
+                </div>
+
+                <p><code>discover()</code> receives filtering criteria (run only these packages, these tags, etc.)
+                    and returns a tree of <code>TestDescriptor</code> nodes — essentially a map of everything the
+                    engine found to run.</p>
+                <p><code>execute()</code> receives that tree plus a listener to report events: test started, passed,
+                    failed, skipped. The Platform aggregates these events from all engines and sends them to your IDE or
+                    build report.</p>
+            </div>
+
+            <div class="callout success">
+                <div class="icon">🔥</div>
+                <div class="body">
+                    <strong>Why This Design Is Brilliant</strong>
+                    <p>Before JUnit 5, IDEs had to special-case every test framework. Now any framework
+                        that implements <code>TestEngine</code> gets IDE support, build tool support, and coverage
+                        tool support for free. The Platform handles all of that.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4 -->
+        <div class="section" id="runtime-flow">
+            <div class="section-header">
+                <h3>🔄 How It All Connects in Practice</h3>
+            </div>
+
+            <div class="card">
+                <h4>The Runtime Flow</h4>
+                <div class="runtime-flow">
+                    <div class="rf-step" data-n="1">
+                        <div>
+                            <div class="rf-title">Build Tool Triggers the Platform</div>
+                            <div class="rf-sub">Maven Surefire / Gradle Test task calls
+                                <code>LauncherFactory.create()</code> and invokes <code>Launcher.discover()</code> then
+                                <code>Launcher.execute()</code>.</div>
+                        </div>
+                    </div>
+                    <div class="rf-step" data-n="2">
+                        <div>
+                            <div class="rf-title">Platform Scans Classpath for Engines</div>
+                            <div class="rf-sub">Uses Java ServiceLoader to find all <code>TestEngine</code>
+                                implementations. Finds <code>JupiterTestEngine</code>, possibly
+                                <code>VintageTestEngine</code>.</div>
+                        </div>
+                    </div>
+                    <div class="rf-step" data-n="3">
+                        <div>
+                            <div class="rf-title">Each Engine Discovers Its Tests</div>
+                            <div class="rf-sub"><code>JupiterTestEngine.discover()</code> scans for classes with
+                                <code>@Test</code> methods and builds a descriptor tree. Vintage does the same for
+                                <code>@RunWith</code> classes.</div>
+                        </div>
+                    </div>
+                    <div class="rf-step" data-n="4">
+                        <div>
+                            <div class="rf-title">Platform Executes All Discovered Tests</div>
+                            <div class="rf-sub">Each engine's <code>execute()</code> is called with its descriptor tree.
+                                Engines run tests and fire events (started/passed/failed) back to the platform.</div>
+                        </div>
+                    </div>
+                    <div class="rf-step" data-n="5">
+                        <div>
+                            <div class="rf-title">Results Aggregated and Reported</div>
+                            <div class="rf-sub">Platform aggregates all events into a unified report. Your IDE shows
+                                green/red. Maven prints the summary. Coverage tools record what ran.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <div class="section" id="dependencies">
+            <div class="section-header">
+                <h3>📦 Dependencies Explained</h3>
+            </div>
+
+            <div class="card">
+                <h4>Maven — The Correct Setup</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">XML</span>
+                        <span class="code-title">pom.xml — JUnit 5 dependencies</span>
+                    </div>
+                    <pre><code><span class="tag">&lt;dependencies&gt;</span>
+
+    <span class="cmt">&lt;!-- Aggregator: pulls in api + engine + params --&gt;</span>
+    <span class="tag">&lt;dependency&gt;</span>
+        <span class="tag">&lt;groupId&gt;</span>org.junit.jupiter<span class="tag">&lt;/groupId&gt;</span>
+        <span class="tag">&lt;artifactId&gt;</span>junit-jupiter<span class="tag">&lt;/artifactId&gt;</span>
+        <span class="tag">&lt;version&gt;</span>5.10.2<span class="tag">&lt;/version&gt;</span>
+        <span class="tag">&lt;scope&gt;</span>test<span class="tag">&lt;/scope&gt;</span>
+    <span class="tag">&lt;/dependency&gt;</span>
+
+    <span class="cmt">&lt;!-- Mockito (includes mockito-core + byte-buddy) --&gt;</span>
+    <span class="tag">&lt;dependency&gt;</span>
+        <span class="tag">&lt;groupId&gt;</span>org.mockito<span class="tag">&lt;/groupId&gt;</span>
+        <span class="tag">&lt;artifactId&gt;</span>mockito-junit-jupiter<span class="tag">&lt;/artifactId&gt;</span>
+        <span class="tag">&lt;version&gt;</span>5.10.0<span class="tag">&lt;/version&gt;</span>
+        <span class="tag">&lt;scope&gt;</span>test<span class="tag">&lt;/scope&gt;</span>
+    <span class="tag">&lt;/dependency&gt;</span>
+
+    <span class="cmt">&lt;!-- Only if migrating from JUnit 4 --&gt;</span>
+    <span class="tag">&lt;dependency&gt;</span>
+        <span class="tag">&lt;groupId&gt;</span>org.junit.vintage<span class="tag">&lt;/groupId&gt;</span>
+        <span class="tag">&lt;artifactId&gt;</span>junit-vintage-engine<span class="tag">&lt;/artifactId&gt;</span>
+        <span class="tag">&lt;version&gt;</span>5.10.2<span class="tag">&lt;/version&gt;</span>
+        <span class="tag">&lt;scope&gt;</span>test<span class="tag">&lt;/scope&gt;</span>
+    <span class="tag">&lt;/dependency&gt;</span>
+
+<span class="tag">&lt;/dependencies&gt;</span>
+
+<span class="tag">&lt;build&gt;&lt;plugins&gt;</span>
+    <span class="cmt">&lt;!-- Maven Surefire 2.22+ required for JUnit 5 --&gt;</span>
+    <span class="tag">&lt;plugin&gt;</span>
+        <span class="tag">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/groupId&gt;</span>
+        <span class="tag">&lt;artifactId&gt;</span>maven-surefire-plugin<span class="tag">&lt;/artifactId&gt;</span>
+        <span class="tag">&lt;version&gt;</span>3.2.5<span class="tag">&lt;/version&gt;</span>
+    <span class="tag">&lt;/plugin&gt;</span>
+<span class="tag">&lt;/plugins&gt;&lt;/build&gt;</span></code></pre>
+                </div>
+
+                <div class="callout warn">
+                    <div class="icon">⚠️</div>
+                    <div class="body">
+                        <strong>Common Mistake: Wrong Maven Surefire Version</strong>
+                        <p>If you're getting "no tests found" with JUnit 5, check your Maven Surefire version.
+                            Versions below 2.22.0 don't understand JUnit 5 engines. Upgrade to 3.x and the problem
+                            vanishes.</p>
+                    </div>
+                </div>
+
+                <h4>Artifact Scope Guide</h4>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Artifact</th>
+                                <th>Maven Scope</th>
+                                <th>Why</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>junit-jupiter-api</code></td>
+                                <td><code>test</code></td>
+                                <td>Your test code imports from here</td>
+                            </tr>
+                            <tr>
+                                <td><code>junit-jupiter-engine</code></td>
+                                <td><code>test</code> (runtime)</td>
+                                <td>Never imported — only needed at runtime by Surefire</td>
+                            </tr>
+                            <tr>
+                                <td><code>junit-jupiter-params</code></td>
+                                <td><code>test</code></td>
+                                <td>Your test code uses <code>@ParameterizedTest</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>mockito-junit-jupiter</code></td>
+                                <td><code>test</code></td>
+                                <td>Pulls in mockito-core + JUnit 5 extension</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+       PART 2
+  ══════════════════════════════════════════════════════════════ -->
+        <div class="part-header">
+            <div class="part-number" style="background:var(--gradient-green);">02</div>
+            <div>
+                <h2>JUnit Jupiter in Practice</h2>
+                <p>The annotations, assertions, and patterns you use every day.</p>
+            </div>
+        </div>
+
+        <!-- SECTION 6 -->
+        <div class="section" id="lifecycle">
+            <div class="section-header">
+                <h3>🔁 Test Lifecycle Annotations</h3>
+            </div>
+
+            <div class="card">
+                <h4>The Lifecycle Order — Visualized</h4>
+                <div class="lifecycle-flow" id="lifecycleFlow">
+                    <div class="lf-item" style="background:rgba(188,140,255,0.06);">
+                        <span class="lf-badge lf-ba">@BeforeAll</span>
+                        <span class="lf-desc">Runs <strong>once</strong> before all tests in the class. Must be
+                            <code>static</code> (by default). Use for expensive setup: start a DB, load files.</span>
+                    </div>
+                    <div class="lf-arrow">↓</div>
+                    <div class="lf-item" style="background:rgba(57,213,211,0.05); margin-left:24px;">
+                        <span class="lf-badge lf-be">@BeforeEach</span>
+                        <span class="lf-desc">Runs before <strong>every</strong> test method. Fresh setup per test. Use
+                            for creating objects, resetting state.</span>
+                    </div>
+                    <div class="lf-arrow" style="margin-left:24px;">↓</div>
+                    <div class="lf-item" style="background:rgba(63,185,80,0.05); margin-left:48px;">
+                        <span class="lf-badge lf-t">@Test</span>
+                        <span class="lf-desc">The actual test. A new class instance is created for each test method by
+                            default.</span>
+                    </div>
+                    <div class="lf-arrow" style="margin-left:24px;">↓</div>
+                    <div class="lf-item" style="background:rgba(57,213,211,0.04); margin-left:24px;">
+                        <span class="lf-badge lf-ae">@AfterEach</span>
+                        <span class="lf-desc">Runs after <strong>every</strong> test. Cleanup: close connections, delete
+                            temp files.</span>
+                    </div>
+                    <div class="lf-arrow">↓</div>
+                    <div class="lf-item" style="background:rgba(188,140,255,0.04);">
+                        <span class="lf-badge lf-aa">@AfterAll</span>
+                        <span class="lf-desc">Runs <strong>once</strong> after all tests. Must be <code>static</code>
+                            (by default). Tear down shared resources.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>Why New Instance Per Test?</h4>
+                <p>JUnit creates a fresh instance of your test class before each test method. This is intentional —
+                    it prevents one test's side effects from leaking into the next.</p>
+                <p>The consequence: <code>@BeforeAll</code> and <code>@AfterAll</code> must be <code>static</code>
+                    because they run outside the context of any single instance.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">@TestInstance workaround — when you need non-static @BeforeAll</span>
+                    </div>
+                    <pre><code><span class="kw2">@TestInstance</span>(<span class="type">TestInstance.Lifecycle</span>.<span class="const">PER_CLASS</span>)
+<span class="kw">class</span> <span class="type">UserServiceTest</span> {
+
+    <span class="cmt">// With PER_CLASS: one instance for all tests</span>
+    <span class="cmt">// @BeforeAll no longer needs to be static!</span>
+    <span class="kw2">@BeforeAll</span>
+    <span class="kw">void</span> <span class="fn">startDatabase</span>() {
+        <span class="cmt">// Called once, but on 'this' instance</span>
+        db.<span class="fn">start</span>();
+    }
+
+    <span class="kw2">@BeforeEach</span>
+    <span class="kw">void</span> <span class="fn">resetState</span>() {
+        <span class="cmt">// Still runs before each test</span>
+        db.<span class="fn">clearTables</span>();
+    }
+}</code></pre>
+                </div>
+
+                <div class="callout warn">
+                    <div class="icon">⚠️</div>
+                    <div class="body">
+                        <strong>PER_CLASS is a double-edged sword</strong>
+                        <p>Sharing instance state across tests makes tests order-dependent and fragile.
+                            Use PER_CLASS only when you have a genuine reason (e.g., expensive setup that
+                            truly cannot be repeated). Always reset shared state in <code>@BeforeEach</code>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 7 -->
+        <div class="section" id="annotations">
+            <div class="section-header">
+                <h3>🏷️ Core Test Annotations</h3>
+            </div>
+
+            <div class="card">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">All core annotations in one class</span>
+                    </div>
+                    <pre><code><span class="kw2">@Tag</span>(<span class="str">"unit"</span>)                  <span class="cmt">// Label tests — run subsets with -Dgroups=unit</span>
+<span class="kw2">@DisplayName</span>(<span class="str">"Order Domain Tests"</span>)
+<span class="kw">class</span> <span class="type">OrderTest</span> {
+
+    <span class="kw2">@Test</span>
+    <span class="kw2">@DisplayName</span>(<span class="str">"should calculate total correctly"</span>)
+    <span class="kw">void</span> <span class="fn">calculateTotal</span>() { <span class="cmt">/* ... */</span> }
+
+    <span class="kw2">@Test</span>
+    <span class="kw2">@Disabled</span>(<span class="str">"JIRA-1234: payment gateway down in CI"</span>)
+    <span class="kw">void</span> <span class="fn">processPayment</span>() { <span class="cmt">/* skipped */</span> }
+
+    <span class="kw2">@Test</span>
+    <span class="kw2">@Timeout</span>(<span class="num">2</span>)  <span class="cmt">// Fails if takes longer than 2 seconds</span>
+    <span class="kw">void</span> <span class="fn">pricingCalculationIsFast</span>() { <span class="cmt">/* ... */</span> }
+
+    <span class="kw2">@RepeatedTest</span>(<span class="num">5</span>)
+    <span class="kw">void</span> <span class="fn">shouldBeIdempotent</span>(<span class="type">RepetitionInfo</span> info) {
+        <span class="cmt">// Runs 5 times — test for flakiness or idempotency</span>
+    }
+
+    <span class="cmt">// Nested tests — group related scenarios</span>
+    <span class="kw2">@Nested</span>
+    <span class="kw2">@DisplayName</span>(<span class="str">"when placing an order"</span>)
+    <span class="kw">class</span> <span class="type">PlacingOrder</span> {
+        <span class="kw2">@Test</span> <span class="kw">void</span> <span class="fn">withValidItems</span>() { <span class="cmt">/* ... */</span> }
+        <span class="kw2">@Test</span> <span class="kw">void</span> <span class="fn">withEmptyCart_shouldFail</span>() { <span class="cmt">/* ... */</span> }
+    }
+
+    <span class="kw2">@Nested</span>
+    <span class="kw2">@DisplayName</span>(<span class="str">"when cancelling an order"</span>)
+    <span class="kw">class</span> <span class="type">CancellingOrder</span> {
+        <span class="kw2">@Test</span> <span class="kw">void</span> <span class="fn">beforeShipping</span>() { <span class="cmt">/* ... */</span> }
+        <span class="kw2">@Test</span> <span class="kw">void</span> <span class="fn">afterShipping_shouldFail</span>() { <span class="cmt">/* ... */</span> }
+    }
+}</code></pre>
+                </div>
+
+                <div class="callout info">
+                    <div class="icon">💡</div>
+                    <div class="body">
+                        <strong>@Nested is underused</strong>
+                        <p><code>@Nested</code> classes have their own <code>@BeforeEach</code>/<code>@AfterEach</code>
+                            lifecycle that stacks on top of the outer class. They make test output read like a spec
+                            document,
+                            and your IDE groups them beautifully. Use them whenever you have multiple scenarios for the
+                            same class.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 8 -->
+        <div class="section" id="assertions">
+            <div class="section-header">
+                <h3>✅ Assertions</h3>
+            </div>
+
+            <div class="card">
+                <h4>The Essential Assertions</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Assertions cheatsheet</span>
+                    </div>
+                    <pre><code><span class="kw">import static</span> org.junit.jupiter.api.Assertions.*;
+
+<span class="cmt">// Basic equality — note: EXPECTED first, ACTUAL second</span>
+<span class="fn">assertEquals</span>(<span class="num">100</span>, order.<span class="fn">getTotal</span>());
+<span class="fn">assertNotEquals</span>(<span class="num">0</span>, order.<span class="fn">getTotal</span>());
+
+<span class="cmt">// Boolean</span>
+<span class="fn">assertTrue</span>(order.<span class="fn">isActive</span>());
+<span class="fn">assertFalse</span>(order.<span class="fn">isCancelled</span>());
+
+<span class="cmt">// Null checks</span>
+<span class="fn">assertNull</span>(order.<span class="fn">getShippedAt</span>());
+<span class="fn">assertNotNull</span>(order.<span class="fn">getCreatedAt</span>());
+
+<span class="cmt">// Reference equality (same object) vs value equality</span>
+<span class="fn">assertSame</span>(cachedUser, service.<span class="fn">getUser</span>(id));   <span class="cmt">// same reference</span>
+<span class="fn">assertEquals</span>(expectedUser, service.<span class="fn">getUser</span>(id)); <span class="cmt">// equals() match</span>
+
+<span class="cmt">// Exception: most important pattern — capture and inspect</span>
+<span class="type">IllegalArgumentException</span> ex = <span class="fn">assertThrows</span>(
+    <span class="type">IllegalArgumentException</span>.<span class="kw">class</span>,
+    () -&gt; orderService.<span class="fn">place</span>(<span class="kw">null</span>)
+);
+<span class="fn">assertEquals</span>(<span class="str">"order cannot be null"</span>, ex.<span class="fn">getMessage</span>());
+
+<span class="cmt">// No exception expected</span>
+<span class="fn">assertDoesNotThrow</span>(() -&gt; orderService.<span class="fn">place</span>(validOrder));
+
+<span class="cmt">// Timeout</span>
+<span class="fn">assertTimeout</span>(<span class="type">Duration</span>.<span class="fn">ofSeconds</span>(<span class="num">2</span>), () -&gt; service.<span class="fn">heavyOp</span>());</code></pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>assertAll — The Hidden Gem</h4>
+                <p>Normal assertions fail fast — the test stops at the first failure. If you have
+                    five fields to check, you might have to run the test five times to see all the problems.</p>
+                <p><code>assertAll()</code> runs ALL assertions and reports ALL failures at once.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">assertAll — all failures reported together</span>
+                    </div>
+                    <pre><code><span class="type">User</span> user = userService.<span class="fn">createUser</span>(<span class="str">"Alice"</span>, <span class="str">"alice@test.com"</span>);
+
+<span class="cmt">// BAD: stops at first failure — you won't see problems 2, 3, 4</span>
+<span class="fn">assertEquals</span>(<span class="str">"Alice"</span>,          user.<span class="fn">getName</span>());
+<span class="fn">assertEquals</span>(<span class="str">"alice@test.com"</span>, user.<span class="fn">getEmail</span>());
+<span class="fn">assertNotNull</span>(user.<span class="fn">getId</span>());
+<span class="fn">assertTrue</span>(user.<span class="fn">isActive</span>());
+
+<span class="cmt">// GOOD: all four checked — report shows all failures</span>
+<span class="fn">assertAll</span>(<span class="str">"user fields"</span>,
+    () -&gt; <span class="fn">assertEquals</span>(<span class="str">"Alice"</span>,          user.<span class="fn">getName</span>()),
+    () -&gt; <span class="fn">assertEquals</span>(<span class="str">"alice@test.com"</span>, user.<span class="fn">getEmail</span>()),
+    () -&gt; <span class="fn">assertNotNull</span>(user.<span class="fn">getId</span>()),
+    () -&gt; <span class="fn">assertTrue</span>(user.<span class="fn">isActive</span>())
+);</code></pre>
+                </div>
+
+                <div class="callout success">
+                    <div class="icon">🔥</div>
+                    <div class="body">
+                        <strong>Use assertAll when testing an object's state</strong>
+                        <p>Any time you are verifying multiple fields on a single returned object,
+                            wrap them in <code>assertAll()</code>. It turns "run test 4 times to find 4 bugs"
+                            into "run test once, see all 4 bugs." This is a senior-level habit that
+                            interviewers notice.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 9 -->
+        <div class="section" id="parameterized">
+            <div class="section-header">
+                <h3>🔢 Parameterized Tests</h3>
+            </div>
+
+            <div class="card">
+                <p>Parameterized tests exist for one reason: stop copy-pasting the same test with
+                    different input values. If you have three tests that are structurally identical but
+                    use different data, collapse them into one parameterized test.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">@ValueSource — simplest: single values</span>
+                    </div>
+                    <pre><code><span class="kw2">@ParameterizedTest</span>
+<span class="kw2">@ValueSource</span>(strings = {<span class="str">""</span>, <span class="str">"   "</span>, <span class="str">"\t"</span>})
+<span class="kw2">@DisplayName</span>(<span class="str">"should reject blank usernames"</span>)
+<span class="kw">void</span> <span class="fn">shouldRejectBlankUsername</span>(<span class="type">String</span> username) {
+    <span class="fn">assertThrows</span>(<span class="type">IllegalArgumentException</span>.<span class="kw">class</span>,
+        () -&gt; userService.<span class="fn">createUser</span>(username));
+}</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">@CsvSource — multiple parameters per test case</span>
+                    </div>
+                    <pre><code><span class="kw2">@ParameterizedTest</span>
+<span class="kw2">@CsvSource</span>({
+    <span class="str">"1, ONE"</span>,
+    <span class="str">"2, TWO"</span>,
+    <span class="str">"3, THREE"</span>
+})
+<span class="kw">void</span> <span class="fn">shouldMapNumberToWord</span>(<span class="kw">int</span> number, <span class="type">String</span> expected) {
+    <span class="fn">assertEquals</span>(expected, converter.<span class="fn">toWord</span>(number));
+}</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">@MethodSource — most powerful: complex objects</span>
+                    </div>
+                    <pre><code><span class="kw2">@ParameterizedTest</span>
+<span class="kw2">@MethodSource</span>(<span class="str">"provideOrderScenarios"</span>)
+<span class="kw">void</span> <span class="fn">shouldCalculateTax</span>(<span class="type">BigDecimal</span> price, <span class="type">String</span> country, <span class="type">BigDecimal</span> expectedTax) {
+    <span class="fn">assertEquals</span>(expectedTax, taxService.<span class="fn">calculate</span>(price, country));
+}
+
+<span class="cmt">// Must be static — returns a Stream of Arguments</span>
+<span class="kw">static</span> <span class="type">Stream</span>&lt;<span class="type">Arguments</span>&gt; <span class="fn">provideOrderScenarios</span>() {
+    <span class="kw">return</span> <span class="type">Stream</span>.<span class="fn">of</span>(
+        <span class="type">Arguments</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"100.00"</span>), <span class="str">"US"</span>, <span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"8.50"</span>)),
+        <span class="type">Arguments</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"200.00"</span>), <span class="str">"UK"</span>, <span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"40.00"</span>)),
+        <span class="type">Arguments</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"50.00"</span>),  <span class="str">"DE"</span>, <span class="kw">new</span> <span class="type">BigDecimal</span>(<span class="str">"9.50"</span>))
+    );
+}</code></pre>
+                </div>
+
+                <div class="callout info">
+                    <div class="icon">💡</div>
+                    <div class="body">
+                        <strong>Which source type to use?</strong>
+                        <p><code>@ValueSource</code> = single primitive/string values.
+                            <code>@CsvSource</code> = multiple simple values, readable inline.
+                            <code>@MethodSource</code> = complex objects, collections, or when setup requires logic.
+                            In real projects, <code>@MethodSource</code> is most common for service-layer tests.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 10 -->
+        <div class="section" id="extensions">
+            <div class="section-header">
+                <h3>🔌 Extensions — @ExtendWith</h3>
+            </div>
+
+            <div class="card">
+                <p>Extensions let you plug behavior into the test lifecycle without modifying test classes.
+                    They are composable — a test class can have multiple extensions, and they stack.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Using built-in extensions</span>
+                    </div>
+                    <pre><code><span class="cmt">// MockitoExtension: initializes @Mock, @Spy, @Captor, @InjectMocks</span>
+<span class="kw2">@ExtendWith</span>(<span class="type">MockitoExtension</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="type">UserServiceTest</span> { }
+
+<span class="cmt">// SpringExtension: loads Spring context, enables @Autowired in tests</span>
+<span class="kw2">@ExtendWith</span>(<span class="type">SpringExtension</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="type">IntegrationTest</span> { }
+
+<span class="cmt">// Multiple extensions: compose them</span>
+<span class="kw2">@ExtendWith</span>({<span class="type">MockitoExtension</span>.<span class="kw">class</span>, <span class="type">TimingExtension</span>.<span class="kw">class</span>})
+<span class="kw">class</span> <span class="type">ComposedTest</span> { }
+
+<span class="cmt">// @TempDir: inject a temporary directory per test</span>
+<span class="kw2">@Test</span>
+<span class="kw">void</span> <span class="fn">shouldWriteToFile</span>(<span class="kw2">@TempDir</span> <span class="type">Path</span> tmpDir) {
+    <span class="type">Path</span> file = tmpDir.<span class="fn">resolve</span>(<span class="str">"output.txt"</span>);
+    <span class="cmt">// JUnit cleans up tmpDir after the test — no manual cleanup</span>
+}</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Writing a simple custom extension</span>
+                    </div>
+                    <pre><code><span class="kw">public class</span> <span class="type">TimingExtension</span> <span class="kw">implements</span> <span class="type">BeforeEachCallback</span>, <span class="type">AfterEachCallback</span> {
+
+    <span class="kw">private</span> <span class="kw">long</span> start;
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">beforeEach</span>(<span class="type">ExtensionContext</span> ctx) {
+        start = <span class="type">System</span>.<span class="fn">currentTimeMillis</span>();
+    }
+
+    <span class="kw2">@Override</span>
+    <span class="kw">public void</span> <span class="fn">afterEach</span>(<span class="type">ExtensionContext</span> ctx) {
+        <span class="kw">long</span> duration = <span class="type">System</span>.<span class="fn">currentTimeMillis</span>() - start;
+        <span class="type">System</span>.out.<span class="fn">printf</span>(<span class="str">"[%s] ran in %dms%n"</span>, ctx.<span class="fn">getDisplayName</span>(), duration);
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+       PART 3
+  ══════════════════════════════════════════════════════════════ -->
+        <div class="part-header">
+            <div class="part-number" style="background:var(--gradient-purple);">03</div>
+            <div>
+                <h2>Mockito</h2>
+                <p>Control your dependencies. Test your logic. No more guessing what happened.</p>
+            </div>
+        </div>
+
+        <!-- SECTION 11 -->
+        <div class="section" id="why-mockito">
+            <div class="section-header">
+                <h3>🎭 Why Mockito Exists</h3>
+            </div>
+
+            <div class="card">
+                <p>Unit tests should test <em>one thing</em> in isolation: the class under test.
+                    But classes have dependencies — databases, HTTP clients, email services.
+                    If you let those real dependencies run during a unit test, you're not testing
+                    your logic anymore. You're testing the whole system.</p>
+
+                <p>Mockito creates fake ("mock") objects that stand in for real dependencies.
+                    You control exactly what they return, what exceptions they throw, and you can
+                    verify exactly how your code interacted with them.</p>
+
+                <div class="key-point">
+                    <span class="kp-icon">💡</span>
+                    <p><strong>Mental model:</strong> A mock is a stunt double. Before filming, you hand the
+                        double a script: "When the director says jump, do this." Then you film. Mockito
+                        lets you write that script before your class runs.</p>
+                </div>
+
+                <h4>The Three Things Mockito Lets You Do</h4>
+                <div class="card-grid">
+                    <div class="card-mini">
+                        <h4>1. Create Fakes</h4>
+                        <p>Replace real dependencies with fake objects that have no real implementation.</p>
+                    </div>
+                    <div class="card-mini">
+                        <h4>2. Define Behavior</h4>
+                        <p>"When <code>findById(5)</code> is called, return this User object." — Stubbing.</p>
+                    </div>
+                </div>
+                <div class="card-grid" style="margin-top:12px;">
+                    <div class="card-mini">
+                        <h4>3. Verify Interactions</h4>
+                        <p>"Assert that <code>save()</code> was called exactly once with this argument."</p>
+                    </div>
+                    <div class="card-mini">
+                        <h4>The Result</h4>
+                        <p>Tests that are fast, deterministic, and isolate exactly the behavior you care about.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 12 -->
+        <div class="section" id="mock-stub-spy">
+            <div class="section-header">
+                <h3>🆚 Mock vs Stub vs Spy — Clearly</h3>
+            </div>
+
+            <div class="card">
+                <p>These three terms are constantly confused. Let's fix that permanently.</p>
+
+                <div class="mock-spy-grid" style="margin-bottom:20px;">
+                    <div class="ms-card ms-mock">
+                        <div class="ms-title">🔵 Mock</div>
+                        <div class="ms-row"><span class="dot"></span>A completely fake object. Not backed by any real
+                            implementation.</div>
+                        <div class="ms-row"><span class="dot"></span>Default: all methods return <code>null</code>,
+                            <code>0</code>, <code>false</code>, or empty collections.</div>
+                        <div class="ms-row"><span class="dot"></span>You define only the behavior you need for the test.
+                        </div>
+                        <div class="ms-row"><span class="dot"></span>Use for: isolating external dependencies (repos,
+                            HTTP clients, queues).</div>
+                        <div class="ms-row"><span class="dot"></span><code>@Mock</code> or
+                            <code>Mockito.mock(UserRepo.class)</code></div>
+                    </div>
+                    <div class="ms-card ms-spy">
+                        <div class="ms-title">🟢 Spy</div>
+                        <div class="ms-row"><span class="dot"></span>Wraps a <strong>real object</strong>. Real methods
+                            run by default.</div>
+                        <div class="ms-row"><span class="dot"></span>You can override specific methods while the rest
+                            behave normally.</div>
+                        <div class="ms-row"><span class="dot"></span>Use for: when you need mostly real behavior but
+                            want to stub one tricky method.</div>
+                        <div class="ms-row"><span class="dot"></span><code>@Spy</code> or
+                            <code>Mockito.spy(new UserService())</code></div>
+                        <div class="ms-row"><span class="dot"></span>⚠️ Use <code>doReturn()</code>, not
+                            <code>when().thenReturn()</code> with spies.</div>
+                    </div>
+                </div>
+
+                <div class="callout info">
+                    <div class="icon">💡</div>
+                    <div class="body">
+                        <strong>Stub is not an object type — it's a verb</strong>
+                        <p>"Stubbing" means setting up the return value of a mock method.
+                            When you write <code>when(mock.find()).thenReturn(user)</code>, you are <em>stubbing</em>
+                            the mock.
+                            Developers often confuse "stub" (the test double pattern) with "mock" (Mockito's object).
+                            In Mockito, you only create Mocks and Spies — stubbing is what you <em>do</em> to them.</p>
+                    </div>
+                </div>
+
+                <div class="callout danger">
+                    <div class="icon">⚠️</div>
+                    <div class="body">
+                        <strong>The Spy Gotcha — This Will Bite You</strong>
+                        <div class="code-block" style="margin-top:10px;">
+                            <div class="code-header"><span class="code-lang">Java</span><span class="code-title">Why
+                                    doReturn() is required for spies</span></div>
+                            <pre><code><span class="type">UserService</span> spy = <span class="type">Mockito</span>.<span class="fn">spy</span>(<span class="kw">new</span> <span class="type">UserService</span>());
+
+<span class="cmt">// ❌ WRONG: when() evaluates spy.heavyOp() FIRST</span>
+<span class="cmt">//    The real method runs during setup → side effects, NPEs</span>
+<span class="fn">when</span>(spy.<span class="fn">heavyOp</span>()).<span class="fn">thenReturn</span>(<span class="str">"result"</span>);
+
+<span class="cmt">// ✅ CORRECT: doReturn() sets up the stub WITHOUT calling the real method</span>
+<span class="fn">doReturn</span>(<span class="str">"result"</span>).<span class="fn">when</span>(spy).<span class="fn">heavyOp</span>();</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Side-by-Side Comparison</h4>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Mock</th>
+                                <th>Spy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Backed by real object?</td>
+                                <td>No</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>Default method behavior</td>
+                                <td>Returns <code>null</code>/<code>0</code>/<code>false</code></td>
+                                <td>Calls real method</td>
+                            </tr>
+                            <tr>
+                                <td>Use for</td>
+                                <td>Pure isolation</td>
+                                <td>Partial mocking</td>
+                            </tr>
+                            <tr>
+                                <td>Stubbing style</td>
+                                <td><code>when().thenReturn()</code></td>
+                                <td><code>doReturn().when()</code></td>
+                            </tr>
+                            <tr>
+                                <td>Annotation</td>
+                                <td><code>@Mock</code></td>
+                                <td><code>@Spy</code></td>
+                            </tr>
+                            <tr>
+                                <td>Risk</td>
+                                <td>Missing stubs return null</td>
+                                <td>Real method runs if not stubbed</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 13 -->
+        <div class="section" id="setup-mockito">
+            <div class="section-header">
+                <h3>⚙️ Setting Up Mockito</h3>
+            </div>
+
+            <div class="card">
+                <h4>Approach A — @ExtendWith (Preferred)</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Complete test class structure — the template you copy every time</span>
+                    </div>
+                    <pre><code><span class="kw2">@ExtendWith</span>(<span class="type">MockitoExtension</span>.<span class="kw">class</span>)  <span class="cmt">// ← Step 1: wire Mockito into JUnit 5</span>
+<span class="kw">class</span> <span class="type">UserServiceTest</span> {
+
+    <span class="kw2">@Mock</span>
+    <span class="kw">private</span> <span class="type">UserRepository</span> userRepository;  <span class="cmt">// ← fully faked</span>
+
+    <span class="kw2">@Mock</span>
+    <span class="kw">private</span> <span class="type">EmailService</span> emailService;       <span class="cmt">// ← fully faked</span>
+
+    <span class="kw2">@Spy</span>
+    <span class="kw">private</span> <span class="type">AuditLogger</span> auditLogger = <span class="kw">new</span> <span class="type">AuditLogger</span>();  <span class="cmt">// ← real object, stubbable</span>
+
+    <span class="kw2">@InjectMocks</span>
+    <span class="kw">private</span> <span class="type">UserService</span> userService;         <span class="cmt">// ← class under test; mocks injected</span>
+
+    <span class="kw2">@Captor</span>
+    <span class="kw">private</span> <span class="type">ArgumentCaptor</span>&lt;<span class="type">User</span>&gt; userCaptor; <span class="cmt">// ← capture what was saved</span>
+
+    <span class="kw2">@Test</span>
+    <span class="kw">void</span> <span class="fn">shouldCreateUser</span>() {
+        <span class="cmt">// Extension initializes all annotations before this runs</span>
+    }
+}</code></pre>
+                </div>
+
+                <h4>Approach B — Manual Initialization (Legacy/Fallback)</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Manual setup — when you can't use JUnit 5 extension</span>
+                    </div>
+                    <pre><code><span class="kw">class</span> <span class="type">UserServiceTest</span> {
+
+    <span class="kw">private</span> <span class="type">AutoCloseable</span> closeable;  <span class="cmt">// must close to release resources</span>
+
+    <span class="kw2">@Mock</span> <span class="type">UserRepository</span> userRepository;
+    <span class="kw2">@InjectMocks</span> <span class="type">UserService</span> userService;
+
+    <span class="kw2">@BeforeEach</span>
+    <span class="kw">void</span> <span class="fn">setUp</span>() {
+        closeable = <span class="type">MockitoAnnotations</span>.<span class="fn">openMocks</span>(<span class="kw">this</span>);
+    }
+
+    <span class="kw2">@AfterEach</span>
+    <span class="kw">void</span> <span class="fn">tearDown</span>() <span class="kw">throws</span> <span class="type">Exception</span> {
+        closeable.<span class="fn">close</span>();  <span class="cmt">// ← don't forget this</span>
+    }
+}</code></pre>
+                </div>
+
+                <div class="callout warn">
+                    <div class="icon">⚠️</div>
+                    <div class="body">
+                        <strong>@InjectMocks Silent Failure</strong>
+                        <p>Mockito tries constructor injection, then setter injection, then field injection.
+                            If it can't inject — wrong types, no matching constructor, etc. — it silently leaves
+                            the field as is. You get a NullPointerException in the test, and Mockito says nothing.
+                            If you see an NPE on the <em>class under test</em>, check your <code>@InjectMocks</code>
+                            setup first.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 14 -->
+        <div class="section" id="stubbing">
+            <div class="section-header">
+                <h3>🎬 Stubbing Behavior</h3>
+            </div>
+
+            <div class="card">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">All stubbing patterns</span>
+                    </div>
+                    <pre><code><span class="cmt">// ── Return a value ────────────────────────────────────────────────</span>
+<span class="fn">when</span>(userRepository.<span class="fn">findById</span>(<span class="num">1L</span>)).<span class="fn">thenReturn</span>(<span class="type">Optional</span>.<span class="fn">of</span>(alice));
+
+<span class="cmt">// ── Throw an exception ────────────────────────────────────────────</span>
+<span class="fn">when</span>(userRepository.<span class="fn">findById</span>(<span class="num">99L</span>)).<span class="fn">thenThrow</span>(<span class="kw">new</span> <span class="type">UserNotFoundException</span>(<span class="str">"not found"</span>));
+
+<span class="cmt">// ── Dynamic response based on input ───────────────────────────────</span>
+<span class="fn">when</span>(userRepository.<span class="fn">findById</span>(<span class="fn">anyLong</span>())).<span class="fn">thenAnswer</span>(invocation -&gt; {
+    <span class="kw">long</span> id = invocation.<span class="fn">getArgument</span>(<span class="num">0</span>);
+    <span class="kw">return</span> id &gt; <span class="num">0</span> ? <span class="type">Optional</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="type">User</span>(id)) : <span class="type">Optional</span>.<span class="fn">empty</span>();
+});
+
+<span class="cmt">// ── Call the real implementation (useful on Spy) ───────────────────</span>
+<span class="fn">when</span>(spy.<span class="fn">format</span>(<span class="fn">anyString</span>())).<span class="fn">thenCallRealMethod</span>();
+
+<span class="cmt">// ── Different values on successive calls ──────────────────────────</span>
+<span class="fn">when</span>(idGenerator.<span class="fn">next</span>())
+    .<span class="fn">thenReturn</span>(<span class="num">1L</span>)   <span class="cmt">// 1st call</span>
+    .<span class="fn">thenReturn</span>(<span class="num">2L</span>)   <span class="cmt">// 2nd call</span>
+    .<span class="fn">thenReturn</span>(<span class="num">3L</span>);  <span class="cmt">// 3rd+ calls all return 3L</span>
+
+<span class="cmt">// ── Void methods ──────────────────────────────────────────────────</span>
+<span class="fn">doNothing</span>().<span class="fn">when</span>(emailService).<span class="fn">sendWelcome</span>(<span class="fn">anyString</span>());
+<span class="fn">doThrow</span>(<span class="kw">new</span> <span class="type">MailException</span>(<span class="str">"SMTP down"</span>)).<span class="fn">when</span>(emailService).<span class="fn">sendWelcome</span>(<span class="str">"bad@test.com"</span>);
+
+<span class="cmt">// ── Chaining: different behavior per call ─────────────────────────</span>
+<span class="fn">when</span>(clock.<span class="fn">now</span>())
+    .<span class="fn">thenReturn</span>(<span class="type">Instant</span>.<span class="fn">parse</span>(<span class="str">"2024-01-01T00:00:00Z"</span>))
+    .<span class="fn">thenThrow</span>(<span class="kw">new</span> <span class="type">RuntimeException</span>(<span class="str">"clock failed"</span>));</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 15 -->
+        <div class="section" id="arg-matchers">
+            <div class="section-header">
+                <h3>🎯 Argument Matchers</h3>
+            </div>
+
+            <div class="card">
+                <p>Sometimes you don't care about the exact argument — you just want to stub
+                    "any call" to a method. Matchers let you express that.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Argument matchers reference</span>
+                    </div>
+                    <pre><code><span class="kw">import static</span> org.mockito.ArgumentMatchers.*;
+
+<span class="cmt">// ── Generic ───────────────────────────────────────────────────────</span>
+<span class="fn">when</span>(repo.<span class="fn">save</span>(<span class="fn">any</span>())).<span class="fn">thenReturn</span>(saved);          <span class="cmt">// any non-null arg</span>
+<span class="fn">when</span>(repo.<span class="fn">findById</span>(<span class="fn">any</span>(<span class="type">Long</span>.<span class="kw">class</span>))).<span class="fn">thenReturn</span>(opt); <span class="cmt">// any Long</span>
+
+<span class="cmt">// ── Type-specific ─────────────────────────────────────────────────</span>
+<span class="fn">when</span>(svc.<span class="fn">find</span>(<span class="fn">anyString</span>())).<span class="fn">thenReturn</span>(result);
+<span class="fn">when</span>(svc.<span class="fn">find</span>(<span class="fn">anyInt</span>())).<span class="fn">thenReturn</span>(result);
+<span class="fn">when</span>(svc.<span class="fn">find</span>(<span class="fn">anyLong</span>())).<span class="fn">thenReturn</span>(result);
+<span class="fn">when</span>(svc.<span class="fn">findAll</span>(<span class="fn">anyList</span>())).<span class="fn">thenReturn</span>(results);
+
+<span class="cmt">// ── Exact value (use when mixing with other matchers) ─────────────</span>
+<span class="fn">when</span>(svc.<span class="fn">query</span>(<span class="fn">anyString</span>(), <span class="fn">eq</span>(<span class="num">10</span>))).<span class="fn">thenReturn</span>(page);
+
+<span class="cmt">// ── Null checks ───────────────────────────────────────────────────</span>
+<span class="fn">when</span>(svc.<span class="fn">process</span>(<span class="fn">isNull</span>())).<span class="fn">thenThrow</span>(<span class="kw">new</span> <span class="type">NullPointerException</span>());
+<span class="fn">when</span>(svc.<span class="fn">process</span>(<span class="fn">isNotNull</span>())).<span class="fn">thenReturn</span>(result);
+
+<span class="cmt">// ── String matchers ───────────────────────────────────────────────</span>
+<span class="fn">when</span>(svc.<span class="fn">find</span>(<span class="fn">startsWith</span>(<span class="str">"admin_"</span>))).<span class="fn">thenReturn</span>(adminUser);
+<span class="fn">when</span>(svc.<span class="fn">find</span>(<span class="fn">contains</span>(<span class="str">"@"</span>))).<span class="fn">thenReturn</span>(emailUser);
+<span class="fn">when</span>(svc.<span class="fn">find</span>(<span class="fn">matches</span>(<span class="str">"\\d{10}"</span>))).<span class="fn">thenReturn</span>(phoneUser);
+
+<span class="cmt">// ── Custom predicate ──────────────────────────────────────────────</span>
+<span class="fn">when</span>(repo.<span class="fn">save</span>(<span class="fn">argThat</span>(u -&gt; u.<span class="fn">getAge</span>() &gt;= <span class="num">18</span>))).<span class="fn">thenReturn</span>(saved);</code></pre>
+                </div>
+
+                <div class="callout danger">
+                    <div class="icon">⚠️</div>
+                    <div class="body">
+                        <strong>The All-or-Nothing Rule — Breaks Silently</strong>
+                        <p>The moment you use ANY argument matcher in a method call, every argument must
+                            use a matcher. Mixing matchers with raw values causes a Mockito exception.</p>
+                        <div class="compare" style="margin-top:10px;">
+                            <div class="compare-card">
+                                <h4>✅ Correct</h4>
+                                <code>verify(svc.query(anyString(), eq(10)))</code>
+                            </div>
+                            <div class="compare-card">
+                                <h4>❌ Breaks at Runtime</h4>
+                                <code>verify(svc.query(anyString(), 10))</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 16 -->
+        <div class="section" id="verification">
+            <div class="section-header">
+                <h3>🔍 Verification</h3>
+            </div>
+
+            <div class="card">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">All verification patterns</span>
+                    </div>
+                    <pre><code><span class="kw">import static</span> org.mockito.Mockito.*;
+
+<span class="cmt">// ── Basic: was this method called? ────────────────────────────────</span>
+<span class="fn">verify</span>(userRepository).<span class="fn">save</span>(<span class="fn">any</span>(<span class="type">User</span>.<span class="kw">class</span>));
+
+<span class="cmt">// ── How many times? ───────────────────────────────────────────────</span>
+<span class="fn">verify</span>(emailService, <span class="fn">times</span>(<span class="num">1</span>)).<span class="fn">sendWelcome</span>(<span class="fn">anyString</span>());
+<span class="fn">verify</span>(auditLog,    <span class="fn">times</span>(<span class="num">3</span>)).<span class="fn">record</span>(<span class="fn">anyString</span>());
+<span class="fn">verify</span>(cache,       <span class="fn">never</span>()).<span class="fn">evict</span>(<span class="fn">anyString</span>());
+<span class="fn">verify</span>(retryService, <span class="fn">atLeast</span>(<span class="num">2</span>)).<span class="fn">attempt</span>(<span class="fn">any</span>());
+<span class="fn">verify</span>(rateLimiter,  <span class="fn">atMost</span>(<span class="num">5</span>)).<span class="fn">check</span>(<span class="fn">anyString</span>());
+
+<span class="cmt">// ── only(): this method AND NOTHING ELSE was called on this mock ──</span>
+<span class="fn">verify</span>(emailService, <span class="fn">only</span>()).<span class="fn">sendWelcome</span>(<span class="str">"alice@test.com"</span>);
+
+<span class="cmt">// ── Nothing was called on these mocks at all ──────────────────────</span>
+<span class="fn">verifyNoInteractions</span>(emailService, auditLog);
+
+<span class="cmt">// ── Only the verified calls happened (nothing extra) ──────────────</span>
+<span class="fn">verify</span>(userRepository).<span class="fn">save</span>(<span class="fn">any</span>());
+<span class="fn">verifyNoMoreInteractions</span>(userRepository);  <span class="cmt">// no other methods called</span></code></pre>
+                </div>
+
+                <div class="callout purple">
+                    <div class="icon">🎯</div>
+                    <div class="body">
+                        <strong>Interview Tip: When to Verify vs When to Assert</strong>
+                        <p>Use <code>verify()</code> for <em>side effects</em> — things that don't come back as return
+                            values.
+                            "Did we save the user? Did we send the email? Did we log the event?"<br>
+                            Use <code>assertEquals()</code> for <em>return values</em>.
+                            Don't verify something you already asserted on — that's redundant and brittle.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 17 -->
+        <div class="section" id="captor">
+            <div class="section-header">
+                <h3>📸 Argument Captor</h3>
+            </div>
+
+            <div class="card">
+                <p>Sometimes <code>verify(mock.save(any()))</code> is not enough. You need to inspect
+                    the actual object that was passed. That's what <code>ArgumentCaptor</code> is for.</p>
+
+                <p>Classic scenario: your method <em>constructs</em> an object internally and passes it
+                    to a dependency. You can't get that object back from the return value — you need
+                    to "catch" it mid-flight.</p>
+
+                <div class="captor-flow">
+                    <div class="cf-box"><b>service.createUser("Alice")</b><br><small>constructs User internally</small>
+                    </div>
+                    <div class="cf-arr">→</div>
+                    <div class="cf-box"><b>userRepo.save(user)</b><br><small>passes constructed object</small></div>
+                    <div class="cf-arr">→</div>
+                    <div class="cf-box"><b>captor.capture()</b><br><small>intercepts and holds it</small></div>
+                    <div class="cf-arr">→</div>
+                    <div class="cf-box"><b>captor.getValue()</b><br><small>you inspect it here</small></div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">ArgumentCaptor — full example</span>
+                    </div>
+                    <pre><code><span class="kw2">@Captor</span>
+<span class="kw">private</span> <span class="type">ArgumentCaptor</span>&lt;<span class="type">User</span>&gt; userCaptor;
+
+<span class="kw2">@Test</span>
+<span class="kw">void</span> <span class="fn">shouldSaveUserWithHashedPassword</span>() {
+    <span class="cmt">// given</span>
+    <span class="fn">when</span>(userRepository.<span class="fn">save</span>(<span class="fn">any</span>())).<span class="fn">thenAnswer</span>(i -&gt; i.<span class="fn">getArgument</span>(<span class="num">0</span>));
+
+    <span class="cmt">// when</span>
+    userService.<span class="fn">register</span>(<span class="str">"alice@test.com"</span>, <span class="str">"plaintext123"</span>);
+
+    <span class="cmt">// then — capture what was actually saved</span>
+    <span class="fn">verify</span>(userRepository).<span class="fn">save</span>(userCaptor.<span class="fn">capture</span>());
+    <span class="type">User</span> savedUser = userCaptor.<span class="fn">getValue</span>();
+
+    <span class="fn">assertAll</span>(
+        () -&gt; <span class="fn">assertEquals</span>(<span class="str">"alice@test.com"</span>, savedUser.<span class="fn">getEmail</span>()),
+        () -&gt; <span class="fn">assertNotEquals</span>(<span class="str">"plaintext123"</span>, savedUser.<span class="fn">getPassword</span>()), <span class="cmt">// must be hashed</span>
+        () -&gt; <span class="fn">assertTrue</span>(savedUser.<span class="fn">isActive</span>()),
+        () -&gt; <span class="fn">assertNotNull</span>(savedUser.<span class="fn">getCreatedAt</span>())
+    );
+}
+
+<span class="cmt">// Multiple calls: getAllValues()</span>
+<span class="kw2">@Test</span>
+<span class="kw">void</span> <span class="fn">shouldSendEmailToAllAdmins</span>() {
+    userService.<span class="fn">notifyAdmins</span>(<span class="str">"System restarted"</span>);
+
+    <span class="type">ArgumentCaptor</span>&lt;<span class="type">String</span>&gt; emailCaptor =
+        <span class="type">ArgumentCaptor</span>.<span class="fn">forClass</span>(<span class="type">String</span>.<span class="kw">class</span>);
+    <span class="fn">verify</span>(emailService, <span class="fn">times</span>(<span class="num">3</span>)).<span class="fn">send</span>(emailCaptor.<span class="fn">capture</span>());
+
+    <span class="type">List</span>&lt;<span class="type">String</span>&gt; sentTo = emailCaptor.<span class="fn">getAllValues</span>();
+    <span class="fn">assertTrue</span>(sentTo.<span class="fn">containsAll</span>(<span class="type">List</span>.<span class="fn">of</span>(<span class="str">"admin1@co"</span>, <span class="str">"admin2@co"</span>, <span class="str">"admin3@co"</span>)));
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 18 -->
+        <div class="section" id="bdd-mockito">
+            <div class="section-header">
+                <h3>📖 BDD Mockito Style</h3>
+            </div>
+
+            <div class="card">
+                <p>BDD (Behavior Driven Development) promotes test structure as <strong>Given / When / Then</strong>.
+                    Mockito provides a BDD-flavored API that reads like a specification rather than test code.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Same test — standard Mockito vs BDD Mockito</span>
+                    </div>
+                    <pre><code><span class="cmt">// ── Standard Mockito ──────────────────────────────────────────────</span>
+<span class="fn">when</span>(userRepository.<span class="fn">findById</span>(<span class="num">1L</span>)).<span class="fn">thenReturn</span>(<span class="type">Optional</span>.<span class="fn">of</span>(alice));
+
+userService.<span class="fn">deactivate</span>(<span class="num">1L</span>);
+
+<span class="fn">verify</span>(userRepository, <span class="fn">times</span>(<span class="num">1</span>)).<span class="fn">save</span>(<span class="fn">any</span>());
+<span class="fn">verify</span>(emailService).<span class="fn">sendDeactivation</span>(<span class="str">"alice@test.com"</span>);
+
+
+<span class="cmt">// ── BDD Mockito ───────────────────────────────────────────────────</span>
+<span class="kw">import static</span> org.mockito.BDDMockito.*;
+
+<span class="cmt">// given</span>
+<span class="fn">given</span>(userRepository.<span class="fn">findById</span>(<span class="num">1L</span>)).<span class="fn">willReturn</span>(<span class="type">Optional</span>.<span class="fn">of</span>(alice));
+
+<span class="cmt">// when</span>
+userService.<span class="fn">deactivate</span>(<span class="num">1L</span>);
+
+<span class="cmt">// then</span>
+<span class="fn">then</span>(userRepository).<span class="fn">should</span>(<span class="fn">times</span>(<span class="num">1</span>)).<span class="fn">save</span>(<span class="fn">any</span>());
+<span class="fn">then</span>(emailService).<span class="fn">should</span>().<span class="fn">sendDeactivation</span>(<span class="str">"alice@test.com"</span>);</code></pre>
+                </div>
+
+                <div class="callout info">
+                    <div class="icon">💡</div>
+                    <div class="body">
+                        <strong>Which style to use?</strong>
+                        <p>Both are functionally identical. BDD style shines when your team structures tests
+                            as Given/When/Then — the code structure mirrors the intent. Standard style is
+                            more common in the wild. Pick one style per codebase and be consistent.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 19 -->
+        <div class="section" id="mistakes">
+            <div class="section-header">
+                <h3>💥 Common Mistakes & Anti-Patterns</h3>
+            </div>
+
+            <div class="card">
+                <h4>1. Mocking Everything — Testing Nothing</h4>
+                <p>If you mock every collaborator of every class, your tests pass but prove nothing.
+                    You're testing that Mockito wires return values together, not that your logic is correct.</p>
+                <div class="callout danger">
+                    <div class="icon">⚠️</div>
+                    <div class="body">
+                        <strong>Rule</strong>
+                        <p>Mock at the boundary: databases, HTTP clients, file systems, message queues.
+                            Don't mock value objects, DTOs, domain classes, or utility methods.
+                            If you're mocking a <code>String</code> or a simple POJO, stop and rethink.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>2. Unused Stubs — Mockito Is Telling You Something</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Strict stubbing will fail your test if a stub is never used</span>
+                    </div>
+                    <pre><code><span class="cmt">// MockitoExtension uses STRICT_STUBS by default</span>
+<span class="cmt">// This FAILS the test because the stub was never called:</span>
+<span class="fn">when</span>(emailService.<span class="fn">sendWelcome</span>(<span class="fn">anyString</span>())).<span class="fn">thenReturn</span>(<span class="kw">true</span>);
+<span class="cmt">// ... but sendWelcome is never called in the production code path tested</span>
+
+<span class="cmt">// ✅ Mockito is warning you: your test setup doesn't match reality.</span>
+<span class="cmt">//    Either the code path changed, or the test is wrong.</span>
+<span class="cmt">//    Listen to this warning — don't suppress it.</span></code></pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>3. Verifying Implementation Detail, Not Behavior</h4>
+                <div class="compare">
+                    <div class="compare-card">
+                        <h4>✅ Verify the contract</h4>
+                        <p>Did we save the user to the repository? Did we send the welcome email?
+                            These are observable side effects that matter.</p>
+                    </div>
+                    <div class="compare-card">
+                        <h4>❌ Verify implementation</h4>
+                        <p>Did we call <code>formatName()</code>? Did we call <code>buildQuery()</code>?
+                            These are internal details — verifying them makes tests brittle.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>4. Not Resetting Mocks Between Tests</h4>
+                <p>If you're using <code>@ExtendWith(MockitoExtension.class)</code>, Mockito
+                    creates fresh mocks for each test. You're safe.</p>
+                <p>If you're managing mocks manually (static fields, shared instances),
+                    call <code>Mockito.reset(mock)</code> in <code>@BeforeEach</code> or recreate them.
+                    Shared mock state between tests is a source of mysterious, flaky failures.</p>
+            </div>
+
+            <div class="card">
+                <h4>5. @InjectMocks on an Interface</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">Classic mistake</span>
+                    </div>
+                    <pre><code><span class="cmt">// ❌ @InjectMocks needs a concrete class — not an interface</span>
+<span class="kw2">@InjectMocks</span>
+<span class="kw">private</span> <span class="type">UserService</span> userService;  <span class="cmt">// ← must be the IMPLEMENTATION class</span>
+                                   <span class="cmt">//   not the interface IUserService</span>
+
+<span class="cmt">// ✅ Correct — concrete class, Mockito can instantiate it</span>
+<span class="kw2">@InjectMocks</span>
+<span class="kw">private</span> <span class="type">UserServiceImpl</span> userService;</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 20 -->
+        <div class="section" id="full-example">
+            <div class="section-header">
+                <h3>🏆 Putting It All Together — Complete Example</h3>
+            </div>
+
+            <div class="card">
+                <p>This is the template. Copy it, adapt it. Every line has a reason.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Java</span>
+                        <span class="code-title">UserServiceTest — production-quality test class</span>
+                    </div>
+                    <pre><code><span class="kw">package</span> com.example.service;
+
+<span class="kw">import static</span> org.junit.jupiter.api.Assertions.*;
+<span class="kw">import static</span> org.mockito.ArgumentMatchers.*;
+<span class="kw">import static</span> org.mockito.BDDMockito.*;
+
+<span class="kw2">@ExtendWith</span>(<span class="type">MockitoExtension</span>.<span class="kw">class</span>)  <span class="cmt">// Wires Mockito into JUnit 5 lifecycle</span>
+<span class="kw">class</span> <span class="type">UserServiceTest</span> {
+
+    <span class="cmt">// ── Dependencies (faked) ──────────────────────────────────────</span>
+    <span class="kw2">@Mock</span>
+    <span class="kw">private</span> <span class="type">UserRepository</span>  userRepository;  <span class="cmt">// fully mocked — no DB</span>
+
+    <span class="kw2">@Mock</span>
+    <span class="kw">private</span> <span class="type">EmailService</span>    emailService;    <span class="cmt">// fully mocked — no SMTP</span>
+
+    <span class="kw2">@Mock</span>
+    <span class="kw">private</span> <span class="type">PasswordEncoder</span> passwordEncoder; <span class="cmt">// fully mocked</span>
+
+    <span class="cmt">// ── Class under test ──────────────────────────────────────────</span>
+    <span class="kw2">@InjectMocks</span>
+    <span class="kw">private</span> <span class="type">UserServiceImpl</span> userService;     <span class="cmt">// Mockito injects the three mocks above</span>
+
+    <span class="cmt">// ── Captors ───────────────────────────────────────────────────</span>
+    <span class="kw2">@Captor</span>
+    <span class="kw">private</span> <span class="type">ArgumentCaptor</span>&lt;<span class="type">User</span>&gt; userCaptor;  <span class="cmt">// captures what gets saved</span>
+
+    <span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+    <span class="cmt">// Happy path: register a valid user</span>
+    <span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+    <span class="kw2">@Test</span>
+    <span class="kw2">@DisplayName</span>(<span class="str">"should register user, hash password, and send welcome email"</span>)
+    <span class="kw">void</span> <span class="fn">shouldRegisterUserSuccessfully</span>() {
+        <span class="cmt">// given ─────────────────────────────────────────────────────</span>
+        <span class="type">String</span> email    = <span class="str">"alice@example.com"</span>;
+        <span class="type">String</span> password = <span class="str">"securepass"</span>;
+        <span class="type">String</span> hash     = <span class="str">"$2a$10$hashed"</span>;
+
+        <span class="fn">given</span>(userRepository.<span class="fn">existsByEmail</span>(email)).<span class="fn">willReturn</span>(<span class="kw">false</span>);
+        <span class="fn">given</span>(passwordEncoder.<span class="fn">encode</span>(password)).<span class="fn">willReturn</span>(hash);
+        <span class="fn">given</span>(userRepository.<span class="fn">save</span>(<span class="fn">any</span>(<span class="type">User</span>.<span class="kw">class</span>)))
+            .<span class="fn">willAnswer</span>(inv -&gt; inv.<span class="fn">getArgument</span>(<span class="num">0</span>)); <span class="cmt">// echo back the saved object</span>
+
+        <span class="cmt">// when ─────────────────────────────────────────────────────</span>
+        <span class="type">User</span> result = userService.<span class="fn">register</span>(email, password);
+
+        <span class="cmt">// then — assert return value ───────────────────────────────</span>
+        <span class="fn">assertAll</span>(<span class="str">"registered user"</span>,
+            () -&gt; <span class="fn">assertEquals</span>(email, result.<span class="fn">getEmail</span>()),
+            () -&gt; <span class="fn">assertNotEquals</span>(password, result.<span class="fn">getPassword</span>()), <span class="cmt">// must be hashed</span>
+            () -&gt; <span class="fn">assertTrue</span>(result.<span class="fn">isActive</span>()),
+            () -&gt; <span class="fn">assertNotNull</span>(result.<span class="fn">getCreatedAt</span>())
+        );
+
+        <span class="cmt">// then — verify what was saved matches expectations ──────────</span>
+        <span class="fn">then</span>(userRepository).<span class="fn">should</span>().<span class="fn">save</span>(userCaptor.<span class="fn">capture</span>());
+        <span class="type">User</span> savedUser = userCaptor.<span class="fn">getValue</span>();
+        <span class="fn">assertEquals</span>(hash, savedUser.<span class="fn">getPassword</span>()); <span class="cmt">// confirm hashed password was persisted</span>
+
+        <span class="cmt">// then — verify side effects ─────────────────────────────────</span>
+        <span class="fn">then</span>(emailService).<span class="fn">should</span>().<span class="fn">sendWelcome</span>(email);
+        <span class="fn">then</span>(emailService).<span class="fn">shouldHaveNoMoreInteractions</span>(); <span class="cmt">// no extra emails</span>
+    }
+
+    <span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+    <span class="cmt">// Sad path: duplicate email</span>
+    <span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+    <span class="kw2">@Test</span>
+    <span class="kw2">@DisplayName</span>(<span class="str">"should throw when email already exists"</span>)
+    <span class="kw">void</span> <span class="fn">shouldThrowWhenEmailAlreadyRegistered</span>() {
+        <span class="cmt">// given</span>
+        <span class="fn">given</span>(userRepository.<span class="fn">existsByEmail</span>(<span class="str">"alice@example.com"</span>)).<span class="fn">willReturn</span>(<span class="kw">true</span>);
+
+        <span class="cmt">// when + then</span>
+        <span class="type">DuplicateEmailException</span> ex = <span class="fn">assertThrows</span>(
+            <span class="type">DuplicateEmailException</span>.<span class="kw">class</span>,
+            () -&gt; userService.<span class="fn">register</span>(<span class="str">"alice@example.com"</span>, <span class="str">"pass"</span>)
+        );
+        <span class="fn">assertEquals</span>(<span class="str">"alice@example.com already registered"</span>, ex.<span class="fn">getMessage</span>());
+
+        <span class="cmt">// no save, no email</span>
+        <span class="fn">then</span>(userRepository).<span class="fn">should</span>(<span class="fn">never</span>()).<span class="fn">save</span>(<span class="fn">any</span>());
+        <span class="fn">then</span>(emailService).<span class="fn">shouldHaveNoInteractions</span>();
+    }
+
+    <span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+    <span class="cmt">// Parameterized: invalid inputs</span>
+    <span class="cmt">// ═══════════════════════════════════════════════════════════════</span>
+    <span class="kw2">@ParameterizedTest</span>
+    <span class="kw2">@ValueSource</span>(strings = {<span class="str">""</span>, <span class="str">"notanemail"</span>, <span class="str">"@nodomain"</span>})
+    <span class="kw2">@DisplayName</span>(<span class="str">"should reject invalid email formats"</span>)
+    <span class="kw">void</span> <span class="fn">shouldRejectInvalidEmail</span>(<span class="type">String</span> badEmail) {
+        <span class="fn">assertThrows</span>(<span class="type">IllegalArgumentException</span>.<span class="kw">class</span>,
+            () -&gt; userService.<span class="fn">register</span>(badEmail, <span class="str">"password"</span>));
+        <span class="fn">verifyNoInteractions</span>(userRepository, emailService);
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK REFERENCE -->
+        <div class="section" id="quick-ref">
+            <div class="section-header">
+                <h3>📋 Quick Reference Tables</h3>
+            </div>
+
+            <div class="card">
+                <h4>Mockito Annotations</h4>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Annotation</th>
+                                <th>What it creates</th>
+                                <th>When to use</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>@Mock</code></td>
+                                <td>Fully fake object, no real implementation</td>
+                                <td>Isolate external dependencies (repos, clients)</td>
+                            </tr>
+                            <tr>
+                                <td><code>@Spy</code></td>
+                                <td>Real object with stubbing capability</td>
+                                <td>Mostly real behavior, override a few methods</td>
+                            </tr>
+                            <tr>
+                                <td><code>@InjectMocks</code></td>
+                                <td>The class under test, with mocks injected</td>
+                                <td>Always for the class you're testing</td>
+                            </tr>
+                            <tr>
+                                <td><code>@Captor</code></td>
+                                <td><code>ArgumentCaptor&lt;T&gt;</code></td>
+                                <td>Inspect arguments passed to a mock method</td>
+                            </tr>
+                            <tr>
+                                <td><code>@ExtendWith</code></td>
+                                <td>Wires an extension into JUnit 5 lifecycle</td>
+                                <td>Always — at the top of every Mockito test class</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>Stubbing Methods</h4>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Syntax</th>
+                                <th>Use case</th>
+                                <th>Works on Spy?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>when().thenReturn()</code></td>
+                                <td>Return a value from a mock method</td>
+                                <td><span class="pill pill-orange">Caution</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>when().thenThrow()</code></td>
+                                <td>Throw an exception from a mock method</td>
+                                <td><span class="pill pill-orange">Caution</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>when().thenAnswer()</code></td>
+                                <td>Dynamic response computed from arguments</td>
+                                <td><span class="pill pill-green">Safe</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>when().thenCallRealMethod()</code></td>
+                                <td>Delegate to actual implementation</td>
+                                <td><span class="pill pill-green">Safe</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>doReturn().when()</code></td>
+                                <td>Return a value — use this on Spy</td>
+                                <td><span class="pill pill-green">Preferred for Spy</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>doNothing().when()</code></td>
+                                <td>Stub a void method to do nothing</td>
+                                <td><span class="pill pill-green">Safe</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>doThrow().when()</code></td>
+                                <td>Throw from a void method</td>
+                                <td><span class="pill pill-green">Safe</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>Verification Methods</h4>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>What it checks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>verify(mock).method()</code></td>
+                                <td>Called exactly once</td>
+                            </tr>
+                            <tr>
+                                <td><code>verify(mock, times(n)).method()</code></td>
+                                <td>Called exactly n times</td>
+                            </tr>
+                            <tr>
+                                <td><code>verify(mock, never()).method()</code></td>
+                                <td>Never called</td>
+                            </tr>
+                            <tr>
+                                <td><code>verify(mock, atLeast(n)).method()</code></td>
+                                <td>Called ≥ n times</td>
+                            </tr>
+                            <tr>
+                                <td><code>verify(mock, atMost(n)).method()</code></td>
+                                <td>Called ≤ n times</td>
+                            </tr>
+                            <tr>
+                                <td><code>verify(mock, only()).method()</code></td>
+                                <td>Only this method, nothing else on mock</td>
+                            </tr>
+                            <tr>
+                                <td><code>verifyNoInteractions(mock)</code></td>
+                                <td>No methods called at all</td>
+                            </tr>
+                            <tr>
+                                <td><code>verifyNoMoreInteractions(mock)</code></td>
+                                <td>Nothing beyond what was already verified</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>JUnit 5 Architecture at a Glance</h4>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>Artifact</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="tag tag-blue">Platform</span></td>
+                                <td><code>junit-platform-launcher</code></td>
+                                <td>Universal test execution foundation; discovers engines</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag tag-green">Jupiter</span></td>
+                                <td><code>junit-jupiter-api</code></td>
+                                <td>API you write tests with: <code>@Test</code>, assertions, extensions</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag tag-green">Jupiter</span></td>
+                                <td><code>junit-jupiter-engine</code></td>
+                                <td>Engine that understands and executes Jupiter tests on Platform</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag tag-green">Jupiter</span></td>
+                                <td><code>junit-jupiter-params</code></td>
+                                <td><code>@ParameterizedTest</code> and all value source annotations</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag tag-yellow">Vintage</span></td>
+                                <td><code>junit-vintage-engine</code></td>
+                                <td>Runs JUnit 3/4 tests on the Platform (migration only)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="banner banner-blue">
+                <h4>🎯 The 5 Things To Remember In Any Interview</h4>
+                <ol style="margin:0;padding-left:20px;line-height:2;">
+                    <li><strong>JUnit 5 = Platform + Jupiter + Vintage.</strong> Platform is the launcher; Jupiter is
+                        the API you use.</li>
+                    <li><strong>Mock = fake object.</strong> Spy = real object with stubbing. They serve different
+                        purposes.</li>
+                    <li><strong>Use <code>doReturn().when()</code> with Spies,</strong> not
+                        <code>when().thenReturn()</code> — real method runs during setup otherwise.</li>
+                    <li><strong><code>assertAll()</code> for object-state tests</strong> — reports all failures at once,
+                        not just the first.</li>
+                    <li><strong>Verify side effects. Assert return values.</strong> Don't verify things you already
+                        asserted.</li>
+                </ol>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════════════════ JS ═══════════════════════════ -->
+    <script>
+        /* ── Progress Bar ─────────────────────────────────────── */
+        const fill = document.getElementById('progress');
+        window.addEventListener('scroll', () => {
+            const total = document.documentElement.scrollHeight - window.innerHeight;
+            fill.style.width = (window.scrollY / total * 100) + '%';
+        });
+
+    // ── Sidebar toggle ──────────────────────────────────────────────────────
+    function toggleSidebar() {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        document.body.classList.toggle('sidebar-open');
+      } else {
+        document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebarCollapsed',
+          document.body.classList.contains('sidebar-collapsed'));
+      }
+    }
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+    document.getElementById('hamburger').onclick = toggleSidebar;
+    document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+    document.querySelectorAll('.toc-link, #sidebar a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) document.body.classList.remove('sidebar-open');
+      });
+    });
+
+        /* ── Active TOC link ──────────────────────────────────── */
+        const sections = document.querySelectorAll('.section[id]');
+        const tocLinks = document.querySelectorAll('.toc-link[href^="#"]');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    tocLinks.forEach(l => l.classList.remove('active'));
+                    const active = document.querySelector(`.toc-link[href="#${e.target.id}"]`);
+                    if (active) { active.classList.add('active'); active.scrollIntoView({ block: 'nearest' }); }
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+
+        sections.forEach(s => observer.observe(s));
+
+        /* ── Sidebar link closes on mobile ───────────────────── */
+        tocLinks.forEach(l => l.addEventListener('click', () => { if (window.innerWidth < 900) closeSidebar(); }));
+
+        /* ── Lifecycle Flow animation ─────────────────────────── */
+        const lfItems = document.querySelectorAll('.lf-item');
+        let lfIndex = 0;
+        let lfTimer = null;
+
+        function animateLifecycle() {
+            lfItems.forEach((el, i) => {
+                el.style.opacity = i === lfIndex ? '1' : '0.4';
+                el.style.background = i === lfIndex ? el.style.background : '';
+                el.style.transform = i === lfIndex ? 'translateX(8px)' : '';
+            });
+            lfIndex = (lfIndex + 1) % lfItems.length;
+        }
+
+        const lfSection = document.getElementById('lifecycle');
+        if (lfSection) {
+            const lfObs = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    if (!lfTimer) lfTimer = setInterval(animateLifecycle, 1000);
+                } else {
+                    clearInterval(lfTimer); lfTimer = null;
+                    lfItems.forEach(el => { el.style.opacity = '1'; el.style.transform = ''; });
+                }
+            }, { threshold: 0.3 });
+            lfObs.observe(lfSection);
+        }
+
+        /* ── Runtime flow step highlight ─────────────────────── */
+        const rfSteps = document.querySelectorAll('.rf-step');
+        let rfIndex = 0;
+        let rfTimer = null;
+
+        function animateRuntime() {
+            rfSteps.forEach((el, i) => {
+                el.style.opacity = i === rfIndex ? '1' : '0.4';
+                el.style.borderLeftColor = i === rfIndex ? '#58a6ff' : '#21262d';
+            });
+            rfIndex = (rfIndex + 1) % rfSteps.length;
+        }
+
+        const rfSection = document.getElementById('runtime-flow');
+        if (rfSection) {
+            const rfObs = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    if (!rfTimer) rfTimer = setInterval(animateRuntime, 900);
+                } else {
+                    clearInterval(rfTimer); rfTimer = null;
+                    rfSteps.forEach(el => { el.style.opacity = '1'; el.style.borderLeftColor = '#21262d'; });
+                }
+            }, { threshold: 0.3 });
+            rfObs.observe(rfSection);
+        }
+
+        /* ── Scroll-in fade for cards ─────────────────────────── */
+        const fadeEls = document.querySelectorAll('.card, .callout, .card-grid, .banner');
+        fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(16px)'; el.style.transition = 'opacity 0.4s ease, transform 0.4s ease'; });
+
+        const fadeObs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; fadeObs.unobserve(e.target); }
+            });
+        }, { threshold: 0.1 });
+
+        fadeEls.forEach(el => fadeObs.observe(el));
+
+        /* ── Back-to-top button ──────────────────────────────── */
+        let topBtn = document.querySelector('.top-btn');
+        if (!topBtn) {
+            topBtn = document.createElement('button');
+            topBtn.className = 'top-btn';
+            topBtn.innerHTML = '↑';
+            topBtn.title = 'Back to top';
+            document.body.appendChild(topBtn);
+        }
+        topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', () => { topBtn.style.opacity = window.scrollY > 400 ? '1' : '0'; topBtn.style.pointerEvents = window.scrollY > 400 ? 'auto' : 'none'; });
+    </script>
+</body>
+
+</html>
