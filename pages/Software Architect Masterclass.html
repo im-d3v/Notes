@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Software Architect Masterclass</title>
+  <link rel="stylesheet" href="../assets/css/notes-theme.css"/>
+  <style>
+    .hero { background: linear-gradient(135deg, #0d1117 0%, #0f2027 40%, #203a43 70%, #2c5364 100%); }
+
+    /* ── Skill Radar ── */
+    .skill-radar { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; margin:1.2rem 0; }
+    .radar-card { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:.9rem 1.1rem; }
+    .radar-level { display:flex; align-items:center; gap:.5rem; margin-top:.4rem; }
+    .radar-bar { height:6px; border-radius:3px; flex:1; background:var(--border); overflow:hidden; }
+    .radar-fill { height:100%; border-radius:3px; }
+    .radar-label { font-size:.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; }
+    .radar-title { font-size:.88rem; font-weight:700; color:var(--text-primary); }
+    .radar-sub { font-size:.72rem; color:var(--text-muted); margin-top:.15rem; }
+
+    /* ── Journey Timeline ── */
+    .journey { position:relative; padding-left:2.5rem; }
+    .journey::before { content:''; position:absolute; left:.9rem; top:0; bottom:0; width:2px; background:linear-gradient(to bottom, var(--accent-blue), var(--accent-purple), var(--accent-orange), var(--accent-green)); }
+    .journey-step { position:relative; margin-bottom:1.5rem; }
+    .journey-dot { position:absolute; left:-1.65rem; width:18px; height:18px; border-radius:50%; border:2px solid var(--bg-primary); display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:800; flex-shrink:0; }
+    .journey-content { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:1rem 1.2rem; }
+    .journey-role { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:.25rem; }
+    .journey-yoe { font-size:.7rem; color:var(--text-muted); float:right; margin-top:.05rem; }
+    .journey-body { font-size:.84rem; color:var(--text-secondary); line-height:1.6; margin-top:.4rem; }
+
+    /* ── Principle Cards ── */
+    .principle-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; margin:1.2rem 0; }
+    .principle-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:1.2rem; border-top:3px solid; }
+    .principle-card.blue  { border-top-color:var(--accent-blue); }
+    .principle-card.green { border-top-color:var(--accent-green); }
+    .principle-card.orange{ border-top-color:var(--accent-orange); }
+    .principle-card.purple{ border-top-color:var(--accent-purple); }
+    .principle-card.red   { border-top-color:var(--accent-red); }
+    .principle-card.cyan  { border-top-color:#00bcd4; }
+    .pc-icon { font-size:1.6rem; margin-bottom:.5rem; }
+    .pc-title { font-size:.95rem; font-weight:700; color:var(--text-primary); margin-bottom:.4rem; }
+    .pc-body { font-size:.83rem; color:var(--text-secondary); line-height:1.65; }
+    .pc-tag  { display:inline-block; background:var(--bg-tertiary); border-radius:4px; padding:.1rem .45rem; font-size:.7rem; color:var(--text-muted); margin:.3rem .2rem 0 0; }
+
+    /* ── ADR / Decision Box ── */
+    .decision-box { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:1rem 0; }
+    .decision-head { background:var(--bg-tertiary); padding:.6rem 1rem; display:flex; align-items:center; gap:.6rem; }
+    .decision-badge { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; background:var(--accent-purple); color:#fff; border-radius:4px; padding:.15rem .5rem; }
+    .decision-title { font-size:.88rem; font-weight:700; color:var(--text-primary); }
+    .decision-body { padding:1rem; }
+
+    /* ── GenAI Concept Cards ── */
+    .ai-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:.9rem; margin:1.2rem 0; }
+    .ai-card { background:linear-gradient(135deg,var(--bg-card) 0%,rgba(124,58,237,.08) 100%); border:1px solid rgba(124,58,237,.25); border-radius:12px; padding:1.1rem; }
+    .ai-icon { font-size:1.5rem; margin-bottom:.4rem; }
+    .ai-title { font-size:.9rem; font-weight:700; color:#a78bfa; margin-bottom:.35rem; }
+    .ai-body { font-size:.82rem; color:var(--text-secondary); line-height:1.65; }
+
+    /* ── Comparison strips ── */
+    .strip-compare { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border-radius:10px; overflow:hidden; margin:1rem 0; }
+    .strip-col { background:var(--bg-card); padding:1rem 1.2rem; }
+    .strip-col h5 { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.6rem; }
+    .strip-col.bad  h5 { color:var(--accent-red); }
+    .strip-col.good h5 { color:var(--accent-green); }
+    .strip-col li { font-size:.83rem; color:var(--text-secondary); margin:.3rem 0; list-style:none; padding-left:1.1rem; position:relative; }
+    .strip-col.bad  li::before { content:'✗'; position:absolute; left:0; color:var(--accent-red); }
+    .strip-col.good li::before { content:'✓'; position:absolute; left:0; color:var(--accent-green); }
+
+    /* ── Pillar layout ── */
+    .pillar-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:.8rem; margin:1rem 0; }
+    .pillar { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:1rem; }
+    .pillar-icon { font-size:1.8rem; margin-bottom:.4rem; }
+    .pillar-name { font-size:.88rem; font-weight:700; color:var(--text-primary); margin-bottom:.3rem; }
+    .pillar-desc { font-size:.79rem; color:var(--text-secondary); line-height:1.6; }
+
+    /* ── Step process ── */
+    .step-flow { counter-reset:sf; }
+    .sf-item { display:flex; gap:1rem; margin:.8rem 0; background:var(--bg-card); border-radius:10px; padding:.9rem 1.1rem; border-left:3px solid var(--accent-blue); }
+    .sf-item.green  { border-left-color:var(--accent-green); }
+    .sf-item.orange { border-left-color:var(--accent-orange); }
+    .sf-item.purple { border-left-color:var(--accent-purple); }
+    .sf-num { background:var(--accent-blue); color:#fff; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.78rem; flex-shrink:0; }
+    .sf-item.green  .sf-num { background:var(--accent-green); }
+    .sf-item.orange .sf-num { background:var(--accent-orange); }
+    .sf-item.purple .sf-num { background:var(--accent-purple); }
+    .sf-body { font-size:.84rem; color:var(--text-secondary); line-height:1.6; }
+    .sf-body strong { color:var(--text-primary); }
+
+    /* ── Checklist ── */
+    .checklist li { list-style:none; padding-left:1.6rem; position:relative; font-size:.85rem; color:var(--text-secondary); margin:.4rem 0; line-height:1.5; }
+    .checklist li::before { content:'☐'; position:absolute; left:0; color:var(--accent-blue); font-size:.95rem; }
+
+    /* ── Quote highlight ── */
+    .arch-quote { border-left:4px solid var(--accent-purple); padding:1rem 1.5rem; background:rgba(124,58,237,.06); border-radius:0 8px 8px 0; margin:1.2rem 0; }
+    .arch-quote p { font-size:1rem; color:var(--text-primary); font-style:italic; line-height:1.7; margin:0; }
+    .arch-quote cite { font-size:.78rem; color:var(--text-muted); margin-top:.5rem; display:block; }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+<button id="hamburger" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+<div id="sidebar-overlay"></div>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🏛️</div>
+    <div>
+      <div class="sidebar-title">Architect Masterclass</div>
+      <div class="sidebar-subtitle">Dev → Staff → Architect</div>
+    </div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">🏠 Navigation</div>
+    <a href="../index.html" class="toc-link">← Back to Home</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 1 — The Architect Role</div>
+    <a href="#what-architects-do" class="toc-link">What Architects Actually Do</a>
+    <a href="#career-journey" class="toc-link">Career Journey</a>
+    <a href="#architect-types" class="toc-link">Types of Architects</a>
+    <a href="#skills-map" class="toc-link">Skills Map</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 2 — System Thinking</div>
+    <a href="#arch-principles" class="toc-link">Architecture Principles</a>
+    <a href="#quality-attributes" class="toc-link">Quality Attributes (NFRs)</a>
+    <a href="#arch-styles" class="toc-link">Architecture Styles</a>
+    <a href="#arch-patterns" class="toc-link">Architecture Patterns</a>
+    <a href="#distributed-systems" class="toc-link">Distributed Systems</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 3 — Design Mastery</div>
+    <a href="#design-principles" class="toc-link">Design Principles</a>
+    <a href="#domain-driven" class="toc-link">Domain-Driven Design</a>
+    <a href="#microservices" class="toc-link">Microservices Patterns</a>
+    <a href="#data-architecture" class="toc-link">Data Architecture</a>
+    <a href="#security-arch" class="toc-link">Security Architecture</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 4 — Platform & Ops</div>
+    <a href="#cloud-arch" class="toc-link">Cloud Architecture</a>
+    <a href="#devops-arch" class="toc-link">DevOps & SRE Thinking</a>
+    <a href="#observability" class="toc-link">Observability</a>
+    <a href="#api-strategy" class="toc-link">API Strategy</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 5 — GenAI for Architects</div>
+    <a href="#genai-foundations" class="toc-link">GenAI Foundations</a>
+    <a href="#llm-architecture" class="toc-link">LLM Architecture</a>
+    <a href="#rag-architecture" class="toc-link">RAG Systems</a>
+    <a href="#agentic-systems" class="toc-link">Agentic Systems</a>
+    <a href="#genai-patterns" class="toc-link">GenAI Design Patterns</a>
+    <a href="#genai-production" class="toc-link">GenAI in Production</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-label">Part 6 — Leadership</div>
+    <a href="#tech-leadership" class="toc-link">Technical Leadership</a>
+    <a href="#decision-making" class="toc-link">Decision Making & ADRs</a>
+    <a href="#communication" class="toc-link">Stakeholder Communication</a>
+    <a href="#roadmap-planning" class="toc-link">Technical Roadmaps</a>
+  </div>
+</nav>
+
+<main id="main">
+
+  <!-- ══════════════════════ HERO ══════════════════════ -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Comprehensive Masterclass</div>
+      <h1>Software Architect</h1>
+      <p class="hero-subtitle">
+        Everything a developer needs to grow into a Software Architect — system design, design principles, cloud, distributed systems, GenAI integration, and technical leadership. No fluff. Deep on what matters.
+      </p>
+      <div class="hero-badges">
+        <span class="tag tag-blue">System Design</span>
+        <span class="tag tag-green">Cloud & DevOps</span>
+        <span class="tag tag-purple">GenAI & LLMs</span>
+        <span class="tag tag-orange">Tech Leadership</span>
+        <span class="tag tag-cyan">DDD & Microservices</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PART 1 — THE ARCHITECT ROLE
+  ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-blue);">01</div>
+    <div>
+      <h2>The Architect Role</h2>
+      <p>Before you can become an architect, you need to understand what architects actually do — and what separates a great one from a good one.</p>
+    </div>
+  </div>
+
+  <div class="section" id="what-architects-do">
+    <div class="section-header"><h3>🏛️ What Architects Actually Do</h3></div>
+
+    <div class="arch-quote">
+      <p>"Architecture is the decisions you wish you could get right early in a project — decisions that are hard to change later and that have a significant impact on quality and cost."</p>
+      <cite>— Martin Fowler</cite>
+    </div>
+
+    <div class="card">
+      <h4>The Real Job Description (not the one on LinkedIn)</h4>
+      <div class="pillar-row">
+        <div class="pillar">
+          <div class="pillar-icon">🔭</div>
+          <div class="pillar-name">Define the Vision</div>
+          <div class="pillar-desc">Translate business goals into technical strategy. Decide what gets built, when, and how — not just how to build the current ticket.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">⚖️</div>
+          <div class="pillar-name">Make Trade-off Decisions</div>
+          <div class="pillar-desc">Every architectural choice gives you something and costs you something. Architects own the trade-off decisions that affect the entire system.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🛡️</div>
+          <div class="pillar-name">Guard Quality Attributes</div>
+          <div class="pillar-desc">Ensure the system meets non-functional requirements: performance, security, scalability, reliability, maintainability. These don't appear in user stories.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🔗</div>
+          <div class="pillar-name">Reduce Accidental Complexity</div>
+          <div class="pillar-desc">Distinguish essential complexity (comes from the problem) from accidental complexity (introduced by poor design). Eliminate the accidental kind ruthlessly.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🧭</div>
+          <div class="pillar-name">Enable the Team</div>
+          <div class="pillar-desc">Create guardrails, not walls. Establish principles and standards that let developers make good decisions independently without constant oversight.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📢</div>
+          <div class="pillar-name">Communicate Decisions</div>
+          <div class="pillar-desc">A great architecture that nobody understands is useless. Architects spend 40-60% of their time communicating — explaining, writing, presenting, aligning.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>What Architects Do NOT Do (common misconceptions)</h4>
+      <div class="strip-compare">
+        <div class="strip-col bad">
+          <h5>❌ Myth</h5>
+          <ul>
+            <li>Write all the hard code</li>
+            <li>Make every technical decision</li>
+            <li>Produce giant upfront design documents</li>
+            <li>Stay isolated from the codebase</li>
+            <li>Only talk to managers and stakeholders</li>
+            <li>Pick technologies because they're new/trendy</li>
+          </ul>
+        </div>
+        <div class="strip-col good">
+          <h5>✅ Reality</h5>
+          <ul>
+            <li>Write just enough code to stay credible and informed</li>
+            <li>Delegate decisions to the right level; decide the hard ones</li>
+            <li>Produce lightweight, living decision records (ADRs)</li>
+            <li>Deeply understand the codebase; refactor as needed</li>
+            <li>Spend significant time pairing with developers</li>
+            <li>Pick proven technologies that fit the problem + team</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="career-journey">
+    <div class="section-header"><h3>🚀 The Career Journey — Junior to Architect</h3></div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">There's no certification or single event that makes you an architect. It's a gradual expansion of <strong>scope</strong>, <strong>influence</strong>, and <strong>responsibility</strong>. The title follows the behavior.</div>
+    </div>
+
+    <div class="card">
+      <div class="journey">
+        <div class="journey-step">
+          <div class="journey-dot" style="background:var(--accent-blue);color:#fff;">J</div>
+          <div class="journey-content">
+            <span class="journey-role" style="color:var(--accent-blue);">Junior Developer</span>
+            <span class="journey-yoe">0–2 yrs</span>
+            <div class="journey-body">
+              Focus: Write correct code. Understand the tools, frameworks, and codebase. Ask good questions. Learn debugging, testing, git workflows. Your scope is <strong>one task</strong>.
+              <br><br>
+              <strong>Key shift to make:</strong> Stop thinking "does this work?" → Start thinking "is this the right approach?"
+            </div>
+          </div>
+        </div>
+
+        <div class="journey-step">
+          <div class="journey-dot" style="background:var(--accent-green);color:#fff;">M</div>
+          <div class="journey-content">
+            <span class="journey-role" style="color:var(--accent-green);">Mid-Level Developer</span>
+            <span class="journey-yoe">2–5 yrs</span>
+            <div class="journey-body">
+              Focus: Own features end-to-end. Understand the domain deeply. Review others' code. Know <em>why</em> things work the way they do — not just that they do. Your scope is <strong>one feature</strong>.
+              <br><br>
+              <strong>Key shift to make:</strong> Stop thinking in single features → Start thinking in <strong>modules and contracts between them</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="journey-step">
+          <div class="journey-dot" style="background:var(--accent-orange);color:#fff;">S</div>
+          <div class="journey-content">
+            <span class="journey-role" style="color:var(--accent-orange);">Senior Developer</span>
+            <span class="journey-yoe">5–8 yrs</span>
+            <div class="journey-body">
+              Focus: Own a service or domain. Make design decisions for your team. Mentor others. Identify systemic problems before they become production incidents. Your scope is <strong>one service/domain</strong>.
+              <br><br>
+              <strong>Key shift to make:</strong> Stop thinking in code → Start thinking in <strong>systems, teams, and time</strong>. A senior dev optimizes code; an architect optimizes the conditions under which good code gets written.
+            </div>
+          </div>
+        </div>
+
+        <div class="journey-step">
+          <div class="journey-dot" style="background:var(--accent-purple);color:#fff;">St</div>
+          <div class="journey-content">
+            <span class="journey-role" style="color:var(--accent-purple);">Staff Engineer / Tech Lead</span>
+            <span class="journey-yoe">7–12 yrs</span>
+            <div class="journey-body">
+              Focus: Define technical direction across multiple teams or a large system. Drive organizational technical decisions. Write proposals, RFCs, and technical strategies. Your scope is <strong>a product or platform</strong>.
+              <br><br>
+              <strong>Key shift to make:</strong> Stop thinking in one system → Start thinking in <strong>systems of systems, organizational capability, and multi-year evolution</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="journey-step">
+          <div class="journey-dot" style="background:#f59e0b;color:#000;">A</div>
+          <div class="journey-content">
+            <span class="journey-role" style="color:#f59e0b;">Software Architect / Principal Engineer</span>
+            <span class="journey-yoe">10+ yrs</span>
+            <div class="journey-body">
+              Focus: Define the technical vision for an organization. Make decisions that shape teams, products, and platforms for years. Balance technical excellence with business goals, budget constraints, and team capabilities. Your scope is <strong>the entire engineering organization</strong>.
+              <br><br>
+              <strong>What sets you apart:</strong> You see the whole board. You think in trade-offs across dimensions most engineers haven't considered yet: team topology, Conway's Law, technical debt economics, build vs buy decisions, platform vs product thinking.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="architect-types">
+    <div class="section-header"><h3>🗂️ Types of Architects — Know Which You're Becoming</h3></div>
+
+    <div class="principle-grid">
+      <div class="principle-card blue">
+        <div class="pc-icon">🏗️</div>
+        <div class="pc-title">Solution Architect</div>
+        <div class="pc-body">Designs the technical solution for a specific project or product. Bridges business requirements and technology. Works closely with engineering teams to translate requirements into architectural blueprints.</div>
+        <span class="pc-tag">Project-scoped</span><span class="pc-tag">Client-facing</span><span class="pc-tag">Design docs</span>
+      </div>
+      <div class="principle-card green">
+        <div class="pc-icon">🌐</div>
+        <div class="pc-title">Enterprise Architect</div>
+        <div class="pc-body">Focuses on the overall structure of the entire enterprise's IT portfolio. Defines standards, governance, and technology roadmaps across all departments. Highly strategic, less hands-on.</div>
+        <span class="pc-tag">Organization-scoped</span><span class="pc-tag">Standards</span><span class="pc-tag">Governance</span>
+      </div>
+      <div class="principle-card purple">
+        <div class="pc-icon">☁️</div>
+        <div class="pc-title">Cloud Architect</div>
+        <div class="pc-body">Specializes in designing cloud infrastructure — AWS, Azure, GCP. Expertise in managed services, IaC, cost optimization, cloud-native patterns, multi-region deployments, and FinOps.</div>
+        <span class="pc-tag">Infrastructure</span><span class="pc-tag">IaC</span><span class="pc-tag">Multi-cloud</span>
+      </div>
+      <div class="principle-card orange">
+        <div class="pc-icon">🔒</div>
+        <div class="pc-title">Security Architect</div>
+        <div class="pc-body">Designs and enforces security posture across systems. Threat modeling, zero-trust design, IAM, data encryption, compliance (SOC2, GDPR, HIPAA), and security-by-design principles.</div>
+        <span class="pc-tag">Zero Trust</span><span class="pc-tag">Threat Modeling</span><span class="pc-tag">Compliance</span>
+      </div>
+      <div class="principle-card red">
+        <div class="pc-icon">📊</div>
+        <div class="pc-title">Data Architect</div>
+        <div class="pc-body">Defines how data is collected, stored, processed, and governed. Data modeling, data warehousing, ETL/ELT pipelines, lake houses, streaming architectures, and data mesh.</div>
+        <span class="pc-tag">Data Modeling</span><span class="pc-tag">Data Mesh</span><span class="pc-tag">Pipelines</span>
+      </div>
+      <div class="principle-card cyan">
+        <div class="pc-icon">🤖</div>
+        <div class="pc-title">AI/ML Architect</div>
+        <div class="pc-body">Designs systems that incorporate AI and ML — from model training pipelines to GenAI-powered applications. LLM integration, RAG pipelines, vector databases, MLOps, and responsible AI.</div>
+        <span class="pc-tag">LLMs</span><span class="pc-tag">RAG</span><span class="pc-tag">MLOps</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="skills-map">
+    <div class="section-header"><h3>🗺️ The Architect's Skills Map</h3></div>
+    <p style="color:var(--text-secondary);margin-bottom:1.2rem;">Architects need a T-shape of skills — deep in software design, broad in everything else. This is the full map of what to develop.</p>
+
+    <div class="skill-radar">
+      <div class="radar-card">
+        <div class="radar-title">System Design</div>
+        <div class="radar-sub">Scalability, reliability, distributed systems</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:95%;background:var(--accent-blue);"></div></div>
+          <span class="radar-label" style="color:var(--accent-blue);">Core</span>
+        </div>
+      </div>
+      <div class="radar-card">
+        <div class="radar-title">Software Design</div>
+        <div class="radar-sub">Patterns, SOLID, DDD, clean code</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:95%;background:var(--accent-blue);"></div></div>
+          <span class="radar-label" style="color:var(--accent-blue);">Core</span>
+        </div>
+      </div>
+      <div class="radar-card">
+        <div class="radar-title">Cloud & Infrastructure</div>
+        <div class="radar-sub">AWS/GCP/Azure, Kubernetes, IaC</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:80%;background:var(--accent-green);"></div></div>
+          <span class="radar-label" style="color:var(--accent-green);">Essential</span>
+        </div>
+      </div>
+      <div class="radar-card">
+        <div class="radar-title">Data & Databases</div>
+        <div class="radar-sub">SQL, NoSQL, caching, data modeling</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:80%;background:var(--accent-green);"></div></div>
+          <span class="radar-label" style="color:var(--accent-green);">Essential</span>
+        </div>
+      </div>
+      <div class="radar-card">
+        <div class="radar-title">Security</div>
+        <div class="radar-sub">Auth, encryption, zero trust, OWASP</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:75%;background:var(--accent-orange);"></div></div>
+          <span class="radar-label" style="color:var(--accent-orange);">Important</span>
+        </div>
+      </div>
+      <div class="radar-card">
+        <div class="radar-title">GenAI & ML</div>
+        <div class="radar-sub">LLMs, RAG, vector DBs, agents</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:75%;background:var(--accent-purple);"></div></div>
+          <span class="radar-label" style="color:var(--accent-purple);">Rising Fast</span>
+        </div>
+      </div>
+      <div class="radar-card">
+        <div class="radar-title">DevOps & SRE</div>
+        <div class="radar-sub">CI/CD, observability, SLOs, reliability</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:70%;background:var(--accent-orange);"></div></div>
+          <span class="radar-label" style="color:var(--accent-orange);">Important</span>
+        </div>
+      </div>
+      <div class="radar-card">
+        <div class="radar-title">Tech Leadership</div>
+        <div class="radar-sub">Communication, ADRs, mentoring, roadmaps</div>
+        <div class="radar-level">
+          <div class="radar-bar"><div class="radar-fill" style="width:85%;background:var(--accent-blue);"></div></div>
+          <span class="radar-label" style="color:var(--accent-blue);">Core</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PART 2 — SYSTEM THINKING
+  ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">02</div>
+    <div>
+      <h2>System Thinking</h2>
+      <p>Architects think in systems, not files. This section builds the mental models for reasoning about large-scale systems.</p>
+    </div>
+  </div>
+
+  <div class="section" id="arch-principles">
+    <div class="section-header"><h3>📐 Core Architecture Principles</h3></div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">These principles are <strong>not rules</strong>. They are <strong>lenses</strong>. You apply them to understand a situation better, not to auto-generate a solution. Knowing when to violate a principle is as important as knowing the principle.</div>
+    </div>
+
+    <div class="card">
+      <h4>The Big 8 Principles Every Architect Must Internalize</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Principle</th><th>What It Means in Practice</th><th>The Violation Warning Sign</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="pill pill-blue">Separation of Concerns</span></td>
+              <td>Each component does one well-defined job. UI doesn't know about DB. Business logic doesn't know about HTTP.</td>
+              <td>A 2000-line controller class that validates, transforms, queries, and renders</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-blue">Single Responsibility</span></td>
+              <td>A module has one reason to change — one stakeholder who "owns" that logic.</td>
+              <td>Changing a billing rule requires editing the same class as changing email templates</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-green">Open/Closed</span></td>
+              <td>Open for extension (add new behavior), closed for modification (don't edit working code).</td>
+              <td>Adding a new payment type requires editing 5 existing switch/if-else blocks</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-green">Dependency Inversion</span></td>
+              <td>Depend on abstractions, not concretions. Your service calls <code>interface PaymentGateway</code>, not <code>class StripeClient</code>.</td>
+              <td>Swapping from Stripe to Braintree requires rewriting 30 service classes</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">Favour Composition</span></td>
+              <td>Build behavior by combining simple objects, not by building deep inheritance hierarchies.</td>
+              <td>A 6-level class hierarchy where changing a base class breaks 20 subclasses</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">Least Privilege</span></td>
+              <td>Every component gets only the access it needs. Databases, APIs, services, and users alike.</td>
+              <td>Your microservice has root DB access "just in case we need it later"</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-purple">Design for Failure</span></td>
+              <td>Assume every dependency will fail. Design retry logic, circuit breakers, and graceful degradation from the start.</td>
+              <td>A single third-party API timeout takes down your entire checkout flow</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-purple">Evolutionary Architecture</span></td>
+              <td>Design systems that can change incrementally without big-bang rewrites. Architecture is not a one-time decision.</td>
+              <td>"We can't change this because it would break everything" — said about a 2-year-old system</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Conway's Law — The Most Underestimated Principle</h4>
+      <div class="arch-quote">
+        <p>"Organizations which design systems are constrained to produce designs which are copies of the communication structures of those organizations."</p>
+        <cite>— Melvin Conway, 1967</cite>
+      </div>
+      <p style="color:var(--text-secondary);margin-bottom:.8rem;">In plain terms: <strong>your architecture will mirror your org chart</strong> whether you want it to or not. If you have 3 frontend teams and 2 backend teams, you'll end up with 3 frontends talking to 2 backends.</p>
+      <div class="callout success">
+        <div class="icon">🎯</div>
+        <div class="body">
+          <strong>Inverse Conway Maneuver:</strong> Deliberately design your <em>team structure</em> to produce the architecture you want. Want microservices? Create small, independent teams with end-to-end ownership. Want a monolith that stays clean? Keep your team tightly coordinated.
+          <br><br>
+          <strong>Practical implication:</strong> Before you design a system, look at your org chart. The architecture that <em>fights</em> the org chart will always lose to the one that embraces it.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="quality-attributes">
+    <div class="section-header"><h3>📏 Quality Attributes (Non-Functional Requirements)</h3></div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">Functional requirements say <em>what</em> the system does. Quality attributes say <em>how well</em> it does it. Architects spend most of their time on quality attributes — they're what defines an architecture, not the features.</div>
+    </div>
+
+    <div class="card">
+      <h4>The Critical Quality Attributes — Every Architect Must Know These Cold</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Attribute</th><th>Definition</th><th>How to Design For It</th><th>Key Metric</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Availability</strong></td>
+              <td>System is operational and accessible when users need it</td>
+              <td>Redundancy, failover, health checks, graceful degradation</td>
+              <td>99.9% = 8.7h/yr downtime; 99.99% = 52m/yr</td>
+            </tr>
+            <tr>
+              <td><strong>Scalability</strong></td>
+              <td>Handle growing load without architectural changes</td>
+              <td>Stateless services, horizontal scaling, partitioning/sharding</td>
+              <td>Throughput at N × load; latency at P99</td>
+            </tr>
+            <tr>
+              <td><strong>Performance</strong></td>
+              <td>System responds to requests within acceptable time</td>
+              <td>Caching, async processing, indexing, CDN, connection pooling</td>
+              <td>P50 / P95 / P99 latency in ms</td>
+            </tr>
+            <tr>
+              <td><strong>Reliability</strong></td>
+              <td>System performs correctly under expected and unexpected conditions</td>
+              <td>Circuit breakers, retries with backoff, idempotency, chaos testing</td>
+              <td>MTBF, error rate %, SLO compliance</td>
+            </tr>
+            <tr>
+              <td><strong>Security</strong></td>
+              <td>Protection from unauthorized access, data breaches, abuse</td>
+              <td>Zero trust, least privilege, encryption in transit/at rest, input validation</td>
+              <td>CVSS score, time-to-patch, audit coverage</td>
+            </tr>
+            <tr>
+              <td><strong>Maintainability</strong></td>
+              <td>Ease of modifying, debugging, and extending the system</td>
+              <td>Clean code, modularity, good tests, documentation, automated linting</td>
+              <td>Time to onboard new dev, DORA metrics</td>
+            </tr>
+            <tr>
+              <td><strong>Observability</strong></td>
+              <td>Ability to understand internal system state from external outputs</td>
+              <td>Structured logging, distributed tracing, metrics, dashboards, alerts</td>
+              <td>Mean time to detect (MTTD)</td>
+            </tr>
+            <tr>
+              <td><strong>Testability</strong></td>
+              <td>Ease of verifying system behavior through automated tests</td>
+              <td>Dependency injection, clean interfaces, ports & adapters, seam insertion</td>
+              <td>Test coverage %, mutation score</td>
+            </tr>
+            <tr>
+              <td><strong>Deployability</strong></td>
+              <td>Frequency and ease of safely deploying changes</td>
+              <td>CI/CD pipelines, feature flags, blue-green/canary deployments, rollbacks</td>
+              <td>Deployment frequency, lead time (DORA)</td>
+            </tr>
+            <tr>
+              <td><strong>Interoperability</strong></td>
+              <td>Ability to work with other systems, standards, and protocols</td>
+              <td>Standard APIs (REST/gRPC), event contracts, API versioning, anti-corruption layers</td>
+              <td>Integration test coverage, API contract tests</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="banner banner-purple">
+      <h4>🔑 The CAP Theorem — The Architect's Fundamental Trade-off</h4>
+      <p>In a distributed system that can experience network partitions, you can only guarantee <strong>2 of 3</strong>: <strong>Consistency</strong> (all nodes see the same data at the same time), <strong>Availability</strong> (every request gets a response), <strong>Partition Tolerance</strong> (system works despite network failures). Since network partitions are inevitable, you're always choosing: <strong>CP</strong> (prioritize consistency — bank transactions) or <strong>AP</strong> (prioritize availability — social feeds, shopping carts). Most modern databases make this choice for you: PostgreSQL=CP, Cassandra=AP, DynamoDB=configurable.</p>
+    </div>
+  </div>
+
+  <div class="section" id="arch-styles">
+    <div class="section-header"><h3>🏗️ Architecture Styles — Choosing the Right Shape</h3></div>
+
+    <div class="card">
+      <h4>Architecture Styles Comparison</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Style</th><th>When to Choose</th><th>You Get</th><th>You Pay</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="pill pill-blue">Monolith</span></td>
+              <td>Early stage, small team, unclear domain boundaries, startup</td>
+              <td>Simple deployment, easy debugging, zero network latency, easy refactoring</td>
+              <td>Scales as unit, long builds, team coupling, tech lock-in</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-green">Modular Monolith</span></td>
+              <td>Medium teams, known domain, want monolith simplicity but clean boundaries</td>
+              <td>Monolith simplicity + module isolation. Easy path to microservices later</td>
+              <td>Requires discipline to maintain module boundaries; still scales as unit</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">Microservices</span></td>
+              <td>Large teams, stable domain understanding, high scale requirements</td>
+              <td>Independent deployment, team autonomy, polyglot, granular scaling</td>
+              <td>Distributed system complexity, network latency, data consistency challenges</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-purple">Event-Driven</span></td>
+              <td>High decoupling needed, async workflows, fan-out processing, audit trails</td>
+              <td>Zero coupling between producers/consumers, resilient, naturally scalable</td>
+              <td>Eventual consistency, hard to debug, need message broker infrastructure</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-blue">Serverless</span></td>
+              <td>Spiky/unpredictable traffic, low ops team, event-triggered processing</td>
+              <td>Zero server management, auto-scaling, pay-per-use</td>
+              <td>Cold starts, vendor lock-in, poor for long-running tasks, hard to test locally</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-green">Service Mesh</span></td>
+              <td>Large microservices estate needing uniform observability/security/traffic control</td>
+              <td>Uniform mTLS, traffic shaping, circuit breaking, distributed tracing — without app code changes</td>
+              <td>Significant ops complexity (Istio/Linkerd configuration overhead)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Monolith vs Microservices — The Real Decision Framework</h4>
+      <div class="callout warn">
+        <div class="icon">⚠️</div>
+        <div class="body">Microservices are not an upgrade from monoliths. They're a different trade-off that makes sense at specific scale/team/domain conditions. Starting with microservices at a startup is almost always a mistake.</div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Factor</th><th>Choose Monolith</th><th>Choose Microservices</th></tr></thead>
+          <tbody>
+            <tr><td>Team size</td><td>&lt; 20 engineers</td><td>50+ engineers</td></tr>
+            <tr><td>Domain clarity</td><td>Domain not yet stable</td><td>Well-understood, stable bounded contexts</td></tr>
+            <tr><td>Deployment cadence</td><td>Deploy together is OK</td><td>Teams need independent release cadences</td></tr>
+            <tr><td>Scale requirements</td><td>Uniform or moderate load</td><td>Wildly different load per service (checkout vs search)</td></tr>
+            <tr><td>Team structure</td><td>Cross-functional, coordinated</td><td>Product teams with end-to-end ownership</td></tr>
+            <tr><td>Ops maturity</td><td>Small ops team or none</td><td>Strong platform/SRE team with mature observability</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="arch-patterns">
+    <div class="section-header"><h3>🧩 Architectural Patterns</h3></div>
+
+    <div class="principle-grid">
+      <div class="principle-card blue">
+        <div class="pc-icon">🔄</div>
+        <div class="pc-title">CQRS</div>
+        <div class="pc-body"><strong>Command Query Responsibility Segregation.</strong> Separate the write model (commands that change state) from the read model (queries that return data). Allows each to be optimized independently. Common pattern: write to normalized SQL, read from a denormalized cache/view.</div>
+        <span class="pc-tag">Read/Write split</span><span class="pc-tag">Performance</span>
+      </div>
+      <div class="principle-card green">
+        <div class="pc-icon">📖</div>
+        <div class="pc-title">Event Sourcing</div>
+        <div class="pc-body"><strong>Store state as a sequence of events</strong>, not as current values. The current state is derived by replaying events. Gives you a full audit log, easy temporal queries, and ability to rebuild any past state. Used in financial systems, booking systems.</div>
+        <span class="pc-tag">Audit trail</span><span class="pc-tag">Time travel</span>
+      </div>
+      <div class="principle-card purple">
+        <div class="pc-icon">🔁</div>
+        <div class="pc-title">Saga Pattern</div>
+        <div class="pc-body"><strong>Manage distributed transactions</strong> across microservices without 2PC. A saga is a sequence of local transactions, each publishing an event to trigger the next. Compensating transactions handle failures. <strong>Choreography</strong> (event-driven) vs <strong>Orchestration</strong> (central coordinator).</div>
+        <span class="pc-tag">Distributed tx</span><span class="pc-tag">Compensation</span>
+      </div>
+      <div class="principle-card orange">
+        <div class="pc-icon">📬</div>
+        <div class="pc-title">Outbox Pattern</div>
+        <div class="pc-body"><strong>Guarantee at-least-once event publishing.</strong> Instead of publishing events directly to a broker (which can fail after DB write), write events to an "outbox" table in the same DB transaction, then have a separate process publish them to the broker.</div>
+        <span class="pc-tag">Reliability</span><span class="pc-tag">At-least-once</span>
+      </div>
+      <div class="principle-card red">
+        <div class="pc-icon">🔌</div>
+        <div class="pc-title">Strangler Fig</div>
+        <div class="pc-body"><strong>Incrementally replace a legacy system</strong> by routing traffic to the new system for specific features while the legacy handles the rest. Over time, the new system "strangles" the old one until it can be retired. Safe, reversible migration strategy.</div>
+        <span class="pc-tag">Migration</span><span class="pc-tag">Zero downtime</span>
+      </div>
+      <div class="principle-card cyan">
+        <div class="pc-icon">🛡️</div>
+        <div class="pc-title">Anti-Corruption Layer</div>
+        <div class="pc-body"><strong>Translate between two different domain models.</strong> When integrating with a legacy system or external service that uses a different language/model, the ACL translates their model to your clean domain model. Prevents external chaos from leaking into your core.</div>
+        <span class="pc-tag">Integration</span><span class="pc-tag">Domain isolation</span>
+      </div>
+      <div class="principle-card blue">
+        <div class="pc-icon">🚥</div>
+        <div class="pc-title">Sidecar / Ambassador</div>
+        <div class="pc-body"><strong>Attach infrastructure concerns to a service as a co-process.</strong> The sidecar runs alongside the main service container and handles cross-cutting concerns: logging, metrics, proxy, mTLS. This is how Istio and Envoy work.</div>
+        <span class="pc-tag">Kubernetes</span><span class="pc-tag">Service Mesh</span>
+      </div>
+      <div class="principle-card green">
+        <div class="pc-icon">⚡</div>
+        <div class="pc-title">BFF — Backend for Frontend</div>
+        <div class="pc-body"><strong>Dedicated backend per client type.</strong> Instead of one API serving mobile, web, and third parties (with conflicting requirements), create a thin BFF per client that aggregates and transforms backend services specifically for that client's needs.</div>
+        <span class="pc-tag">API design</span><span class="pc-tag">Mobile vs Web</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="distributed-systems">
+    <div class="section-header"><h3>🌐 Distributed Systems — The Hard Problems</h3></div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">The fallacies of distributed computing: The network is reliable. Latency is zero. Bandwidth is infinite. The network is secure. Topology doesn't change. There is one administrator. Transport cost is zero. The network is homogeneous. <strong>All false. Plan for all of them.</strong></div>
+    </div>
+
+    <div class="card">
+      <h4>Key Distributed Systems Challenges Every Architect Must Solve</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Problem</th><th>Symptoms</th><th>Solutions</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Partial Failure</strong></td>
+              <td>One service succeeds, another fails mid-transaction. State inconsistency.</td>
+              <td>Saga + compensating transactions, Outbox pattern, idempotency keys</td>
+            </tr>
+            <tr>
+              <td><strong>Clock Skew</strong></td>
+              <td>Two servers record the same event with different timestamps → wrong ordering</td>
+              <td>Logical clocks (Lamport), vector clocks, NTP with bounded drift tolerance</td>
+            </tr>
+            <tr>
+              <td><strong>Split Brain</strong></td>
+              <td>Network partition → two nodes both think they're the leader → conflicting writes</td>
+              <td>Leader election with majority quorum, fencing tokens, ETCD/ZooKeeper</td>
+            </tr>
+            <tr>
+              <td><strong>Cascading Failures</strong></td>
+              <td>One slow service causes queue buildup, which overwhelms another service</td>
+              <td>Circuit breakers (Resilience4j), bulkheads (thread pool isolation), timeouts</td>
+            </tr>
+            <tr>
+              <td><strong>Thundering Herd</strong></td>
+              <td>Cache expires → 1000 requests hit DB simultaneously</td>
+              <td>Cache stampede protection: mutex lock, probabilistic early expiry, background refresh</td>
+            </tr>
+            <tr>
+              <td><strong>Duplicate Processing</strong></td>
+              <td>Message broker retries cause same event processed twice</td>
+              <td>Idempotency keys, deduplication tables, exactly-once Kafka semantics</td>
+            </tr>
+            <tr>
+              <td><strong>Data Consistency</strong></td>
+              <td>Read your own writes, monotonic reads, causality — all hard across services</td>
+              <td>Read-after-write: read from leader. Causality: version vectors. Strong: sync replication</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Resilience Patterns — Make Your System Fault-Tolerant</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Concept</span><span class="code-title">Circuit Breaker States</span></div>
+        <pre><code>  CLOSED (normal) → too many failures → OPEN (reject requests, fast-fail)
+  OPEN → after cooldown period → HALF-OPEN (let one request through)
+  HALF-OPEN → success → CLOSED (back to normal)
+  HALF-OPEN → failure → OPEN again
+
+  Configuration: failureThreshold=5, waitDuration=30s, permittedCallsInHalfOpen=3
+  Java: Resilience4j CircuitBreaker @CircuitBreaker(name="payment")
+  
+  Why it helps: Instead of waiting 30s for a timeout × 1000 requests,
+  the OPEN state immediately returns an error in &lt;1ms, preventing thread exhaustion.</code></pre>
+      </div>
+      <div class="table-wrapper" style="margin-top:.8rem;">
+        <table>
+          <thead><tr><th>Pattern</th><th>Problem It Solves</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Circuit Breaker</strong></td><td>Slow/failing downstream cascading up</td><td>After N failures, fail fast for T seconds</td></tr>
+            <tr><td><strong>Retry with Backoff</strong></td><td>Transient failures (network blip)</td><td>Retry 3× with exponential backoff + jitter</td></tr>
+            <tr><td><strong>Bulkhead</strong></td><td>One integration exhausting all threads</td><td>Separate thread pool per integration</td></tr>
+            <tr><td><strong>Timeout</strong></td><td>Slow dependency blocking threads</td><td>Every outbound call gets a hard time limit</td></tr>
+            <tr><td><strong>Fallback</strong></td><td>Service unavailable but partial response possible</td><td>Return cached/default data when primary fails</td></tr>
+            <tr><td><strong>Rate Limiter</strong></td><td>Protect service from being overwhelmed</td><td>Token bucket / sliding window per client</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PART 3 — DESIGN MASTERY
+  ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">03</div>
+    <div>
+      <h2>Design Mastery</h2>
+      <p>Deep-dive into the design principles, domain modeling, and data architecture patterns that define great software at scale.</p>
+    </div>
+  </div>
+
+  <div class="section" id="design-principles">
+    <div class="section-header"><h3>🔧 Design Principles — Beyond SOLID</h3></div>
+
+    <div class="card">
+      <h4>Coupling & Cohesion — The Physicist's View of Software</h4>
+      <p style="color:var(--text-secondary);margin-bottom:1rem;">Everything in software design is ultimately an attempt to maximize cohesion within modules and minimize coupling between them. These two forces are in constant tension.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Type of Coupling</th><th>Description</th><th>Risk Level</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Content</strong></td><td>One module directly modifies another's internal data</td><td><span class="pill pill-red" style="font-size:.7rem;">Worst</span></td></tr>
+            <tr><td><strong>Common / Global</strong></td><td>Two modules share global state (static variables, global DB connection)</td><td><span class="pill pill-red" style="font-size:.7rem;">Very Bad</span></td></tr>
+            <tr><td><strong>Control</strong></td><td>One module passes flags to control another's behavior</td><td><span class="pill pill-orange" style="font-size:.7rem;">Bad</span></td></tr>
+            <tr><td><strong>Stamp / Data Structure</strong></td><td>Modules share a complex data structure even if they only need part of it</td><td><span class="pill pill-orange" style="font-size:.7rem;">Moderate</span></td></tr>
+            <tr><td><strong>Data</strong></td><td>Modules share only the data they actually need (method parameters)</td><td><span class="pill pill-green" style="font-size:.7rem;">OK</span></td></tr>
+            <tr><td><strong>Message</strong></td><td>Modules communicate via events/messages — no direct knowledge</td><td><span class="pill pill-green" style="font-size:.7rem;">Best</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Clean Architecture (Uncle Bob) — Dependency Rule</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Architecture</span><span class="code-title">Clean Architecture Layers</span></div>
+        <pre><code>  ┌─────────────────────────────────────────────────┐
+  │            Frameworks & Drivers                 │  ← Web, DB, UI, Devices
+  │  ┌─────────────────────────────────────────┐    │
+  │  │         Interface Adapters              │    │  ← Controllers, Gateways, Presenters
+  │  │  ┌──────────────────────────────────┐   │    │
+  │  │  │      Application Use Cases       │   │    │  ← Business rules of the app
+  │  │  │  ┌───────────────────────────┐   │   │    │
+  │  │  │  │     Enterprise Entities   │   │   │    │  ← Core business objects (pure Java)
+  │  │  │  └───────────────────────────┘   │   │    │
+  │  │  └──────────────────────────────────┘   │    │
+  │  └─────────────────────────────────────────┘    │
+  └─────────────────────────────────────────────────┘
+  
+  THE DEPENDENCY RULE: Dependencies always point inward.
+  Outer layers know about inner layers. Inner layers know NOTHING about outer layers.
+  The Entity layer has ZERO imports from Spring, JPA, HTTP, or anything outer.</code></pre>
+      </div>
+      <div class="callout success" style="margin-top:1rem;">
+        <div class="icon">🎯</div>
+        <div class="body"><strong>Why this matters:</strong> Your business logic (the most valuable, most stable part) is completely insulated from technology choices (the most volatile part). You can swap Spring for Quarkus, PostgreSQL for MongoDB, REST for gRPC — without touching a single entity or use case class.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="domain-driven">
+    <div class="section-header"><h3>🗺️ Domain-Driven Design (DDD)</h3></div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">DDD is not a technology — it's a <strong>way of thinking about software in terms of the business problem</strong>. Its value is in creating a shared language between developers and domain experts that makes the code self-documenting and the design naturally aligned with the business.</div>
+    </div>
+
+    <div class="card">
+      <h4>Strategic DDD — The Big Picture</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Concept</th><th>Simple Explanation</th><th>Real Example</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Ubiquitous Language</strong></td><td>A shared vocabulary used by both the code and the business team. No translation layer between "what business says" and "what code says".</td><td>If finance says "invoice", your class is <code>Invoice</code>, not <code>BillingDocument</code></td></tr>
+            <tr><td><strong>Bounded Context</strong></td><td>A boundary within which a domain model is consistent. The same word can mean different things in different contexts — that's OK.</td><td>"Customer" in Ordering means someone who buys. In Support it means someone with a ticket. Two different models.</td></tr>
+            <tr><td><strong>Context Map</strong></td><td>A diagram showing how bounded contexts relate to each other and integrate.</td><td>Ordering context → (downstream) → Fulfillment context. Fulfillment context → (ACL) → Legacy Warehouse System</td></tr>
+            <tr><td><strong>Core Domain</strong></td><td>The part of your domain that gives you competitive advantage. Where you invest the most in DDD sophistication.</td><td>For Spotify: music recommendation. NOT: user authentication (generic).</td></tr>
+            <tr><td><strong>Subdomain Types</strong></td><td>Core (competitive advantage), Supporting (enables core, build in-house), Generic (buy/outsource, not differentiating)</td><td>Netflix: Core=recommendation engine, Supporting=content management, Generic=email sending</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Tactical DDD — Building Blocks in Code</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Java</span><span class="code-title">DDD Building Blocks — Practical Examples</span></div>
+        <pre><code><span class="cmt">// ── VALUE OBJECT: no identity, defined by its attributes, immutable ─</span>
+<span class="kw">public record</span> <span class="type">EmailAddress</span>(<span class="type">String</span> value) {
+    <span class="kw">public</span> <span class="type">EmailAddress</span> {
+        <span class="kw">if</span> (!value.<span class="fn">matches</span>(<span class="str">"^[\\w.-]+@[\\w.-]+\\.\\w+$"</span>))
+            <span class="kw">throw new</span> <span class="type">IllegalArgumentException</span>(<span class="str">"Invalid email: "</span> + value);
+    }
+}
+<span class="cmt">// Two EmailAddress("x@y.com") are equal — no separate ID needed</span>
+
+<span class="cmt">// ── ENTITY: has identity, state can change over lifetime ─────────</span>
+<span class="kw">public class</span> <span class="type">Customer</span> {
+    <span class="kw">private final</span> <span class="type">CustomerId</span> id;        <span class="cmt">// identity is what matters</span>
+    <span class="kw">private</span> <span class="type">EmailAddress</span> email;          <span class="cmt">// state can change</span>
+    <span class="kw">private</span> <span class="type">CustomerStatus</span> status;
+
+    <span class="kw">public void</span> <span class="fn">changeEmail</span>(<span class="type">EmailAddress</span> newEmail) {
+        <span class="kw">if</span> (status == <span class="type">CustomerStatus</span>.<span class="const">SUSPENDED</span>)
+            <span class="kw">throw new</span> <span class="type">DomainException</span>(<span class="str">"Suspended customers cannot change email"</span>);
+        <span class="kw">this</span>.email = newEmail;              <span class="cmt">// domain rule enforced here, not in service</span>
+        registerEvent(<span class="kw">new</span> <span class="type">CustomerEmailChangedEvent</span>(id, newEmail));
+    }
+}
+
+<span class="cmt">// ── AGGREGATE ROOT: entry point that enforces all invariants ─────</span>
+<span class="kw">public class</span> <span class="type">Order</span> {  <span class="cmt">// Aggregate root — owns OrderLines</span>
+    <span class="kw">private final</span> <span class="type">OrderId</span>             id;
+    <span class="kw">private final</span> <span class="type">List</span>&lt;<span class="type">OrderLine</span>&gt;     lines = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    <span class="kw">private</span> <span class="type">OrderStatus</span>               status;
+    <span class="kw">private static final int</span>           MAX_LINES = <span class="num">50</span>;
+
+    <span class="kw">public void</span> <span class="fn">addLine</span>(<span class="type">ProductId</span> product, <span class="kw">int</span> qty, <span class="type">Money</span> unitPrice) {
+        <span class="kw">if</span> (status != <span class="type">OrderStatus</span>.<span class="const">DRAFT</span>)
+            <span class="kw">throw new</span> <span class="type">DomainException</span>(<span class="str">"Can only add lines to draft orders"</span>);
+        <span class="kw">if</span> (lines.<span class="fn">size</span>() >= MAX_LINES)
+            <span class="kw">throw new</span> <span class="type">DomainException</span>(<span class="str">"Order cannot exceed 50 lines"</span>);
+        lines.<span class="fn">add</span>(<span class="kw">new</span> <span class="type">OrderLine</span>(product, qty, unitPrice));
+    }
+    <span class="cmt">// External code NEVER creates OrderLine directly — must go through Order aggregate</span>
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="microservices">
+    <div class="section-header"><h3>🔬 Microservices Patterns — The Complete Toolkit</h3></div>
+
+    <div class="card">
+      <h4>Service Decomposition Strategies</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Strategy</th><th>How</th><th>Best For</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Decompose by Business Capability</strong></td><td>Each service = one business capability (Ordering, Payments, Shipping)</td><td>New systems with clear business domains</td></tr>
+            <tr><td><strong>Decompose by Subdomain (DDD)</strong></td><td>Each service = one DDD bounded context</td><td>Complex domains with rich business logic</td></tr>
+            <tr><td><strong>Decompose by Team</strong></td><td>Each team owns the services they're responsible for (Conway's Law)</td><td>Scaling organizations</td></tr>
+            <tr><td><strong>Strangler Fig from Monolith</strong></td><td>Incrementally extract services from an existing monolith</td><td>Legacy modernization</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Inter-Service Communication Patterns</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Pattern</th><th>Mechanism</th><th>Use When</th><th>Watch Out For</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Synchronous REST</strong></td>
+              <td>HTTP request/response</td>
+              <td>Query-response, real-time user-facing operations</td>
+              <td>Tight coupling; caller blocked waiting; cascading failures</td>
+            </tr>
+            <tr>
+              <td><strong>gRPC</strong></td>
+              <td>HTTP/2 + Protocol Buffers</td>
+              <td>High-performance internal service communication; streaming</td>
+              <td>Schema evolution; not human-readable; need Protobuf toolchain</td>
+            </tr>
+            <tr>
+              <td><strong>Async Messaging</strong></td>
+              <td>Kafka / RabbitMQ / SQS</td>
+              <td>Fire-and-forget, fan-out, cross-domain events, decoupling</td>
+              <td>Eventual consistency; need idempotency; message ordering complexity</td>
+            </tr>
+            <tr>
+              <td><strong>GraphQL</strong></td>
+              <td>Query language over HTTP</td>
+              <td>Flexible client queries; BFF pattern; avoid over/under-fetching</td>
+              <td>N+1 problem; security (deep queries); complex caching</td>
+            </tr>
+            <tr>
+              <td><strong>WebSocket / SSE</strong></td>
+              <td>Persistent connections</td>
+              <td>Real-time updates, notifications, live dashboards</td>
+              <td>Connection state; scaling stateful connections; reconnection logic</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Database Per Service — The Golden Rule</h4>
+      <p style="color:var(--text-secondary);margin-bottom:.8rem;">Each microservice <em>must</em> own its own database and schema. No sharing tables or schemas across service boundaries. This is what enables independent deployment.</p>
+      <div class="strip-compare">
+        <div class="strip-col bad">
+          <h5>❌ Shared DB Anti-Pattern</h5>
+          <ul>
+            <li>Service A and B both read/write the same table</li>
+            <li>Schema change in one service breaks the other</li>
+            <li>Can't deploy independently</li>
+            <li>Can't scale each service's DB independently</li>
+            <li>Integration via DB = worst coupling possible</li>
+          </ul>
+        </div>
+        <div class="strip-col good">
+          <h5>✅ DB Per Service</h5>
+          <ul>
+            <li>Each service owns its tables; no other service touches them</li>
+            <li>Schema evolution contained within one service</li>
+            <li>Each service can use a different DB type (SQL, NoSQL, graph)</li>
+            <li>Cross-service joins done via API calls or event-driven sync</li>
+            <li>True independent deployability</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="data-architecture">
+    <div class="section-header"><h3>🗄️ Data Architecture — Where Architects Spend 40% of Their Time</h3></div>
+
+    <div class="card">
+      <h4>Choosing the Right Database</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Database Type</th><th>Best For</th><th>Examples</th><th>Avoid When</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="pill pill-blue">Relational (SQL)</span></td>
+              <td>Complex relationships, ACID transactions, structured data, reporting</td>
+              <td>PostgreSQL, MySQL, Oracle, SQL Server</td>
+              <td>Massive unstructured data, extreme horizontal write scale needed</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-green">Document (NoSQL)</span></td>
+              <td>Hierarchical data, flexible schemas, product catalogs, user profiles</td>
+              <td>MongoDB, DynamoDB, Firestore</td>
+              <td>Complex multi-document transactions; need strong joins</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">Key-Value</span></td>
+              <td>Caching, sessions, rate limiting, feature flags — ultra-fast lookups</td>
+              <td>Redis, DynamoDB, Memcached</td>
+              <td>Complex queries; large values; need relationships</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-purple">Wide-Column</span></td>
+              <td>Time series, IoT, high-write-throughput, Cassandra's write-heavy sweet spot</td>
+              <td>Apache Cassandra, HBase, ScyllaDB</td>
+              <td>Ad-hoc queries; frequent data model changes; small scale</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-blue">Graph</span></td>
+              <td>Relationship-heavy queries: social networks, fraud detection, recommendation graphs</td>
+              <td>Neo4j, Amazon Neptune, JanusGraph</td>
+              <td>Relational data that isn't graph-centric; small datasets</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-green">Search Engine</span></td>
+              <td>Full-text search, faceted filtering, autocomplete, log analytics</td>
+              <td>Elasticsearch, OpenSearch, Apache Solr</td>
+              <td>Primary source of truth; ACID requirements</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-purple">Vector Database</span></td>
+              <td>Similarity search, semantic search, AI/ML embeddings, RAG pipelines</td>
+              <td>Pinecone, Weaviate, Qdrant, pgvector</td>
+              <td>Exact-match queries; traditional relational use cases</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">Time-Series</span></td>
+              <td>Metrics, monitoring data, IoT sensor data, financial ticks</td>
+              <td>InfluxDB, TimescaleDB, Prometheus</td>
+              <td>Non-temporal data; complex joins needed</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Data Mesh vs Data Warehouse vs Data Lake</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Paradigm</th><th>What It Is</th><th>Who Manages Data</th><th>Best For</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Data Warehouse</strong></td>
+              <td>Centralized, structured repository of historical data for analytics. Star/snowflake schema.</td>
+              <td>Central data team</td>
+              <td>Business intelligence, reporting, structured analytics</td>
+            </tr>
+            <tr>
+              <td><strong>Data Lake</strong></td>
+              <td>Central store for all raw data (structured, semi-structured, unstructured) at any scale.</td>
+              <td>Central data team</td>
+              <td>ML training data, raw event storage, exploratory analysis</td>
+            </tr>
+            <tr>
+              <td><strong>Data Lakehouse</strong></td>
+              <td>Combines data lake's scale with warehouse's structure + ACID. Delta Lake, Apache Iceberg.</td>
+              <td>Hybrid</td>
+              <td>Modern analytics platform that serves both BI and ML</td>
+            </tr>
+            <tr>
+              <td><strong>Data Mesh</strong></td>
+              <td>Decentralized paradigm where each domain team owns their data as a "data product".</td>
+              <td>Domain teams</td>
+              <td>Large orgs where central data team is a bottleneck</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="security-arch">
+    <div class="section-header"><h3>🔒 Security Architecture</h3></div>
+
+    <div class="card">
+      <h4>Zero Trust Architecture</h4>
+      <div class="arch-quote">
+        <p>"Never trust, always verify. Treat every request as if it comes from an untrusted network — regardless of where it originates."</p>
+      </div>
+      <div class="principle-grid">
+        <div class="principle-card blue">
+          <div class="pc-icon">🔐</div>
+          <div class="pc-title">Verify Explicitly</div>
+          <div class="pc-body">Always authenticate and authorize based on all available data points: identity, location, device health, service, workload, data classification, and anomalies.</div>
+        </div>
+        <div class="principle-card green">
+          <div class="pc-icon">🎯</div>
+          <div class="pc-title">Least Privilege Access</div>
+          <div class="pc-body">Limit user and service access with just-in-time (JIT) and just-enough-access (JEA). Minimize blast radius when a credential is compromised.</div>
+        </div>
+        <div class="principle-card orange">
+          <div class="pc-icon">💥</div>
+          <div class="pc-title">Assume Breach</div>
+          <div class="pc-body">Design assuming the attacker is already inside the network. Minimize blast radius, segment access, encrypt everything end-to-end, detect anomalies with behavioral analytics.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Security at Every Layer — Defense in Depth</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Layer</th><th>Security Controls</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Edge / Network</strong></td><td>WAF (Web Application Firewall), DDoS protection, rate limiting, IP allowlisting</td></tr>
+            <tr><td><strong>API Gateway</strong></td><td>Authentication (JWT/OAuth2), authorization checks, request validation, TLS termination</td></tr>
+            <tr><td><strong>Application</strong></td><td>Input validation, output encoding (prevent XSS), CSRF protection, parameterized queries (prevent SQLi)</td></tr>
+            <tr><td><strong>Service-to-Service</strong></td><td>mTLS (mutual TLS), service accounts, signed JWTs, Kubernetes RBAC</td></tr>
+            <tr><td><strong>Data</strong></td><td>Encryption at rest (AES-256), encryption in transit (TLS 1.3), field-level encryption for PII</td></tr>
+            <tr><td><strong>Identity</strong></td><td>MFA, short-lived tokens, secret rotation (Vault/AWS Secrets Manager), no hardcoded credentials</td></tr>
+            <tr><td><strong>Observability</strong></td><td>Audit logging, SIEM integration, anomaly detection, incident response playbooks</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Auth Patterns — OAuth2, OIDC, JWT</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Flow</span><span class="code-title">OAuth2 Authorization Code Flow (most secure for web apps)</span></div>
+        <pre><code>  User → [Click Login] → Your App
+  Your App → [Redirect] → Identity Provider (Google/Auth0/Keycloak)
+  User → [Enters credentials] → Identity Provider
+  Identity Provider → [Authorization Code] → Your App (redirect_uri)
+  Your App → [Code + Client Secret] → Identity Provider Token Endpoint
+  Identity Provider → [Access Token + ID Token + Refresh Token] → Your App
+
+  Access Token (JWT): short-lived (15m), used for API calls
+  ID Token (JWT): contains user identity claims
+  Refresh Token: long-lived, used to get new access tokens silently
+
+  JWT Anatomy:
+  Header: {"alg":"RS256","typ":"JWT"}
+  Payload: {"sub":"user123","email":"x@y.com","roles":["admin"],"exp":1735000000}
+  Signature: RSA signature using Identity Provider's private key → your app verifies with public key</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PART 4 — PLATFORM & OPS
+  ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-orange);">04</div>
+    <div>
+      <h2>Platform & Operations</h2>
+      <p>Modern architects must understand the platform their software runs on — cloud, containers, CI/CD, and the observability stack.</p>
+    </div>
+  </div>
+
+  <div class="section" id="cloud-arch">
+    <div class="section-header"><h3>☁️ Cloud Architecture</h3></div>
+
+    <div class="card">
+      <h4>Cloud-Native Design Principles (12-Factor App + Extensions)</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Factor</th><th>What It Means</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><strong>Codebase</strong></td><td>One codebase tracked in version control. Many deploys. No snowflake deployments.</td></tr>
+            <tr><td>2</td><td><strong>Dependencies</strong></td><td>Explicitly declare and isolate dependencies. Never rely on system-installed packages.</td></tr>
+            <tr><td>3</td><td><strong>Config</strong></td><td>Store config in environment variables. Never hardcode URLs, passwords, or environment-specific values in code.</td></tr>
+            <tr><td>4</td><td><strong>Backing Services</strong></td><td>Treat databases, queues, and caches as attached resources. Swap them via config, not code changes.</td></tr>
+            <tr><td>5</td><td><strong>Build/Release/Run</strong></td><td>Strictly separate build (compile), release (build + config), and run (execute) stages.</td></tr>
+            <tr><td>6</td><td><strong>Processes</strong></td><td>Execute the app as stateless processes. State lives in backing services (DB, cache), not in memory.</td></tr>
+            <tr><td>7</td><td><strong>Port Binding</strong></td><td>Export services via port binding — app is self-contained. No deploying into an app server.</td></tr>
+            <tr><td>8</td><td><strong>Concurrency</strong></td><td>Scale out via the process model. Add more processes, not bigger machines (horizontal scale).</td></tr>
+            <tr><td>9</td><td><strong>Disposability</strong></td><td>Fast startup, graceful shutdown. Apps should be killed/restarted at any time without data loss.</td></tr>
+            <tr><td>10</td><td><strong>Dev/Prod Parity</strong></td><td>Keep development, staging, and production as similar as possible. Reduce "works on my machine" bugs.</td></tr>
+            <tr><td>11</td><td><strong>Logs</strong></td><td>Treat logs as event streams. Write to stdout; let the environment collect and aggregate them.</td></tr>
+            <tr><td>12</td><td><strong>Admin Processes</strong></td><td>Run admin/management tasks as one-off processes (database migrations, one-time scripts).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>AWS / Cloud Services — What Architects Must Know</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Category</th><th>Key Services</th><th>Architect's Perspective</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Compute</strong></td>
+              <td>EC2, ECS, EKS, Lambda, Fargate</td>
+              <td>EC2=full control, EKS=container orchestration, Lambda=serverless event-driven, Fargate=serverless containers</td>
+            </tr>
+            <tr>
+              <td><strong>Networking</strong></td>
+              <td>VPC, ALB, NLB, CloudFront, Route 53, API Gateway</td>
+              <td>Always design your VPC first. ALB for HTTP(S) load balancing. CloudFront for CDN + edge security.</td>
+            </tr>
+            <tr>
+              <td><strong>Storage</strong></td>
+              <td>S3, EBS, EFS, Glacier</td>
+              <td>S3=object storage (cheap, infinite scale), EBS=block storage for EC2, EFS=shared filesystem</td>
+            </tr>
+            <tr>
+              <td><strong>Databases</strong></td>
+              <td>RDS, Aurora, DynamoDB, ElastiCache, DocumentDB, Neptune</td>
+              <td>Aurora=MySQL/PG-compatible but 5x faster. DynamoDB=global scale with single-digit ms latency.</td>
+            </tr>
+            <tr>
+              <td><strong>Messaging</strong></td>
+              <td>SQS, SNS, Kinesis, MSK (Kafka), EventBridge</td>
+              <td>SQS=queue (point-to-point), SNS=pub-sub (fan-out), Kinesis=real-time streams, EventBridge=event bus</td>
+            </tr>
+            <tr>
+              <td><strong>Security</strong></td>
+              <td>IAM, KMS, Secrets Manager, WAF, GuardDuty, Security Hub</td>
+              <td>IAM roles over long-lived keys always. Secrets Manager over SSM for sensitive values.</td>
+            </tr>
+            <tr>
+              <td><strong>Observability</strong></td>
+              <td>CloudWatch, X-Ray, OpenTelemetry</td>
+              <td>X-Ray for distributed tracing. CloudWatch for logs/metrics/alarms. Use custom dashboards for SLOs.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="devops-arch">
+    <div class="section-header"><h3>🚀 DevOps & SRE Thinking</h3></div>
+
+    <div class="card">
+      <h4>DORA Metrics — The 4 Metrics That Matter for Engineering Velocity</h4>
+      <p style="color:var(--text-secondary);margin-bottom:.8rem;">Research by DORA (DevOps Research and Assessment) found these 4 metrics predict software delivery performance and organizational performance.</p>
+      <div class="pillar-row">
+        <div class="pillar">
+          <div class="pillar-icon">⚡</div>
+          <div class="pillar-name">Deployment Frequency</div>
+          <div class="pillar-desc">How often you deploy to production.<br><br><strong>Elite:</strong> Multiple per day<br><strong>Low:</strong> Monthly to every 6m</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">⏱️</div>
+          <div class="pillar-name">Lead Time for Changes</div>
+          <div class="pillar-desc">Time from code commit to production.<br><br><strong>Elite:</strong> &lt; 1 hour<br><strong>Low:</strong> 1 month – 6 months</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🔧</div>
+          <div class="pillar-name">Mean Time to Restore</div>
+          <div class="pillar-desc">Time to restore service after incident.<br><br><strong>Elite:</strong> &lt; 1 hour<br><strong>Low:</strong> 1 week – 1 month</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📉</div>
+          <div class="pillar-name">Change Failure Rate</div>
+          <div class="pillar-desc">% of deployments causing production failures.<br><br><strong>Elite:</strong> 0–15%<br><strong>Low:</strong> 46–60%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>SLI / SLO / SLA — The Language of Reliability</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Concept</span><span class="code-title">SLI → SLO → SLA hierarchy</span></div>
+        <pre><code>  SLI (Service Level Indicator) = a measurable metric that reflects service health
+    Examples: request success rate %, P99 latency ms, error rate %, uptime %
+
+  SLO (Service Level Objective) = your internal reliability target
+    Examples: "99.9% of requests succeed" | "P99 latency &lt; 200ms over rolling 30 days"
+    The SLO is tighter than the SLA — it's your internal commitment to your team.
+
+  SLA (Service Level Agreement) = external contract with customers
+    Examples: "We guarantee 99.9% availability, or we refund 10% of monthly fee"
+    The SLA is looser than the SLO — it's the floor, not the target.
+
+  ERROR BUDGET = 1 - SLO availability
+    99.9% SLO = 0.1% error budget = 43.2 minutes/month of allowed downtime
+    If error budget is exhausted → feature work stops → focus on reliability
+    If error budget is healthy → can take more deployment risk</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="observability">
+    <div class="section-header"><h3>🔭 Observability — The Three Pillars</h3></div>
+
+    <div class="card">
+      <h4>Logs, Metrics, Traces — The Observability Trinity</h4>
+      <div class="principle-grid">
+        <div class="principle-card blue">
+          <div class="pc-icon">📝</div>
+          <div class="pc-title">Logs — What happened</div>
+          <div class="pc-body">Timestamped records of events. Use <strong>structured logging</strong> (JSON) — never plain text. Always include: traceId, userId, requestId, duration, status. Tool: ELK Stack, Loki, CloudWatch Logs.</div>
+          <span class="pc-tag">ELK</span><span class="pc-tag">Loki</span><span class="pc-tag">Structured JSON</span>
+        </div>
+        <div class="principle-card green">
+          <div class="pc-icon">📊</div>
+          <div class="pc-title">Metrics — How it's performing</div>
+          <div class="pc-body">Numerical measurements over time: request rate, error rate, latency, CPU, memory. Use the <strong>RED method</strong> (Rate, Errors, Duration) for services. Tool: Prometheus + Grafana, Datadog.</div>
+          <span class="pc-tag">Prometheus</span><span class="pc-tag">Grafana</span><span class="pc-tag">RED method</span>
+        </div>
+        <div class="principle-card orange">
+          <div class="pc-icon">🔍</div>
+          <div class="pc-title">Traces — How requests flow</div>
+          <div class="pc-body">Follow a single request across all services — from API gateway → service A → DB → service B. Essential for diagnosing latency in distributed systems. Tool: Jaeger, Zipkin, AWS X-Ray, OpenTelemetry.</div>
+          <span class="pc-tag">Jaeger</span><span class="pc-tag">OpenTelemetry</span><span class="pc-tag">Distributed tracing</span>
+        </div>
+      </div>
+      <div class="callout success" style="margin-top:1rem;">
+        <div class="icon">🎯</div>
+        <div class="body"><strong>OpenTelemetry is now the standard.</strong> It's a vendor-neutral SDK that instruments your code once and exports to any backend (Jaeger, Datadog, Honeycomb, etc.). Start with OTel from day one — don't bake Datadog-specific instrumentation into your code.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="api-strategy">
+    <div class="section-header"><h3>🌐 API Strategy</h3></div>
+
+    <div class="card">
+      <h4>API Gateway Pattern — The Entry Point</h4>
+      <p style="color:var(--text-secondary);margin-bottom:.8rem;">An API Gateway is the single entry point for all client requests. It handles cross-cutting concerns so your services don't have to.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Architecture</span><span class="code-title">API Gateway Responsibilities</span></div>
+        <pre><code>  Client → API Gateway → Service A
+                       → Service B
+                       → Service C
+
+  API Gateway handles:
+  ├── Authentication (verify JWT / API key)
+  ├── Authorization (check permissions)
+  ├── Rate Limiting (per user/API key)
+  ├── Request Routing (path-based, header-based)
+  ├── Load Balancing
+  ├── SSL Termination
+  ├── Request/Response Transformation
+  ├── Circuit Breaking
+  ├── Caching (for cacheable responses)
+  ├── Logging & Analytics
+  └── Versioning (route v1 vs v2)
+
+  Popular options: Kong, AWS API Gateway, NGINX, Traefik, Envoy</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>API Design Best Practices</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Principle</th><th>Rule</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Idempotency</strong></td><td>Same request, same result. Critical for retries.</td><td><code>PUT /orders/123</code> called twice = same result. Add idempotency key for POST.</td></tr>
+            <tr><td><strong>Pagination</strong></td><td>Never return unbounded collections.</td><td>Cursor-based: <code>?cursor=xyz&limit=20</code>. Offset: <code>?page=2&size=20</code></td></tr>
+            <tr><td><strong>Versioning</strong></td><td>Never break existing clients. Version your API.</td><td><code>/api/v2/users</code> or <code>Accept: application/vnd.api+json;version=2</code></td></tr>
+            <tr><td><strong>Error Format</strong></td><td>Consistent, machine-readable error responses.</td><td>RFC 7807: <code>{"type":"validation-error","title":"...","violations":[...]}</code></td></tr>
+            <tr><td><strong>HATEOAS</strong></td><td>Return links to related resources in responses (REST Level 3).</td><td><code>{"id":1,"_links":{"cancel":"/orders/1/cancel","pay":"/orders/1/pay"}}</code></td></tr>
+            <tr><td><strong>Async APIs</strong></td><td>For long-running operations, return 202 Accepted with a polling URL.</td><td><code>202 {"jobId":"abc","statusUrl":"/jobs/abc"}</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PART 5 — GENAI FOR ARCHITECTS
+  ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-purple);">05</div>
+    <div>
+      <h2>GenAI for Architects</h2>
+      <p>Generative AI is now a first-class architectural concern. Every architect must understand how LLMs work, how to build with them, and how to deploy them reliably at scale.</p>
+    </div>
+  </div>
+
+  <div class="section" id="genai-foundations">
+    <div class="section-header"><h3>🤖 GenAI Foundations — How It Actually Works</h3></div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body">You don't need to be an ML researcher to architect GenAI systems. But you <em>do</em> need to understand the core mechanics well enough to make good architectural decisions about context, latency, cost, reliability, and safety.</div>
+    </div>
+
+    <div class="card">
+      <h4>How Large Language Models Work — The Mental Model</h4>
+      <div class="ai-grid">
+        <div class="ai-card">
+          <div class="ai-icon">🔤</div>
+          <div class="ai-title">Tokenization</div>
+          <div class="ai-body">Text is split into "tokens" (roughly 3/4 of a word on average). "Hello world" = 2 tokens. "antidisestablishmentarianism" = several. Models think in tokens, not words. Costs are priced per token.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">📐</div>
+          <div class="ai-title">Embeddings</div>
+          <div class="ai-body">Each token becomes a vector (array of ~1536 numbers). Similar concepts have similar vectors. This is how the model "understands" meaning — meaning is spatial proximity in vector space.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">👁️</div>
+          <div class="ai-title">Attention Mechanism</div>
+          <div class="ai-body">The "Transformer" in "GPT". For each token, attention calculates which other tokens in the context are most relevant. This is how the model understands "it" refers to "the cat" 20 tokens earlier.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">🎲</div>
+          <div class="ai-title">Next Token Prediction</div>
+          <div class="ai-body">LLMs are trained to predict the most likely next token given all previous tokens. Generation is sampling — the model outputs a probability distribution, and we pick from it (temperature controls randomness).</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">🪟</div>
+          <div class="ai-title">Context Window</div>
+          <div class="ai-body">The maximum amount of text the model can "see" at once. GPT-4 = 128K tokens (~100K words). The model only knows what's in its context window — it has no memory between conversations by default.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">🌡️</div>
+          <div class="ai-title">Temperature</div>
+          <div class="ai-body">Controls randomness. Temperature=0: always picks the most likely token (deterministic, factual tasks). Temperature=1: samples proportionally (creative tasks). Temperature=2: wild and unpredictable.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>LLM Capability Map — What They're Good At and What They're Not</h4>
+      <div class="strip-compare">
+        <div class="strip-col good">
+          <h5>✅ Strong Capabilities</h5>
+          <ul>
+            <li>Text generation, summarization, rewriting</li>
+            <li>Code generation and explanation</li>
+            <li>Classification and entity extraction</li>
+            <li>Translation across languages</li>
+            <li>Question answering over provided context</li>
+            <li>Reasoning through structured problems step-by-step</li>
+            <li>Generating multiple options / brainstorming</li>
+            <li>Structured output (JSON, tables) from instructions</li>
+          </ul>
+        </div>
+        <div class="strip-col bad">
+          <h5>❌ Fundamental Limitations</h5>
+          <ul>
+            <li>Hallucination — confident wrong answers</li>
+            <li>Knowledge cutoff — no real-time information</li>
+            <li>Arithmetic and complex math (use code interpreter)</li>
+            <li>Reliable precise counting and exact recall</li>
+            <li>Consistency over very long context</li>
+            <li>Knowing what it doesn't know</li>
+            <li>Following complex multi-step instructions reliably</li>
+            <li>Safe behavior under adversarial inputs (prompt injection)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>LLM Models — The Landscape (2025)</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Model</th><th>Maker</th><th>Best For</th><th>Context</th></tr></thead>
+          <tbody>
+            <tr><td><strong>GPT-4o / o1</strong></td><td>OpenAI</td><td>General-purpose, reasoning, code; o1 = complex multi-step reasoning</td><td>128K</td></tr>
+            <tr><td><strong>Claude 3.5 / Claude 4</strong></td><td>Anthropic</td><td>Long context, nuanced writing, safety-focused, instruction following</td><td>200K</td></tr>
+            <tr><td><strong>Gemini 1.5 / 2.0</strong></td><td>Google</td><td>Multimodal (images/video/audio), very long context, Google ecosystem</td><td>1M+</td></tr>
+            <tr><td><strong>Llama 3 / 3.1</strong></td><td>Meta (Open)</td><td>Self-hosted/private deployment, fine-tuning, cost-sensitive applications</td><td>128K</td></tr>
+            <tr><td><strong>Mistral / Mixtral</strong></td><td>Mistral AI (Open)</td><td>Efficient, self-hosted, European regulation compliance</td><td>32K</td></tr>
+            <tr><td><strong>DeepSeek V3 / R1</strong></td><td>DeepSeek (Open)</td><td>Very cost-effective reasoning, coding; R1 = strong reasoning at low cost</td><td>64K</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="llm-architecture">
+    <div class="section-header"><h3>🏗️ LLM Integration Architecture</h3></div>
+
+    <div class="card">
+      <h4>Ways to Use LLMs — From Simple to Complex</h4>
+      <div class="step-flow">
+        <div class="sf-item">
+          <div class="sf-num">1</div>
+          <div class="sf-body"><strong>Direct Prompting:</strong> Call the LLM API with a prompt, get a response. Zero infrastructure. Sufficient for simple generation tasks like summarization, classification, drafting. Start here.</div>
+        </div>
+        <div class="sf-item green">
+          <div class="sf-num">2</div>
+          <div class="sf-body"><strong>Prompt Engineering:</strong> Craft system prompts that consistently produce the output format you need. Use few-shot examples (2–5 examples in the prompt). Use chain-of-thought ("think step by step"). Most value for least effort.</div>
+        </div>
+        <div class="sf-item orange">
+          <div class="sf-num">3</div>
+          <div class="sf-body"><strong>RAG (Retrieval-Augmented Generation):</strong> Inject relevant context into the prompt at runtime. Solves knowledge cutoff and domain-specific knowledge gaps. Required for any production Q&A system over private data. See dedicated RAG section.</div>
+        </div>
+        <div class="sf-item purple">
+          <div class="sf-num">4</div>
+          <div class="sf-body"><strong>Function Calling / Tool Use:</strong> LLM decides which tools to call (search, calculator, DB query, API). Model returns structured JSON describing the tool call; your code executes it. Bridges LLM reasoning with real-world actions.</div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-num">5</div>
+          <div class="sf-body"><strong>Fine-Tuning:</strong> Train the model further on your domain data to change its behavior or style. Expensive, slower iteration, requires evaluation pipeline. Use only when prompt engineering + RAG have been exhausted and you have thousands of high-quality examples.</div>
+        </div>
+        <div class="sf-item green">
+          <div class="sf-num">6</div>
+          <div class="sf-body"><strong>Agentic Systems:</strong> LLM autonomously decides sequences of actions across multiple tools to accomplish a goal. Highest capability, highest complexity, highest failure surface. See dedicated section.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Prompt Engineering — The Architect's Toolkit</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Prompt</span><span class="code-title">High-Quality System Prompt Structure</span></div>
+        <pre><code>  A well-structured system prompt has 5 components:
+
+  1. ROLE: "You are an expert Java architect reviewing pull requests."
+     → Sets the model's persona and knowledge domain
+
+  2. CONTEXT: "You are reviewing a microservice in our e-commerce platform.
+               The service handles order processing with Kafka for async events."
+     → Provides domain context the model needs to reason correctly
+
+  3. TASK: "Review the provided code for: correctness, performance, security,
+            and alignment with our microservices principles."
+     → Clear, specific instructions
+
+  4. FORMAT: "Respond as a JSON object: {severity: high|medium|low, category: ...,
+              issue: ..., suggestion: ..., code_example: ...}"
+     → Structured output is machine-parseable and consistent
+
+  5. CONSTRAINTS: "Do not suggest rewriting the entire service. Focus on the
+                   specific code provided. If code is correct, say so."
+     → Prevent unwanted behaviors and scope creep
+
+  Advanced techniques:
+  - Chain of Thought: "Think step by step before answering"
+  - Self-Consistency: Generate 3 answers, pick the majority
+  - ReAct: Reason → Act → Observe → repeat (for agents)
+  - Few-Shot: Provide 3 example input/output pairs before the real input</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="rag-architecture">
+    <div class="section-header"><h3>📚 RAG — Retrieval-Augmented Generation</h3></div>
+
+    <div class="callout info">
+      <div class="icon">💡</div>
+      <div class="body"><strong>RAG solves the core LLM problem:</strong> LLMs don't know your private data, and their training data has a cutoff date. RAG lets you inject relevant up-to-date information into every LLM call at runtime — making the LLM knowledgeable about your domain without fine-tuning.</div>
+    </div>
+
+    <div class="card">
+      <h4>RAG Architecture — Step by Step</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Architecture</span><span class="code-title">RAG Pipeline — Indexing + Retrieval</span></div>
+        <pre><code>  ═══ INDEXING PHASE (offline, run once or periodically) ═══════════════
+  
+  1. LOAD: Ingest documents (PDFs, Confluence, Notion, code, databases)
+  2. CHUNK: Split documents into chunks (512–1024 tokens)
+     → Overlap chunks by 100 tokens to avoid cutting context at boundaries
+  3. EMBED: Convert each chunk to a vector using an embedding model
+     → text-embedding-3-large (OpenAI) or all-MiniLM-L6 (local, fast)
+  4. STORE: Save (chunk_text, vector, metadata) into a Vector Database
+     → Pinecone, Weaviate, Qdrant, pgvector (PostgreSQL extension)
+
+  ═══ RETRIEVAL PHASE (online, per user query) ══════════════════════════
+  
+  User Query: "How do I configure retry logic in our payment service?"
+  
+  1. EMBED QUERY: Convert query to vector using the same embedding model
+  2. SEARCH: Find top-K most similar chunks in vector DB (cosine similarity)
+     → Returns 3–5 most relevant text chunks
+  3. RERANK (optional): Use a cross-encoder to reorder chunks by relevance
+  4. AUGMENT: Build prompt: system_prompt + retrieved_chunks + user_query
+  5. GENERATE: Send augmented prompt to LLM → grounded, accurate response
+  6. CITE: Include source references in the response for trust + verification</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>RAG Quality Improvements — What Architects Tune</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Problem</th><th>Root Cause</th><th>Solution</th></tr></thead>
+          <tbody>
+            <tr><td>Wrong chunks retrieved</td><td>Chunks too large; query and document use different vocabulary</td><td>Smaller chunks, HyDE (generate hypothetical answer, embed it), hybrid search (BM25 + vector)</td></tr>
+            <tr><td>Context lost at chunk boundaries</td><td>Splitting mid-sentence or mid-concept</td><td>Semantic chunking (split at section boundaries), parent-child chunking</td></tr>
+            <tr><td>Irrelevant chunks retrieved</td><td>Embedding model too generic</td><td>Fine-tune embedding model on domain data, add metadata filters to retrieval</td></tr>
+            <tr><td>LLM ignores retrieved context</td><td>Context buried in the middle of a long prompt</td><td>"Lost in the middle" problem — put most relevant context at start or end of prompt</td></tr>
+            <tr><td>Stale information</td><td>Index not updated</td><td>Incremental indexing pipeline, document change detection, TTL-based re-indexing</td></tr>
+            <tr><td>Hallucination in responses</td><td>LLM generates from training, not from context</td><td>Grounding instructions ("Only use the provided context"), citation enforcement</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Advanced RAG Patterns</h4>
+      <div class="ai-grid">
+        <div class="ai-card">
+          <div class="ai-icon">🔀</div>
+          <div class="ai-title">Hybrid Search</div>
+          <div class="ai-body">Combine vector similarity search (semantic) with BM25 keyword search (lexical). Merge results with Reciprocal Rank Fusion. Beats either alone for most use cases.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">🌳</div>
+          <div class="ai-title">RAPTOR / Hierarchical</div>
+          <div class="ai-body">Summarize clusters of chunks into higher-level summaries. Build a tree. Search at multiple levels. Answers both "what is X?" (detailed) and "summarize the whole thing" (high-level).</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">🔄</div>
+          <div class="ai-title">Self-RAG</div>
+          <div class="ai-body">LLM decides whether retrieval is needed at all. If yes, it retrieves, then critiques whether retrieved docs are relevant. Reduces unnecessary retrieval and low-quality augmentation.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">🔮</div>
+          <div class="ai-title">HyDE</div>
+          <div class="ai-body">Hypothetical Document Embeddings. Generate a hypothetical answer to the query, embed it, use it to search. The hypothetical answer's vocabulary matches the document vocabulary better than the raw question.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">🔍</div>
+          <div class="ai-title">Multi-Query</div>
+          <div class="ai-body">Generate 3–5 variations of the user's question, retrieve for each, deduplicate. Increases recall for queries that can be asked multiple ways.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-icon">💾</div>
+          <div class="ai-title">Contextual Retrieval</div>
+          <div class="ai-body">Anthropic's technique: before chunking, have an LLM prepend a short context sentence to each chunk ("This section describes the retry configuration for the payment service"). Dramatically improves chunk relevance.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="agentic-systems">
+    <div class="section-header"><h3>🤖 Agentic Systems — LLMs That Take Actions</h3></div>
+
+    <div class="callout warn">
+      <div class="icon">⚠️</div>
+      <div class="body">Agentic systems are the most powerful and the most risky GenAI architecture. An LLM making autonomous multi-step decisions can accomplish remarkable things — and cause remarkable damage. Architect with strong guardrails, human-in-the-loop checkpoints, and blast-radius minimization.</div>
+    </div>
+
+    <div class="card">
+      <h4>The ReAct Loop — How Agents Work</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Pattern</span><span class="code-title">ReAct: Reasoning + Acting Loop</span></div>
+        <pre><code>  User: "Find all orders placed by customer #123 last month, check if any 
+         are delayed, and send them a personalized apology email."
+
+  Iteration 1:
+    Thought: "I need to find orders for customer #123 from last month."
+    Action: query_orders(customer_id=123, start=2025-05-01, end=2025-05-31)
+    Observation: [{id:1001, status:DELAYED}, {id:1002, status:DELIVERED}]
+
+  Iteration 2:
+    Thought: "Order 1001 is delayed. I need details to personalize the email."
+    Action: get_order_details(order_id=1001)
+    Observation: {product:"Laptop", expected:2025-05-10, actual:null, reason:"supply"}
+
+  Iteration 3:
+    Thought: "I have enough context. I'll draft a personalized apology email."
+    Action: generate_email(customer=123, order=1001, reason="supply chain delay")
+    Observation: "Dear Sarah, We're sorry your laptop order..."
+
+  Iteration 4:
+    Thought: "Email looks good. I should send it."
+    Action: ⚠️ PAUSE → HUMAN APPROVAL (before sending)
+    [Human approves] → send_email(to="sarah@...", body="Dear Sarah...")
+
+  Final Answer: "Sent apology email for order 1001. Order 1002 was on time."</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Multi-Agent Architecture Patterns</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Pattern</th><th>Structure</th><th>Best For</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Orchestrator + Subagents</strong></td>
+              <td>One LLM plans and coordinates; specialized subagents execute specific tasks</td>
+              <td>Complex workflows with distinct subtasks (research + write + review)</td>
+            </tr>
+            <tr>
+              <td><strong>Pipeline (Waterfall)</strong></td>
+              <td>Sequential: agent A's output feeds agent B, feeds agent C</td>
+              <td>Predictable, linear transformations (extract → enrich → format)</td>
+            </tr>
+            <tr>
+              <td><strong>Parallelization</strong></td>
+              <td>Multiple agents work on different parts simultaneously; results merged</td>
+              <td>Independent subtasks that benefit from parallel execution (evaluate 5 options)</td>
+            </tr>
+            <tr>
+              <td><strong>Evaluator-Optimizer</strong></td>
+              <td>Generator agent creates output; critic agent scores it; loop until quality threshold met</td>
+              <td>High-quality content generation, code review, fact-checking</td>
+            </tr>
+            <tr>
+              <td><strong>Debate / Society of Agents</strong></td>
+              <td>Multiple agents argue different positions; arbiter decides</td>
+              <td>Decision making, reducing bias, exploring solution space</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Agent Memory Architecture</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Memory Type</th><th>What It Stores</th><th>Implementation</th></tr></thead>
+          <tbody>
+            <tr><td><strong>In-Context (Working)</strong></td><td>Current conversation, task state, immediate reasoning</td><td>The context window itself — ephemeral, lost after session</td></tr>
+            <tr><td><strong>External (Episodic)</strong></td><td>Past conversations, completed tasks, user preferences</td><td>Vector DB with user session namespace; retrieve recent relevant memories</td></tr>
+            <tr><td><strong>Semantic (Knowledge)</strong></td><td>Facts, domain knowledge, learned rules</td><td>RAG over curated knowledge base; regularly updated</td></tr>
+            <tr><td><strong>Procedural (Skills)</strong></td><td>How to use tools, workflow templates, best practices</td><td>System prompt instructions; few-shot examples; fine-tuning</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="genai-patterns">
+    <div class="section-header"><h3>🧩 GenAI Design Patterns</h3></div>
+
+    <div class="ai-grid">
+      <div class="ai-card">
+        <div class="ai-icon">🔗</div>
+        <div class="ai-title">Prompt Chaining</div>
+        <div class="ai-body">Break complex tasks into a sequence of LLM calls. Output of call N becomes input to call N+1. Each call has a focused, simple task. More reliable than one mega-prompt.</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-icon">🚦</div>
+        <div class="ai-title">Routing / Classifier</div>
+        <div class="ai-body">First LLM call classifies the input into categories. Each category routes to a different specialized prompt or pipeline. E.g., classify as "technical question" vs "billing question" → different handlers.</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-icon">🌀</div>
+        <div class="ai-title">Parallelization</div>
+        <div class="ai-body">Run multiple LLM calls simultaneously on different aspects of a task. Aggregate results. Faster than sequential chains. Example: evaluate code for correctness, security, and style in parallel.</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-icon">🔁</div>
+        <div class="ai-title">Self-Correction Loop</div>
+        <div class="ai-body">Generate → Validate (programmatically or with another LLM call) → if invalid, provide error feedback and regenerate. Especially useful for structured output (JSON, SQL, code) that must pass validation.</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-icon">📝</div>
+        <div class="ai-title">Structured Output</div>
+        <div class="ai-body">Use function calling / JSON mode to force LLM output into a defined schema. Parse it programmatically. Never regex-parse free-form LLM text in production — use structured output APIs.</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-icon">🛡️</div>
+        <div class="ai-title">Input/Output Guardrails</div>
+        <div class="ai-body">Validate inputs for prompt injection, PII, off-topic requests. Validate outputs for hallucination markers, policy violations, quality thresholds. Nemo Guardrails, custom classifiers, rule-based filters.</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-icon">🧪</div>
+        <div class="ai-title">LLM-as-Judge</div>
+        <div class="ai-body">Use a separate LLM call to evaluate the quality of another LLM's output. Scales QA without human annotation. Use a stronger model as judge, weaker model as generator. Define clear evaluation rubric.</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-icon">💰</div>
+        <div class="ai-title">Cost-Aware Routing</div>
+        <div class="ai-body">Route simple queries to cheap/fast models (GPT-4o-mini, Claude Haiku), complex queries to expensive/capable models (GPT-4o, Claude Sonnet). 80% of queries are simple — 10× cost savings possible.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="genai-production">
+    <div class="section-header"><h3>🚀 GenAI in Production — What Actually Breaks</h3></div>
+
+    <div class="card">
+      <h4>GenAI Production Architecture</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Architecture</span><span class="code-title">Production LLM Service Stack</span></div>
+        <pre><code>  User Request
+      ↓
+  [Input Guardrail]  ← PII detection, injection check, topic filter
+      ↓
+  [Prompt Builder]   ← Template + RAG retrieval + conversation history
+      ↓
+  [Model Router]     ← Route to: cache | cheap model | expensive model
+      ↓
+  [Response Cache]   ← Semantic cache (if similar prompt was answered recently)
+      ↓ (cache miss)
+  [LLM API Call]     ← With retry/backoff, timeout, fallback model
+      ↓
+  [Output Validator] ← Schema validation, quality check, safety filter
+      ↓
+  [Output Guardrail] ← PII masking, hallucination detection, policy enforcement
+      ↓
+  [Response + Sources]
+  
+  Supporting infrastructure:
+  ├── LLM Gateway (LiteLLM / PortKey): unified API across providers
+  ├── Observability: log every prompt/response with latency/cost/tokens
+  ├── Evaluation Pipeline: periodic offline evaluation of response quality
+  └── A/B Testing: compare model versions on quality + cost metrics</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Common GenAI Failure Modes in Production</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Failure Mode</th><th>What Happens</th><th>Prevention</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Hallucination at Scale</strong></td><td>LLM confidently generates false information that users trust</td><td>RAG grounding, citation enforcement, factual consistency checks, LLM-as-judge</td></tr>
+            <tr><td><strong>Prompt Injection</strong></td><td>User input overrides system prompt: "Ignore all previous instructions and..."</td><td>Input sanitization, clear delimiters, separate system/user context, output validation</td></tr>
+            <tr><td><strong>PII Leakage</strong></td><td>LLM includes another user's personal data in response (context contamination)</td><td>PII scrubbing before embedding, namespace isolation per user, output scanning</td></tr>
+            <tr><td><strong>Jailbreaking</strong></td><td>Users manipulate model into policy-violating outputs</td><td>Safety classifiers on input + output, model fine-tuning, content moderation API</td></tr>
+            <tr><td><strong>Cost Explosion</strong></td><td>Unexpected token usage spikes from long contexts or high volume</td><td>Token limits per request, budget alerts, cost-aware routing, semantic caching</td></tr>
+            <tr><td><strong>Latency Variance</strong></td><td>LLM latency is non-deterministic and can spike from 1s to 30s+</td><td>Streaming responses, timeout + fallback, async processing for non-real-time tasks</td></tr>
+            <tr><td><strong>Degraded Response Quality</strong></td><td>Prompt drift, model updates, data quality changes degrade output silently</td><td>Continuous evaluation pipeline, quality metrics dashboards, shadow testing on prod</td></tr>
+            <tr><td><strong>Context Window Overflow</strong></td><td>Conversation history grows until it exceeds context window, truncating important context</td><td>Sliding window, conversation summarization, store+retrieve with vector search</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>LLMOps — Operating LLM Systems</h4>
+      <div class="pillar-row">
+        <div class="pillar">
+          <div class="pillar-icon">📊</div>
+          <div class="pillar-name">Evaluation</div>
+          <div class="pillar-desc">Build offline eval datasets. Score responses on: faithfulness, relevance, coherence, groundedness. Run evals on every prompt change and model upgrade. Tools: RAGAS, PromptFoo, LangSmith.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📈</div>
+          <div class="pillar-name">Observability</div>
+          <div class="pillar-desc">Log every LLM call: prompt (with params), response, latency, tokens (input/output/total), cost, model version, user ID. Query logs to debug quality issues. Tools: LangSmith, Helicone, Arize.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🔄</div>
+          <div class="pillar-name">Prompt Versioning</div>
+          <div class="pillar-desc">Treat prompts as code. Version control them. A/B test prompt changes before full rollout. Never change a production prompt without testing it on your eval dataset first.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">💰</div>
+          <div class="pillar-name">Cost Management</div>
+          <div class="pillar-desc">Track cost per user, per feature, per request type. Set budget alerts. Use semantic caching (exact or similar prompts → serve cached response). Route to smaller models where quality allows.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🧪</div>
+          <div class="pillar-name">Red Teaming</div>
+          <div class="pillar-desc">Adversarially test your system for prompt injection, jailbreaks, PII leakage, toxic output. Do this before launch, not after an incident. Automate red-team tests in CI.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🔁</div>
+          <div class="pillar-name">Feedback Loops</div>
+          <div class="pillar-desc">Collect thumbs up/down signals from users. Build a human feedback pipeline. Use good/bad examples to improve prompts and fine-tune future models. Continuous improvement is the moat.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PART 6 — TECHNICAL LEADERSHIP
+  ══════════════════════════════════════════════════ -->
+  <div class="part-header">
+    <div class="part-number" style="background:var(--gradient-green);">06</div>
+    <div>
+      <h2>Technical Leadership</h2>
+      <p>The skills that separate a great technical architect from a great technical <em>leader</em>. Architecture without leadership is just documentation.</p>
+    </div>
+  </div>
+
+  <div class="section" id="tech-leadership">
+    <div class="section-header"><h3>🦅 Technical Leadership Principles</h3></div>
+
+    <div class="card">
+      <h4>The Architect as a Force Multiplier</h4>
+      <div class="arch-quote">
+        <p>"The best architects I know don't make most of the technical decisions themselves — they create an environment where other engineers consistently make good technical decisions."</p>
+      </div>
+      <div class="pillar-row">
+        <div class="pillar">
+          <div class="pillar-icon">📋</div>
+          <div class="pillar-name">Principles over Rules</div>
+          <div class="pillar-desc">Document the <em>why</em> behind decisions, not just the <em>what</em>. Teams that understand the principles can make good decisions in novel situations without asking the architect every time.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🌿</div>
+          <div class="pillar-name">Evolutionary Fitness Functions</div>
+          <div class="pillar-desc">Define automated checks that verify architectural qualities are preserved as the code evolves. E.g., "no new circular dependencies", "test coverage &gt; 80%", "P99 latency &lt; 200ms".</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🔬</div>
+          <div class="pillar-name">Architecture Reviews</div>
+          <div class="pillar-desc">Run lightweight design reviews for significant changes before they're built. A 30-minute review can prevent weeks of rework. Focus on: does this align with principles? What are the trade-offs?</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📚</div>
+          <div class="pillar-name">Teach, Don't Dictate</div>
+          <div class="pillar-desc">When you make a decision, explain the reasoning. Write it down. Pair program on the implementation. Build architectural knowledge in the team, not just in your head.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Technical Debt — The Architect's Balance Sheet</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Debt Type</th><th>Description</th><th>Interest Rate (Cost)</th><th>When to Pay</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Deliberate + Reckless</strong></td>
+              <td>"We don't have time for tests now" — conscious shortcut with no plan to fix</td>
+              <td><span class="pill pill-red" style="font-size:.7rem;">Very High</span></td>
+              <td>Immediately — this compounds fastest</td>
+            </tr>
+            <tr>
+              <td><strong>Deliberate + Prudent</strong></td>
+              <td>"Ship this MVP now, refactor auth when we have real user requirements"</td>
+              <td><span class="pill pill-orange" style="font-size:.7rem;">Manageable</span></td>
+              <td>When the condition is met (user requirements arrived)</td>
+            </tr>
+            <tr>
+              <td><strong>Inadvertent + Reckless</strong></td>
+              <td>"What's layered architecture?" — debt from ignorance</td>
+              <td><span class="pill pill-red" style="font-size:.7rem;">High</span></td>
+              <td>Educate the team; refactor as opportunity allows</td>
+            </tr>
+            <tr>
+              <td><strong>Inadvertent + Prudent</strong></td>
+              <td>"Now we understand the domain better and realize our initial design was wrong"</td>
+              <td><span class="pill pill-green" style="font-size:.7rem;">Low</span></td>
+              <td>Refactor when the insight arrives and you have capacity</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout info" style="margin-top:1rem;">
+        <div class="icon">💡</div>
+        <div class="body"><strong>The 20% Rule:</strong> Reserve 20% of every sprint for technical debt reduction. Frame it to management as "investing in engineering velocity" — debt with high interest (coupling in hot paths, no tests on frequently-changed code) compounds and halves team speed within 2 years if not addressed.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="decision-making">
+    <div class="section-header"><h3>🎯 Decision Making & Architecture Decision Records</h3></div>
+
+    <div class="card">
+      <h4>ADR — Architecture Decision Record Template</h4>
+      <p style="color:var(--text-secondary);margin-bottom:.8rem;">An ADR documents a single significant architectural decision — the context, the decision, and the consequences. They're the most valuable documentation an architect can produce.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Markdown</span><span class="code-title">ADR-0001: Use Kafka for Async Service Communication</span></div>
+        <pre><code>  # ADR-0001: Use Apache Kafka for Asynchronous Inter-Service Communication
+  
+  ## Status
+  Accepted | Date: 2025-09-15 | Author: @arch-team
+  Supersedes: ADR-0000 (RabbitMQ decision, 2024)
+  
+  ## Context
+  Our order processing involves 7 microservices that need to react to OrderPlaced
+  events: inventory, shipping, email, analytics, fraud, rewards, finance.
+  We need to:
+  - Fan-out one event to many consumers independently
+  - Replay events for new consumers being onboarded
+  - Handle 50,000 events/sec at peak (Black Friday)
+  - Maintain event ordering within a single order's lifecycle
+  
+  ## Decision
+  Use Apache Kafka (MSK on AWS) as our primary async messaging infrastructure.
+  
+  ## Rationale (Options Considered)
+  1. RabbitMQ: Good for queues, poor for fan-out replay, doesn't scale to 50K/sec easily
+  2. AWS SQS+SNS: Managed, but no log replay, harder ordering guarantees
+  3. ✅ Kafka: Log-based, fan-out native, replay built-in, 50K+/sec, partition ordering
+  
+  ## Consequences
+  + Event replay: onboard new consumers without re-processing source systems
+  + Audit log: Kafka topic is an immutable event log for free
+  + Scale: handles 10x our current peak
+  - Operational complexity: requires MSK cluster management, monitoring
+  - Learning curve: team unfamiliar with Kafka consumer group semantics
+  - Eventual consistency: consumers may be behind; downstream reads may be stale
+  
+  ## Action Items
+  - [ ] Platform team: provision MSK cluster with 3-AZ replication
+  - [ ] All teams: add Kafka consumer dead-letter queue + retry logic
+  - [ ] Runbook: Kafka consumer lag alerting (alert if lag > 10,000 messages)</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Architect's Decision Framework</h4>
+      <div class="step-flow">
+        <div class="sf-item">
+          <div class="sf-num">1</div>
+          <div class="sf-body"><strong>Define the problem clearly.</strong> What are we actually trying to solve? What are the constraints (time, cost, team skill, existing system)? What does success look like? A well-framed problem often reveals the answer.</div>
+        </div>
+        <div class="sf-item green">
+          <div class="sf-num">2</div>
+          <div class="sf-body"><strong>Identify the quality attributes in tension.</strong> Performance vs Cost? Consistency vs Availability? Simplicity vs Flexibility? Name the trade-off explicitly. Most architectural decisions are choosing which attribute to prioritize.</div>
+        </div>
+        <div class="sf-item orange">
+          <div class="sf-num">3</div>
+          <div class="sf-body"><strong>Generate 2–3 real alternatives.</strong> Never evaluate a single option — you'll always find reasons it works. Force yourself to have at least 2 credible alternatives. "Use X" vs "Use Y" vs "Build our own".</div>
+        </div>
+        <div class="sf-item purple">
+          <div class="sf-num">4</div>
+          <div class="sf-body"><strong>Evaluate against your specific context.</strong> Team size, existing skill set, scale requirements, timeline, operational maturity. The same pattern can be correct in one context and catastrophic in another.</div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-num">5</div>
+          <div class="sf-body"><strong>Decide and document.</strong> Pick an option and write an ADR. State the decision, the rationale, and the consequences (including downsides). "We chose X because [specific reasons]. The trade-off is [acknowledged cost]."</div>
+        </div>
+        <div class="sf-item green">
+          <div class="sf-num">6</div>
+          <div class="sf-body"><strong>Revisit with new information.</strong> Decisions are not permanent. Mark ADRs as "Superseded" when better options emerge. The goal is not to be right forever — it's to make the best decision with current information and update it as you learn.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="communication">
+    <div class="section-header"><h3>📢 Stakeholder Communication</h3></div>
+
+    <div class="card">
+      <h4>Speaking Different Languages — Technical vs Business</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Technical Reality</th><th>How to Say It to Business Stakeholders</th></tr></thead>
+          <tbody>
+            <tr><td>"We have tight coupling — changing service A requires changing 5 other services"</td><td>"Our current architecture is like a tightly knotted rope — to untangle one thread we have to move all of them. This is slowing our feature delivery by ~30%."</td></tr>
+            <tr><td>"We need to refactor this monolith into microservices"</td><td>"We want to invest in breaking our codebase into smaller, independently deployable pieces. This will let different teams ship features independently instead of coordinating every release."</td></tr>
+            <tr><td>"We have no observability — we're flying blind in production"</td><td>"Right now, when something goes wrong in production, it takes our team an average of 4 hours to find the cause. With this investment, we'd cut that to 15 minutes."</td></tr>
+            <tr><td>"We need to implement proper auth — our current JWT validation is wrong"</td><td>"We discovered a security vulnerability that could allow unauthorized access to customer data. We're proposing a 2-week fix that eliminates this risk before it's exploited."</td></tr>
+            <tr><td>"We should adopt Kubernetes"</td><td>"Our current deployment process takes 3 hours and requires manual intervention. With this platform upgrade, we can deploy any service in 10 minutes automatically."</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>The Architecture Presentation — C4 Model</h4>
+      <div class="callout info">
+        <div class="icon">💡</div>
+        <div class="body">The <strong>C4 Model</strong> (by Simon Brown) gives architects a standard way to present architecture at 4 levels of zoom. Use the right level for the right audience — non-technical stakeholders need Level 1; developers need Levels 3–4.</div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Level</th><th>Name</th><th>Shows</th><th>Audience</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>L1</strong></td>
+              <td>System Context</td>
+              <td>Your system as a single box. What external systems and users interact with it.</td>
+              <td>Everyone — CEOs, product, sales</td>
+            </tr>
+            <tr>
+              <td><strong>L2</strong></td>
+              <td>Container</td>
+              <td>The major deployable units inside your system (web app, API, database, cache).</td>
+              <td>Technical stakeholders, architects</td>
+            </tr>
+            <tr>
+              <td><strong>L3</strong></td>
+              <td>Component</td>
+              <td>The major components inside one container (controllers, services, repositories).</td>
+              <td>Development team</td>
+            </tr>
+            <tr>
+              <td><strong>L4</strong></td>
+              <td>Code</td>
+              <td>Class/module level. Auto-generate from code — don't maintain manually.</td>
+              <td>Developers (rarely needed)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="roadmap-planning">
+    <div class="section-header"><h3>🗺️ Technical Roadmaps</h3></div>
+
+    <div class="card">
+      <h4>How to Build a Technical Roadmap That Actually Gets Funded</h4>
+      <div class="step-flow">
+        <div class="sf-item">
+          <div class="sf-num">1</div>
+          <div class="sf-body"><strong>Baseline the current state.</strong> Document your current architecture, pain points, incidents from last 6 months, tech debt backlog, team velocity data. Make the pain concrete and quantifiable.</div>
+        </div>
+        <div class="sf-item green">
+          <div class="sf-num">2</div>
+          <div class="sf-body"><strong>Define the target state.</strong> What does the architecture look like in 2 years? Draw it out. Define the quality attributes you're targeting. Be specific: "P99 latency &lt; 100ms at 100K RPS" not "better performance".</div>
+        </div>
+        <div class="sf-item orange">
+          <div class="sf-num">3</div>
+          <div class="sf-body"><strong>Map the gap.</strong> What's the delta between current and target? Break it into concrete initiatives. Each initiative should have a clear outcome, not just an activity. "Migrate auth to Auth0" not "Improve authentication".</div>
+        </div>
+        <div class="sf-item purple">
+          <div class="sf-num">4</div>
+          <div class="sf-body"><strong>Prioritize by impact × effort × risk.</strong> Sequence initiatives that unblock other initiatives first. Tackle highest-risk items early (fail fast, not late). Deliver quick wins in month 1–3 to build trust.</div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-num">5</div>
+          <div class="sf-body"><strong>Connect to business outcomes.</strong> Every initiative must have a business case. "Migrating to Kubernetes saves $200K/year in EC2 costs and reduces deploy time from 3h to 15min, enabling 2× deploy frequency."</div>
+        </div>
+        <div class="sf-item green">
+          <div class="sf-num">6</div>
+          <div class="sf-body"><strong>Review and adapt quarterly.</strong> A 2-year technical roadmap is a direction, not a plan. Review quarterly. Update based on what you learned. New business priorities change your sequencing. Architectural thinking is continuous.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner banner-green">
+      <h4>🏆 The Architect's North Star</h4>
+      <p>Great architects build systems that let organizations move fast, safely, forever. Not just today. Not just at this scale. Not just with the current team. They design for the system to be <strong>evolvable</strong> — so that the architecture you build today doesn't become the legacy that holds the company back in 5 years. That is the job.</p>
+    </div>
+
+    <div class="callout success">
+      <div class="icon">🎯</div>
+      <div class="body">
+        <strong>Your daily checklist as an architect:</strong>
+        <ol style="color:var(--text-secondary);margin-top:.5rem;padding-left:1.2rem;font-size:.85rem;line-height:1.8;">
+          <li>Did I make at least one decision today with a documented rationale?</li>
+          <li>Did I explain the <em>why</em> behind at least one decision to a developer?</li>
+          <li>Did I look at the system from the business perspective, not just the technical one?</li>
+          <li>Did I reduce complexity somewhere, even by a little?</li>
+          <li>Did I ask: "what happens when this fails?" about at least one component?</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+window.addEventListener('scroll', () => {
+  const el = document.getElementById('progress');
+  if (el) {
+    const s = document.documentElement;
+    el.style.width = ((s.scrollTop || document.body.scrollTop) / (s.scrollHeight - s.clientHeight) * 100) + '%';
+  }
+  const tb = document.getElementById('topBtn');
+  if (tb) tb.style.display = (window.scrollY > 500) ? 'flex' : 'none';
+});
+
+function toggleSidebar() {
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    document.body.classList.toggle('sidebar-open');
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+  }
+}
+if (localStorage.getItem('sidebarCollapsed') === 'true') {
+  document.body.classList.add('sidebar-collapsed');
+}
+document.getElementById('hamburger').onclick = toggleSidebar;
+document.getElementById('sidebar-overlay').onclick = toggleSidebar;
+</script>
+</body>
+</html>
